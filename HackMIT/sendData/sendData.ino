@@ -4,6 +4,12 @@
 //Pins connected to RadioBlock pins 1/2/3/4
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(5,4,3,2);
 
+unsigned char buttonState = 0x00;
+// TL: 0b00000001
+// TR: 0b00000010
+// BL: 0b00000100
+// BR: 0b00001000
+
 uint8_t payload[] = { 2 };
 
 #define CODE_TEMP   1
@@ -21,12 +27,21 @@ void setup() {
 
   //Give RadioBlock time to init
   delay(500);
-
-  //Tell the world we are alive  
+  
+  // Blink lights to indicate that the device is initializing. It's alive!
   interface.setLED(true);
-  delay(1000);
+  delay(25);
+  interface.setLED(false);
+  delay(25);
+  interface.setLED(true);
+  delay(25);
+  interface.setLED(false);
+  delay(25);
+  interface.setLED(true);
+  delay(25);
   interface.setLED(false);
   
+  // We need to set these values so other RadioBlocks can find us
   interface.setChannel(15);
   interface.setPanID(0xBAAD);
   interface.setAddress(OUR_ADDRESS);
@@ -35,8 +50,8 @@ void setup() {
   Serial.println("Starting...");
 }
 
-void loop() // run over and over
-{
+void loop() { // run over and over
+
   //New Message
 //  if (interface.getResponse().isAvailable()) {
 //    Serial.println("New Response...");
@@ -66,12 +81,12 @@ void loop() // run over and over
   //Toggle other other guys LED on RadioBlock
 //  interface.addData(CODE_LED, 1);
 
-  char a_char = 0x04; // BUG: This type doesn't work right.
-  interface.addData(0xf, a_char); 
-  interface.addData(0xf, a_char); 
-  interface.addData(0xf, a_char);
-  interface.addData(0xf, a_char);
-  interface.addData(0xf, a_char);
+//  char a_char = 0x04; // BUG: This type doesn't work right.
+  interface.addData(0x1, buttonState); 
+//  interface.addData(0xf, a_char); 
+//  interface.addData(0xf, a_char);
+//  interface.addData(0xf, a_char);
+//  interface.addData(0xf, a_char);
   
 //  Serial.print("Command ID: ");
 //  Serial.println(interface.getResponse().getCommandId(), HEX);
