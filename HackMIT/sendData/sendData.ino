@@ -1,14 +1,17 @@
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
 
-//Pins connected to RadioBlock pins 1/2/3/4
-RadioBlockSerialInterface interface = RadioBlockSerialInterface(5,4,3,2);
+// Button Module
+#define MODULE_BUTTON_0_PIN 13
 
 unsigned char buttonState = 0x00;
 // TL: 0b00000001
 // TR: 0b00000010
 // BL: 0b00000100
 // BR: 0b00001000
+
+//Pins connected to RadioBlock pins 1/2/3/4
+RadioBlockSerialInterface interface = RadioBlockSerialInterface(5,4,3,2);
 
 uint8_t payload[] = { 2 };
 
@@ -23,6 +26,10 @@ uint8_t payload[] = { 2 };
 //uint8_t packetData[] = ;
 
 void setup() {
+  // Set up button module
+  pinMode(MODULE_BUTTON_0_PIN, INPUT);
+  
+  // Set up RadioBlock module
   interface.begin();  
 
   //Give RadioBlock time to init
@@ -51,6 +58,15 @@ void setup() {
 }
 
 void loop() { // run over and over
+
+  unsigned int buttonInput = digitalRead(MODULE_BUTTON_0_PIN);
+  if (buttonInput == HIGH) {
+    buttonState = buttonState | 0x01;
+  } else {
+    buttonState = buttonState & ~(1 << 0);
+  }
+  Serial.print("Button State: ");
+  Serial.println(buttonState, BIN);
 
   //New Message
 //  if (interface.getResponse().isAvailable()) {
