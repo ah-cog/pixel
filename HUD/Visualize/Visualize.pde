@@ -1,176 +1,222 @@
-// Graphing sketch
-
-
-// This program takes ASCII-encoded strings
-// from the serial port at 9600 baud and graphs them. It expects values in the
-// range 0 to 1023, followed by a newline, or newline and carriage return
-
-// Created 20 Apr 2005
-// Updated 18 Jan 2008
-// by Tom Igoe
-// This example code is in the public domain.
-
 import processing.serial.*;
 import ddf.minim.*;
 import ddf.minim.ugens.*;
 
 Minim       minim;
 AudioOutput out;
-Oscil       wave1;
-Oscil       wave2;
-Oscil       wave3;
-Oscil       wave4;
+Oscil       topRowWave;
+Oscil       bottomRowWave;
 
-Serial myPort;        // The serial port
-int xPos = 1;         // horizontal position of the graph
+Serial myPort;
 
-int PC = 0;
+int counter = 0;
+
+int windowWidth  = 1024;
+int windowHeight =  768;
+
+//boolean sketchFullScreen() {
+//  return true;
+//}
+
+int moduleCount = 0;
+
+class Module {
+  long UUID;
+  
+  int xPosition;
+  int yPosition;
+  int buttonSwitchState[];
+  
+  Module() {
+    // Generate UUID for module
+    UUID = moduleCount;
+    moduleCount = moduleCount + 1;
+    
+    // Constructor
+    xPosition = 512;
+    yPosition = 384;
+    
+    buttonSwitchState = new int[4];
+    buttonSwitchState[0] = 0;
+    buttonSwitchState[1] = 0;
+    buttonSwitchState[2] = 0;
+    buttonSwitchState[3] = 0;
+  }
+  
+  void setPosition(int x, int y) {
+    xPosition = x;
+    yPosition = y;
+  }
+  
+  int getSwitchState(int i) {
+    return buttonSwitchState[i];
+  }
+  
+  void setSwitchState(int i, int state) {
+    buttonSwitchState[i] = state;
+  }
+  
+  void display() {
+    rectMode(CORNERS);
+    if (buttonSwitchState[0] != 0) {
+      fill(0, 0, 255);
+    } else {
+      fill(64, 64, 64);
+    }
+    rect(xPosition - 95, yPosition - 100, xPosition - 5, yPosition - 10);
+  
+    if (buttonSwitchState[1] != 0) {
+      fill(0, 0, 255);
+    }  else {
+      fill(64, 64, 64);
+    }
+    rect(xPosition + 15, yPosition - 100, xPosition + 105, yPosition - 10);
+  
+    if (buttonSwitchState[2] != 0) {
+      fill(0, 0, 255);
+    } else {
+      fill(64, 64, 64);
+    }
+    rect(xPosition - 95, yPosition + 10, xPosition - 5, yPosition + 100);
+  
+    if (buttonSwitchState[3] != 0) {
+      fill(0, 0, 255);
+    } else {
+      fill(64, 64, 64);
+    }
+    rect(xPosition + 15, yPosition + 10, xPosition + 105, yPosition + 100);
+  }
+}
+
+Module modules[];
 
 void setup () {
-  // set the window size:
-  size(1024, 760);        
+  
+  modules = new Module[2];
+  
+  modules[0] = new Module();
+  modules[0].setPosition(212, 384);
+  modules[1] = new Module();
+  modules[1].setPosition(712, 384);
+  
+  // Set the window size
+  size(windowWidth, windowHeight);
+//  size(displayWidth, displayHeight);
 
   // List all the available serial ports
   println(Serial.list());
-  // I know that the first port in the serial list on my mac
-  // is always my  Arduino, so I open Serial.list()[0].
-  // Open whatever port is the one you're using.
-  myPort = new Serial(this, Serial.list()[6], 115200);
-  // don't generate a serialEvent() unless you get a newline character:
-  myPort.bufferUntil('\n');
-  // set inital background:
+
+  // Open whatever port is the one you're using with the Arduino.
+//  myPort = new Serial(this, Serial.list()[6], 115200);
+//  myPort.bufferUntil('\n'); // Don't generate a serialEv /ent() unless you get a newline character:
+
+  // Set inital background
   background(0);
-  
-  
+
+  //
+  // Set up sound synthesizer
+  //
+
+  // Set up Minim for sound synthesis
   minim = new Minim(this);
-  
-  // use the getLineOut method of the Minim object to get an AudioOutput object
+
+  // Use the getLineOut method of the Minim object to get an AudioOutput object
   out = minim.getLineOut();
-  
-  // create a sine wave Oscil, set to 440 Hz, at 0.5 amplitude
-  wave1 = new Oscil( 240, 0.5f, Waves.SQUARE );
-  wave2 = new Oscil( 440, 0.5f, Waves.SQUARE );
-  wave3 = new Oscil( 640, 0.5f, Waves.SQUARE );
-  wave4 = new Oscil( 840, 0.5f, Waves.SQUARE );
-  // patch the Oscil to the output
-//  wave4.patch( out );
+
+  // Create a sine wave Oscil, set to 440 Hz, at 0.5 amplitude
+  topRowWave    = new Oscil(440, 0.5f, Waves.SQUARE);
+  bottomRowWave = new Oscil(660, 0.5f, Waves.SQUARE);
 }
-int epoch = 0;
+
+int previousTime = 0;
 void draw () {
-  // everything happens in the serialEvent()
-  background(0);
+  // NOTE: The state gets updated in the the serialEvent() function
   
-   int currentTime = millis();
-   if (currentTime - epoch > 200) {
-    wave2.unpatch( out );
-    wave3.unpatch( out ); 
-   }
-  if (currentTime - epoch > 500) {
-    epoch = currentTime;
-    wave2.unpatch( out );
-    wave3.unpatch( out );
-    if (PC == 0) {
-      if (buttonSwitchState[0] != 0) {
-        wave2.patch( out );
+  background(0);
+
+  //
+  // Synthesize sounds for column for which the counter is active
+  //
+  
+  int currentTime = millis();
+  
+  // Stop sound synthesizer after a short time (after it has been activated)
+  if (currentTime - previousTime > 200) {
+    topRowWave.unpatch(out); // Top row
+    bottomRowWave.unpatch(out);
+  }
+
+  // Update counter
+  if (currentTime - previousTime > 500) {
+    previousTime = currentTime;
+
+    // Output left column sounds
+    if (counter == 0) {
+      if (modules[0].getSwitchState(0) != 0) {
+        topRowWave.patch(out);
       }
-      if (buttonSwitchState[1] != 0) {
-        wave3.patch( out );
+      if (modules[0].getSwitchState(1) != 0) { 
+        bottomRowWave.patch(out);
       }
-      PC = 1;
-    } else {
-      if (buttonSwitchState[2] != 0) {
-        wave2.patch( out );
+      counter = 1;
+    }
+    
+    // Output right column sounds
+    else {
+      if (modules[0].getSwitchState(2) != 0) { 
+        topRowWave.patch(out);
       }
-      if (buttonSwitchState[3] != 0) {
-        wave3.patch( out );
+     if (modules[0].getSwitchState(3) != 0) {
+        bottomRowWave.patch(out);
       }
-      PC = 0;
+      counter = 0;
     }
   }
-  
+
   //
-  // Draw module
+  // Draw the waveforms
   //
-  
-  rectMode(CORNERS);
-  if (buttonSwitchState[0] != 0) {
-    fill(0, 0, 255);
-  } else {
-    fill(64, 64, 64);
-  }
-  rect(417, 239, 507, 329);
-  
-  if (buttonSwitchState[1] != 0) {
-    fill(0, 0, 255);
-  } else {
-    fill(64, 64, 64);
-  }
-  rect(527, 239, 617, 329);
-  
-  if (buttonSwitchState[2] != 0) {
-    fill(0, 0, 255);
-  } else {
-    fill(64, 64, 64);
-  }
-  rect(417, 339, 507, 429);
-  
-  if (buttonSwitchState[3] != 0) {
-    fill(0, 0, 255);
-  } else {
-    fill(64, 64, 64);
-  }
-  rect(527, 339, 617, 429);
-  
-  
-  
-   // draw the waveforms
+
   stroke(255, 255, 255);
-  for(int i = 0; i < out.bufferSize() - 1; i++)
-  {
-    line( i, ((768.0 / 2.0) - 50) + out.left.get(i)*50, i+1, ((768.0 / 2.0) - 50) + out.left.get(i+1)*50 );
-//    line( i, ((768.0 / 3.0) - 50) + out.left.get(i)*50, i+1, ((768.0 / 3.0) - 50) + out.left.get(i+1)*50 );
-//    line( i, ((768.0 / 2.0) - 50) + out.left.get(i)*50, i+1, ((768.0 / 2.0) - 50) + out.left.get(i+1)*50 );
-//    line( i, 150 + out.right.get(i)*50, i+1, 150 + out.right.get(i+1)*50 );
+  for (int i = 0; i < out.bufferSize() - 1; i++) {
+    // Output module waveform
+    line(i, (windowHeight / 2.0) + out.left.get(i) * 50, i + 1, (windowHeight / 2.0) + out.left.get(i + 1) * 50);
+  }
+
+  //
+  // Draw module on screen
+  //
+  
+  for (int i = 0; i < modules.length; i++) {
+    modules[i].display();
   }
 }
 
-int buttonSwitchState[] = { 0, 0, 0, 0 };
-int buttonSoundState[] = { 0, 0, 0, 0 };
-
-void serialEvent (Serial myPort) {
+void serialEvent(Serial myPort) {
   // get the ASCII string:
   String inString = myPort.readStringUntil('\n');
 
   if (inString != null) {
-    // trim off any whitespace:
+    // trim off any whitespace
     inString = trim(inString);
     println(inString);
-    
-    int[] nums = int(split(inString, '\t'));
-    buttonSwitchState[0] = nums[0];
-    buttonSwitchState[1] = nums[1];
-    buttonSwitchState[2] = nums[2];
-    buttonSwitchState[3] = nums[3];
-    
-    
-//    // convert to an int and map to the screen height:
-//    int inByte = Integer.parseInt(inString); 
-////    float inByte = float(inString); 
-////    inByte = map(inByte, 0, 1023, 0, height);
-//
-//    // draw the line:
-//    stroke(127, 34, 255);
-//    line(xPos, height, xPos, height - inByte);
 
-    // at the edge of the screen, go back to the beginning:
-    if (xPos >= width) {
-      xPos = 0;
-      background(0);
-    } 
-    else {
-      // increment the horizontal position:
-      xPos++;
-    }
+    // Read data from modules
+    int[] inputNumbers = int(split(inString, '\t'));
+//    buttonSwitchState[0] = inputNumbers[0];
+//    buttonSwitchState[1] = inputNumbers[1];
+//    buttonSwitchState[2] = inputNumbers[2];
+//    buttonSwitchState[3] = inputNumbers[3];
   }
+}
+
+void keyPressed() {
+//  if () {
+//  }
+}
+
+void stop() {
+  out.close();
+  minim.stop();
 }
 

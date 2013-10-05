@@ -7,18 +7,10 @@ const int greenLED = 10;
 const int blueLED  = 6;
 
 // Button Grounds
-//const int buttonMatrix1 = 12; // BL
-//const int buttonMatrix2 = 7;  // BR
-//const int buttonMatrix3 = 13; // TL
-//const int buttonMatrix4 = 11; // TR
-
 const int buttonPins[4] = { 12, 7, 13, 11 };
 
 // LED Grounds (LED "Top" is the side with the wires coming out, going to the Arduino.)
-const int ledGnd1 = 5; // BL
-const int ledGnd2 = 8; // 3; // TL
-const int ledGnd3 = 2; // 8; // BR
-const int ledGnd4 = 3; // TR
+const int ledPins[4] = { 5, 8, 2, 3 };
 
 // Color definitions
 int red[]    = { 255, 0, 0 };
@@ -29,8 +21,8 @@ int yellow[] = { 255, 255, 0 };
 int dark[]   = { 0, 0, 0 };
 
 // Program Counter State
-int pci = 0; // Program Counter Index
-unsigned long epoch = 0;
+int counter = 0; // Program Counter Index
+unsigned long previousTime = 0;
 
 // Button State
 int buttonReadyState[4] = { 1, 1, 1, 1 };
@@ -51,10 +43,10 @@ void setup() {
   pinMode(buttonPins[3], INPUT);
 
   // LED Grounds
-  pinMode(ledGnd1, OUTPUT);
-  pinMode(ledGnd2, OUTPUT);
-  pinMode(ledGnd3, OUTPUT);
-  pinMode(ledGnd4, OUTPUT);
+  pinMode(ledPins[0], OUTPUT);
+  pinMode(ledPins[1], OUTPUT);
+  pinMode(ledPins[2], OUTPUT);
+  pinMode(ledPins[3], OUTPUT);
 
   // RGB Pins
   pinMode(redLED, OUTPUT);
@@ -72,10 +64,10 @@ void loop() {
 //  ledColor(dark, blue, blue, green);
 
   // Uniform color. Pass in the color array of your choice.
-//  ledColorU(purple);
+//ledColorU(purple);
 
   // Dark is just off. Use dark to turn any LED off.
-  //ledColor(dark, dark, dark, dark);
+//  ledColor(dark, dark, dark, dark);
   ledColor(buttonColorState[0], buttonColorState[1], buttonColorState[2], buttonColorState[3]);
   
   //
@@ -88,112 +80,39 @@ void loop() {
   readButtonState(2);
   readButtonState(3);
   
-//  buttonSwitchState[1] = (digitalRead(buttonPins[1]) && buttonSwitchState[1] ? 0 : 1);
-//  buttonSwitchState[2] = (digitalRead(buttonPins[2]) && buttonSwitchState[2] ? 0 : 1);
-//  buttonSwitchState[3] = (digitalRead(buttonPins[3]) && buttonSwitchState[3] ? 0 : 1);
-  
-  if (buttonSwitchState[0] == 0) {
-    buttonColorState[0][0] = 0;
-    buttonColorState[0][1] = 0;
-    buttonColorState[0][2] = 0;
-  } else {
-    if (pci == 0) {
-      buttonColorState[0][0] = blue[0];
-      buttonColorState[0][1] = blue[1];
-      buttonColorState[0][2] = blue[2];
-    } else {
-      buttonColorState[0][0] = 255;
-      buttonColorState[0][1] = 255;
-      buttonColorState[0][2] = 255;
-    }
-  }
-  
-  if (buttonSwitchState[1] == 0) {
-    buttonColorState[1][0] = 0;
-    buttonColorState[1][1] = 0;
-    buttonColorState[1][2] = 0;
-  } else {
-    if (pci == 0) {
-      buttonColorState[1][0] = blue[0];
-      buttonColorState[1][1] = blue[1];
-      buttonColorState[1][2] = blue[2];
-    } else {
-      buttonColorState[1][0] = 255;
-      buttonColorState[1][1] = 255;
-      buttonColorState[1][2] = 255;
-    }
-  }
-  
-  if (buttonSwitchState[2] == 0) {
-    buttonColorState[2][0] = 0;
-    buttonColorState[2][1] = 0;
-    buttonColorState[2][2] = 0;
-  } else {
-    if (pci == 1) {
-      buttonColorState[2][0] = blue[0];
-      buttonColorState[2][1] = blue[1];
-      buttonColorState[2][2] = blue[2];
-    } else {
-      buttonColorState[2][0] = 255;
-      buttonColorState[2][1] = 255;
-      buttonColorState[2][2] = 255;
-    }
-  }
-  
-  if (buttonSwitchState[3] == 0) {
-    buttonColorState[3][0] = 0;
-    buttonColorState[3][1] = 0;
-    buttonColorState[3][2] = 0;
-  } else {
-    if (pci == 1) {
-      buttonColorState[3][0] = blue[0];
-      buttonColorState[3][1] = blue[1];
-      buttonColorState[3][2] = blue[2];
-    } else {
-      buttonColorState[3][0] = 255;
-      buttonColorState[3][1] = 255;
-      buttonColorState[3][2] = 255;
-    }
-  }
-  
-  // Update PC column
+  //
+  // Update counter column
+  //
   unsigned long currentTime = millis();
-  if (currentTime - epoch > 500) {
-    epoch = currentTime;
-    if (pci == 0) {
-//      buttonColorState[0][0] = red[0];
-//      buttonColorState[0][1] = red[1];
-//      buttonColorState[0][2] = red[2];
-//      
-//      buttonColorState[1][0] = red[0];
-//      buttonColorState[1][1] = red[1];
-//      buttonColorState[1][2] = red[2];
-      
-      pci = 1;
-      
+  if (currentTime - previousTime > 500) {
+    previousTime = currentTime;
+    if (counter == 0) {
+      counter = 1;
     } else {
-      
-//      buttonColorState[2][0] = red[0];
-//      buttonColorState[2][1] = red[1];
-//      buttonColorState[2][2] = red[2];
-//      
-//      buttonColorState[3][0] = red[0];
-//      buttonColorState[3][1] = red[1];
-//      buttonColorState[3][2] = red[2];
-      
-      pci = 0;
+      counter = 0;
     }
   }
+  
+  //
+  // Update color based on button state
+  //
+  
+  updateButtonColor(0, blue);
+  updateButtonColor(1, blue);
+  updateButtonColor(2, blue);
+  updateButtonColor(3, blue);
 
+  //
   // Check for button presses and output states
   // Enable if you want to test your buttons
+  //
   Serial.print(buttonSwitchState[0]);
   Serial.print("\t");
   Serial.print(buttonSwitchState[1]);
   Serial.print("\t");
   Serial.print(buttonSwitchState[2]);
   Serial.print("\t");
-  Serial.println(buttonSwitchState[3]);
+  Serial.println(buttonSwitchState[3]); 
 }
 
 void readButtonState(int i) {
@@ -211,6 +130,34 @@ void readButtonState(int i) {
   }
 }
 
+void updateButtonColor(int i, int color[]) {
+  
+  if (buttonSwitchState[i] == 0) { // Check if button state is "off"
+  
+    buttonColorState[i][0] = 0;
+    buttonColorState[i][1] = 0;
+    buttonColorState[i][2] = 0;
+    
+  } else { // Check if button state is "on"
+  
+    if (counter == 0 && ((i == 0 || i == 1))) {
+      // Counter is in left column
+      buttonColorState[i][0] = 255;
+      buttonColorState[i][1] = 255;
+      buttonColorState[i][2] = 255;
+    } else if (counter == 1 && ((i == 2 || i == 3))) {
+      buttonColorState[i][0] = 255;
+      buttonColorState[i][1] = 255;
+      buttonColorState[i][2] = 255;
+    } else { // Counter is in right column
+      // Counter is in left column
+      buttonColorState[i][0] = color[0];
+      buttonColorState[i][1] = color[1];
+      buttonColorState[i][2] = color[2];
+    }
+  }
+}
+
 // Control individual LEDs
 // Pass in a RGB color array for each LED
 void ledColor(int led1[], int led2[], int led3[], int led4[]) {
@@ -221,10 +168,10 @@ void ledColor(int led1[], int led2[], int led3[], int led4[]) {
   analogWrite(blueLED, led1[2]);
   // Flicker control
   delay(2);
-  digitalWrite(ledGnd1, LOW); // "Turn on" LED
+  digitalWrite(ledPins[0], LOW); // "Turn on" LED
   // Flicker control
   delayMicroseconds(1100); // Wait (for POV effect?)
-  digitalWrite(ledGnd1, HIGH); // "Turn off" LED
+  digitalWrite(ledPins[0], HIGH); // "Turn off" LED
 
   // LED 2
   analogWrite(redLED, led2[0]);
@@ -232,10 +179,10 @@ void ledColor(int led1[], int led2[], int led3[], int led4[]) {
   analogWrite(blueLED, led2[2]);
   // Flicker control
   delay(2);
-  digitalWrite(ledGnd2, LOW);
+  digitalWrite(ledPins[1], LOW);
   // Flicker control
   delayMicroseconds(1100);
-  digitalWrite(ledGnd2, HIGH);
+  digitalWrite(ledPins[1], HIGH);
 
   // LED 3
   analogWrite(redLED, led3[0]);
@@ -243,10 +190,10 @@ void ledColor(int led1[], int led2[], int led3[], int led4[]) {
   analogWrite(blueLED, led3[2]);
   // Flicker control
   delay(2);
-  digitalWrite(ledGnd3, LOW);
+  digitalWrite(ledPins[2], LOW);
   // Flicker control
   delayMicroseconds(1100);
-  digitalWrite(ledGnd3, HIGH);
+  digitalWrite(ledPins[2], HIGH);
 
   // LED 4
   analogWrite(redLED, led4[0]);
@@ -254,10 +201,10 @@ void ledColor(int led1[], int led2[], int led3[], int led4[]) {
   analogWrite(blueLED, led4[2]);
   // Flicker control
   delay(2);
-  digitalWrite(ledGnd4, LOW);
+  digitalWrite(ledPins[3], LOW);
   // Flicker control
   delayMicroseconds(1100);
-  digitalWrite(ledGnd4, HIGH);
+  digitalWrite(ledPins[3], HIGH);
 }
 
 // Uniform color
@@ -266,8 +213,8 @@ void ledColorU(int color[]) {
   analogWrite(redLED, color[0]);
   analogWrite(greenLED, color[1]);
   analogWrite(blueLED, color[2]);
-  digitalWrite(ledGnd1, LOW);
-  digitalWrite(ledGnd2, LOW);
-  digitalWrite(ledGnd3, LOW);
-  digitalWrite(ledGnd4, LOW); 
+  digitalWrite(ledPins[0], LOW);
+  digitalWrite(ledPins[1], LOW);
+  digitalWrite(ledPins[2], LOW);
+  digitalWrite(ledPins[3], LOW); 
 }
