@@ -2,7 +2,10 @@
 #include <RadioBlock.h>
 
 // Button Module
-#define MODULE_BUTTON_0_PIN 13
+#define MODULE_BUTTON_0_PIN 7
+#define MODULE_BUTTON_1_PIN 8
+#define MODULE_BUTTON_2_PIN 12
+#define MODULE_BUTTON_3_PIN 13
 
 unsigned char buttonState = 0x00;
 // TL: 0b00000001
@@ -28,6 +31,9 @@ uint8_t payload[] = { 2 };
 void setup() {
   // Set up button module
   pinMode(MODULE_BUTTON_0_PIN, INPUT);
+  pinMode(MODULE_BUTTON_1_PIN, INPUT);
+  pinMode(MODULE_BUTTON_2_PIN, INPUT);
+  pinMode(MODULE_BUTTON_3_PIN, INPUT);
   
   // Set up RadioBlock module
   interface.begin();  
@@ -59,12 +65,36 @@ void setup() {
 
 void loop() { // run over and over
 
-  unsigned int buttonInput = digitalRead(MODULE_BUTTON_0_PIN);
+  unsigned int buttonInput = LOW;
+  // Button 0
+  buttonInput = digitalRead(MODULE_BUTTON_0_PIN);
   if (buttonInput == HIGH) {
     buttonState = buttonState | 0x01;
   } else {
     buttonState = buttonState & ~(1 << 0);
   }
+  // Button 1
+  buttonInput = digitalRead(MODULE_BUTTON_1_PIN);
+  if (buttonInput == HIGH) {
+    buttonState = buttonState | 0x02;
+  } else {
+    buttonState = buttonState & ~(1 << 1);
+  }
+  // Button 2
+  buttonInput = digitalRead(MODULE_BUTTON_2_PIN);
+  if (buttonInput == HIGH) {
+    buttonState = buttonState | 0x04;
+  } else {
+    buttonState = buttonState & ~(1 << 2);
+  }
+  // Button 3
+  buttonInput = digitalRead(MODULE_BUTTON_3_PIN);
+  if (buttonInput == HIGH) {
+    buttonState = buttonState | 0x08;
+  } else {
+    buttonState = buttonState & ~(1 << 3);
+  }
+  
   Serial.print("Button State: ");
   Serial.println(buttonState, BIN);
 
