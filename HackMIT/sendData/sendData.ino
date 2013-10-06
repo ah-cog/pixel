@@ -8,13 +8,30 @@
 #define MODULE_BUTTON_3_PIN 13
 
 unsigned char buttonState = 0x00;
+bool colorLock = false;
 // TL: 0b00000001
 // TR: 0b00000010
 // BL: 0b00000100
 // BR: 0b00001000
 
+// RGB Pins (PWM Pins)
+const int redLED   = 9;
+const int blueLED  = 10;
+const int greenLED = 11;
+
+// Button Grounds
+const int ledPins[4] = { A0, A1, A2, A3 };
+
+// Color definitions
+int red[]    = { 255, 0, 0 };
+int green[]  = { 0, 255, 0 };
+int blue[]   = { 0, 0, 255 };
+int purple[] = { 255, 0, 150 };
+int yellow[] = { 255, 255, 0 };
+int dark[]   = { 0, 0, 0 };
+
 //Pins connected to RadioBlock pins 1/2/3/4
-RadioBlockSerialInterface interface = RadioBlockSerialInterface(5,4,3,2);
+RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
 
 uint8_t payload[] = { 2 };
 
@@ -34,6 +51,17 @@ void setup() {
   pinMode(MODULE_BUTTON_1_PIN, INPUT);
   pinMode(MODULE_BUTTON_2_PIN, INPUT);
   pinMode(MODULE_BUTTON_3_PIN, INPUT);
+  
+  // RGB Pins
+  pinMode(redLED, OUTPUT);
+  pinMode(greenLED, OUTPUT);
+  pinMode(blueLED, OUTPUT);
+
+  // RGB Pin GNDs
+  pinMode(ledPins[0], OUTPUT);
+  pinMode(ledPins[1], OUTPUT);
+  pinMode(ledPins[2], OUTPUT);
+  pinMode(ledPins[3], OUTPUT);
   
   // Set up RadioBlock module
   interface.begin();  
@@ -65,6 +93,9 @@ void setup() {
 
 void loop() { // run over and over
 
+  ledColor(yellow, red, purple, green);
+
+  // Get button input state
   unsigned int buttonInput = LOW;
   // Button 0
   buttonInput = digitalRead(MODULE_BUTTON_0_PIN);
@@ -147,6 +178,71 @@ void loop() { // run over and over
   interface.sendMessage();  
   
   Serial.println("Data sent.");
+  delay(2000);
+}
+
+
+
+
+
+
+// Control individual LEDs
+// Pass in a RGB color array for each LED
+void ledColor(int led1[], int led2[], int led3[], int led4[]) {
   
-    delay(2000);
+  // LED 1
+  analogWrite(redLED, led1[0]); // Set color
+  analogWrite(greenLED, led1[1]);
+  analogWrite(blueLED, led1[2]);
+  // Flicker control
+  delay(2);
+  digitalWrite(ledPins[0], LOW); // "Turn on" LED
+  // Flicker control
+  delayMicroseconds(1100); // Wait (for POV effect?)
+  digitalWrite(ledPins[0], HIGH); // "Turn off" LED
+
+  // LED 2
+  analogWrite(redLED, led2[0]);
+  analogWrite(greenLED, led2[1]);
+  analogWrite(blueLED, led2[2]);
+  // Flicker control
+  delay(2);
+  digitalWrite(ledPins[1], LOW);
+  // Flicker control
+  delayMicroseconds(1100);
+  digitalWrite(ledPins[1], HIGH);
+
+  // LED 3
+  analogWrite(redLED, led3[0]);
+  analogWrite(greenLED, led3[1]);
+  analogWrite(blueLED, led3[2]);
+  // Flicker control
+  delay(2);
+  digitalWrite(ledPins[2], LOW);
+  // Flicker control
+  delayMicroseconds(1100);
+  digitalWrite(ledPins[2], HIGH);
+
+  // LED 4
+  analogWrite(redLED, led4[0]);
+  analogWrite(greenLED, led4[1]);
+  analogWrite(blueLED, led4[2]);
+  // Flicker control
+  delay(2);
+  digitalWrite(ledPins[3], LOW);
+  // Flicker control
+  delayMicroseconds(1100);
+  digitalWrite(ledPins[3], HIGH);
+}
+
+// Uniform color
+// This doesn't appear to work well with mixed colors.
+void ledColorU(int color[]) {
+  analogWrite(redLED, color[0]);
+  analogWrite(greenLED, color[1]);
+  analogWrite(blueLED, color[2]);
+  digitalWrite(ledPins[0], LOW);
+  digitalWrite(ledPins[1], LOW);
+  digitalWrite(ledPins[2], LOW);
+  digitalWrite(ledPins[3], LOW); 
 }
