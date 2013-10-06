@@ -27,6 +27,8 @@ const int greenLED = 11;
 // Button Grounds
 const int ledPins[4] = { A0, A1, A2, A3 };
 
+// Button State
+int buttonReadyState[4] = { 1, 1, 1, 1 };
 int buttonColorState[4][3] = { 
   { 0, 0, 0 },
   { 0, 0, 0 },
@@ -41,6 +43,10 @@ int blue[]   = { 0, 0, 255 };
 int purple[] = { 255, 0, 150 };
 int yellow[] = { 255, 255, 0 };
 int dark[]   = { 0, 0, 0 };
+
+// Program Counter State
+int counter = 0; // Program Counter Index
+unsigned long previousTime = 0;
 
 //Pins connected to RadioBlock pins 1/2/3/4
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
@@ -138,58 +144,106 @@ void loop() { // run over and over
   // Button 0
   buttonInput = digitalRead(MODULE_BUTTON_0_PIN);
   if (buttonInput == HIGH) {
-    buttonState = buttonState | 0x01;
-    buttonColorState[0][0] = 255;
+    
+    if (buttonState & 0x01) {
+//      buttonState = buttonState | 0x01;
+//      buttonColorState[0][0] = 255;
+      buttonState = buttonState & ~(1 << 0);
+      buttonColorState[0][0] = 0;
+    } else {
+//      buttonState = buttonState & ~(1 << 0);
+//      buttonColorState[0][0] = 0;
+      buttonState = buttonState | 0x01;
+      buttonColorState[0][0] = 255;
+    }
+    
+//    buttonState = buttonState | 0x01;
+//    buttonColorState[0][0] = 255;
     
     // Play sound for button
     int noteDuration = 1000 / noteDurations[0];
     tone(SPEAKER_PIN, NOTE_C5, noteDuration);
   } else {
-    buttonState = buttonState & ~(1 << 0);
-    buttonColorState[0][0] = 0;
+//    buttonState = buttonState & ~(1 << 0);
+//    buttonColorState[0][0] = 0;
   }
   // Button 1
   buttonInput = digitalRead(MODULE_BUTTON_1_PIN);
   if (buttonInput == HIGH) {
-    buttonState = buttonState | 0x02;
-    buttonColorState[1][0] = 255;
+    if (buttonState & 0x02) {
+      buttonState = buttonState & ~(1 << 1);
+      buttonColorState[1][0] = 0;
+    } else {
+      buttonState = buttonState | 0x02;
+      buttonColorState[1][0] = 255;
+    }
     
     // Play sound for button
     int noteDuration = 1000 / noteDurations[0];
     tone(SPEAKER_PIN, NOTE_C5, noteDuration);
   } else {
-    buttonState = buttonState & ~(1 << 1);
-    buttonColorState[1][0] = 0;
+//    buttonState = buttonState & ~(1 << 1);
+//    buttonColorState[1][0] = 0;
   }
   // Button 2
   buttonInput = digitalRead(MODULE_BUTTON_2_PIN);
   if (buttonInput == HIGH) {
-    buttonState = buttonState | 0x04;
-    buttonColorState[2][1] = 255;
+    if (buttonState & 0x04) {
+      buttonState = buttonState & ~(1 << 2);
+      buttonColorState[2][1] = 0;
+    } else {
+      buttonState = buttonState | 0x04;
+      buttonColorState[2][1] = 255;
+    }
     
     // Play sound for button
     int noteDuration = 1000 / noteDurations[3];
     tone(SPEAKER_PIN, melody[3], noteDuration);
   } else {
-    buttonState = buttonState & ~(1 << 2);
-    buttonColorState[2][1] = 0;
+//    buttonState = buttonState & ~(1 << 2);
+//    buttonColorState[2][1] = 0;
   }
   // Button 3
   buttonInput = digitalRead(MODULE_BUTTON_3_PIN);
   if (buttonInput == HIGH) {
-    buttonState = buttonState | 0x08;
-    buttonColorState[3][1] = 255;
+    if (buttonState & 0x08) {
+      buttonState = buttonState & ~(1 << 3);
+      buttonColorState[3][1] = 0;
+    } else {
+      buttonState = buttonState | 0x08;
+      buttonColorState[3][1] = 255;
+    }
     
     // Play sound for button
     int noteDuration = 1000 / noteDurations[3];
     tone(SPEAKER_PIN, melody[3], noteDuration);
   } else {
-    buttonState = buttonState & ~(1 << 3);
-    buttonColorState[3][1] = 0;
+//    buttonState = buttonState & ~(1 << 3);
+//    buttonColorState[3][1] = 0;
   }
   
   Serial.print("Button State: ");
   Serial.println(buttonState, BIN);
+  
+  
+  
+  
+  //
+  // Update counter column
+  //
+  unsigned long currentTime = millis();
+  if (currentTime - previousTime > 500) {
+    previousTime = currentTime;
+    if (counter == 0) {
+      counter = 1;
+    } else {
+      counter = 0;
+    }
+  }
+  
+  
+  
+  
 
   //New Message
 //  if (interface.getResponse().isAvailable()) {
@@ -240,7 +294,7 @@ void loop() { // run over and over
   interface.sendMessage(); 
   
   Serial.println("Data sent.");
-  delay(1000);
+//  delay(1000);
 }
 
 
