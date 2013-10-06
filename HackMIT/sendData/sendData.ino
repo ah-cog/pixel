@@ -6,6 +6,8 @@
 
 #include "pitches.h"
 
+#define ENABLE_SERIAL 0
+
 // Button Module
 const int buttonPins[4] = { 7, 8, 12, 13 };
 
@@ -27,6 +29,7 @@ const int greenLED = 11;
 const int ledPins[4] = { A0, A1, A2, A3 };
 
 // Button State
+bool updateState = false;
 int buttonReadyState[4] = { 1, 1, 1, 1 };
 //int buttonSwitchState[4] = { 0, 0, 0, 0 };
 int buttonColorState[4][3] = { 
@@ -123,10 +126,12 @@ void setup() {
   interface.setChannel(15);
   interface.setPanID(0xBAAD);
   interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
-    
-  //Serial.begin(9600); 
-  Serial.begin(115200); 
-  Serial.println("Starting...");
+
+//  if (ENABLE_SERIAL) {
+    //Serial.begin(9600); 
+    Serial.begin(115200); 
+    Serial.println("Starting...");
+//  }
   
   // iterate over the notes of the melody:
   for (int thisNote = 0; thisNote < 3; thisNote++) {
@@ -165,10 +170,12 @@ void loop() { // run over and over
     generateSound(3);
   }
   
+  if (ENABLE_SERIAL) {
   Serial.print("Button State: ");
   Serial.println(buttonState, BIN);
   
   Serial.println(OUR_ADDRESS);  Serial.println(OUR_ADDRESS);  Serial.println(OUR_ADDRESS);  Serial.println(OUR_ADDRESS);
+  }
   
   
   
@@ -197,7 +204,7 @@ void loop() { // run over and over
   
   
   
-  if (MODULE_ID == 0) {
+//  if (MODULE_ID == 0) {
 
   //New Message
 //  if (interface.getResponse().isAvailable()) {
@@ -214,60 +221,76 @@ void loop() { // run over and over
   //We use the 'setupMessage()' call if we want to use a bunch of data,
   //otherwise can use sendData() calls to directly send a few bytes
   
-  //This is the OTHER guys address
-  interface.setupMessage(THEIR_ADDRESS);
+      Serial.print("updateState = ");
+    Serial.println(updateState);
   
-// (REMOVE:)  interface.getResponse().setCommandId(APP_COMMAND_DATA_REQ);
-  
-  //Send temperature reading
-//  interface.addData(CODE_TEMP, analogRead(A0));
-  
-  //Send state of pot (potentimeter, not drug manufacturing)
-//  interface.addData(CODE_VALVE, analogRead(1));
-  
-  //Toggle other other guys LED on RadioBlock
-//  interface.addData(CODE_LED, 1);
+  if (updateState) {
 
-//  char a_char = 0x04; // BUG: This type doesn't work right.
-  interface.addData(0x1, buttonState);
-//  interface.addData(0xf, a_char); 
-//  interface.addData(0xf, a_char);
-//  interface.addData(0xf, a_char);
-//  interface.addData(0xf, a_char);
+    updateState = false;
+    //This is the OTHER guys address
+    interface.setupMessage(THEIR_ADDRESS);
+    
+  // (REMOVE:)  interface.getResponse().setCommandId(APP_COMMAND_DATA_REQ);
+    
+    //Send temperature reading
+  //  interface.addData(CODE_TEMP, analogRead(A0));
+    
+    //Send state of pot (potentimeter, not drug manufacturing)
+  //  interface.addData(CODE_VALVE, analogRead(1));
+    
+    //Toggle other other guys LED on RadioBlock
+  //  interface.addData(CODE_LED, 1);
   
-//  Serial.print("Command ID: ");
-//  Serial.println(interface.getResponse().getCommandId(), HEX);
-                    
-//  setFrameLength
-//  setFrameData
-
-  // Add frame data
-//  interface.addData(0x1, a_uchar);
- 
-  // Send data over the air (OTA)
-  interface.sendMessage(); 
+  //  char a_char = 0x04; // BUG: This type doesn't work right.
+    interface.addData(0x1, buttonState);
+  //  interface.addData(0xf, a_char); 
+  //  interface.addData(0xf, a_char);
+  //  interface.addData(0xf, a_char);
+  //  interface.addData(0xf, a_char);
+    
+  //  Serial.print("Command ID: ");
+  //  Serial.println(interface.getResponse().getCommandId(), HEX);
+                      
+  //  setFrameLength
+  //  setFrameData
   
-  Serial.println("Data sent.");
-  delay(2000);
-
+    // Add frame data
+  //  interface.addData(0x1, a_uchar);
+   
+    // Send data over the air (OTA)
+    interface.sendMessage(); 
+    
+    if (ENABLE_SERIAL) {
+    Serial.println("Data sent.");
+    }
+    delay(1200);
   }
 
+//  }
 
 
 
 
-  if (MODULE_ID == 1) {
+
+//  if (MODULE_ID == 1) {
 
   // Read an incoming packet if available within the specified number of milliseconds (the timeout value).
-  if (interface.readPacket(1000)) { // NOTE: Every time this is called, the response returned by getResponse() is overwritten.
+  if (interface.readPacket(5)) { // NOTE: Every time this is called, the response returned by getResponse() is overwritten.
+    if (ENABLE_SERIAL) {
     Serial.println("Received a packet:");
+    }
     
     // Get error code for response
     if (interface.getResponse().getErrorCode() == APP_STATUS_SUCESS) {
+      if (ENABLE_SERIAL) {
       Serial.println("Success: Good packet.");
+      }
     } else {
+      if (ENABLE_SERIAL) {
       Serial.println("Failure: Bad packet.");
+      }
     }
+    if (ENABLE_SERIAL) {
      Serial.print("Len: ");
      Serial.print(interface.getResponse().getPacketLength(), DEC);
      Serial.print(", Command: ");
@@ -275,6 +298,7 @@ void loop() { // run over and over
      Serial.print(", CRC: ");
      Serial.print(interface.getResponse().getCrc(), HEX); // Cyclic redundancy check (CRC) [Source: http://en.wikipedia.org/wiki/Cyclic_redundancy_check]
      Serial.println("");
+     }
 
      //
      // Parse Frame Data
@@ -306,8 +330,10 @@ void loop() { // run over and over
      // the sent data. See "Data or start of payload" below at array offset of 5.
      
      frameDataLength = interface.getResponse().getFrameDataLength();
-     Serial.print("Length of Frame Data: ");
-     Serial.println(frameDataLength);
+     if (ENABLE_SERIAL) {
+       Serial.print("Length of Frame Data: ");
+       Serial.println(frameDataLength);
+     }
      
      // Get the method the sending unit used to construct the packet
      if (frameDataLength == 6) {
@@ -317,7 +343,9 @@ void loop() { // run over and over
      }
      
      // The following "meanings" for these bytes are from page 15 of the SimpleMesh_Serial_Protocol.pdf from Colorado Micro Devices.
+     if (ENABLE_SERIAL) {
      Serial.println("Frame Data: ");
+     }
      
      //Serial.println(interface.getResponse().getFrameData()[0], HEX);
      //Serial.println(interface.getResponse().getFrameData()[1]);
@@ -327,6 +355,7 @@ void loop() { // run over and over
      
      commandId = interface.getResponse().getCommandId();
      if (commandId == 0x22) { //APP_COMMAND_DATA_IND) { // 0x22
+       if (ENABLE_SERIAL) {
        Serial.print("  Source address: ");
        Serial.println(interface.getResponse().getFrameData()[1], HEX); // Source address
        
@@ -341,31 +370,40 @@ void loop() { // run over and over
        
        Serial.print("  Received Signal Strength Indicator: ");
        Serial.println(interface.getResponse().getFrameData()[4], HEX); // Received Signal Strength Indicator
+       }
        
        // Parse Data or Payload:
        
        if (sendMethod == 0) {
+         if (ENABLE_SERIAL) {
          Serial.print("  Sent Data: ");
          Serial.println(interface.getResponse().getFrameData()[5], HEX);
+         }
        } else if (sendMethod == 1) {
          codeAndType = interface.getResponse().getFrameData()[5]; 
          
          
+         if (ENABLE_SERIAL) {
          Serial.print(" Encoded send code and original data type: ");
          Serial.println(codeAndType, HEX); // The actual data
+         }
          
          payloadDataType = codeAndType & 0xf;
          payloadCode = (codeAndType >> 4) & 0xf;
          
+         if (ENABLE_SERIAL) {
          Serial.print("  The sent code was (in hex): ");
          Serial.println(payloadCode, HEX);
          Serial.print("  The original data type was: ");
          Serial.println(payloadDataType);
+         }
          
          if (payloadDataType == 1) {
+           if (ENABLE_SERIAL) {
            Serial.println("   Data type is TYPE_UINT8. Data:");
            Serial.print("    The data: ");
            Serial.println(interface.getResponse().getFrameData()[6]);
+           }
            
            
            // TODO: CHANGE THIS!!! HACKY!!!!
@@ -374,11 +412,13 @@ void loop() { // run over and over
            
            
          } else if (payloadDataType == 2) {
+           if (ENABLE_SERIAL) {
            Serial.println("   Data type is TYPE_INT8. High and low bytes:");
            Serial.print("    High part: ");
            Serial.println(interface.getResponse().getFrameData()[6]); 
            Serial.print("    Low part: ");
            Serial.println(interface.getResponse().getFrameData()[7]);
+           }
          } else if (payloadDataType == 3) {
            Serial.println("   Data type is TYPE_UINT16. High and low bytes:");
            Serial.print("    High part: ");
@@ -433,7 +473,7 @@ void loop() { // run over and over
      }
   }
   
-  }
+//  }
 }
 
 
@@ -472,6 +512,7 @@ void getButtonState(int i) {
         buttonColorState[i][0] = 255;
 //        buttonSwitchState[i] = 1;
       }
+      updateState = true;
       
 //      // Play sound for button
 //      int noteDuration = 1000 / noteDurations[0];
