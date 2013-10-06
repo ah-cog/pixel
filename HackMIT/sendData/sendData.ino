@@ -30,6 +30,7 @@ const int ledPins[4] = { A0, A1, A2, A3 };
 
 // Button State
 int buttonReadyState[4] = { 1, 1, 1, 1 };
+int buttonSwitchState[4] = { 0, 0, 0, 0 };
 int buttonColorState[4][3] = { 
   { 0, 0, 0 },
   { 0, 0, 0 },
@@ -167,6 +168,15 @@ void loop() { // run over and over
     }
   }
   
+  Serial.print("CCOOUUNNTTEERR: ");
+  Serial.println(counter, DEC);
+  
+  
+  updateButtonColor(0, blue);
+  updateButtonColor(1, blue);
+  updateButtonColor(2, blue);
+  updateButtonColor(3, blue);
+  
   
   
   
@@ -254,9 +264,11 @@ void getButtonState(int i) {
       if (buttonState & buttonBitFlag) {
         buttonState = buttonState & ~(1 << i);
         buttonColorState[i][0] = 0;
+        buttonSwitchState[i] = 0;
       } else {
         buttonState = buttonState | buttonBitFlag;
         buttonColorState[i][0] = 255;
+        buttonSwitchState[i] = 1;
       }
       
       // Play sound for button
@@ -269,6 +281,34 @@ void getButtonState(int i) {
     // Button is not 
     if (!digitalRead(buttonPins[i])) {
       buttonReadyState[i] = 1;
+    }
+  }
+}
+
+void updateButtonColor(int i, int color[]) {
+  
+  if (buttonSwitchState[i] == 0) { // Check if button state is "off"
+  
+    buttonColorState[i][0] = 0;
+    buttonColorState[i][1] = 0;
+    buttonColorState[i][2] = 0;
+    
+  } else { // Check if button state is "on"
+  
+    if (counter == 0 && ((i == 0 || i == 2))) {
+      // Counter is in left column
+      buttonColorState[i][0] = 255;
+      buttonColorState[i][1] = 255;
+      buttonColorState[i][2] = 255;
+    } else if (counter == 1 && ((i == 1 || i == 3))) {
+      buttonColorState[i][0] = 255;
+      buttonColorState[i][1] = 255;
+      buttonColorState[i][2] = 255;
+    } else { // Counter is in right column
+      // Counter is in left column
+      buttonColorState[i][0] = color[0];
+      buttonColorState[i][1] = color[1];
+      buttonColorState[i][2] = color[2];
     }
   }
 }
