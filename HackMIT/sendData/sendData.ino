@@ -28,7 +28,7 @@ const int ledPins[4] = { A0, A1, A2, A3 };
 
 // Button State
 int buttonReadyState[4] = { 1, 1, 1, 1 };
-int buttonSwitchState[4] = { 0, 0, 0, 0 };
+//int buttonSwitchState[4] = { 0, 0, 0, 0 };
 int buttonColorState[4][3] = { 
   { 0, 0, 0 },
   { 0, 0, 0 },
@@ -61,7 +61,7 @@ RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
 //#define CODE_VALVE  4
 
 // Set our known network addresses. How do we deal with unexpected nodes...?
-#define MODULE_ID 1
+#define MODULE_ID 0
 #if MODULE_ID == 0
   #define OUR_ADDRESS   0x1000
   #define THEIR_ADDRESS 0x1001
@@ -76,7 +76,8 @@ RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
 int melody[] = { NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3,0, NOTE_B3, NOTE_C4 };
 
 // Startup Jingle (note durations: 4 = quarter note, 8 = eighth note, etc.)
-int noteDurations[] = { 4, 8, 8, 4, 4, 4, 4, 4 };
+//int noteDurations[] = { 4, 8, 8, 4, 4, 4, 4, 4 };
+int noteDurations[] = { 8, 8, 8 };
 
 //uint8_t packetData[] = ;
 
@@ -123,11 +124,12 @@ void setup() {
   interface.setPanID(0xBAAD);
   interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
     
-  Serial.begin(9600); 
+  //Serial.begin(9600); 
+  Serial.begin(115200); 
   Serial.println("Starting...");
   
   // iterate over the notes of the melody:
-  for (int thisNote = 0; thisNote < 8; thisNote++) {
+  for (int thisNote = 0; thisNote < 3; thisNote++) {
 
     // to calculate the note duration, take one second 
     // divided by the note type.
@@ -227,7 +229,7 @@ void loop() { // run over and over
 //  interface.addData(CODE_LED, 1);
 
 //  char a_char = 0x04; // BUG: This type doesn't work right.
-  interface.addData(0x1, buttonState); 
+  interface.addData(0x1, buttonState);
 //  interface.addData(0xf, a_char); 
 //  interface.addData(0xf, a_char);
 //  interface.addData(0xf, a_char);
@@ -246,7 +248,7 @@ void loop() { // run over and over
   interface.sendMessage(); 
   
   Serial.println("Data sent.");
-//  delay(1000);
+  delay(2000);
 
   }
 
@@ -257,7 +259,7 @@ void loop() { // run over and over
   if (MODULE_ID == 1) {
 
   // Read an incoming packet if available within the specified number of milliseconds (the timeout value).
-  if (interface.readPacket(10)) { // NOTE: Every time this is called, the response returned by getResponse() is overwritten.
+  if (interface.readPacket(1000)) { // NOTE: Every time this is called, the response returned by getResponse() is overwritten.
     Serial.println("Received a packet:");
     
     // Get error code for response
@@ -364,6 +366,13 @@ void loop() { // run over and over
            Serial.println("   Data type is TYPE_UINT8. Data:");
            Serial.print("    The data: ");
            Serial.println(interface.getResponse().getFrameData()[6]);
+           
+           
+           // TODO: CHANGE THIS!!! HACKY!!!!
+           
+           buttonState = interface.getResponse().getFrameData()[6];
+           
+           
          } else if (payloadDataType == 2) {
            Serial.println("   Data type is TYPE_INT8. High and low bytes:");
            Serial.print("    High part: ");
@@ -457,11 +466,11 @@ void getButtonState(int i) {
       if (buttonState & buttonBitFlag) {
         buttonState = buttonState & ~(1 << i);
         buttonColorState[i][0] = 0;
-        buttonSwitchState[i] = 0;
+//        buttonSwitchState[i] = 0;
       } else {
         buttonState = buttonState | buttonBitFlag;
         buttonColorState[i][0] = 255;
-        buttonSwitchState[i] = 1;
+//        buttonSwitchState[i] = 1;
       }
       
 //      // Play sound for button
@@ -480,18 +489,19 @@ void getButtonState(int i) {
 
 void generateSound(int i) {
   
-//  unsigned char buttonBitFlag = 0x00;
-//  if (i == 0) {
-//    buttonBitFlag = 0x01;
-//  } else if (i == 1) {
-//    buttonBitFlag = 0x02;
-//  } else if (i == 2) {
-//    buttonBitFlag = 0x04;
-//  } else if (i == 3) {
-//    buttonBitFlag = 0x08;
-//  }
+  unsigned char buttonBitFlag = 0x00;
+  if (i == 0) {
+    buttonBitFlag = 0x01;
+  } else if (i == 1) {
+    buttonBitFlag = 0x02;
+  } else if (i == 2) {
+    buttonBitFlag = 0x04;
+  } else if (i == 3) {
+    buttonBitFlag = 0x08;
+  }
   
-  if (buttonSwitchState[i] == 0) { // Check if button state is "off"
+  //if (buttonSwitchState[i] == 0) { // Check if button state is "off"
+  if ((buttonState & buttonBitFlag) == 0) {
   
     buttonColorState[i][0] = 0;
     buttonColorState[i][1] = 0;
@@ -521,7 +531,19 @@ void generateSound(int i) {
 
 void updateButtonColor(int i, int color[]) {
   
-  if (buttonSwitchState[i] == 0) { // Check if button state is "off"
+  unsigned char buttonBitFlag = 0x00;
+  if (i == 0) {
+    buttonBitFlag = 0x01;
+  } else if (i == 1) {
+    buttonBitFlag = 0x02;
+  } else if (i == 2) {
+    buttonBitFlag = 0x04;
+  } else if (i == 3) {
+    buttonBitFlag = 0x08;
+  }
+  
+  //if (buttonSwitchState[i] == 0) { // Check if button state is "off"
+  if ((buttonState & buttonBitFlag) == 0) {
   
     buttonColorState[i][0] = 0;
     buttonColorState[i][1] = 0;
