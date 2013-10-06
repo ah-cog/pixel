@@ -1,11 +1,15 @@
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
 
+ #include "pitches.h"
+
 // Button Module
 #define MODULE_BUTTON_0_PIN 7
 #define MODULE_BUTTON_1_PIN 8
 #define MODULE_BUTTON_2_PIN 12
 #define MODULE_BUTTON_3_PIN 13
+
+#define SPEAKER_PIN A4
 
 unsigned char buttonState = 0x00;
 bool colorLock = false;
@@ -14,6 +18,7 @@ bool colorLock = false;
 // BL: 0b00000100
 // BR: 0b00001000
 
+
 // RGB Pins (PWM Pins)
 const int redLED   = 9;
 const int blueLED  = 10;
@@ -21,6 +26,13 @@ const int greenLED = 11;
 
 // Button Grounds
 const int ledPins[4] = { A0, A1, A2, A3 };
+
+int buttonColorState[4][3] = { 
+  { 0, 0, 0 },
+  { 0, 0, 0 },
+  { 0, 0, 0 },
+  { 0, 0, 0 }
+};
 
 // Color definitions
 int red[]    = { 255, 0, 0 };
@@ -33,7 +45,7 @@ int dark[]   = { 0, 0, 0 };
 //Pins connected to RadioBlock pins 1/2/3/4
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
 
-uint8_t payload[] = { 2 };
+//uint8_t payload[] = { 2 };
 
 #define CODE_TEMP   1
 #define CODE_ALARM  2
@@ -42,6 +54,14 @@ uint8_t payload[] = { 2 };
 
 #define OUR_ADDRESS   0x1000
 #define THEIR_ADDRESS 0x1001
+
+// Speakers:
+
+// notes in the melody:
+int melody[] = { NOTE_C4, NOTE_G3,NOTE_G3, NOTE_A3, NOTE_G3,0, NOTE_B3, NOTE_C4 };
+
+// Startup Jingle (note durations: 4 = quarter note, 8 = eighth note, etc.)
+int noteDurations[] = { 4, 8, 8, 4, 4, 4, 4, 4 };
 
 //uint8_t packetData[] = ;
 
@@ -89,11 +109,29 @@ void setup() {
     
   Serial.begin(9600); 
   Serial.println("Starting...");
+  
+  // iterate over the notes of the melody:
+  for (int thisNote = 0; thisNote < 8; thisNote++) {
+
+    // to calculate the note duration, take one second 
+    // divided by the note type.
+    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+    int noteDuration = 1000/noteDurations[thisNote];
+    tone(SPEAKER_PIN, melody[thisNote],noteDuration);
+
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    // stop the tone playing:
+    noTone(SPEAKER_PIN);
+  }
 }
 
 void loop() { // run over and over
 
-  ledColor(yellow, red, purple, green);
+  //ledColor(yellow, red, purple, green);
+  ledColor(buttonColorState[0], buttonColorState[1], buttonColorState[2], buttonColorState[3]);
 
   // Get button input state
   unsigned int buttonInput = LOW;
@@ -101,29 +139,37 @@ void loop() { // run over and over
   buttonInput = digitalRead(MODULE_BUTTON_0_PIN);
   if (buttonInput == HIGH) {
     buttonState = buttonState | 0x01;
+    buttonColorState[0][0] = 255;
   } else {
     buttonState = buttonState & ~(1 << 0);
+    buttonColorState[0][0] = 0;
   }
   // Button 1
   buttonInput = digitalRead(MODULE_BUTTON_1_PIN);
   if (buttonInput == HIGH) {
     buttonState = buttonState | 0x02;
+    buttonColorState[1][0] = 255;
   } else {
     buttonState = buttonState & ~(1 << 1);
+    buttonColorState[1][0] = 0;
   }
   // Button 2
   buttonInput = digitalRead(MODULE_BUTTON_2_PIN);
   if (buttonInput == HIGH) {
     buttonState = buttonState | 0x04;
+    buttonColorState[2][0] = 255;
   } else {
     buttonState = buttonState & ~(1 << 2);
+    buttonColorState[2][0] = 0;
   }
   // Button 3
   buttonInput = digitalRead(MODULE_BUTTON_3_PIN);
   if (buttonInput == HIGH) {
     buttonState = buttonState | 0x08;
+    buttonColorState[3][0] = 255;
   } else {
     buttonState = buttonState & ~(1 << 3);
+    buttonColorState[3][0] = 0;
   }
   
   Serial.print("Button State: ");
@@ -178,7 +224,7 @@ void loop() { // run over and over
   interface.sendMessage();  
   
   Serial.println("Data sent.");
-  delay(2000);
+  //delay(2000);
 }
 
 

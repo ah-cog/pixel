@@ -2,7 +2,7 @@
 #include <RadioBlock.h>
 
 // RadioBlock pins Tx, Rx, Gnd, Vcc are connected to Arduino pins 2, 3, 4, 5 (respectively).
-RadioBlockSerialInterface interface = RadioBlockSerialInterface(5,4,3,2);
+RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
 
 //uint8_t payload[] = { 2 };
 
@@ -143,75 +143,74 @@ void loop() { // run over and over
          
          Serial.print(" Encoded send code and original data type: ");
          Serial.println(codeAndType, HEX); // The actual data
-			
-			payloadDataType = codeAndType & 0xf;
-			payloadCode = (codeAndType >> 4) & 0xf;
-			
-			Serial.print("  The sent code was (in hex): ");
-			Serial.println(payloadCode, HEX);
-			Serial.print("  The original data type was: ");
-			Serial.println(payloadDataType);
-			
-			
-			if (payloadDataType == 1) {
-				Serial.println("   Data type is TYPE_UINT8. Data:");
-				Serial.print("    The data: ");
-				Serial.println(interface.getResponse().getFrameData()[6]); 
-			} else if (payloadDataType == 2) {
-				Serial.println("   Data type is TYPE_INT8. High and low bytes:");
-				Serial.print("    High part: ");
-				Serial.println(interface.getResponse().getFrameData()[6]); 
-				Serial.print("    Low part: ");
-				Serial.println(interface.getResponse().getFrameData()[7]);
-			} else if (payloadDataType == 3) {
-				Serial.println("   Data type is TYPE_UINT16. High and low bytes:");
-				Serial.print("    High part: ");
-				Serial.println(interface.getResponse().getFrameData()[6]); 
-				Serial.print("    Low part: ");
-				Serial.println(interface.getResponse().getFrameData()[7]);
-			} else if (payloadDataType == 4) {
-				Serial.println("   Data type is TYPE_INT16. High and low bytes:");
-				Serial.print("    High part: ");
-				Serial.println(interface.getResponse().getFrameData()[6]); 
-				Serial.print("    Low part: ");
-				Serial.println(interface.getResponse().getFrameData()[7]);
-			} else if (payloadDataType == 5) {
-				Serial.println("   Data type is TYPE_UINT32. Four bytes:");
-				Serial.print("    MSB: ");
-				Serial.println(interface.getResponse().getFrameData()[6]); 
-				Serial.print("    : ");
-				Serial.println(interface.getResponse().getFrameData()[7]);
-				Serial.print("    :");
-				Serial.println(interface.getResponse().getFrameData()[8]);
-				Serial.print("    LSB:");
-				Serial.println(interface.getResponse().getFrameData()[9]);
-			} else {
-				Serial.println("   Data type is not coded for yet...");
-				// Debugging: 
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[6]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[7]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[8]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[9]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[10]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[11]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[12]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[13]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[14]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[15]);
-				Serial.print("   Raw byte:");
-				Serial.println(interface.getResponse().getFrameData()[16]);
-				// End debugging
-			}
+         
+         payloadDataType = codeAndType & 0xf;
+         payloadCode = (codeAndType >> 4) & 0xf;
+         
+         Serial.print("  The sent code was (in hex): ");
+         Serial.println(payloadCode, HEX);
+         Serial.print("  The original data type was: ");
+         Serial.println(payloadDataType);
+         
+         if (payloadDataType == 1) {
+           Serial.println("   Data type is TYPE_UINT8. Data:");
+           Serial.print("    The data: ");
+           Serial.println(interface.getResponse().getFrameData()[6]);
+         } else if (payloadDataType == 2) {
+           Serial.println("   Data type is TYPE_INT8. High and low bytes:");
+           Serial.print("    High part: ");
+           Serial.println(interface.getResponse().getFrameData()[6]); 
+           Serial.print("    Low part: ");
+           Serial.println(interface.getResponse().getFrameData()[7]);
+         } else if (payloadDataType == 3) {
+           Serial.println("   Data type is TYPE_UINT16. High and low bytes:");
+           Serial.print("    High part: ");
+           Serial.println(interface.getResponse().getFrameData()[6]); 
+           Serial.print("    Low part: ");
+           Serial.println(interface.getResponse().getFrameData()[7]);
+         } else if (payloadDataType == 4) {
+           Serial.println("   Data type is TYPE_INT16. High and low bytes:");
+           Serial.print("    High part: ");
+           Serial.println(interface.getResponse().getFrameData()[6]); 
+           Serial.print("    Low part: ");
+           Serial.println(interface.getResponse().getFrameData()[7]);
+         } else if (payloadDataType == 5) {
+           Serial.println("   Data type is TYPE_UINT32. Four bytes:");
+           Serial.print("    MSB: ");
+           Serial.println(interface.getResponse().getFrameData()[6]); 
+           Serial.print("    : ");
+           Serial.println(interface.getResponse().getFrameData()[7]);
+           Serial.print("    :");
+           Serial.println(interface.getResponse().getFrameData()[8]);
+           Serial.print("    LSB:");
+           Serial.println(interface.getResponse().getFrameData()[9]);
+         } else {
+           Serial.println("   Data type is not coded for yet...");
+           // Debugging: 
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[6]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[7]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[8]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[9]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[10]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[11]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[12]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[13]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[14]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[15]);
+           Serial.print("   Raw byte:");
+           Serial.println(interface.getResponse().getFrameData()[16]);
+           // End debugging
+         }
                  
        }
      }
