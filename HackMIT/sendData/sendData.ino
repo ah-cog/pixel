@@ -1,7 +1,7 @@
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
 
- #include "pitches.h"
+#include "pitches.h"
 
 // Button Module
 #define MODULE_BUTTON_0_PIN 7
@@ -58,7 +58,7 @@ RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
 // Speakers:
 
 // notes in the melody:
-int melody[] = { NOTE_C4, NOTE_G3,NOTE_G3, NOTE_A3, NOTE_G3,0, NOTE_B3, NOTE_C4 };
+int melody[] = { NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3,0, NOTE_B3, NOTE_C4 };
 
 // Startup Jingle (note durations: 4 = quarter note, 8 = eighth note, etc.)
 int noteDurations[] = { 4, 8, 8, 4, 4, 4, 4, 4 };
@@ -117,7 +117,7 @@ void setup() {
     // divided by the note type.
     //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
     int noteDuration = 1000/noteDurations[thisNote];
-    tone(SPEAKER_PIN, melody[thisNote],noteDuration);
+    tone(SPEAKER_PIN, melody[thisNote], noteDuration);
 
     // to distinguish the notes, set a minimum time between them.
     // the note's duration + 30% seems to work well:
@@ -140,6 +140,10 @@ void loop() { // run over and over
   if (buttonInput == HIGH) {
     buttonState = buttonState | 0x01;
     buttonColorState[0][0] = 255;
+    
+    // Play sound for button
+    int noteDuration = 1000 / noteDurations[0];
+    tone(SPEAKER_PIN, NOTE_C5, noteDuration);
   } else {
     buttonState = buttonState & ~(1 << 0);
     buttonColorState[0][0] = 0;
@@ -149,6 +153,10 @@ void loop() { // run over and over
   if (buttonInput == HIGH) {
     buttonState = buttonState | 0x02;
     buttonColorState[1][0] = 255;
+    
+    // Play sound for button
+    int noteDuration = 1000 / noteDurations[0];
+    tone(SPEAKER_PIN, NOTE_C5, noteDuration);
   } else {
     buttonState = buttonState & ~(1 << 1);
     buttonColorState[1][0] = 0;
@@ -157,19 +165,27 @@ void loop() { // run over and over
   buttonInput = digitalRead(MODULE_BUTTON_2_PIN);
   if (buttonInput == HIGH) {
     buttonState = buttonState | 0x04;
-    buttonColorState[2][0] = 255;
+    buttonColorState[2][1] = 255;
+    
+    // Play sound for button
+    int noteDuration = 1000 / noteDurations[3];
+    tone(SPEAKER_PIN, melody[3], noteDuration);
   } else {
     buttonState = buttonState & ~(1 << 2);
-    buttonColorState[2][0] = 0;
+    buttonColorState[2][1] = 0;
   }
   // Button 3
   buttonInput = digitalRead(MODULE_BUTTON_3_PIN);
   if (buttonInput == HIGH) {
     buttonState = buttonState | 0x08;
-    buttonColorState[3][0] = 255;
+    buttonColorState[3][1] = 255;
+    
+    // Play sound for button
+    int noteDuration = 1000 / noteDurations[3];
+    tone(SPEAKER_PIN, melody[3], noteDuration);
   } else {
     buttonState = buttonState & ~(1 << 3);
-    buttonColorState[3][0] = 0;
+    buttonColorState[3][1] = 0;
   }
   
   Serial.print("Button State: ");
@@ -221,10 +237,10 @@ void loop() { // run over and over
 //  interface.addData(0x1, a_uchar);
  
   // Send data over the air (OTA)
-  interface.sendMessage();  
+  interface.sendMessage(); 
   
   Serial.println("Data sent.");
-  //delay(2000);
+  delay(1000);
 }
 
 
