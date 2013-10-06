@@ -4,10 +4,10 @@
 #include "pitches.h"
 
 // Button Module
-#define MODULE_BUTTON_0_PIN 7
-#define MODULE_BUTTON_1_PIN 8
-#define MODULE_BUTTON_2_PIN 12
-#define MODULE_BUTTON_3_PIN 13
+//#define MODULE_BUTTON_0_PIN 7
+//#define MODULE_BUTTON_1_PIN 8
+//#define MODULE_BUTTON_2_PIN 12
+//#define MODULE_BUTTON_3_PIN 13
 const int buttonPins[4] = { 7, 8, 12, 13 };
 
 #define SPEAKER_PIN A4
@@ -36,6 +36,7 @@ int buttonColorState[4][3] = {
   { 0, 0, 0 },
   { 0, 0, 0 }
 };
+int buttonNote[4] = { NOTE_C5, NOTE_C5, NOTE_C3, NOTE_C3 };
 
 // Color definitions
 int red[]    = { 255, 0, 0 };
@@ -73,11 +74,12 @@ int noteDurations[] = { 4, 8, 8, 4, 4, 4, 4, 4 };
 //uint8_t packetData[] = ;
 
 void setup() {
+  
   // Set up button module
-  pinMode(MODULE_BUTTON_0_PIN, INPUT);
-  pinMode(MODULE_BUTTON_1_PIN, INPUT);
-  pinMode(MODULE_BUTTON_2_PIN, INPUT);
-  pinMode(MODULE_BUTTON_3_PIN, INPUT);
+  pinMode(buttonPins[0], INPUT);
+  pinMode(buttonPins[1], INPUT);
+  pinMode(buttonPins[2], INPUT);
+  pinMode(buttonPins[3], INPUT);
   
   // RGB Pins
   pinMode(redLED, OUTPUT);
@@ -141,94 +143,9 @@ void loop() { // run over and over
   ledColor(buttonColorState[0], buttonColorState[1], buttonColorState[2], buttonColorState[3]);
 
   // Get button input state
-  unsigned int buttonInput = LOW;
-  // Button 0
-//  if (buttonReadyState[0]) {
-//    buttonReadyState[0] = 0;
-//    
-//    buttonInput = digitalRead(MODULE_BUTTON_0_PIN);
-//    
-//    if (buttonInput == HIGH) {
-//      if (buttonState & 0x01) {
-//        buttonState = buttonState & ~(1 << 0);
-//        buttonColorState[0][0] = 0;
-//      } else {
-//        buttonState = buttonState | 0x01;
-//        buttonColorState[0][0] = 255;
-//      }
-//      
-//      // Play sound for button
-//      int noteDuration = 1000 / noteDurations[0];
-//      tone(SPEAKER_PIN, NOTE_C5, noteDuration);
-//    } else {
-//      // NONE?
-//    }
-//  } else {
-//    // Button is not ready
-//    if (!digitalRead(MODULE_BUTTON_0_PIN)) {
-//      buttonReadyState[0] = 1;
-//    }
-//  }
   getButtonState(0);
-  
-  // Button 1
-//  buttonInput = digitalRead(MODULE_BUTTON_1_PIN);
-//  if (buttonInput == HIGH) {
-//    if (buttonState & 0x02) {
-//      buttonState = buttonState & ~(1 << 1);
-//      buttonColorState[1][0] = 0;
-//    } else {
-//      buttonState = buttonState | 0x02;
-//      buttonColorState[1][0] = 255;
-//    }
-//    
-//    // Play sound for button
-//    int noteDuration = 1000 / noteDurations[0];
-//    tone(SPEAKER_PIN, NOTE_C5, noteDuration);
-//  } else {
-////    buttonState = buttonState & ~(1 << 1);
-////    buttonColorState[1][0] = 0;
-//  }
   getButtonState(1);
-  
-  // Button 2
-//  buttonInput = digitalRead(MODULE_BUTTON_2_PIN);
-//  if (buttonInput == HIGH) {
-//    if (buttonState & 0x04) {
-//      buttonState = buttonState & ~(1 << 2);
-//      buttonColorState[2][1] = 0;
-//    } else {
-//      buttonState = buttonState | 0x04;
-//      buttonColorState[2][1] = 255;
-//    }
-//    
-//    // Play sound for button
-//    int noteDuration = 1000 / noteDurations[3];
-//    tone(SPEAKER_PIN, melody[3], noteDuration);
-//  } else {
-////    buttonState = buttonState & ~(1 << 2);
-////    buttonColorState[2][1] = 0;
-//  }
   getButtonState(2);
-  
-  // Button 3
-//  buttonInput = digitalRead(MODULE_BUTTON_3_PIN);
-//  if (buttonInput == HIGH) {
-//    if (buttonState & 0x08) {
-//      buttonState = buttonState & ~(1 << 3);
-//      buttonColorState[3][1] = 0;
-//    } else {
-//      buttonState = buttonState | 0x08;
-//      buttonColorState[3][1] = 255;
-//    }
-//    
-//    // Play sound for button
-//    int noteDuration = 1000 / noteDurations[3];
-//    tone(SPEAKER_PIN, melody[3], noteDuration);
-//  } else {
-////    buttonState = buttonState & ~(1 << 3);
-////    buttonColorState[3][1] = 0;
-//  }
   getButtonState(3);
   
   Serial.print("Button State: ");
@@ -344,7 +261,7 @@ void getButtonState(int i) {
       
       // Play sound for button
       int noteDuration = 1000 / noteDurations[0];
-      tone(SPEAKER_PIN, NOTE_C5, noteDuration);
+      tone(SPEAKER_PIN, buttonNote[i], noteDuration);
     } else {
       // NONE?
     }
