@@ -1,6 +1,9 @@
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
 
+// Get hacky. Get happy.
+// It's hacky and it's happy. It's a proof of concept and a labor of love.
+
 #include "pitches.h"
 
 // Button Module
@@ -50,6 +53,7 @@ int dark[]   = { 0, 0, 0 };
 // Program Counter State
 int counter = 0; // Program Counter Index
 unsigned long previousTime = 0;
+bool counterDone = false;
 
 //Pins connected to RadioBlock pins 1/2/3/4
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
@@ -149,6 +153,14 @@ void loop() { // run over and over
   getButtonState(2);
   getButtonState(3);
   
+  if (!counterDone) {
+    counterDone = true;
+    generateSound(0);
+    generateSound(1);
+    generateSound(2);
+    generateSound(3);
+  }
+  
   Serial.print("Button State: ");
   Serial.println(buttonState, BIN);
   
@@ -166,6 +178,7 @@ void loop() { // run over and over
     } else {
       counter = 0;
     }
+    counterDone = false;
   }
   
   Serial.print("CCOOUUNNTTEERR: ");
@@ -239,7 +252,6 @@ void loop() { // run over and over
 void getButtonState(int i) {
   
   unsigned char buttonBitFlag = 0x00;
-  
   if (i == 0) {
     buttonBitFlag = 0x01;
   } else if (i == 1) {
@@ -271,9 +283,9 @@ void getButtonState(int i) {
         buttonSwitchState[i] = 1;
       }
       
-      // Play sound for button
-      int noteDuration = 1000 / noteDurations[0];
-      tone(SPEAKER_PIN, buttonNote[i], noteDuration);
+//      // Play sound for button
+//      int noteDuration = 1000 / noteDurations[0];
+//      tone(SPEAKER_PIN, buttonNote[i], noteDuration);
     } else {
       // NONE?
     }
@@ -283,6 +295,47 @@ void getButtonState(int i) {
       buttonReadyState[i] = 1;
     }
   }
+}
+
+void generateSound(int i) {
+  
+//  unsigned char buttonBitFlag = 0x00;
+//  if (i == 0) {
+//    buttonBitFlag = 0x01;
+//  } else if (i == 1) {
+//    buttonBitFlag = 0x02;
+//  } else if (i == 2) {
+//    buttonBitFlag = 0x04;
+//  } else if (i == 3) {
+//    buttonBitFlag = 0x08;
+//  }
+  
+  if (buttonSwitchState[i] == 0) { // Check if button state is "off"
+  
+    buttonColorState[i][0] = 0;
+    buttonColorState[i][1] = 0;
+    buttonColorState[i][2] = 0;
+    
+  } else { // Check if button state is "on"
+  
+    if (counter == 0 && ((i == 0 || i == 2))) {
+      // Counter is in right column
+      // Play sound for button
+      int noteDuration = 1000 / noteDurations[0];
+      tone(SPEAKER_PIN, buttonNote[i], noteDuration);
+    } else if (counter == 1 && ((i == 1 || i == 3))) {
+      // Counter is in left column
+      // Play sound for button
+      int noteDuration = 1000 / noteDurations[0];
+      tone(SPEAKER_PIN, buttonNote[i], noteDuration);
+    } else {
+      // Counter is in non-existent (invalid) column
+//      buttonColorState[i][0] = color[0];
+//      buttonColorState[i][1] = color[1];
+//      buttonColorState[i][2] = color[2];
+    }
+  }
+  
 }
 
 void updateButtonColor(int i, int color[]) {
