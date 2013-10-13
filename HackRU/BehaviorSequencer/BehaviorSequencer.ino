@@ -32,7 +32,7 @@ David A. Mellis and Tom Igoe, Adafruit, SparkFun.
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 
 #define MAKEY_INPUT_PIN A0
 #define ACCELEROMETER_X_PIN A3
@@ -48,10 +48,13 @@ boolean check = false; // This is for the MAKEY_INPUT_PIN
 // Set up RadioBlocks
 //
 
+// unsigned char previousStateMessage = 0x01;
+unsigned char stateMessage = 0x01;
+
 // Set our known network addresses. How do we deal with 
 // unexpected nodes...? This should be dynamic, and nodes should
 // self-assign their addresses and broadcast the the mesh network.
-#define MODULE_ID 3
+#define MODULE_ID 2
 #if MODULE_ID == 2
   #define OUR_ADDRESS   0x1002
   #define THEIR_ADDRESS 0x1003
@@ -65,15 +68,23 @@ RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
 
 void setup() {
   
+  // Set pin modes
+  pinMode(RELAY_ENABLE_PIN, OUTPUT);
+  
+  // Set up RadioBlock module
+  interface.begin(); 
+  
+  // Give RadioBlock time to initialize
+  delay(500);
+  
   // We need to set these values so other RadioBlocks can find us
   interface.setChannel(15);
   interface.setPanID(0xBAAD);
   interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
   
-  // Set pin modes
-  pinMode(RELAY_ENABLE_PIN, OUTPUT);
-  
+  // Open serial port for communication
   Serial.begin(115200);
+  //Serial1.begin(115200); // For Leonardo
 }
 
 void loop() {
@@ -94,7 +105,7 @@ void loop() {
     if (!check){         
       // Keyboard.print("d");
       digitalWrite(RELAY_ENABLE_PIN, HIGH);
-      Serial.println(averageInputValue);           
+      Serial.println(averageInputValue);
       check = !check;   
     }         
   }
@@ -112,12 +123,14 @@ void loop() {
   //
   
   // Print the accelerometer sensor values:
-  Serial.print(analogRead(ACCELEROMETER_X_PIN));
-  Serial.print("\t");
-  Serial.print(analogRead(ACCELEROMETER_Y_PIN));
-  Serial.print("\t");
-  Serial.print(analogRead(ACCELEROMETER_Z_PIN));
-  Serial.println();
+  if (ENABLE_DEBUG) {
+    Serial.print(analogRead(ACCELEROMETER_X_PIN));
+    Serial.print("\t");
+    Serial.print(analogRead(ACCELEROMETER_Y_PIN));
+    Serial.print("\t");
+    Serial.print(analogRead(ACCELEROMETER_Z_PIN));
+    Serial.println();
+  }
   
   
   //
@@ -126,28 +139,31 @@ void loop() {
   
   // This is the other node's address
   
-  interface.setupMessage(THEIR_ADDRESS);
-  
-  unsigned char stateMessage = 0x00;
-  // TL: 0b00000001
-  // TR: 0b00000010
-  // BL: 0b00000100
-  // BR: 0b00001000
-  interface.addData(0x1, stateMessage);
-  
-  // Send data over the air (OTA)
-  interface.sendMessage();
-  
-//  delay(1200);
-  
-  
-  
-  
+  if (MODULE_ID == 2) {
+    interface.setupMessage(THEIR_ADDRESS);
+    
+    // TL: 0b00000001
+    // TR: 0b00000010
+    // BL: 0b00000100
+    // BR: 0b00001000
+    interface.addData(0x1, stateMessage);
+
+    // Send data over the air (OTA)
+    interface.sendMessage();
+    
+    Serial.println("Sent message.");
+    
+    delay(1300);
+  }
   
   
   
   // Read an incoming packet if available within the specified number of milliseconds (the timeout value).
   if (interface.readPacket(5)) { // NOTE: Every time this is called, the response returned by getResponse() is overwritten.
+//    digitalWrite(RELAY_ENABLE_PIN, HIGH);
+//    digitalWrite(13, HIGH);
+    
+    
     if (ENABLE_DEBUG) {
     Serial.println("Received a packet:");
     }
@@ -227,6 +243,7 @@ void loop() {
      
      commandId = interface.getResponse().getCommandId();
      if (commandId == 0x22) { //APP_COMMAND_DATA_IND) { // 0x22
+      
        if (ENABLE_DEBUG) {
          Serial.print("  Source address: ");
          Serial.println(interface.getResponse().getFrameData()[1], HEX); // Source address
