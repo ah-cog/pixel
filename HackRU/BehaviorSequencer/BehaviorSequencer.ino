@@ -50,6 +50,7 @@ MovingAvarageFilter movingAvarageFilter(20);
 //
 
 boolean check = false; // This is for the MAKEY_INPUT_PIN
+boolean check2 = false; // This is for the MAKEY_INPUT_PIN
 
 // Next module (linked to, or return to beginning of sequence)
 int nextModule = 0; // 0 = self, 1 = the other (hard coded for now)
@@ -71,7 +72,7 @@ bool updateState = false;
 //       If no direct response is given and no node responds on 
 //       behalf of the requested address, take the address. Resolve 
 //       or negotiate any collisions later if the address shows up.
-#define MODULE_ID 3
+#define MODULE_ID 2
 #if MODULE_ID == 2
   #define OUR_ADDRESS   0x1002
   #define THEIR_ADDRESS 0x1003
@@ -115,11 +116,50 @@ void loop() {
   averageInputValue = movingAvarageFilter.process(input);
   
 //  Serial.println(averageInputValue);
-  Serial.println(receivedStateMessage);
+  Serial.print(averageInputValue < MAKEY_INPUT_SENSITIVITY);
+  Serial.print(" ");
+  Serial.println(receivedStateMessage != 0);
 
   // Call the fir routine with the input. The value 'fir' spits out is stored in the output variable.
   
 //  if (averageInputValue < MAKEY_INPUT_SENSITIVITY || receivedStateMessage != 0x00) { // Change this parameter to fine tune the sensitivity
+  if (receivedStateMessage != 0) {
+    
+    // TODO: Check if the current module is active, if the iterator is on this module.
+    
+//    if (!check2) { // TODO: Only execute when the incoming state changes... (TODO: Create ~previousPreviousModuleInputState)
+      // Keyboard.print("d");
+      digitalWrite(RELAY_ENABLE_PIN, HIGH);
+      Serial.println(averageInputValue);
+      
+      // Check for transition from opened ("low") to closed ("high")
+//      if (previousAverageInputValue > MAKEY_INPUT_SENSITIVITY_CEILING) {
+//        updateState = true;
+        stateMessage = 0x01;
+//      }
+      
+//      check2 = !check2;   
+//    }
+    
+  }
+  if (receivedStateMessage == 0) {
+    // TODO: Check if the current module is active, if the iterator is on this module.
+    
+//    if (!check2) { // TODO: Only execute when the incoming state changes... (TODO: Create ~previousPreviousModuleInputState)
+      // Keyboard.print("d");
+      digitalWrite(RELAY_ENABLE_PIN, LOW);
+      Serial.println(averageInputValue);
+      
+      // Check for transition from opened ("low") to closed ("high")
+//      if (previousAverageInputValue < MAKEY_INPUT_SENSITIVITY) {
+//        updateState = true;
+        stateMessage = 0x00;
+//      }
+      
+//      check2 = !check2;   
+//    }
+  }
+  
   if (averageInputValue < MAKEY_INPUT_SENSITIVITY) { // Switch "closed". Change this parameter to fine tune the sensitivity.
     if (!check) {
       // Keyboard.print("d");
@@ -129,14 +169,31 @@ void loop() {
       // Check for transition from opened ("low") to closed ("high")
       if (previousAverageInputValue > MAKEY_INPUT_SENSITIVITY_CEILING) {
         updateState = true;
-//        stateMessage = 0x01;
         stateMessage = 0x01;
       }
       
       check = !check;   
-    }         
+    }
   }
-  
+//  if (receivedStateMessage == 0) {
+//    
+//    // TODO: Check if the current module is active, if the iterator is on this module.
+//    
+//    if (!check2) { // TODO: Only execute when the incoming state changes... (TODO: Create ~previousPreviousModuleInputState)
+//      // Keyboard.print("d");
+//      digitalWrite(RELAY_ENABLE_PIN, LOW);
+//      Serial.println(averageInputValue);
+//      
+//      // Check for transition from opened ("low") to closed ("high")
+////      if (previousAverageInputValue < MAKEY_INPUT_SENSITIVITY) {
+////        updateState = true;
+//        stateMessage = 0x00;
+////      }
+//      
+//      check2 = !check2;   
+//    }
+//    
+//  }
   if (averageInputValue > MAKEY_INPUT_SENSITIVITY_CEILING) { // Switch "open"
     if (check) {
       check = !check;
@@ -145,7 +202,6 @@ void loop() {
       // Check for transition from closed ("high") to opened ("low")
       if (previousAverageInputValue < MAKEY_INPUT_SENSITIVITY) {
         updateState = true;
-//        stateMessage = 0x00;
         stateMessage = 0x00;
       }
       
