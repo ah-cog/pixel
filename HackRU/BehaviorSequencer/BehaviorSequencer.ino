@@ -32,7 +32,7 @@ David A. Mellis and Tom Igoe, Adafruit, SparkFun.
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
 
-#define ENABLE_DEBUG 1
+#define ENABLE_DEBUG_MODE 1
 
 #define MAKEY_INPUT_PIN A0
 #define ACCELEROMETER_X_PIN A3
@@ -40,20 +40,35 @@ David A. Mellis and Tom Igoe, Adafruit, SparkFun.
 #define ACCELEROMETER_Z_PIN A1
 #define RELAY_ENABLE_PIN 12
 
+#define MAKEY_INPUT_SENSITIVITY 300
+#define MAKEY_INPUT_SENSITIVITY_CEILING 301 // 600
+
 MovingAvarageFilter movingAvarageFilter(20);
 
+//
+// Set up module state
+//
+
 boolean check = false; // This is for the MAKEY_INPUT_PIN
+
+// Next module (linked to, or return to beginning of sequence)
+int nextModule = 0; // 0 = self, 1 = the other (hard coded for now)
 
 //
 // Set up RadioBlocks
 //
 
 // unsigned char previousStateMessage = 0x01;
-unsigned char stateMessage = 0x01;
+unsigned char stateMessage = 0x00;
+bool updateState = false;
 
 // Set our known network addresses. How do we deal with 
 // unexpected nodes...? This should be dynamic, and nodes should
 // self-assign their addresses and broadcast the the mesh network.
+// TODO: Broadcast asking for ACK from addresses in address space. 
+//       If no direct response is given and no node responds on 
+//       behalf of the requested address, take the address. Resolve 
+//       or negotiate any collisions later if the address shows up.
 #define MODULE_ID 2
 #if MODULE_ID == 2
   #define OUR_ADDRESS   0x1002
@@ -84,7 +99,6 @@ void setup() {
   
   // Open serial port for communication
   Serial.begin(115200);
-  //Serial1.begin(115200); // For Leonardo
 }
 
 void loop() {
@@ -96,41 +110,53 @@ void loop() {
   // Declare input and output variables
   float input =  analogRead(MAKEY_INPUT_PIN); // without a real input, looking at the step respons (input at unity, 1)
   float averageInputValue = 0;
-
   averageInputValue = movingAvarageFilter.process(input);
+//  bool hasInput = false;
+  
+  Serial.println(averageInputValue);
 
   // Call the fir routine with the input. The value 'fir' spits out is stored in the output variable.
   
-  if (averageInputValue < 400) { // Change this parameter to fine tune the sensitivity
-    if (!check){         
+  if (averageInputValue < MAKEY_INPUT_SENSITIVITY) { // Change this parameter to fine tune the sensitivity
+    if (!check) {
       // Keyboard.print("d");
+//      stateMessage = 0x01;
+//      updateState = true;
       digitalWrite(RELAY_ENABLE_PIN, HIGH);
       Serial.println(averageInputValue);
+//      hasInput = true;
       check = !check;   
     }         
   }
   
-  if (averageInputValue > 600) {     
+  if (averageInputValue > MAKEY_INPUT_SENSITIVITY_CEILING) {
     if (check) {
       check = !check;
-      digitalWrite(RELAY_ENABLE_PIN, LOW);  
-    }     
+//      stateMessage = 0x00;
+//      updateState = true;
+      digitalWrite(RELAY_ENABLE_PIN, LOW);
+    }
   }
   
+  // Continue sequence based on state of input of current module
+  
+//  if (hasInput) {
+//    // Set output here or on linked modules
+//  }
   
   //
   // Print accelerometer data over serial
   //
   
   // Print the accelerometer sensor values:
-  if (ENABLE_DEBUG) {
-    Serial.print(analogRead(ACCELEROMETER_X_PIN));
-    Serial.print("\t");
-    Serial.print(analogRead(ACCELEROMETER_Y_PIN));
-    Serial.print("\t");
-    Serial.print(analogRead(ACCELEROMETER_Z_PIN));
-    Serial.println();
-  }
+//  if (ENABLE_DEBUG_MODE) {
+//    Serial.print(analogRead(ACCELEROMETER_X_PIN));
+//    Serial.print("\t");
+//    Serial.print(analogRead(ACCELEROMETER_Y_PIN));
+//    Serial.print("\t");
+//    Serial.print(analogRead(ACCELEROMETER_Z_PIN));
+//    Serial.println();
+//  }
   
   
   //
@@ -139,7 +165,11 @@ void loop() {
   
   // This is the other node's address
   
-  if (MODULE_ID == 2) {
+  //if (MODULE_ID == 2) {
+  if (updateState) {
+
+    updateState = false;
+    
     interface.setupMessage(THEIR_ADDRESS);
     
     // TL: 0b00000001
@@ -153,72 +183,73 @@ void loop() {
     
     Serial.println("Sent message.");
     
-    delay(1300);
+    delay(1200);
   }
   
   
-  
+  //
   // Read an incoming packet if available within the specified number of milliseconds (the timeout value).
+  //
+  
   if (interface.readPacket(5)) { // NOTE: Every time this is called, the response returned by getResponse() is overwritten.
 //    digitalWrite(RELAY_ENABLE_PIN, HIGH);
 //    digitalWrite(13, HIGH);
-    
-    
-    if (ENABLE_DEBUG) {
-    Serial.println("Received a packet:");
+
+    if (ENABLE_DEBUG_MODE) {
+      Serial.println("Received a packet:");
     }
     
     // Get error code for response
     if (interface.getResponse().getErrorCode() == APP_STATUS_SUCESS) {
-      if (ENABLE_DEBUG) {
-      Serial.println("Success: Good packet.");
+      if (ENABLE_DEBUG_MODE) {
+        Serial.println("Success: Good packet.");
       }
     } else {
-      if (ENABLE_DEBUG) {
-      Serial.println("Failure: Bad packet.");
+      if (ENABLE_DEBUG_MODE) {
+        Serial.println("Failure: Bad packet.");
       }
     }
-    if (ENABLE_DEBUG) {
-     Serial.print("Len: ");
-     Serial.print(interface.getResponse().getPacketLength(), DEC);
-     Serial.print(", Command: ");
-     Serial.print(interface.getResponse().getCommandId(), HEX);
-     Serial.print(", CRC: ");
-     Serial.print(interface.getResponse().getCrc(), HEX); // Cyclic redundancy check (CRC) [Source: http://en.wikipedia.org/wiki/Cyclic_redundancy_check]
-     Serial.println("");
-     }
-
-     //
-     // Parse Frame Data
-     //
-     
-     // General command format (sizes are in bytes), Page 4:
-     // | Start Byte (1) | Size (1) | Payload (Variable) | CRC (2) |
-     
-     // COMMAND ID   MEANING
-     // 0x20         This command is used to send data over the network, Page 13
-     
-     int frameDataLength = 0;
-     int sendMethod = -1;
-     // Send method will be:
-     // 0 = unknown
-     // 1 = sendData()
-     // 2 = sendMessage()
-     
-     int commandId = -1;
-     unsigned int codeAndType = 0;
-     unsigned int payloadCode = 0;
-     unsigned int payloadDataType = 0;
-     
-     // We can use this to determine which commands the sending unit used to construct the packet:
-     // If the length == 6, the sender used sendData()
-     // If the length > 6, the sender used setupMessage(), addData(), and sendMessage() 
-     //
-     // If the sender used the second method, we need to do more parsing of the payload to pull out
-     // the sent data. See "Data or start of payload" below at array offset of 5.
+    if (ENABLE_DEBUG_MODE) {
+      Serial.print("Len: ");
+      Serial.print(interface.getResponse().getPacketLength(), DEC);
+      Serial.print(", Command: ");
+      Serial.print(interface.getResponse().getCommandId(), HEX);
+      Serial.print(", CRC: ");
+      Serial.print(interface.getResponse().getCrc(), HEX); // Cyclic redundancy check (CRC) [Source: http://en.wikipedia.org/wiki/Cyclic_redundancy_check]
+      Serial.println("");
+    }
+    
+    //
+    // Parse Frame Data
+    //
+ 
+ // General command format (sizes are in bytes), Page 4:
+ // | Start Byte (1) | Size (1) | Payload (Variable) | CRC (2) |
+ 
+ // COMMAND ID   MEANING
+ // 0x20         This command is used to send data over the network, Page 13
+ 
+ int frameDataLength = 0;
+ int sendMethod = -1;
+ // Send method will be:
+ // 0 = unknown
+ // 1 = sendData()
+ // 2 = sendMessage()
+ 
+ int commandId = -1;
+ unsigned int codeAndType = 0;
+ unsigned int payloadCode = 0;
+ unsigned int payloadDataType = 0;
+ 
+ // We can use this to determine which commands the sending unit used to construct the packet:
+ // If the length == 6, the sender used sendData()
+ // If the length > 6, the sender used setupMessage(), addData(), and sendMessage() 
+ //
+ // If the sender used the second method, we need to do more parsing of the payload to pull out
+ // the sent data. See "Data or start of payload" below at array offset of 5.
      
      frameDataLength = interface.getResponse().getFrameDataLength();
-     if (ENABLE_DEBUG) {
+     if (ENABLE_DEBUG_MODE) {
        Serial.print("Length of Frame Data: ");
        Serial.println(frameDataLength);
      }
@@ -231,7 +262,7 @@ void loop() {
      }
      
      // The following "meanings" for these bytes are from page 15 of the SimpleMesh_Serial_Protocol.pdf from Colorado Micro Devices.
-     if (ENABLE_DEBUG) {
+     if (ENABLE_DEBUG_MODE) {
        Serial.println("Frame Data: ");
      }
      
@@ -244,7 +275,7 @@ void loop() {
      commandId = interface.getResponse().getCommandId();
      if (commandId == 0x22) { //APP_COMMAND_DATA_IND) { // 0x22
       
-       if (ENABLE_DEBUG) {
+       if (ENABLE_DEBUG_MODE) {
          Serial.print("  Source address: ");
          Serial.println(interface.getResponse().getFrameData()[1], HEX); // Source address
          
@@ -264,7 +295,7 @@ void loop() {
        // Parse Data or Payload:
        
        if (sendMethod == 0) {
-         if (ENABLE_DEBUG) {
+         if (ENABLE_DEBUG_MODE) {
          Serial.print("  Sent Data: ");
          Serial.println(interface.getResponse().getFrameData()[5], HEX);
          }
@@ -272,7 +303,7 @@ void loop() {
          codeAndType = interface.getResponse().getFrameData()[5]; 
          
          
-         if (ENABLE_DEBUG) {
+         if (ENABLE_DEBUG_MODE) {
            Serial.print(" Encoded send code and original data type: ");
            Serial.println(codeAndType, HEX); // The actual data
          }
@@ -280,7 +311,7 @@ void loop() {
          payloadDataType = codeAndType & 0xf;
          payloadCode = (codeAndType >> 4) & 0xf;
          
-         if (ENABLE_DEBUG) {
+         if (ENABLE_DEBUG_MODE) {
            Serial.print("  The sent code was (in hex): ");
            Serial.println(payloadCode, HEX);
            Serial.print("  The original data type was: ");
@@ -288,7 +319,7 @@ void loop() {
          }
          
          if (payloadDataType == 1) {
-           if (ENABLE_DEBUG) {
+           if (ENABLE_DEBUG_MODE) {
            Serial.println("   Data type is TYPE_UINT8. Data:");
            Serial.print("    The data: ");
            Serial.println(interface.getResponse().getFrameData()[6]);
@@ -298,10 +329,11 @@ void loop() {
            // TODO: CHANGE THIS!!! HACKY!!!!
            
            stateMessage = interface.getResponse().getFrameData()[6];
+//           digitalWrite(RELAY_ENABLE_PIN, HIGH); // HACK: Turn on output
            
            
          } else if (payloadDataType == 2) {
-           if (ENABLE_DEBUG) {
+           if (ENABLE_DEBUG_MODE) {
              Serial.println("   Data type is TYPE_INT8. High and low bytes:");
              Serial.print("    High part: ");
              Serial.println(interface.getResponse().getFrameData()[6]); 
