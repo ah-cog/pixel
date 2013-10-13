@@ -1,6 +1,6 @@
-const int xInput = A0;
-const int yInput = A1;
-const int zInput = A2;
+const int xInput = A1;
+const int yInput = A2;
+const int zInput = A3;
 const int buttonPin = 2;
 
 // Raw Ranges:

@@ -8,6 +8,9 @@
 
 #define ENABLE_SERIAL 0
 
+#define RELAY_ENABLE_PIN 12
+
+
 // Button Module
 const int buttonPins[4] = { 7, 8, 12, 13 };
 
@@ -85,6 +88,11 @@ int noteDurations[] = { 8, 8, 8 };
 //uint8_t packetData[] = ;
 
 void setup() {
+  
+  pinMode(RELAY_ENABLE_PIN, OUTPUT);
+  
+  
+  
   
   // Set up button module
   pinMode(buttonPins[0], INPUT);
