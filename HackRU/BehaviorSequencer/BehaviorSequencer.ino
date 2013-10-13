@@ -29,10 +29,10 @@ David A. Mellis and Tom Igoe, Adafruit, SparkFun.
 */
 
 #include <MovingAvarageFilter.h>
-#include <RadioBlock.h>
 #include <SoftwareSerial.h>
+#include <RadioBlock.h>
 
-#define ENABLE_DEBUG 1
+#define ENABLE_DEBUG 0
 
 #define MAKEY_INPUT_PIN A0
 #define ACCELEROMETER_X_PIN A3
@@ -51,7 +51,7 @@ boolean check = false; // This is for the MAKEY_INPUT_PIN
 // Set our known network addresses. How do we deal with 
 // unexpected nodes...? This should be dynamic, and nodes should
 // self-assign their addresses and broadcast the the mesh network.
-#define MODULE_ID 2
+#define MODULE_ID 3
 #if MODULE_ID == 2
   #define OUR_ADDRESS   0x1002
   #define THEIR_ADDRESS 0x1003
@@ -64,13 +64,14 @@ boolean check = false; // This is for the MAKEY_INPUT_PIN
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(5, 4, 3, 2);
 
 void setup() {
-  // Set pin modes
-  pinMode(RELAY_ENABLE_PIN, OUTPUT);
   
   // We need to set these values so other RadioBlocks can find us
   interface.setChannel(15);
   interface.setPanID(0xBAAD);
   interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
+  
+  // Set pin modes
+  pinMode(RELAY_ENABLE_PIN, OUTPUT);
   
   Serial.begin(115200);
 }
@@ -137,7 +138,7 @@ void loop() {
   // Send data over the air (OTA)
   interface.sendMessage();
   
-  delay(1200);
+//  delay(1200);
   
   
   
