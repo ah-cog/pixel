@@ -32,7 +32,7 @@ David A. Mellis and Tom Igoe, Adafruit, SparkFun.
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
 
-#define ENABLE_DEBUG_MODE 1
+#define ENABLE_DEBUG_MODE 0
 
 #define MAKEY_INPUT_PIN A0
 #define ACCELEROMETER_X_PIN A3
@@ -54,11 +54,13 @@ boolean check = false; // This is for the MAKEY_INPUT_PIN
 // Next module (linked to, or return to beginning of sequence)
 int nextModule = 0; // 0 = self, 1 = the other (hard coded for now)
 
+float previousAverageInputValue = 0;
+
 //
 // Set up RadioBlocks
 //
 
-// unsigned char previousStateMessage = 0x01;
+unsigned char receivedStateMessage = 0x00;
 unsigned char stateMessage = 0x00;
 bool updateState = false;
 
@@ -69,7 +71,7 @@ bool updateState = false;
 //       If no direct response is given and no node responds on 
 //       behalf of the requested address, take the address. Resolve 
 //       or negotiate any collisions later if the address shows up.
-#define MODULE_ID 2
+#define MODULE_ID 3
 #if MODULE_ID == 2
   #define OUR_ADDRESS   0x1002
   #define THEIR_ADDRESS 0x1003
@@ -111,38 +113,49 @@ void loop() {
   float input =  analogRead(MAKEY_INPUT_PIN); // without a real input, looking at the step respons (input at unity, 1)
   float averageInputValue = 0;
   averageInputValue = movingAvarageFilter.process(input);
-//  bool hasInput = false;
   
-  Serial.println(averageInputValue);
+//  Serial.println(averageInputValue);
+  Serial.println(receivedStateMessage);
 
   // Call the fir routine with the input. The value 'fir' spits out is stored in the output variable.
   
-  if (averageInputValue < MAKEY_INPUT_SENSITIVITY) { // Change this parameter to fine tune the sensitivity
+//  if (averageInputValue < MAKEY_INPUT_SENSITIVITY || receivedStateMessage != 0x00) { // Change this parameter to fine tune the sensitivity
+  if (averageInputValue < MAKEY_INPUT_SENSITIVITY) { // Switch "closed". Change this parameter to fine tune the sensitivity.
     if (!check) {
       // Keyboard.print("d");
-//      stateMessage = 0x01;
-//      updateState = true;
       digitalWrite(RELAY_ENABLE_PIN, HIGH);
       Serial.println(averageInputValue);
-//      hasInput = true;
+      
+      // Check for transition from opened ("low") to closed ("high")
+      if (previousAverageInputValue > MAKEY_INPUT_SENSITIVITY_CEILING) {
+        updateState = true;
+//        stateMessage = 0x01;
+        stateMessage = 0x01;
+      }
+      
       check = !check;   
     }         
   }
   
-  if (averageInputValue > MAKEY_INPUT_SENSITIVITY_CEILING) {
+  if (averageInputValue > MAKEY_INPUT_SENSITIVITY_CEILING) { // Switch "open"
     if (check) {
       check = !check;
-//      stateMessage = 0x00;
-//      updateState = true;
       digitalWrite(RELAY_ENABLE_PIN, LOW);
+      
+      // Check for transition from closed ("high") to opened ("low")
+      if (previousAverageInputValue < MAKEY_INPUT_SENSITIVITY) {
+        updateState = true;
+//        stateMessage = 0x00;
+        stateMessage = 0x00;
+      }
+      
     }
   }
   
-  // Continue sequence based on state of input of current module
+  // Update previous average input value
+  previousAverageInputValue = averageInputValue;
   
-//  if (hasInput) {
-//    // Set output here or on linked modules
-//  }
+  // TODO: Continue sequence based on state of input of current module
   
   //
   // Print accelerometer data over serial
@@ -163,9 +176,6 @@ void loop() {
   // Send state to other module
   //
   
-  // This is the other node's address
-  
-  //if (MODULE_ID == 2) {
   if (updateState) {
 
     updateState = false;
@@ -222,31 +232,31 @@ void loop() {
     //
     // Parse Frame Data
     //
- 
- // General command format (sizes are in bytes), Page 4:
- // | Start Byte (1) | Size (1) | Payload (Variable) | CRC (2) |
- 
- // COMMAND ID   MEANING
- // 0x20         This command is used to send data over the network, Page 13
- 
- int frameDataLength = 0;
- int sendMethod = -1;
- // Send method will be:
- // 0 = unknown
- // 1 = sendData()
- // 2 = sendMessage()
- 
- int commandId = -1;
- unsigned int codeAndType = 0;
- unsigned int payloadCode = 0;
- unsigned int payloadDataType = 0;
- 
- // We can use this to determine which commands the sending unit used to construct the packet:
- // If the length == 6, the sender used sendData()
- // If the length > 6, the sender used setupMessage(), addData(), and sendMessage() 
- //
- // If the sender used the second method, we need to do more parsing of the payload to pull out
- // the sent data. See "Data or start of payload" below at array offset of 5.
+    
+    // General command format (sizes are in bytes), Page 4:
+    // | Start Byte (1) | Size (1) | Payload (Variable) | CRC (2) |
+    
+    // COMMAND ID   MEANING
+    // 0x20         This command is used to send data over the network, Page 13
+    
+    int frameDataLength = 0;
+    int sendMethod = -1;
+    // Send method will be:
+    // 0 = unknown
+    // 1 = sendData()
+    // 2 = sendMessage()
+    
+    int commandId = -1;
+    unsigned int codeAndType = 0;
+    unsigned int payloadCode = 0;
+    unsigned int payloadDataType = 0;
+    
+    // We can use this to determine which commands the sending unit used to construct the packet:
+    // If the length == 6, the sender used sendData()
+    // If the length > 6, the sender used setupMessage(), addData(), and sendMessage() 
+    //
+    // If the sender used the second method, we need to do more parsing of the payload to pull out
+    // the sent data. See "Data or start of payload" below at array offset of 5.
      
      frameDataLength = interface.getResponse().getFrameDataLength();
      if (ENABLE_DEBUG_MODE) {
@@ -320,16 +330,22 @@ void loop() {
          
          if (payloadDataType == 1) {
            if (ENABLE_DEBUG_MODE) {
-           Serial.println("   Data type is TYPE_UINT8. Data:");
-           Serial.print("    The data: ");
-           Serial.println(interface.getResponse().getFrameData()[6]);
+             Serial.println("   Data type is TYPE_UINT8. Data:");
+             Serial.print("    The data: ");
+             Serial.println(interface.getResponse().getFrameData()[6]);
            }
            
            
            // TODO: CHANGE THIS!!! HACKY!!!!
            
-           stateMessage = interface.getResponse().getFrameData()[6];
+           receivedStateMessage = interface.getResponse().getFrameData()[6];
 //           digitalWrite(RELAY_ENABLE_PIN, HIGH); // HACK: Turn on output
+           
+           
+           
+           
+           
+           
            
            
          } else if (payloadDataType == 2) {
