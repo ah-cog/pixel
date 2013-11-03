@@ -144,7 +144,7 @@ void Matrix_update(void)
   Update_Matrix[2][2]=0;
  #endif
 
-  Matrix_Multiply(DCM_Matrix,Update_Matrix,Temporary_Matrix); //a*b=c
+  Matrix_Multiply(DCM_Matrix, Update_Matrix, Temporary_Matrix); // a * b = c
 
   for(int x=0; x<3; x++) //Matrix Addition (update)
   {
@@ -155,10 +155,9 @@ void Matrix_update(void)
   }
 }
 
-void Euler_angles(void)
-{
+void Euler_angles(void) {
   pitch = -asin(DCM_Matrix[2][0]);
-  roll = atan2(DCM_Matrix[2][1],DCM_Matrix[2][2]);
-  yaw = atan2(DCM_Matrix[1][0],DCM_Matrix[0][0]);
+  roll = atan2(DCM_Matrix[2][1], DCM_Matrix[2][2]);
+  yaw = atan2(DCM_Matrix[1][0], DCM_Matrix[0][0]);
 }
 
