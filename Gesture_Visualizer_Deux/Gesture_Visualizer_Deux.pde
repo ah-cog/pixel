@@ -83,7 +83,7 @@ void draw () {
 void serialEvent (Serial serialPort) {
   // Read serial data
   if ( serialPort.available() > 0) {  // If data is available,
-    serialInputString = fd.readString();         // read it and store it in val
+    serialInputString = serialPort.readString();         // read it and store it in val
   }
   // println(serialInputString);
   
