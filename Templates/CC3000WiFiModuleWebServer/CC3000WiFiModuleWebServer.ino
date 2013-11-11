@@ -71,6 +71,7 @@
   Written by Limor Fried & Kevin Townsend for Adafruit Industries.  
   BSD license, all text above must be included in any redistribution      
  ****************************************************/
+
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
 #include "utility/debug.h"
@@ -83,20 +84,19 @@
 #define ADAFRUIT_CC3000_CS    10
 // Use hardware SPI for the remaining pins
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
-Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,
-                                         SPI_CLOCK_DIV2); // you can change this clock speed
+Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV2); // you can change this clock speed
 
-#define WLAN_SSID       "Hackerspace"           // cannot be longer than 32 characters!
-#define WLAN_PASS       "MakingIsFun!"
+#define WLAN_SSID "Hackerspace" // Cannot be longer than 32 characters!
+#define WLAN_PASS "MakingIsFun!"
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
-#define WLAN_SECURITY   WLAN_SEC_WPA2
+#define WLAN_SECURITY WLAN_SEC_WPA2
 
-#define LISTEN_PORT           3000    // What TCP port to listen on for connections.  The echo protocol uses port 7.
+#define LISTEN_PORT 80 // What TCP port to listen on for connections.  The echo protocol uses port 7.
 
 Adafruit_CC3000_Server echoServer(LISTEN_PORT);
 
-void setup(void)
-{
+void setup(void) {
+  
   Serial.begin(115200);
   Serial.println(F("Hello, CC3000!\n")); 
 
@@ -104,8 +104,7 @@ void setup(void)
   
   /* Initialise the module */
   Serial.println(F("\nInitializing..."));
-  if (!cc3000.begin())
-  {
+  if (!cc3000.begin()) {
     Serial.println(F("Couldn't begin()! Check your wiring?"));
     while(1);
   }
@@ -118,19 +117,18 @@ void setup(void)
   Serial.println(F("Connected!"));
   
   Serial.println(F("Request DHCP"));
-  while (!cc3000.checkDHCP())
-  {
+  while (!cc3000.checkDHCP()) {
     delay(100); // ToDo: Insert a DHCP timeout!
-  }  
+  }
 
   /* Display the IP address DNS, Gateway, etc. */  
   while (! displayConnectionDetails()) {
     delay(1000);
   }
 
-  /*********************************************************/
-  /* You can safely remove this to save some flash memory! */
-  /*********************************************************/
+  //
+  // You can safely remove this to save some flash memory!
+  //
   Serial.println(F("\r\nNOTE: This sketch may cause problems with other sketches"));
   Serial.println(F("since the .disconnect() function is never called, so the"));
   Serial.println(F("AP may refuse connection requests from the CC3000 until a"));
@@ -143,25 +141,25 @@ void setup(void)
   Serial.println(F("Listening for connections..."));
 }
 
-void loop(void)
-{
+void loop (void) {
+  
   // Try to get a client which is connected.
   Adafruit_CC3000_ClientRef client = echoServer.available();
   if (client) {
     boolean currentLineIsBlank = true;
     while(client.connected()) {
-     // Check if there is data available to read.
-     if (client.available() > 0) {
-       // Read a byte and write it to all clients.
-       uint8_t c = client.read();
-       //client.write(c);
-       
+      // Check if there is data available to read.
+      if (client.available() > 0) {
+        // Read a byte and write it to all clients.
+        uint8_t c = client.read();
+        //client.write(c);
+        
         if (c == '\n' && currentLineIsBlank) {
-       // send a standard http response header
+          // send a standard http response header
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
           client.println("Connection: close");  // the connection will be closed after completion of the response
-//      client.println("Refresh: 5");  // refresh the page automatically every 5 sec
+          // client.println("Refresh: 5");  // refresh the page automatically every 5 sec
           client.println();
           client.println("<!DOCTYPE HTML>");
           client.println("<html>");
@@ -172,7 +170,7 @@ void loop(void)
             client.print(analogChannel);
             client.print(" is ");
             client.print(sensorReading);
-            client.println("<br />");       
+            client.println("<br />");
           }
           client.println("<strong>Hello</strong>");
           client.println("</html>");
@@ -182,40 +180,31 @@ void loop(void)
         if (c == '\n') {
           // you're starting a new line
           currentLineIsBlank = true;
-        } 
-        else if (c != '\r') {
+        } else if (c != '\r') {
           // you've gotten a character on the current line
           currentLineIsBlank = false;
         }
-       
-     }
-  }
-  
-  // give the web browser time to receive the data
+      }
+    }
+    
+    // give the web browser time to receive the data
     delay(1);
-  
-  // Close the connection
-  client.close();
-  
+    
+    // Close the connection
+    client.close();
   }
 }
 
-/**************************************************************************/
-/*!
-    @brief  Tries to read the IP address and other connection details
-*/
-/**************************************************************************/
-bool displayConnectionDetails(void)
-{
+//
+// Tries to read the IP address and other connection details
+//
+bool displayConnectionDetails (void) {
   uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
   
-  if(!cc3000.getIPAddress(&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv))
-  {
+  if(!cc3000.getIPAddress(&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
     Serial.println(F("Unable to retrieve the IP Address!\r\n"));
     return false;
-  }
-  else
-  {
+  } else {
     Serial.print(F("\nIP Addr: ")); cc3000.printIPdotsRev(ipAddress);
     Serial.print(F("\nNetmask: ")); cc3000.printIPdotsRev(netmask);
     Serial.print(F("\nGateway: ")); cc3000.printIPdotsRev(gateway);
