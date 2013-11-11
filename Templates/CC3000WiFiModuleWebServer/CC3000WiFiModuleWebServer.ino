@@ -93,7 +93,7 @@ Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ
 
 #define LISTEN_PORT 80 // What TCP port to listen on for connections.  The echo protocol uses port 7.
 
-Adafruit_CC3000_Server echoServer(LISTEN_PORT);
+Adafruit_CC3000_Server httpServer(LISTEN_PORT);
 
 void setup(void) {
   
@@ -136,7 +136,7 @@ void setup(void) {
   Serial.println(F("there isn't an obvious moment to disconnect with a server.\r\n"));
   
   // Start listening for connections
-  echoServer.begin();
+  httpServer.begin();
   
   Serial.println(F("Listening for connections..."));
 }
@@ -144,7 +144,7 @@ void setup(void) {
 void loop (void) {
   
   // Try to get a client which is connected.
-  Adafruit_CC3000_ClientRef client = echoServer.available();
+  Adafruit_CC3000_ClientRef client = httpServer.available();
   if (client) {
     boolean currentLineIsBlank = true;
     while(client.connected()) {
