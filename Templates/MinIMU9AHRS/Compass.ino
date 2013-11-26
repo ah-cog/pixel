@@ -28,8 +28,8 @@ with MinIMU-9-Arduino-AHRS. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-void Compass_Heading()
-{
+void Compass_Heading() {
+  
   float MAG_X;
   float MAG_Y;
   float cos_roll;
@@ -37,8 +37,8 @@ void Compass_Heading()
   float cos_pitch;
   float sin_pitch;
   
-  cos_roll = cos(roll);
-  sin_roll = sin(roll);
+  cos_roll  = cos(roll);
+  sin_roll  = sin(roll);
   cos_pitch = cos(pitch);
   sin_pitch = sin(pitch);
   

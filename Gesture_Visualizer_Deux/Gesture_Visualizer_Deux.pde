@@ -11,7 +11,7 @@ void setup () {
   size(640, 360, P3D);
   
   // Connect to the corresponding serial port
-  serialPort = new Serial(this, Serial.list()[14], 115200);
+  serialPort = new Serial(this, Serial.list()[10], 115200);
   
   // Defer callback until new line
   serialPort.bufferUntil('\n');

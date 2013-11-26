@@ -81,7 +81,7 @@
 #define ADAFRUIT_CC3000_IRQ   3  // MUST be an interrupt pin!
 // These can be any two pins
 #define ADAFRUIT_CC3000_VBAT  5
-#define ADAFRUIT_CC3000_CS    10
+#define ADAFRUIT_CC3000_CS    9
 // Use hardware SPI for the remaining pins
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV2); // you can change this clock speed
@@ -98,15 +98,19 @@ Adafruit_CC3000_Server httpServer(LISTEN_PORT);
 void setup(void) {
   
   Serial.begin(115200);
+//  while (!Serial); // Hack
   Serial.println(F("Hello, CC3000!\n")); 
 
-  Serial.print("Free RAM: "); Serial.println(getFreeRam(), DEC);
+  Serial.print("Free RAM: ");
+  Serial.println(getFreeRam(), DEC);
   
   /* Initialise the module */
   Serial.println(F("\nInitializing..."));
   if (!cc3000.begin()) {
     Serial.println(F("Couldn't begin()! Check your wiring?"));
-    while(1);
+    while(1) {
+      Serial.println(F("Couldn't begin()! Check your wiring?"));
+    };
   }
   
   if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
@@ -119,6 +123,7 @@ void setup(void) {
   Serial.println(F("Request DHCP"));
   while (!cc3000.checkDHCP()) {
     delay(100); // ToDo: Insert a DHCP timeout!
+//    Serial.println("DHCP Timeout");
   }
 
   /* Display the IP address DNS, Gateway, etc. */  
