@@ -4,7 +4,7 @@
 //Pins connected to RadioBlock pins 1/2/3/4
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(-1,-1,8,4);
 
-uint8_t payload[] = {2};
+uint8_t payload[] = { 2 };
 
 #define CODE_TEMP   1
 #define CODE_ALARM  2
@@ -54,11 +54,13 @@ void loop() // run over and over
   //This is the OTHER guys address
   interface.setupMessage(THEIR_ADDRESS);
   
-  //Send temperature reading
-//  interface.addData(1, (short) 0xFF);
-  //interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
-  //interface.addData(14, (unsigned long) 0xFFDDCCAA); // TYPE_UINT32
-  interface.addData(9, (long) 0xFFBBCCAA); // TYPE_UINT32
+  // Package the data payload for transmission
+  interface.addData(1, (unsigned char) 0x13); // TYPE_UINT8
+  interface.addData(1, (char) 0x14); // TYPE_INT8
+  interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
+  interface.addData(1, (short) 0xABCD); // TYPE_INT16
+  interface.addData(14, (unsigned long) 0xDDDDCCAA); // TYPE_UINT32
+  interface.addData(9, (long) 0xFF03CCAA); // TYPE_INT32
   
 //  //Send state of pot (potentimeter, not drug manufacturing)
 //  interface.addData(CODE_VALVE, analogRead(1));

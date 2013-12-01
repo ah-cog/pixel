@@ -277,42 +277,42 @@ void setup() {
 
 void loop() {
   
-  if (receivedStateMessage != 0) {
-    
-    // TODO: Check if the current module is active, if the iterator is on this module.
-    
-    //    if (!check2) { // TODO: Only execute when the incoming state changes... (TODO: Create ~previousPreviousModuleInputState)
-    // Keyboard.print("d");
-    digitalWrite(RELAY_ENABLE_PIN, HIGH);
-    //      Serial.println(averageInputValue);
-    
-    // Check for transition from opened ("low") to closed ("high")
-    //      if (previousAverageInputValue > MAKEY_INPUT_SENSITIVITY_CEILING) {
-    //        updateState = true;
-    stateMessage = 0x01;
-    //      }
-    
-    //      check2 = !check2;   
-//    }
-    
-  }
-  if (receivedStateMessage == 0) {
-    // TODO: Check if the current module is active, if the iterator is on this module.
-    
-//    if (!check2) { // TODO: Only execute when the incoming state changes... (TODO: Create ~previousPreviousModuleInputState)
-      // Keyboard.print("d");
-      digitalWrite(RELAY_ENABLE_PIN, LOW);
-//      Serial.println(averageInputValue);
-      
-      // Check for transition from opened ("low") to closed ("high")
-//      if (previousAverageInputValue < MAKEY_INPUT_SENSITIVITY) {
-//        updateState = true;
-        stateMessage = 0x00;
-//      }
-      
-//      check2 = !check2;   
-//    }
-  }
+//  if (receivedStateMessage != 0) {
+//    
+//    // TODO: Check if the current module is active, if the iterator is on this module.
+//    
+//    //    if (!check2) { // TODO: Only execute when the incoming state changes... (TODO: Create ~previousPreviousModuleInputState)
+//    // Keyboard.print("d");
+//    digitalWrite(RELAY_ENABLE_PIN, HIGH);
+//    //      Serial.println(averageInputValue);
+//    
+//    // Check for transition from opened ("low") to closed ("high")
+//    //      if (previousAverageInputValue > MAKEY_INPUT_SENSITIVITY_CEILING) {
+//    //        updateState = true;
+//    stateMessage = 0x01;
+//    //      }
+//    
+//    //      check2 = !check2;   
+////    }
+//    
+//  }
+//  if (receivedStateMessage == 0) {
+//    // TODO: Check if the current module is active, if the iterator is on this module.
+//    
+////    if (!check2) { // TODO: Only execute when the incoming state changes... (TODO: Create ~previousPreviousModuleInputState)
+//      // Keyboard.print("d");
+//      digitalWrite(RELAY_ENABLE_PIN, LOW);
+////      Serial.println(averageInputValue);
+//      
+//      // Check for transition from opened ("low") to closed ("high")
+////      if (previousAverageInputValue < MAKEY_INPUT_SENSITIVITY) {
+////        updateState = true;
+//        stateMessage = 0x00;
+////      }
+//      
+////      check2 = !check2;   
+////    }
+//  }
   
   
   
