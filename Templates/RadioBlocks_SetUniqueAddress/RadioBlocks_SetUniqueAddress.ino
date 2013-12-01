@@ -1,6 +1,21 @@
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
 
+#define TYPE_UINT8 		1
+#define TYPE_INT8		2
+#define	TYPE_UINT16		3
+#define TYPE_INT16		4
+#define TYPE_UINT32		5
+#define TYPE_INT32		6
+#define TYPE_UINT64		7
+#define TYPE_INT64		8
+#define TYPE_FLOAT		9
+#define TYPE_FIXED8_8	10
+#define TYPE_FIXED16_8	11
+#define TYPE_8BYTES		12
+#define TYPE_16BYTES	13
+#define TYPE_ASCII		14
+
 #define RADIOBLOCKS_ADDRESS_MIN 0
 #define RADIOBLOCKS_ADDRESS_MAX 65533 // 0xFFFD
 
@@ -181,23 +196,22 @@ void loop() // run over and over
         
         // Parse payload data based on whether sendData() or the three functions setupMessage(), 
         // addData(), and sendMessage() were used.
-        unsigned int codeAndType = 0;
-        unsigned int payloadCode = 0;
-        unsigned int payloadDataType = 0;
         
         if (sendMethod != -1) { // Check if sendMethod is valid... if < 6, no data was attached...
         
           // "sendData()" was used, so only one byte of data was sent (since this function sends only one byte).
           // Therefore, extract the one byte of data from the first byte of the "Payload". [Page 15]
           if (sendMethod == 0) {
-            if (ENABLE_DEBUG_MODE) {
-              Serial.print("  Sent Data: ");
-              Serial.println(interface.getResponse().getFrameData()[5], HEX);
-            }
+            Serial.print("  Sent Data: ");
+            Serial.println(interface.getResponse().getFrameData()[5], HEX);
             
           } else if (sendMethod == 1) {
             // The "Payload" field is packed in pairs, each pair consisting of a 1 byte code followed by a 
             // variable number of bytes of data, determinable by the 1 byte code.
+            
+            unsigned int codeAndType = 0;
+            unsigned int payloadCode = 0;
+            unsigned int payloadDataType = 0;
             
             codeAndType = interface.getResponse().getFrameData()[5];
             Serial.print(" Encoded send code and original data type: ");
@@ -211,8 +225,88 @@ void loop() // run over and over
             Serial.println(payloadDataType);
             
             //
-            // Extract the data type and data
+            // Extract and type cast the data based on data type
             //
+            
+            if (payloadDataType == TYPE_UINT8) {
+              Serial.println("   Data type is TYPE_UINT8. High and low bytes:");
+              Serial.print("    High part: ");
+              Serial.println(interface.getResponse().getFrameData()[6]);
+              
+            } else if (payloadDataType == TYPE_INT8) {
+              Serial.println("   Data type is TYPE_INT8. High and low bytes:");
+              Serial.print("    High part: ");
+              Serial.println(interface.getResponse().getFrameData()[6]);
+              
+            } else if (payloadDataType == TYPE_UINT16) {
+              Serial.println("   Data type is TYPE_INT16. High and low bytes:");
+              Serial.print("    High part: ");
+              Serial.println(interface.getResponse().getFrameData()[6]); 
+              Serial.print("    Low part: ");
+              Serial.println(interface.getResponse().getFrameData()[7]);
+              
+              short unsigned int data = interface.getResponse().getFrameData()[6] << 8 | ((unsigned short int) interface.getResponse().getFrameData()[7]);
+              Serial.print("Value: ");
+              Serial.println(data);
+              
+            } else if (payloadDataType == TYPE_INT16) {
+              Serial.println("   Data type is TYPE_INT16. High and low bytes:");
+              Serial.print("    High part: ");
+              Serial.println(interface.getResponse().getFrameData()[6]); 
+              Serial.print("    Low part: ");
+              Serial.println(interface.getResponse().getFrameData()[7]);
+              
+              short data = interface.getResponse().getFrameData()[6] << 8 | ((short) interface.getResponse().getFrameData()[7]);
+              Serial.print("Value: ");
+              Serial.println(data);
+              
+            } else if (payloadDataType == TYPE_UINT32) {
+              Serial.println("   Data type is TYPE_UINT32. Four bytes:");
+              Serial.print("    MSB: ");
+              Serial.println(interface.getResponse().getFrameData()[6]); 
+              Serial.print("    : ");
+              Serial.println(interface.getResponse().getFrameData()[7]);
+              Serial.print("    : ");
+              Serial.println(interface.getResponse().getFrameData()[8]);
+              Serial.print("    LSB: ");
+              Serial.println(interface.getResponse().getFrameData()[9]);
+              
+              unsigned long data = ((unsigned long) interface.getResponse().getFrameData()[6] << 24) | ((unsigned long) interface.getResponse().getFrameData()[7] << 16) | ((unsigned long) interface.getResponse().getFrameData()[8] << 8) | ((unsigned long) interface.getResponse().getFrameData()[9]);
+              Serial.print("Value: ");
+              Serial.println(data, HEX);
+              
+            } else if (payloadDataType == TYPE_INT32) {
+              Serial.println("   Data type is TYPE_INT32. Four bytes:");
+              Serial.print("    MSB: ");
+              Serial.println(interface.getResponse().getFrameData()[6]); 
+              Serial.print("    : ");
+              Serial.println(interface.getResponse().getFrameData()[7]);
+              Serial.print("    : ");
+              Serial.println(interface.getResponse().getFrameData()[8]);
+              Serial.print("    LSB: ");
+              Serial.println(interface.getResponse().getFrameData()[9]);
+              
+              long data = ((long) interface.getResponse().getFrameData()[6] << 24) | ((long) interface.getResponse().getFrameData()[7] << 16) | ((long) interface.getResponse().getFrameData()[8] << 8) | ((long) interface.getResponse().getFrameData()[9]);
+              Serial.print("Value: ");
+              Serial.println(data, HEX);
+              
+            } else if (payloadDataType == TYPE_UINT64) {
+              // TODO:
+            } else if (payloadDataType == TYPE_INT64) {
+              // TODO:
+            } else if (payloadDataType == TYPE_FLOAT) {
+              // TODO:
+            } else if (payloadDataType == TYPE_FIXED8_8) {
+              // TODO:
+            } else if (payloadDataType == TYPE_FIXED16_8) {
+              // TODO:
+            } else if (payloadDataType == TYPE_8BYTES) {
+              // TODO:
+            } else if (payloadDataType == TYPE_16BYTES) {
+              // TODO:
+            } else if (payloadDataType == TYPE_ASCII) {
+              // TODO:
+            }
           }
         }
         
