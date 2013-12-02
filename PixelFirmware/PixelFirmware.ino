@@ -196,13 +196,13 @@ bool updateState = false;
 //  #define THEIR_ADDRESS 0x0002
 //#endif
 
-#define OUR_ADDRESS   0x0002
-#define THEIR_ADDRESS 0x0003
+//#define OUR_ADDRESS   0x0002
+//#define THEIR_ADDRESS 0x0003
 
 // The module's pins 1, 2, 3, and 4 are connected to Arduino's pins 5, 4, 3, and 2.
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(-1, -1, 8, 4);
 
-unsigned short int neighbors[4];
+unsigned short int neighbors[1];
 
 // These #define's are copied from the RadioBlock.cpp file.
 #define TYPE_UINT8 	1
@@ -238,7 +238,7 @@ void setup() {
   // Set up address of RadioBlocks interface
   // TODO: Iterate until an address is set. Iterate through addresses to check for availability.
   // Broadcast message to "Get Acknowledgment State Request" and wait for response until timeout...
-  interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
+//  interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
   
   Serial.begin(115200);
   pinMode(STATUS_LED, OUTPUT); // Status LED
@@ -321,7 +321,7 @@ void loop() {
   // Read RadioBlock data
   //
 
-  if (interface.readPacket(1000)) { // Waits a maximum of <i>timeout</i> milliseconds for a response packet before timing out; returns true if packet is read. Returns false if timeout or error occurs.
+  if (interface.readPacket(10)) { // Waits a maximum of <i>timeout</i> milliseconds for a response packet before timing out; returns true if packet is read. Returns false if timeout or error occurs.
   //interface.readPacket(); // Read the packet (NOTE: Seemingly must do this for isAvailable() to work properly.)
   //if (interface.getResponse().isAvailable()) {
   // TODO: Change this to interface.isAvailable() so it doesn't block and wait for any time, so it just reads "when available" (in quotes because it's doing polling)
@@ -830,12 +830,16 @@ void sendGesture(char gestureCode) {
   
   Serial.println("sendGesture()");
   
-  //This is the OTHER guys address
-  interface.setupMessage(THEIR_ADDRESS);
-  
-  // Package the data payload for transmission
-  interface.addData(1, (byte) gestureCode); // TYPE_INT8
-  interface.sendMessage(); //Send data OTA
+  for (int i = 0; i < 1; i++) {
+    //This is the OTHER guys address
+//    interface.setupMessage(THEIR_ADDRESS);
+    interface.setupMessage(0x00);
+//    interface.setupMessage(neighbors[i]);
+    
+    // Package the data payload for transmission
+    interface.addData(1, (byte) gestureCode); // TYPE_INT8
+    interface.sendMessage(); //Send data OTA
+  }
   
   delay(500);
 }

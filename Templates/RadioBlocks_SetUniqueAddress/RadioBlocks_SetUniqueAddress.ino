@@ -56,7 +56,7 @@ void setup()
   // TODO: Iterate until an address is set. Iterate through addresses to check for availability.
   // Broadcast message to "Get Acknowledgment State Request" and wait for response until timeout...
   // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
-  interface.setAddress(0x0003); // (2) Set the module's address
+  interface.setAddress(0x0000); // (2) Set the module's address
   
   // Begin serial communication
   Serial.begin(115200);
