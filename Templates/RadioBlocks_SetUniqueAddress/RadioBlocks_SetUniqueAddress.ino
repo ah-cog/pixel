@@ -63,8 +63,16 @@ void setup()
   Serial.println("Done with setup.");
 }
 
+boolean sent = false;
 void loop() // run over and over
 {
+  
+  if (!sent) {
+    delay(1000);
+    interface.getAddress();
+    sent = true;
+  }
+  
   //  interface.setLED(true);
   //  delay(500);
   //  interface.setLED(false);
@@ -99,7 +107,7 @@ void loop() // run over and over
     // NOTE: I believe this constitutes a "frame".
     
     if (interface.getResponse().getErrorCode() == APP_STATUS_SUCESS) {
-      Serial.println("Received packet.");
+      Serial.println("\n\n\n\nReceived packet.");
     } else {
       Serial.println("Error: Failed to receive packet.");
     }
@@ -356,13 +364,22 @@ void loop() // run over and over
       }
 
       /// TODO...
+    } else if (commandId == APP_STATUS_TIMEOUT) {
+      
+      Serial.println("Error: Timeout");
+      // TODO: (?) Remove timed out node from neighbors list? Update "last status" to timeout?
+      
+    } else if (commandId == APP_COMMAND_GET_ADDR_RESP) { // (i.e., 0x25) [Page 15]
+      
+//        Serial.print("  Frame Command Id: ");
+//        Serial.println(interface.getResponse().getFrameData()[0], HEX); // Frame options
+      
+      // Computer source address using bitwise operators (combine two bytes into a "short", a 16-bit integer data type)
+      short address = interface.getResponse().getFrameData()[0] | ((short) interface.getResponse().getFrameData()[1] << 8);
+      Serial.print("  Device address: ");
+      Serial.println(address, HEX); // Source address
+    
     }
-//    else if (commandId == APP_STATUS_TIMEOUT) {
-//      
-//      Serial.println("Error: Timeout");
-//      // TODO: (?) Remove timed out node from neighbors list? Update "last status" to timeout?
-//      
-//    }
   }
 
 
