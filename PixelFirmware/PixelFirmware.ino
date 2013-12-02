@@ -287,6 +287,12 @@ void setup() {
   timer = millis();
   delay(20);
   counter = 0;
+  
+  //
+  // Setup lights
+  //
+  
+  // TODO:
 }
 
 short address = -1;
@@ -581,7 +587,7 @@ void loop() {
     // ***
     
 //    printData();
-    printGesture();
+    detectGesture();
   }
   
   //
@@ -846,15 +852,13 @@ void sendGesture(char gestureCode) {
 
 unsigned long lastJerkUp = 0;
 unsigned long lastJerkDown = 0;
-void printGesture() {
+void detectGesture() {
   
   // Jerk Up
   if (AN[5] > (255 + 400)) {
     unsigned long currentTime = millis();
     Serial.println("Jerk up");
     lastJerkUp = currentTime; // Update time of last jerk up
-    
-    sendGesture(1);
   }
   
   // Jerk Down
@@ -878,11 +882,37 @@ void printGesture() {
   
   // Pickup
   if ((255 + 100) < AN[5]) {
-//    Serial.println("Pick up");
+    ledOn();
+    
+    unsigned long currentTime = millis();
+    Serial.println("Pick Up");
+    lastJerkUp = currentTime; // Update time of last jerk up
+    
+    sendGesture(1);
   }
   
   // Set down
   if (AN[5] < (255 - 200)) {
-//    Serial.println("Set down");
+    ledFadeOut();
+    
+    unsigned long currentTime = millis();
+    Serial.println("Set Down");
+    lastJerkUp = currentTime; // Update time of last jerk up
+    
+    sendGesture(0);
+  }
+}
+
+void ledOn() {
+  analogWrite(6, 0);
+}
+
+void ledFadeOut() {
+  // Fade out from max to min in increments of 5 points
+  //delay(50);
+  for(int fadeValue = 0 ; fadeValue <= 255; fadeValue +=15) { 
+    // sets the value (range from 0 to 255):
+    analogWrite(6, fadeValue);
+    delay(10); // wait for a few milliseconds to see the dimming effect      
   }
 }
