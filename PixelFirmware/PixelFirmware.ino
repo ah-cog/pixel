@@ -44,7 +44,7 @@ with MinIMU-9-Arduino-AHRS. If not, see <http://www.gnu.org/licenses/>.
 // Positive yaw : counterclockwise
 //int SENSOR_SIGN[9] = {1,-1,-1,-1,1,1,1,-1,-1}; //Correct directions x,y,z - gyro, accelerometer, magnetometer
 
-int SENSOR_SIGN[9] = {1,-1,-1, 1,-1,1, 1,-1,-1}; // Correct directions x,y,z - gyro, accelerometer, magnetometer
+int SENSOR_SIGN[9] = { 1,-1,-1, 1,-1, 1, 1,-1,-1 }; // Correct directions x,y,z - gyro, accelerometer, magnetometer
 
 #include <Wire.h>
 #include <SoftwareSerial.h>
@@ -99,18 +99,10 @@ long timer24 = 0; // Second timer used to print values
 int AN[6]; // Array that stores the gyro and accelerometer data
 int AN_OFFSET[6] = { 0, 0, 0, 0, 0, 0 }; // Array that stores the Offset of the sensors
 
-int gyro_x;
-int gyro_y;
-int gyro_z;
-int accel_x;
-int accel_y;
-int accel_z;
-int magnetom_x;
-int magnetom_y;
-int magnetom_z;
-float c_magnetom_x;
-float c_magnetom_y;
-float c_magnetom_z;
+int gyro_x, gyro_y, gyro_z;
+int accel_x, accel_y, accel_z;
+int magnetom_x, magnetom_y, magnetom_z;
+float c_magnetom_x, c_magnetom_y, c_magnetom_z;
 float MAG_Heading;
 
 float Accel_Vector[3] = { 0, 0, 0 }; // Store the acceleration in a vector
@@ -136,13 +128,9 @@ float errorYaw[3] = { 0, 0, 0 };
 unsigned int counter = 0;
 byte gyro_sat = 0;
 
-
-
 float pressure = 0;
 float altitude = 0;
 float temperature = 0;
-
-
 
 // The "Direction Cosine Matrix" (DCM), also known as the "Rotation Matrix"
 float DCM_Matrix[3][3] = {
@@ -167,35 +155,12 @@ float Temporary_Matrix[3][3] = {
 //
 
 #define ENABLE_DEBUG_MODE 0 // Enable RadioBlocks debug mode
-#define RADIOBLOCK_PACKET_READ_TIMEOUT 5
-
-unsigned char receivedStateMessage = 0x00;
-unsigned char stateMessage = 0x00;
-bool updateState = false;
-
-// Set our known network addresses. How do we deal with 
-// unexpected nodes...? This should be dynamic, and nodes should
-// self-assign their addresses and broadcast the the mesh network.
-// TODO: Broadcast asking for ACK from addresses in address space. 
-//       If no direct response is given and no node responds on 
-//       behalf of the requested address, take the address. Resolve 
-//       or negotiate any collisions later if the address shows up.
-//#define MODULE_ID 2
-//#if MODULE_ID == 2
-//  #define OUR_ADDRESS   0x0002
-//  #define THEIR_ADDRESS 0x0003
-//#elif MODULE_ID == 3
-//  #define OUR_ADDRESS   0x0003
-//  #define THEIR_ADDRESS 0x0002
-//#endif
-
-//#define OUR_ADDRESS   0x0002
-//#define THEIR_ADDRESS 0x0003
+#define RADIOBLOCK_PACKET_READ_TIMEOUT 10
 
 // The module's pins 1, 2, 3, and 4 are connected to Arduino's pins 5, 4, 3, and 2.
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(-1, -1, 8, 4);
 
-unsigned long lastSent = 0;
+unsigned long lastSendTime = 0;
 
 bool hasCounter = 0;
 unsigned long lastCount = 0;
@@ -247,7 +212,7 @@ void setup() {
   
   I2C_Init();
 
-  Serial.println("Pixel Firmware (Version 2013.12.01.17.50.58)");
+  Serial.println("Pixel Firmware (Version 2013.12.14.22.58.36)");
 
   delay(1500);
  
@@ -314,7 +279,7 @@ void loop() {
         neighbors[0] = 1;
         neighbors[1] = 2;
         next[0] = 1;
-        hasCounter = true;
+        hasCounter = false;
         hasInitialized = true;
       } else if (address == 1) {
         neighbors[0] = 0;
@@ -337,10 +302,10 @@ void loop() {
   // Read RadioBlock data
   //
 
-  if (interface.readPacket(10)) { // Waits a maximum of <i>timeout</i> milliseconds for a response packet before timing out; returns true if packet is read. Returns false if timeout or error occurs.
-  //interface.readPacket(); // Read the packet (NOTE: Seemingly must do this for isAvailable() to work properly.)
-  //if (interface.getResponse().isAvailable()) {
-  // TODO: Change this to interface.isAvailable() so it doesn't block and wait for any time, so it just reads "when available" (in quotes because it's doing polling)
+  if (interface.readPacket(RADIOBLOCK_PACKET_READ_TIMEOUT)) { // Waits a maximum of <i>timeout</i> milliseconds for a response packet before timing out; returns true if packet is read. Returns false if timeout or error occurs.
+    // interface.readPacket(); // Read the packet (NOTE: Seemingly must do this for isAvailable() to work properly.)
+    // if (interface.getResponse().isAvailable()) {
+    // TODO: Change this to interface.isAvailable() so it doesn't block and wait for any time, so it just reads "when available" (in quotes because it's doing polling)
   
     // General command format (sizes are in bytes), Page 4:
     //
@@ -427,14 +392,16 @@ void loop() {
         // Parse payload data
         //
         
-        int payloadStartIndex = 5; // Index of first byte of "Payload"
+//#define PAYLOAD_START_INDEX 5
+        
+        int PAYLOAD_START_INDEX = 5; // Index of first byte of "Payload"
         
         Serial.print("Raw Payload Data: [ ");
-        for (int i = 0; i < (frameDataLength - payloadStartIndex - 1); i++) {
+        for (int i = 0; i < (frameDataLength - PAYLOAD_START_INDEX - 1); i++) {
           Serial.print(interface.getResponse().getFrameData()[5 + i] , HEX);
           Serial.print(" : ");
         }
-        Serial.print(interface.getResponse().getFrameData()[5 + (frameDataLength - payloadStartIndex - 1)], HEX);
+        Serial.print(interface.getResponse().getFrameData()[5 + (frameDataLength - PAYLOAD_START_INDEX - 1)], HEX);
         Serial.println(" ]");
         
         Serial.println("Parsed Payload Data:");
@@ -473,14 +440,14 @@ void loop() {
             int loopCount = 0;
             int maxLoopCount = 20;
             
-            while(payloadOffset < (frameDataLength - payloadStartIndex)) {
+            while(payloadOffset < (frameDataLength - PAYLOAD_START_INDEX)) {
               
               // Protect against infinite loop with this conditional
               if (loopCount > maxLoopCount) {
                 break;
               }
               
-              codeAndType = interface.getResponse().getFrameData()[payloadStartIndex + payloadOffset];
+              codeAndType = interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset];
               Serial.print(" Encoded send code and original data type: ");
               Serial.println(codeAndType, HEX); // The actual data
               
@@ -499,48 +466,58 @@ void loop() {
                 
                 Serial.println("   Data type is TYPE_UINT8. High and low bytes:");
                 Serial.print("    High part: ");
-                Serial.println(interface.getResponse().getFrameData()[payloadStartIndex + payloadOffset + 1]);
+                Serial.println(interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 1]);
                 
                 payloadOffset = payloadOffset + sizeof(unsigned char) + 1;
+                
+                
+                
+                
+                
+                //
+                // Process received data, update state
+                //
+        
+                // Turn on if received counter
+                if (!hasCounter) {
+                  hasCounter = true;
+                  lastCount = 0;
+                  // update time that counter received
+                }
+                ledOn();
                 
               } else if (payloadDataType == TYPE_INT8) {
                 
                 Serial.println("   Data type is TYPE_INT8. High and low bytes:");
                 Serial.print("    High part: ");
-                Serial.println(interface.getResponse().getFrameData()[payloadStartIndex + payloadOffset + 1]);
+                Serial.println(interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 1]);
                 
                 payloadOffset = payloadOffset + sizeof(char) + 1;
                 
-              } 
-  //            else if (payloadDataType == TYPE_UINT16) {
-  //              
-  //              Serial.println("   Data type is TYPE_UINT16. High and low bytes:");
-  //              Serial.print("    High part: ");
-  //              Serial.println(interface.getResponse().getFrameData()[payloadStartIndex + payloadOffset + 1]); 
-  //              Serial.print("    Low part: ");
-  //              Serial.println(interface.getResponse().getFrameData()[payloadStartIndex + payloadOffset + 2]);
-  //              
-  //              short unsigned int data = interface.getResponse().getFrameData()[payloadStartIndex + payloadOffset + 1] << 8 | ((unsigned short int) interface.getResponse().getFrameData()[payloadStartIndex + payloadOffset + 2]);
-  //              Serial.print("    Value: ");
-  //              Serial.println(data);
-  //            }
+              }
+              
+              /* 
+              else if (payloadDataType == TYPE_UINT16) {
+                
+                Serial.println("   Data type is TYPE_UINT16. High and low bytes:");
+                Serial.print("    High part: ");
+                Serial.println(interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 1]); 
+                Serial.print("    Low part: ");
+                Serial.println(interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 2]);
+                
+                short unsigned int data = interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 1] << 8 | ((unsigned short int) interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 2]);
+                Serial.print("    Value: ");
+                Serial.println(data);
+              }
+              */
               
               loopCount++;
               
             } // while()
             
-            
-            // Turn on if received counter
-            if (!hasCounter) {
-              hasCounter = true;
-              lastCount = 0;
-              // update time that counter received
-            }
-            ledOn();
           }
         }
-  
-        /// TODO...
+        
       } else if (commandId == APP_COMMAND_GET_ADDR_RESP) { // (i.e., 0x25) [Page 15]
         
   //        Serial.print("  Frame Command Id: ");
@@ -557,22 +534,9 @@ void loop() {
     } else {
       Serial.println("Error: Failed to receive packet.");
     }
-    
-//    Serial.print("Packet length: ");
-//    Serial.print(interface.getResponse().getPacketLength(), DEC);
-//    Serial.print(", Command: ");
-//    Serial.print(interface.getResponse().getCommandId(), HEX);
-//    Serial.print(", Payload: <below>");
-//    Serial.print(", CRC: ");
-//    Serial.print(interface.getResponse().getCrc(), HEX);
-//    Serial.println("");
-  }
+  } 
   
   if (hasInitialized) {
-    
-    if (hasCounter && lastCount == 0) {
-      lastCount = millis();
-    }
    
     //
     // Get IMU data
@@ -636,17 +600,21 @@ void loop() {
       detectGesture();
     }
     
+    if (hasCounter && lastCount == 0) {
+      Serial.println("Received counter.");
+      lastCount = millis();
+    }
+    
     //
     // Check if current node has the counter
     //
     
-    Serial.println(hasCounter);
     if (hasCounter) {
       if (millis() - lastCount > 2000) {
         sendCounter();
         hasCounter = false;
         lastCount = 0L;
-        analogWrite(6, 255);
+        ledOff();
       }
     }
     
@@ -660,6 +628,11 @@ void sendGesture(char gestureCode) {
   //otherwise can use sendData() calls to directly send a few bytes
   
   Serial.println("sendGesture()");
+  hasCounter = true;
+  
+  delay(500);
+  
+  return;
   
   for (int i = 0; i < NEIGHBOR_COUNT; i++) {
     //This is the OTHER guys address
@@ -677,25 +650,19 @@ void sendGesture(char gestureCode) {
 }
 
 void sendCounter() {
-  if (millis() - lastSent > 1000) {
-    Serial.println("sendCounter()");
-    
-    for (int i = 0; i < 1; i++) {
-      //This is the OTHER guys address
-  //    interface.setupMessage(THEIR_ADDRESS);
-  //    interface.setupMessage(0x00);
-      //interface.setupMessage(neighbors[i]);
-      interface.setupMessage(next[i]);
-      
-      // Package the data payload for transmission
-      interface.addData(1, (byte) 0x00); // TYPE_INT8
-      interface.sendMessage(); //Send data OTA
-    }
-    
-    lastSent = millis();
-  }
+  Serial.println("sendCounter()");
   
-  //delay(500);
+  for (int i = 0; i < 1; i++) {
+    //This is the OTHER guys address
+//    interface.setupMessage(THEIR_ADDRESS);
+//    interface.setupMessage(0x00);
+    //interface.setupMessage(neighbors[i]);
+    interface.setupMessage(next[i]);
+    
+    // Package the data payload for transmission
+    interface.addData(1, (byte) 0x00); // TYPE_INT8
+    interface.sendMessage(); //Send data OTA
+  }
 }
 
 unsigned long lastJerkUp = 0;
@@ -753,6 +720,10 @@ void detectGesture() {
 
 void ledOn() {
   analogWrite(6, 0);
+}
+
+void ledOff() {
+  analogWrite(6, 255);
 }
 
 void ledFadeOut() {
