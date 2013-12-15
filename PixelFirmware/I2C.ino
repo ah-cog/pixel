@@ -108,7 +108,7 @@ void Alt_Init() {
 }
 
 // Read altimeter sensor data
-void Read_Alt() {
+void Read_Altimeter() {
 
   pressure = ps.readPressureInchesHg();
   altitude = ps.pressureToAltitudeFeet(pressure);

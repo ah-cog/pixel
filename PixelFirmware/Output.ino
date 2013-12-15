@@ -39,7 +39,7 @@ void printData (void) {
   Serial.print("\t");
   Serial.print(ToDeg(yaw)); // Yaw (Rotation about Z)
 #endif      
-#if PRINT_ANALOGS==1
+#if PRINT_ANALOGS ==1
 //  Serial.print(",AN:");
   Serial.print("\t");
   Serial.print(AN[0]);  //(int)read_adc(0) // Gyro X
@@ -59,13 +59,14 @@ void printData (void) {
   Serial.print(c_magnetom_y);
   Serial.print("\t");
   Serial.print(c_magnetom_z);
-#endif
   Serial.print ("\t");
   Serial.print(pressure);
   Serial.print ("\t");
   Serial.print(altitude);
   Serial.print ("\t");
   Serial.print(temperature);
+#endif
+
 /*
 #if PRINT_DCM == 1
   Serial.print (",DCM:");

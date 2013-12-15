@@ -28,7 +28,7 @@ with MinIMU-9-Arduino-AHRS. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-//Computes the dot product of two vectors
+// Computes the dot product of two vectors
 float Vector_Dot_Product(float vector1[3],float vector2[3]) {
   float op = 0;
   
