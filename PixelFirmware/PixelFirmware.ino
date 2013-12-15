@@ -27,16 +27,13 @@ with MinIMU-9-Arduino-AHRS. If not, see <http://www.gnu.org/licenses/>.
 */
 
 // Uncomment the below line to use this axis definition: 
-   // X axis pointing forward
-   // Y axis pointing to the right 
-   // and Z axis pointing down.
+// X axis pointing forward
+// Y axis pointing to the right 
+// and Z axis pointing down.
 // Positive pitch : nose up
 // Positive roll : right wing down
 // Positive yaw : clockwise
 //int SENSOR_SIGN[9] = { 1, 1, 1, -1, -1, -1, 1, 1, 1 }; //Correct directions x,y,z - gyro, accelerometer, magnetometer
-//int SENSOR_SIGN[9] = { 1, -1, -1, -1, 1, 1, 1, -1, -1 }; //Correct directions x,y,z - gyro, accelerometer, magnetometer
-//int SENSOR_SIGN[9] = { 1, 1, -1, -1, -1, 1, -1, 1, -1 }; //Correct directions x,y,z - gyro, accelerometer, magnetometer
-int SENSOR_SIGN[9] = {1,-1,-1, 1,-1,1, 1,-1,-1}; //Correct directions x,y,z - gyro, accelerometer, magnetometer
 
 // Uncomment the below line to use this axis definition: 
    // X axis pointing forward
@@ -47,7 +44,7 @@ int SENSOR_SIGN[9] = {1,-1,-1, 1,-1,1, 1,-1,-1}; //Correct directions x,y,z - gy
 // Positive yaw : counterclockwise
 //int SENSOR_SIGN[9] = {1,-1,-1,-1,1,1,1,-1,-1}; //Correct directions x,y,z - gyro, accelerometer, magnetometer
 
-// tested with Arduino Uno with ATmega328 and Arduino Duemilanove with ATMega168
+int SENSOR_SIGN[9] = {1,-1,-1, 1,-1,1, 1,-1,-1}; // Correct directions x,y,z - gyro, accelerometer, magnetometer
 
 #include <Wire.h>
 #include <SoftwareSerial.h>
@@ -93,8 +90,6 @@ int SENSOR_SIGN[9] = {1,-1,-1, 1,-1,1, 1,-1,-1}; //Correct directions x,y,z - gy
 //#define PRINT_DCM 0     // Will print the whole direction cosine matrix
 #define PRINT_ANALOGS 1 // Will print the analog raw data
 #define PRINT_EULER 1   // Will print the Euler angles Roll, Pitch and Yaw
-
-#define STATUS_LED 13 
 
 float G_Dt = 0.02;    // Integration time (DCM algorithm)  We will run the integration loop at 50Hz if possible
 
@@ -245,7 +240,6 @@ void setup() {
 //  interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
   
   Serial.begin(115200);
-  pinMode(STATUS_LED, OUTPUT); // Status LED
  
   //
   // Initialize IMU
@@ -255,7 +249,6 @@ void setup() {
 
   Serial.println("Pixel Firmware (Version 2013.12.01.17.50.58)");
 
-  digitalWrite(STATUS_LED, LOW);
   delay(1500);
  
   Accel_Init();
@@ -286,7 +279,6 @@ void setup() {
   }
   
   delay(2000);
-  digitalWrite(STATUS_LED, HIGH);
     
   timer = millis();
   delay(20);
@@ -304,6 +296,7 @@ boolean verifiedAddress = false;
 boolean hasValidAddress = false;
 boolean hasValidNeighbors = false;
 boolean hasInitialized = false;
+
 void loop() {
   
   if (!verifiedAddress) {
@@ -339,8 +332,6 @@ void loop() {
       hasValidNeighbors = true;
     }
   }
-  
-  
   
   //
   // Read RadioBlock data
@@ -659,242 +650,6 @@ void loop() {
       }
     }
     
-    //
-    // Send state to other module
-    //
-    
-  //  if (updateState) {
-  //
-  //    updateState = false;
-  //    
-  //    interface.setupMessage(THEIR_ADDRESS);
-  //    
-  //    // TL: 0b00000001
-  //    // TR: 0b00000010
-  //    // BL: 0b00000100
-  //    // BR: 0b00001000
-  //    interface.addData(0x1, stateMessage);
-  //
-  //    // Send data over the air (OTA)
-  //    interface.sendMessage();
-  //    
-  //    Serial.println("Sent message.");
-  //    
-  //    delay(1200);
-  //  }
-    
-    //
-    // Read an incoming packet if available within the specified number of milliseconds (the timeout value).
-    //
-  
-  //  if (interface.readPacket(RADIOBLOCK_PACKET_READ_TIMEOUT)) { // NOTE: Every time this is called, the response returned by getResponse() is overwritten.
-  ////    digitalWrite(RELAY_ENABLE_PIN, HIGH);
-  ////    digitalWrite(13, HIGH);
-  //
-  //    if (ENABLE_DEBUG_MODE) {
-  //      Serial.println("Received a packet:");
-  //    }
-  //    
-  //    // Get error code for response
-  //    if (interface.getResponse().getErrorCode() == APP_STATUS_SUCESS) {
-  //      if (ENABLE_DEBUG_MODE) {
-  //        Serial.println("Success: Good packet.");
-  //      }
-  //    } else {
-  //      if (ENABLE_DEBUG_MODE) {
-  //        Serial.println("Failure: Bad packet.");
-  //      }
-  //    }
-  //    if (ENABLE_DEBUG_MODE) {
-  //      Serial.print("Len: ");
-  //      Serial.print(interface.getResponse().getPacketLength(), DEC);
-  //      Serial.print(", Command: ");
-  //      Serial.print(interface.getResponse().getCommandId(), HEX);
-  //      Serial.print(", CRC: ");
-  //      Serial.print(interface.getResponse().getCrc(), HEX); // Cyclic redundancy check (CRC) [Source: http://en.wikipedia.org/wiki/Cyclic_redundancy_check]
-  //      Serial.println("");
-  //    }
-  //    
-  //    //
-  //    // Parse Frame Data
-  //    //
-  //    
-  //    // General command format (sizes are in bytes), Page 4:
-  //    // | Start Byte (1) | Size (1) | Payload (Variable) | CRC (2) |
-  //    
-  //    // COMMAND ID   MEANING
-  //    // 0x20         This command is used to send data over the network, Page 13
-  //    
-  //    int frameDataLength = 0;
-  //    int sendMethod = -1;
-  //    // Send method will be:
-  //    // 0 = unknown
-  //    // 1 = sendData()
-  //    // 2 = sendMessage()
-  //    
-  //    int commandId = -1;
-  //    unsigned int codeAndType = 0;
-  //    unsigned int payloadCode = 0;
-  //    unsigned int payloadDataType = 0;
-  //    
-  //    // We can use this to determine which commands the sending unit used to construct the packet:
-  //    // If the length == 6, the sender used sendData()
-  //    // If the length > 6, the sender used setupMessage(), addData(), and sendMessage() 
-  //    //
-  //    // If the sender used the second method, we need to do more parsing of the payload to pull out
-  //    // the sent data. See "Data or start of payload" below at array offset of 5.
-  //     
-  //     frameDataLength = interface.getResponse().getFrameDataLength();
-  //     if (ENABLE_DEBUG_MODE) {
-  //       Serial.print("Length of Frame Data: ");
-  //       Serial.println(frameDataLength);
-  //     }
-  //     
-  //     // Get the method the sending unit used to construct the packet
-  //     if (frameDataLength == 6) {
-  //       sendMethod = 0; // The sender used sendData()
-  //     } else if (frameDataLength > 6) {
-  //       sendMethod = 1; // The sender used setupMessage(), addData(), and sendMessage()
-  //     }
-  //     
-  //     // The following "meanings" for these bytes are from page 15 of the SimpleMesh_Serial_Protocol.pdf from Colorado Micro Devices.
-  //     if (ENABLE_DEBUG_MODE) {
-  //       Serial.println("Frame Data: ");
-  //     }
-  //     
-  //     //Serial.println(interface.getResponse().getFrameData()[0], HEX);
-  //     //Serial.println(interface.getResponse().getFrameData()[1]);
-  //     //Serial.println(interface.getResponse().getFrameData()[2]);
-  //     
-  //     // Process message based on the its Command ID
-  //     
-  //     commandId = interface.getResponse().getCommandId();
-  //     if (commandId == 0x22) { //APP_COMMAND_DATA_IND) { // 0x22
-  //      
-  //       if (ENABLE_DEBUG_MODE) {
-  //         Serial.print("  Source address: ");
-  //         Serial.println(interface.getResponse().getFrameData()[1], HEX); // Source address
-  //         
-  //         Serial.print("  Frame options: ");
-  //         // 0x00 None
-  //         // 0x01 Acknowledgment was requested
-  //         // 0x02 Security was used
-  //         Serial.println(interface.getResponse().getFrameData()[2], HEX); // Frame options
-  //         
-  //         Serial.print("  Link Quality Indicator: ");
-  //         Serial.println(interface.getResponse().getFrameData()[3], HEX); // Link quality indicator
-  //         
-  //         Serial.print("  Received Signal Strength Indicator: ");
-  //         Serial.println(interface.getResponse().getFrameData()[4], HEX); // Received Signal Strength Indicator
-  //       }
-  //       
-  //       // Parse Data or Payload:
-  //       
-  //       if (sendMethod == 0) {
-  //         if (ENABLE_DEBUG_MODE) {
-  //           Serial.print("  Sent Data: ");
-  //           Serial.println(interface.getResponse().getFrameData()[5], HEX);
-  //         }
-  //       } else if (sendMethod == 1) {
-  //         codeAndType = interface.getResponse().getFrameData()[5]; 
-  //         
-  //         
-  //         if (ENABLE_DEBUG_MODE) {
-  //           Serial.print(" Encoded send code and original data type: ");
-  //           Serial.println(codeAndType, HEX); // The actual data
-  //         }
-  //         
-  //         payloadDataType = codeAndType & 0xf;
-  //         payloadCode = (codeAndType >> 4) & 0xf;
-  //         
-  //         if (ENABLE_DEBUG_MODE) {
-  //           Serial.print("  The sent code was (in hex): ");
-  //           Serial.println(payloadCode, HEX);
-  //           Serial.print("  The original data type was: ");
-  //           Serial.println(payloadDataType);
-  //         }
-  //         
-  //         if (payloadDataType == 1) {
-  //           if (ENABLE_DEBUG_MODE) {
-  //             Serial.println("   Data type is TYPE_UINT8. Data:");
-  //             Serial.print("    The data: ");
-  //             Serial.println(interface.getResponse().getFrameData()[6]);
-  //           }
-  //           
-  //           
-  //           // TODO: CHANGE THIS!!! HACKY!!!!
-  //           
-  //           receivedStateMessage = interface.getResponse().getFrameData()[6];
-  ////           digitalWrite(RELAY_ENABLE_PIN, HIGH); // HACK: Turn on output
-  //           
-  //           
-  //           
-  //           
-  //           
-  //           
-  //           
-  //           
-  //         } else if (payloadDataType == 2) {
-  //           if (ENABLE_DEBUG_MODE) {
-  //             Serial.println("   Data type is TYPE_INT8. High and low bytes:");
-  //             Serial.print("    High part: ");
-  //             Serial.println(interface.getResponse().getFrameData()[6]); 
-  //             Serial.print("    Low part: ");
-  //             Serial.println(interface.getResponse().getFrameData()[7]);
-  //           }
-  //         } else if (payloadDataType == 3) {
-  //           Serial.println("   Data type is TYPE_UINT16. High and low bytes:");
-  //           Serial.print("    High part: ");
-  //           Serial.println(interface.getResponse().getFrameData()[6]); 
-  //           Serial.print("    Low part: ");
-  //           Serial.println(interface.getResponse().getFrameData()[7]);
-  //         } else if (payloadDataType == 4) {
-  //           Serial.println("   Data type is TYPE_INT16. High and low bytes:");
-  //           Serial.print("    High part: ");
-  //           Serial.println(interface.getResponse().getFrameData()[6]); 
-  //           Serial.print("    Low part: ");
-  //           Serial.println(interface.getResponse().getFrameData()[7]);
-  //         } else if (payloadDataType == 5) {
-  //           Serial.println("   Data type is TYPE_UINT32. Four bytes:");
-  //           Serial.print("    MSB: ");
-  //           Serial.println(interface.getResponse().getFrameData()[6]); 
-  //           Serial.print("    : ");
-  //           Serial.println(interface.getResponse().getFrameData()[7]);
-  //           Serial.print("    :");
-  //           Serial.println(interface.getResponse().getFrameData()[8]);
-  //           Serial.print("    LSB:");
-  //           Serial.println(interface.getResponse().getFrameData()[9]);
-  //         } else {
-  //           Serial.println("   Data type is not coded for yet...");
-  //           // Debugging: 
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[6]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[7]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[8]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[9]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[10]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[11]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[12]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[13]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[14]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[15]);
-  //           Serial.print("   Raw byte:");
-  //           Serial.println(interface.getResponse().getFrameData()[16]);
-  //           // End debugging
-  //         }
-  //         
-  //       }
-  //     }
-  //  }
   }
 }
 
