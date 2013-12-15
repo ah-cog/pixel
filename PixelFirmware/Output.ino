@@ -28,69 +28,69 @@ with MinIMU-9-Arduino-AHRS. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-void printData (void) {
-  Serial.print("!");
-
-#if PRINT_EULER == 1
-//  Serial.print("ANG:");
-  Serial.print(ToDeg(roll)); // Roll (Rotation about X)
-  Serial.print("\t");
-  Serial.print(ToDeg(pitch)); // Pitch (Rotation about Y)
-  Serial.print("\t");
-  Serial.print(ToDeg(yaw)); // Yaw (Rotation about Z)
-#endif      
-#if PRINT_ANALOGS ==1
-//  Serial.print(",AN:");
-  Serial.print("\t");
-  Serial.print(AN[0]);  //(int)read_adc(0) // Gyro X
-  Serial.print("\t");
-  Serial.print(AN[1]); // Gyro Y
-  Serial.print("\t");
-  Serial.print(AN[2]); // Gyro Z
-  Serial.print("\t");
-  Serial.print(AN[3]); // Accelerometer X
-  Serial.print("\t");
-  Serial.print(AN[4]); // Accelerometer Y
-  Serial.print("\t");
-  Serial.print(AN[5]); // Accelerometer Z
-  Serial.print("\t");
-  Serial.print(c_magnetom_x);
-  Serial.print("\t");
-  Serial.print(c_magnetom_y);
-  Serial.print("\t");
-  Serial.print(c_magnetom_z);
-  Serial.print ("\t");
-  Serial.print(pressure);
-  Serial.print ("\t");
-  Serial.print(altitude);
-  Serial.print ("\t");
-  Serial.print(temperature);
-#endif
-
-/*
-#if PRINT_DCM == 1
-  Serial.print (",DCM:");
-  Serial.print(convert_to_dec(DCM_Matrix[0][0]));
-  Serial.print (",");
-  Serial.print(convert_to_dec(DCM_Matrix[0][1]));
-  Serial.print (",");
-  Serial.print(convert_to_dec(DCM_Matrix[0][2]));
-  Serial.print (",");
-  Serial.print(convert_to_dec(DCM_Matrix[1][0]));
-  Serial.print (",");
-  Serial.print(convert_to_dec(DCM_Matrix[1][1]));
-  Serial.print (",");
-  Serial.print(convert_to_dec(DCM_Matrix[1][2]));
-  Serial.print (",");
-  Serial.print(convert_to_dec(DCM_Matrix[2][0]));
-  Serial.print (",");
-  Serial.print(convert_to_dec(DCM_Matrix[2][1]));
-  Serial.print (",");
-  Serial.print(convert_to_dec(DCM_Matrix[2][2]));
-#endif
-*/
-  Serial.println();
-}
+//void printData (void) {
+//  Serial.print("!");
+//
+//#if PRINT_EULER == 1
+////  Serial.print("ANG:");
+//  Serial.print(ToDeg(roll)); // Roll (Rotation about X)
+//  Serial.print("\t");
+//  Serial.print(ToDeg(pitch)); // Pitch (Rotation about Y)
+//  Serial.print("\t");
+//  Serial.print(ToDeg(yaw)); // Yaw (Rotation about Z)
+//#endif      
+//#if PRINT_ANALOGS ==1
+////  Serial.print(",AN:");
+//  Serial.print("\t");
+//  Serial.print(AN[0]);  //(int)read_adc(0) // Gyro X
+//  Serial.print("\t");
+//  Serial.print(AN[1]); // Gyro Y
+//  Serial.print("\t");
+//  Serial.print(AN[2]); // Gyro Z
+//  Serial.print("\t");
+//  Serial.print(AN[3]); // Accelerometer X
+//  Serial.print("\t");
+//  Serial.print(AN[4]); // Accelerometer Y
+//  Serial.print("\t");
+//  Serial.print(AN[5]); // Accelerometer Z
+//  Serial.print("\t");
+//  Serial.print(c_magnetom_x);
+//  Serial.print("\t");
+//  Serial.print(c_magnetom_y);
+//  Serial.print("\t");
+//  Serial.print(c_magnetom_z);
+//  Serial.print ("\t");
+//  Serial.print(pressure);
+//  Serial.print ("\t");
+//  Serial.print(altitude);
+//  Serial.print ("\t");
+//  Serial.print(temperature);
+//#endif
+//
+///*
+//#if PRINT_DCM == 1
+//  Serial.print (",DCM:");
+//  Serial.print(convert_to_dec(DCM_Matrix[0][0]));
+//  Serial.print (",");
+//  Serial.print(convert_to_dec(DCM_Matrix[0][1]));
+//  Serial.print (",");
+//  Serial.print(convert_to_dec(DCM_Matrix[0][2]));
+//  Serial.print (",");
+//  Serial.print(convert_to_dec(DCM_Matrix[1][0]));
+//  Serial.print (",");
+//  Serial.print(convert_to_dec(DCM_Matrix[1][1]));
+//  Serial.print (",");
+//  Serial.print(convert_to_dec(DCM_Matrix[1][2]));
+//  Serial.print (",");
+//  Serial.print(convert_to_dec(DCM_Matrix[2][0]));
+//  Serial.print (",");
+//  Serial.print(convert_to_dec(DCM_Matrix[2][1]));
+//  Serial.print (",");
+//  Serial.print(convert_to_dec(DCM_Matrix[2][2]));
+//#endif
+//*/
+//  Serial.println();
+//}
 
 long convert_to_dec(float x) {
   return x * 10000000;
