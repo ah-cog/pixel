@@ -49,6 +49,7 @@ int SENSOR_SIGN[9] = { 1,-1,-1, 1,-1, 1, 1,-1,-1 }; // Correct directions x,y,z 
 #include <Wire.h>
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
+#include <TrueRandom.h>
 //#include <SPI.h>
 //#include <SD.h>
 //#include <avr/io.h>
@@ -188,18 +189,24 @@ unsigned short int next[1];
 #define TYPE_8BYTES	12
 #define TYPE_16BYTES	13
 #define TYPE_ASCII	14
- 
+
+byte uuidNumber[16]; // UUIDs in binary form are 16 bytes long
+
 void setup() {
+  
+  //
+  // Generate a new UUID to identify the device uniquely among all of them
+  // 
+  
+  TrueRandom.uuid(uuidNumber);
   
   //
   // Set up RadioBlock module
   //
   
   interface.setBaud(115200);
-  interface.begin(); 
-  
-  // Give RadioBlock time to initialize
-  delay(500);
+  interface.begin();
+  delay(500); // Give RadioBlock time to initialize
   
   // We need to set these values so other RadioBlocks can find us
   interface.setChannel(15);
@@ -207,8 +214,8 @@ void setup() {
   
   // Set up address of RadioBlocks interface
   // TODO: Iterate until an address is set. Iterate through addresses to check for availability.
-  // Broadcast message to "Get Acknowledgment State Request" and wait for response until timeout...
-//  interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
+  // TODO: Broadcast message to "Get Acknowledgment State Request" and wait for response until timeout...
+  // interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
   
   Serial.begin(115200);
  
@@ -226,7 +233,11 @@ void setup() {
   
   I2C_Init();
 
-  Serial.println("Pixel Firmware (Version 2013.12.14.22.58.36)");
+  Serial.println("Pixel Firmware (Version 2013.12.15.23.09.20)");
+  
+  Serial.print("UUID: ");
+  printUuid(uuidNumber);
+  Serial.println();
 
   delay(1500);
  
@@ -268,8 +279,6 @@ void setup() {
   //
   
   ledFadeOut(); // Fade off to indicate ready
-  
-  
 }
 
 short address = -1;
@@ -281,6 +290,10 @@ boolean hasInitialized = false;
 byte messageQueue = 0x00;
 
 void loop() {
+  
+  //
+  // Initialize device (before gestures and communication are available)
+  //
   
   if (!verifiedAddress) {
     delay(500);
@@ -324,23 +337,23 @@ void loop() {
   
   if (getMeshData()) {
     // Message was received from a neighbor in the mesh
-    if (parseMessage()) {
+    if (processMessage()) {
       // Message parsed successfully
     }
   }
   
   if (hasInitialized) {
    
-    //
-    // Get IMU data
-    //
+    // Primary event loop
     
-    if (sensePhysicalData()) {
+    if (sensePhysicalData()) { // Get IMU data
       //printData();
-      detectMovement();
+      if (detectMovements()) {
+        // TOOD: Detect gesture (?)
+      }
     }
     
-    // detectGesture(); // TODO: Recognize gestures in movement patterns
+    // detectGestures(); // TODO: Recognize gestures in movement patterns
     
 //    Serial.println(hasCounter + "\t" + lastCount);
     
@@ -453,16 +466,16 @@ void sendCounter() {
 
 unsigned long lastJerkUp = 0;
 unsigned long lastJerkDown = 0;
-boolean detectMovement() {
+boolean detectMovements() {
   
-  // Jerk Up
+  // Check for "Jerk Up"
   if (AN[5] > (255 + 400)) {
     unsigned long currentTime = millis();
     Serial.println("Jerk up");
     lastJerkUp = currentTime; // Update time of last jerk up
   }
   
-  // Jerk Down
+  // Check for "Jerk Down"
   if ((255 - 400) > AN[5]) {
     unsigned long currentTime = millis();
     Serial.println("Jerk down");
@@ -472,17 +485,17 @@ boolean detectMovement() {
     return true;
   }
   
-  // Shake (Jerk Up + Jerk Down multiple times within a certain time period)
+  // Check for "Shake" (Jerk Up + Jerk Down multiple times within a certain time period)
 //  if (-10 < AN[5] && AN[5] < 10) {
 //    Serial.println("Shaking");
 //  }
   
-  // Freefall
+  // Check for "Freefall"
   if (-10 < AN[5] && AN[5] < 10) {
 //    Serial.println("Free fall");
   }
   
-  // Pickup
+  // Check for "Lift Up"
   if ((255 + 100) < AN[5]) {
     ledOn();
     
@@ -494,7 +507,7 @@ boolean detectMovement() {
     return true;
   }
   
-  // Set down
+  // Check for "Set Down"
   if (AN[5] < (255 - 200)) {
     ledFadeOut();
     
@@ -507,6 +520,10 @@ boolean detectMovement() {
   }
   
   return false;
+}
+
+boolean detectGestures() {
+  return true;
 }
 
 void ledOn() {
@@ -529,6 +546,7 @@ void ledFadeOut() {
 /**
  * Read data from the inertial measurement unit (IMU) sensors.
  */
+// TODO: Create a timer interrupt that calls this at 50 Hz
 boolean sensePhysicalData() {
   
   if ((millis() - timer) >= 20) { // Main loop runs at 50Hz
@@ -571,6 +589,9 @@ boolean sensePhysicalData() {
   }
 }
 
+/**
+ * Read received (and buffered) data from the RadioBlock.
+ */
 boolean getMeshData() {
   
   if (interface.readPacket(RADIOBLOCK_PACKET_READ_TIMEOUT)) { // Waits a maximum of <i>timeout</i> milliseconds for a response packet before timing out; returns true if packet is read. Returns false if timeout or error occurs.
@@ -713,6 +734,10 @@ boolean getMeshData() {
               
               // Protect against infinite loop with this conditional
               if (loopCount > maxLoopCount) {
+                Serial.println("WARNING: loopCount > maxLoopCount");
+                interface.getResponse().reset(); // TODO: Possibly remove this. This might be a bad idea.
+                clearCounter();
+                return false;
                 break;
               }
               
@@ -779,10 +804,17 @@ boolean getMeshData() {
 //            setCounter();
             
           }
-        }
+        } 
+        
+        // Return true if a packet was read (i.e., received) successfully
+        // TODO: Add "return true" and "return false" cases to different conditions above, in this block.
+        return true;
         
       } else if (commandId == APP_COMMAND_DATA_CONF) {
+        
         Serial.println("APP_COMMAND_DATA_CONF");
+        
+        return false; // Return true if a packet was read (i.e., received) successfully
         
       } else if (commandId == APP_COMMAND_GET_ADDR_RESP) { // (i.e., 0x25) [Page 15]
         
@@ -795,15 +827,21 @@ boolean getMeshData() {
         Serial.println(address, HEX); // Source address
         
         hasValidAddress = true;
-      
+        
+        return false; // Return true if a packet was read (i.e., received) successfully
       }
       
     } else {
+      
       Serial.println("Error: Failed to receive packet.");
-      // TODO: Clear the buffer, check if this .
+      // TODO: Clear the buffer, check if this is causing messages to stop sending back and forth.
+      // TODO: Reset!!
+      interface.getResponse().reset(); // TODO: Possibly remove this. This might be a bad idea.
+      clearCounter();
+      return false; // Return true if a packet was read (i.e., received) successfully
     }
     
-    return true; // Return true if a packet was read (i.e., received) successfully
+    // return true; // Return true if a packet was read (i.e., received) successfully
     
   } else { // Timeout or error occurred
     return false;
@@ -813,26 +851,20 @@ boolean getMeshData() {
 /**
  * Process received message data, update state
  */
-boolean parseMessage() {
+boolean processMessage() {
   
   // TODO: Dequeue message from front of the queue
   byte message = messageQueue;
   
   if (message == 0x1F) {
-    
-    Serial.println("parseMessage(0x1F)");
-    
-    // Turn on if received counter
-    setCounter();
-    
-    // TODO: Free the message from memory
-    messageQueue = 0x00;
-    
+    Serial.println("processMessage(0x1F)");
+    setCounter(); // Turn on if received counter
+    messageQueue = 0x00; // TODO: Free the message from memory
     return true;
-    
   } else if (message == 0x00) {
-    // noop
+    // NOOP (i.e., "no operation")
+    return true;
   }
   
-  return false;
+  return false; // By default, return false
 }
