@@ -432,9 +432,13 @@ void sendGesture(char gestureCode) {
   //hasCounter = true;
   setCounter();
   
-  delay(500);
+  delay(200);
   
   return;
+  
+  
+  
+  
   
   for (int i = 0; i < NEIGHBOR_COUNT; i++) {
     //This is the OTHER guys address
@@ -461,8 +465,18 @@ void sendCounter() {
     // Package the data payload for transmission
     interface.addData(1, (byte) 0x1F); // TYPE_INT8
     interface.sendMessage(); // Send data OTA
+    
+    // Wait for confirmation
+    // delayUntilConfirmation();
   }
 }
+
+//boolean delayUntilConfirmation() {
+////  if (interface.readPacket(RADIOBLOCK_PACKET_READ_TIMEOUT)) {
+////  }
+//  readPacketUntilAvailable();
+//  // TODO: Wait until receive "confirmed receive" message received
+//}
 
 unsigned long lastJerkUp = 0;
 unsigned long lastJerkDown = 0;
