@@ -49,11 +49,44 @@ int SENSOR_SIGN[9] = { 1,-1,-1, 1,-1, 1, 1,-1,-1 }; // Correct directions x,y,z 
 #include <Wire.h>
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
-#include <TrueRandom.h>
-//#include <SPI.h>
-//#include <SD.h>
-//#include <avr/io.h>
-//#include <avr/interrupt.h>
+//#include <TrueRandom.h>
+#include <Adafruit_CC3000.h>
+#include <SPI.h>
+#include <SD.h>
+#include "utility/debug.h"
+#include "utility/socket.h"
+
+
+
+// set up variables using the SD utility library functions:
+Sd2Card card;
+SdVolume volume;
+SdFile root;
+
+#define SDCARD_CHIPSELECT 10
+
+// These are the interrupt and control pins
+#define ADAFRUIT_CC3000_IRQ   1 // 3  // MUST be an interrupt pin!
+// These can be any two pins
+#define ADAFRUIT_CC3000_VBAT  4
+#define ADAFRUIT_CC3000_CS    9
+// Use hardware SPI for the remaining pins
+// On an UNO, SCK = 13, MISO = 12, and MOSI = 11
+Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV2); // you can change this clock speed
+
+#define WLAN_SSID "Hackerspace" // Cannot be longer than 32 characters!
+#define WLAN_PASS "MakingIsFun!"
+// Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
+#define WLAN_SECURITY WLAN_SEC_WPA2
+
+#define LISTEN_PORT 80 // What TCP port to listen on for connections.  The echo protocol uses port 7.
+
+Adafruit_CC3000_Server httpServer(LISTEN_PORT);
+
+
+
+
+
 
 // LSM303 accelerometer (8g sensitivity)
 // 3.8 mg/digit; 1 g = 256
@@ -166,7 +199,7 @@ float Temporary_Matrix[3][3] = {
 #define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload
 
 // The module's pins 1, 2, 3, and 4 are connected to Arduino's pins 5, 4, 3, and 2.
-RadioBlockSerialInterface interface = RadioBlockSerialInterface(-1, -1, 8, 2);
+RadioBlockSerialInterface interface = RadioBlockSerialInterface(-1, -1, 7, 8);
 
 boolean hasCounter = false;
 unsigned long lastCount = 0;
@@ -198,7 +231,7 @@ void setup() {
   // Generate a new UUID to identify the device uniquely among all of them
   // 
   
-  TrueRandom.uuid(uuidNumber);
+//  TrueRandom.uuid(uuidNumber);
   
   //
   // Set up RadioBlock module
@@ -206,11 +239,16 @@ void setup() {
   
   interface.setBaud(115200);
   interface.begin();
-  delay(500); // Give RadioBlock time to initialize
+  delay(1500); // Give RadioBlock time to initialize
   
   // We need to set these values so other RadioBlocks can find us
   interface.setChannel(15);
   interface.setPanID(0xBAAD);
+  
+  interface.setLED(true); delay(100); interface.setLED(false); delay(100);
+  interface.setLED(true); delay(100); interface.setLED(false); delay(100);
+  interface.setLED(true); delay(100); interface.setLED(false); delay(100);
+  interface.setLED(false);
   
   // Set up address of RadioBlocks interface
   // TODO: Iterate until an address is set. Iterate through addresses to check for availability.
@@ -218,6 +256,74 @@ void setup() {
   // interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
   
   Serial.begin(115200);
+  while (!Serial) { } // wait for serial port to connect. Needed for Leonardo only
+  
+  Serial.print("\nInitializing SD card...");
+  pinMode(10, OUTPUT);     // change this to 53 on a mega
+  
+   // we'll use the initialization code from the utility libraries
+  // since we're just testing if the card is working!
+  if (!card.init(SPI_HALF_SPEED, SDCARD_CHIPSELECT)) {
+    Serial.println("initialization failed. Things to check:");
+    Serial.println("* is a card is inserted?");
+    Serial.println("* Is your wiring correct?");
+    Serial.println("* did you change the chipSelect pin to match your shield or module?");
+    return;
+  } else {
+   Serial.println("Wiring is correct and a card is present."); 
+  }
+  
+  // print the type of card
+  Serial.print("\nCard type: ");
+  switch(card.type()) {
+    case SD_CARD_TYPE_SD1:
+      Serial.println("SD1");
+      break;
+    case SD_CARD_TYPE_SD2:
+      Serial.println("SD2");
+      break;
+    case SD_CARD_TYPE_SDHC:
+      Serial.println("SDHC");
+      break;
+    default:
+      Serial.println("Unknown");
+  }
+
+  // Now we will try to open the 'volume'/'partition' - it should be FAT16 or FAT32
+  if (!volume.init(card)) {
+    Serial.println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
+    return;
+  }
+
+
+  // print the type and size of the first FAT-type volume
+  uint32_t volumesize;
+  Serial.print("\nVolume type is FAT");
+  Serial.println(volume.fatType(), DEC);
+  Serial.println();
+  
+  volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
+  volumesize *= volume.clusterCount();       // we'll have a lot of clusters
+  volumesize *= 512;                            // SD card blocks are always 512 bytes
+  Serial.print("Volume size (bytes): ");
+  Serial.println(volumesize);
+  Serial.print("Volume size (Kbytes): ");
+  volumesize /= 1024;
+  Serial.println(volumesize);
+  Serial.print("Volume size (Mbytes): ");
+  volumesize /= 1024;
+  Serial.println(volumesize);
+
+  
+  Serial.println("\nFiles found on the card (name, date and size in bytes): ");
+  root.openRoot(volume);
+  
+  // list all files in the card with date and size
+  root.ls(LS_R | LS_DATE | LS_SIZE);
+  
+  
+  
+  
  
   ledOn(); delay(100); ledOff(); delay(600);
   ledOn(); delay(100); ledOff(); delay(40);
@@ -263,10 +369,10 @@ void setup() {
   
   AN_OFFSET[5] -= GRAVITY * SENSOR_SIGN[5];
   
-//  Serial.println("Offset:");
-//  for (int y = 0; y < 6; y++) {
-//    Serial.println(AN_OFFSET[y]);
-//  }
+  Serial.println("Offset:");
+  for (int y = 0; y < 6; y++) {
+    Serial.println(AN_OFFSET[y]);
+  }
   
   delay(1000);
     
@@ -279,6 +385,56 @@ void setup() {
   //
   
   ledFadeOut(); // Fade off to indicate ready
+  
+  
+  
+  
+  //
+  // Initialize WiFI
+  //
+  
+  Serial.println(F("Hello, CC3000!\n")); 
+
+  Serial.print("Free RAM: "); Serial.println(getFreeRam(), DEC);
+  
+  /* Initialise the module */
+  Serial.println(F("\nInitializing..."));
+  if (!cc3000.begin()) {
+    Serial.println(F("Couldn't begin()! Check your wiring?"));
+    while(1);
+  }
+  
+  Serial.println(F("\Connecting to AP..."));
+  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
+    Serial.println(F("Failed!"));
+    while(1);
+  }
+   
+  Serial.println(F("Connected!"));
+  
+  Serial.println(F("Request DHCP"));
+  while (!cc3000.checkDHCP()) {
+    delay(100); // ToDo: Insert a DHCP timeout!
+  }
+
+  /* Display the IP address DNS, Gateway, etc. */  
+  while (! displayConnectionDetails()) {
+    delay(1000);
+  }
+
+  //
+  // You can safely remove this to save some flash memory!
+  //
+  Serial.println(F("\r\nNOTE: This sketch may cause problems with other sketches"));
+//  Serial.println(F("since the .disconnect() function is never called, so the"));
+//  Serial.println(F("AP may refuse connection requests from the CC3000 until a"));
+//  Serial.println(F("timeout period passes.  This is normal behaviour since"));
+//  Serial.println(F("there isn't an obvious moment to disconnect with a server.\r\n"));
+  
+  // Start listening for connections
+  httpServer.begin();
+  
+  Serial.println(F("Listening for connections..."));
 }
 
 short address = -1;
@@ -295,40 +451,49 @@ void loop() {
   // Initialize device (before gestures and communication are available)
   //
   
-  if (!verifiedAddress) {
-    delay(500);
-    interface.getAddress();
-    verifiedAddress = true;
-  }
+//  if (!verifiedAddress) {
+//    delay(500);
+//    interface.getAddress();
+//    verifiedAddress = true;
+//  }
+//  
+//  if (!hasInitialized) {
+//    if (verifiedAddress) {
+//      if (hasValidAddress && !hasValidNeighbors) {
+//        Serial.println("Manually setting neighbors.");
+//        // Listen for address
+//        // neighbors
+//        if (address == 0) {
+//          neighbors[0] = 1;
+//          neighbors[1] = 2;
+//          next[0] = 1;
+//          hasCounter = false;
+//          hasInitialized = true;
+//        } else if (address == 1) {
+//          neighbors[0] = 0;
+//          neighbors[1] = 2;
+//          next[0] = 2;
+//          hasCounter = false;
+//          hasInitialized = true;
+//        } else if (address == 2) {
+//          neighbors[0] = 0;
+//          neighbors[1] = 1;
+//          next[0] = 1;
+//          hasCounter = false;
+//          hasInitialized = true;
+//        }
+//        hasValidNeighbors = true;
+//      }
+//    }
+//  }
+  hasInitialized = true;
   
-  if (!hasInitialized) {
-    if (verifiedAddress) {
-      if (hasValidAddress && !hasValidNeighbors) {
-        Serial.println("Manually setting neighbors.");
-        // Listen for address
-        // neighbors
-        if (address == 0) {
-          neighbors[0] = 1;
-          neighbors[1] = 2;
-          next[0] = 1;
-          hasCounter = false;
-          hasInitialized = true;
-        } else if (address == 1) {
-          neighbors[0] = 0;
-          neighbors[1] = 2;
-          next[0] = 2;
-          hasCounter = false;
-          hasInitialized = true;
-        } else if (address == 2) {
-          neighbors[0] = 0;
-          neighbors[1] = 1;
-          next[0] = 1;
-          hasCounter = false;
-          hasInitialized = true;
-        }
-        hasValidNeighbors = true;
-      }
-    }
+  //
+  // Read Web data
+  //
+  
+  if (getWebData()) {
+    // Yep!
   }
   
   //
@@ -347,7 +512,7 @@ void loop() {
     // Primary event loop
     
     if (sensePhysicalData()) { // Get IMU data
-      //printData();
+      printData();
       if (detectMovements()) {
         // TOOD: Detect gesture (?)
       }
@@ -863,6 +1028,67 @@ boolean getMeshData() {
 }
 
 /**
+ * Read received (and buffered) data from the Internet.
+ */
+boolean getWebData() {
+  // Try to get a client which is connected.
+  Adafruit_CC3000_ClientRef client = httpServer.available();
+  if (client) {
+    Serial.println("Client");
+    boolean currentLineIsBlank = true;
+    while(client.connected()) {
+      Serial.println("Client connected");
+      // Check if there is data available to read.
+      if (client.available() > 0) {
+        Serial.println("Client available");
+        // Read a byte and write it to all clients.
+        uint8_t c = client.read();
+        //client.write(c);
+        
+        if (c == '\n' && currentLineIsBlank) {
+          // send a standard http response header
+          client.println("HTTP/1.1 200 OK");
+          client.println("Content-Type: text/html");
+          client.println("Connection: close");  // the connection will be closed after completion of the response
+          // client.println("Refresh: 5");  // refresh the page automatically every 5 sec
+          client.println();
+          client.println("<!DOCTYPE HTML>");
+          client.println("<html>");
+          client.println("<h1>Pixel</h1>");
+          // output the value of each analog input pin
+          for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
+            int sensorReading = analogRead(analogChannel);
+            client.print("analog input ");
+            client.print(analogChannel);
+            client.print(" is ");
+            client.print(sensorReading);
+            client.println("<br />");
+          }
+          client.println("</html>");
+          break;
+        }
+        
+        if (c == '\n') {
+          // you're starting a new line
+          currentLineIsBlank = true;
+        } else if (c != '\r') {
+          // you've gotten a character on the current line
+          currentLineIsBlank = false;
+        }
+      }
+    }
+    
+    // give the web browser time to receive the data
+    delay(1);
+    
+    // Close the connection
+    client.close();
+  }
+  
+  return true;
+}
+
+/**
  * Process received message data, update state
  */
 boolean processMessage() {
@@ -881,4 +1107,32 @@ boolean processMessage() {
   }
   
   return false; // By default, return false
+}
+
+
+
+
+
+
+
+
+
+//
+// Tries to read the IP address and other connection details
+//
+bool displayConnectionDetails (void) {
+  uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
+  
+  if(!cc3000.getIPAddress(&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
+//    Serial.println(F("Unable to retrieve the IP Address!\r\n"));
+    return false;
+  } else {
+    Serial.print(F("\nIP Addr: ")); cc3000.printIPdotsRev(ipAddress);
+//    Serial.print(F("\nNetmask: ")); cc3000.printIPdotsRev(netmask);
+//    Serial.print(F("\nGateway: ")); cc3000.printIPdotsRev(gateway);
+//    Serial.print(F("\nDHCPsrv: ")); cc3000.printIPdotsRev(dhcpserv);
+//    Serial.print(F("\nDNSserv: ")); cc3000.printIPdotsRev(dnsserv);
+    Serial.println();
+    return true;
+  }
 }

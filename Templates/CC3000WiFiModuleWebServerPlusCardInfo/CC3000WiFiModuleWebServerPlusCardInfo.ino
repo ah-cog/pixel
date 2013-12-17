@@ -19,7 +19,7 @@ SdFile root;
 #define SDCARD_CHIPSELECT 10
 
 // These are the interrupt and control pins
-#define ADAFRUIT_CC3000_IRQ   3  // MUST be an interrupt pin!
+#define ADAFRUIT_CC3000_IRQ   1 // 3  // MUST be an interrupt pin!
 // These can be any two pins
 #define ADAFRUIT_CC3000_VBAT  4
 #define ADAFRUIT_CC3000_CS    9
@@ -135,6 +135,7 @@ void setup(void) {
     while(1);
   }
   
+  Serial.println(F("\Connecting to AP..."));
   if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
     Serial.println(F("Failed!"));
     while(1);
@@ -172,10 +173,13 @@ void loop (void) {
   // Try to get a client which is connected.
   Adafruit_CC3000_ClientRef client = httpServer.available();
   if (client) {
+    Serial.println("Client");
     boolean currentLineIsBlank = true;
     while(client.connected()) {
+      Serial.println("Client connected");
       // Check if there is data available to read.
       if (client.available() > 0) {
+        Serial.println("Client available");
         // Read a byte and write it to all clients.
         uint8_t c = client.read();
         //client.write(c);

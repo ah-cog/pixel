@@ -19,7 +19,7 @@
  *   http://tools.ietf.org/html/rfc4122
  */
 
-void printHex(byte number) {
+void prinUuidtHex(byte number) {
   int topDigit = number >> 4;
   int bottomDigit = number & 0x0f;
   // Print high hex digit
@@ -35,6 +35,6 @@ void printUuid(byte* uuidNumber) {
     if (i==6) Serial.print("-");
     if (i==8) Serial.print("-");
     if (i==10) Serial.print("-");
-    printHex(uuidNumber[i]);
+    prinUuidtHex(uuidNumber[i]);
   }
 }
