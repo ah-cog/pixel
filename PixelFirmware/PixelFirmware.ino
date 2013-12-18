@@ -256,7 +256,9 @@ void setup() {
   // interface.setAddress(OUR_ADDRESS); // TODO: Dynamically set address based on other address in the area (and extended address space from shared state, and add collision fixing.)
   
   Serial.begin(115200);
-  while (!Serial) { } // wait for serial port to connect. Needed for Leonardo only
+  //while (!Serial) { } // wait for serial port to connect. Needed for Leonardo only
+  
+  Serial.println(F("Pixel Firmware (Version 2013.12.15.23.09.20)"));
   
   Serial.print("\nInitializing SD card...");
   pinMode(10, OUTPUT);     // change this to 53 on a mega
@@ -273,7 +275,7 @@ void setup() {
    Serial.println("Wiring is correct and a card is present."); 
   }
   
-  // print the type of card
+  // Print the type of card
   Serial.print("\nCard type: ");
   switch(card.type()) {
     case SD_CARD_TYPE_SD1:
@@ -295,8 +297,7 @@ void setup() {
     return;
   }
 
-
-  // print the type and size of the first FAT-type volume
+  // Print the type and size of the first FAT-type volume
   uint32_t volumesize;
   Serial.print("\nVolume type is FAT");
   Serial.println(volume.fatType(), DEC);
@@ -337,9 +338,8 @@ void setup() {
   // Initialize IMU
   //
   
+  Serial.println("Initializing IMU...");
   I2C_Init();
-
-  Serial.println("Pixel Firmware (Version 2013.12.15.23.09.20)");
   
   Serial.print("UUID: ");
   printUuid(uuidNumber);
@@ -392,27 +392,25 @@ void setup() {
   //
   // Initialize WiFI
   //
-  
-  Serial.println(F("Hello, CC3000!\n")); 
 
-  Serial.print("Free RAM: "); Serial.println(getFreeRam(), DEC);
+  // Serial.print("Free RAM: "); Serial.println(getFreeRam(), DEC);
   
   /* Initialise the module */
-  Serial.println(F("\nInitializing..."));
+  Serial.println(F("\nInitializing Wi-Fi..."));
   if (!cc3000.begin()) {
     Serial.println(F("Couldn't begin()! Check your wiring?"));
     while(1);
   }
   
-  Serial.println(F("\Connecting to AP..."));
+  Serial.println(F("\tConnecting to AP..."));
   if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
-    Serial.println(F("Failed!"));
+    Serial.println(F("\tFailed!"));
     while(1);
   }
    
-  Serial.println(F("Connected!"));
+  Serial.println(F("\tConnected!"));
   
-  Serial.println(F("Request DHCP"));
+  Serial.println(F("\tRequesting DHCP"));
   while (!cc3000.checkDHCP()) {
     delay(100); // ToDo: Insert a DHCP timeout!
   }
@@ -425,7 +423,7 @@ void setup() {
   //
   // You can safely remove this to save some flash memory!
   //
-  Serial.println(F("\r\nNOTE: This sketch may cause problems with other sketches"));
+//  Serial.println(F("\r\nNOTE: This sketch may cause problems with other sketches"));
 //  Serial.println(F("since the .disconnect() function is never called, so the"));
 //  Serial.println(F("AP may refuse connection requests from the CC3000 until a"));
 //  Serial.println(F("timeout period passes.  This is normal behaviour since"));
@@ -434,7 +432,7 @@ void setup() {
   // Start listening for connections
   httpServer.begin();
   
-  Serial.println(F("Listening for connections..."));
+  Serial.println(F("\tListening for web connections..."));
 }
 
 short address = -1;
@@ -456,37 +454,40 @@ void loop() {
 //    interface.getAddress();
 //    verifiedAddress = true;
 //  }
-//  
-//  if (!hasInitialized) {
-//    if (verifiedAddress) {
-//      if (hasValidAddress && !hasValidNeighbors) {
-//        Serial.println("Manually setting neighbors.");
-//        // Listen for address
-//        // neighbors
-//        if (address == 0) {
-//          neighbors[0] = 1;
-//          neighbors[1] = 2;
-//          next[0] = 1;
-//          hasCounter = false;
-//          hasInitialized = true;
-//        } else if (address == 1) {
-//          neighbors[0] = 0;
-//          neighbors[1] = 2;
-//          next[0] = 2;
-//          hasCounter = false;
-//          hasInitialized = true;
-//        } else if (address == 2) {
-//          neighbors[0] = 0;
-//          neighbors[1] = 1;
-//          next[0] = 1;
-//          hasCounter = false;
-//          hasInitialized = true;
-//        }
-//        hasValidNeighbors = true;
-//      }
-//    }
-//  }
+
+  // HACK (for testing/debuggin):
+  verifiedAddress = true;
   hasInitialized = true;
+
+  if (!hasInitialized) {
+    if (verifiedAddress) {
+      if (hasValidAddress && !hasValidNeighbors) {
+        Serial.println("Manually setting neighbors.");
+        // Listen for address
+        // neighbors
+        if (address == 0) {
+          neighbors[0] = 1;
+          neighbors[1] = 2;
+          next[0] = 1;
+          hasCounter = false;
+          hasInitialized = true;
+        } else if (address == 1) {
+          neighbors[0] = 0;
+          neighbors[1] = 2;
+          next[0] = 2;
+          hasCounter = false;
+          hasInitialized = true;
+        } else if (address == 2) {
+          neighbors[0] = 0;
+          neighbors[1] = 1;
+          next[0] = 1;
+          hasCounter = false;
+          hasInitialized = true;
+        }
+        hasValidNeighbors = true;
+      }
+    }
+  }
   
   //
   // Read Web data
@@ -1054,6 +1055,8 @@ boolean getWebData() {
           client.println();
           client.println("<!DOCTYPE HTML>");
           client.println("<html>");
+          client.println("<head></head>");
+          client.println("<body style=\"background-color: #e75e53;\">");
           client.println("<h1>Pixel</h1>");
           // output the value of each analog input pin
           for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
