@@ -35,16 +35,16 @@ It might not work on all networks!
 #define ADAFRUIT_CC3000_IRQ   1  // MUST be an interrupt pin!
 // These can be any two pins
 #define ADAFRUIT_CC3000_VBAT  4
-#define ADAFRUIT_CC3000_CS    2
+#define ADAFRUIT_CC3000_CS    10
 // Use hardware SPI for the remaining pins
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,
                                          SPI_CLOCK_DIV2); // you can change this clock speed
 
-#define WLAN_SSID       "WhiteGiraffe"           // cannot be longer than 32 characters!
+#define WLAN_SSID       "Gubbels Down"           // cannot be longer than 32 characters!
 #define WLAN_PASS       "6AzjFtdDFD"
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
-#define WLAN_SECURITY   WLAN_SEC_WPA2
+#define WLAN_SECURITY WLAN_SEC_UNSEC // WLAN_SEC_WPA2
 
 #define IDLE_TIMEOUT_MS  3000      // Amount of time to wait (in milliseconds) with no data 
                                    // received before closing the connection.  If you know the server
@@ -94,6 +94,7 @@ void setup(void)
   while (!cc3000.checkDHCP())
   {
     delay(100); // ToDo: Insert a DHCP timeout!
+    Serial.println(F("Failed to get DHCP, trying again!"))
   }  
 
   /* Display the IP address DNS, Gateway, etc. */  
@@ -108,6 +109,7 @@ void setup(void)
     if (! cc3000.getHostByName(WEBSITE, &ip)) {
       Serial.println(F("Couldn't resolve!"));
     }
+    Serial.println(F("Failed to get DHCP, trying again!"))
     delay(500);
   }
 

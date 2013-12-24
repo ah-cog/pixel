@@ -33,10 +33,46 @@ MinIMU-9-Arduino-AHRS
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
 #include <SD.h>
+#include <EEPROM.h>
 #include "utility/debug.h"
 #include "utility/socket.h"
 
 #include "Mesh.h" // For mesh network (i.e., the RadioBlocks modules)
+
+/**
+ * SD Card Setup
+ */
+
+// set up variables using the SD utility library functions:
+#define SDCARD_CS 9
+Sd2Card card;
+SdVolume volume;
+SdFile root;
+
+/**
+ * Wi-Fi Setup
+ */
+
+// These are the interrupt and control pins for the CC3000 chip
+#define ADAFRUIT_CC3000_IRQ   1 // 3  // This MUST be an interrupt pin!
+#define ADAFRUIT_CC3000_VBAT  4 // This can be any pin
+#define ADAFRUIT_CC3000_CS    10 // This can be any pin
+// Use hardware SPI for the remaining pins:
+//     Arduino UNO: SCK = 13, MISO = 12, and MOSI = 11
+Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV2); // you can change this clock speed
+
+#define WLAN_SSID "Gubbels Down" // Cannot be longer than 32 characters!
+#define WLAN_PASS "6AzjFtdDFD"
+// Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
+#define WLAN_SECURITY WLAN_SEC_UNSEC // WLAN_SEC_WPA2
+
+#define HTTP_LISTEN_PORT 80 // What TCP port to listen on for connections.  The echo protocol uses port 7.
+
+Adafruit_CC3000_Server httpServer(HTTP_LISTEN_PORT);
+
+/**
+ * Accelerometer Setup
+ */
 
 // Uncomment the below line to use this axis definition: 
 // X axis pointing forward
@@ -56,35 +92,6 @@ MinIMU-9-Arduino-AHRS
 // Positive yaw : counterclockwise
 //int SENSOR_SIGN[9] = {1,-1,-1,-1,1,1,1,-1,-1}; //Correct directions x,y,z - gyro, accelerometer, magnetometer
 int SENSOR_SIGN[9] = { 1, -1, -1, 1, -1, 1, 1, -1, -1 }; // Correct directions x,y,z - gyro, accelerometer, magnetometer
-
-// set up variables using the SD utility library functions:
-#define SDCARD_CS 9
-Sd2Card card;
-SdVolume volume;
-SdFile root;
-
-
-// These are the interrupt and control pins for the CC3000 chip
-#define ADAFRUIT_CC3000_IRQ   1 // 3  // This MUST be an interrupt pin!
-#define ADAFRUIT_CC3000_VBAT  4 // This can be any pin
-#define ADAFRUIT_CC3000_CS    10 // This can be any pin
-// Use hardware SPI for the remaining pins:
-//     Arduino UNO: SCK = 13, MISO = 12, and MOSI = 11
-Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV2); // you can change this clock speed
-
-#define WLAN_SSID "Gubbels Down" // Cannot be longer than 32 characters!
-#define WLAN_PASS "6AzjFtdDFD"
-// Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
-#define WLAN_SECURITY WLAN_SEC_UNSEC // WLAN_SEC_WPA2
-
-#define HTTP_LISTEN_PORT 80 // What TCP port to listen on for connections.  The echo protocol uses port 7.
-
-Adafruit_CC3000_Server httpServer(HTTP_LISTEN_PORT);
-
-
-
-
-
 
 // LSM303 accelerometer (8g sensitivity)
 // 3.8 mg/digit; 1 g = 256
@@ -179,9 +186,9 @@ float Temporary_Matrix[3][3] = {
     { 0, 0, 0 }
 };
 
-//
-// Set up RadioBlocks
-//
+/**
+ * RadioBlocks Setup
+ */
 
 #define RADIOBLOCK_PACKET_READ_TIMEOUT 40
 #define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload
@@ -189,13 +196,21 @@ float Temporary_Matrix[3][3] = {
 // The module's pins 1, 2, 3, and 4 are connected to Arduino's pins 5, 4, 3, and 2.
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(-1, -1, 7, 8);
 
+/**
+ * Idenity Setup
+ */
+
+byte uuidNumber[16]; // UUIDs in binary form are 16 bytes long
+
+/**
+ * Device Setup
+ */
+
 boolean hasCounter = false;
 unsigned long lastCount = 0;
 #define NEIGHBOR_COUNT 2
 unsigned short int neighbors[NEIGHBOR_COUNT];
 unsigned short int next[1];
-
-byte uuidNumber[16]; // UUIDs in binary form are 16 bytes long
 
 void setup() {
 
@@ -204,8 +219,34 @@ void setup() {
     // 
     
     randomSeed(analogRead(A9)); // Seed pseudo-random number generator
-    generateUuid(uuidNumber, 16); // Generate UUID
-    // TODO: Write UUID to EEPROM if it doesn't already exist
+    
+    delay(1000);
+    
+    byte value = EEPROM.read(0);
+    if (value == 0xFF) { // Generate UUID and save to EEPROM
+        Serial.print("Generating UUID... ");
+        generateUuid(uuidNumber, 16); // Generate UUID
+        Serial.println("Done.");
+        
+        // Write to EEPROM
+        Serial.print("Writing UUID to EEPROM... ");
+        for (int i = 0; i < 16; i++) {
+            EEPROM.write(i, (uint8_t) uuidNumber[i]);
+            delay(100);
+        }
+        Serial.println("Done.");
+        
+        
+    } else { // Read UUID from EEPROM
+        
+        byte value = 0x00; // = EEPROM.read(uuidEepromAddress);
+        Serial.print("Reading UUID from EEPROM... ");
+        for (int i = 0; i < 16; i++) {
+            value = EEPROM.read(i);
+            uuidNumber[i] = value;
+        }
+        Serial.println("Done.");
+    }
     
     //
     // Set up RadioBlock module
@@ -474,7 +515,7 @@ void loop() {
     //    verifiedAddress = true;
     //  }
 
-    // HACK (for testing/debuggin):
+    // HACK (for testing/debugging):
     verifiedAddress = true;
     hasInitialized = true;
 
@@ -1192,7 +1233,7 @@ boolean getWebData() {
                         client.println("<link href='http://fonts.googleapis.com/css?family=Josefin+Sans:100,300,400,600,700,100italic,300italic,400italic,600italic,700italic|Comfortaa:400,300,700' rel='stylesheet' type='text/css'>");
                         client.println("<script src='https://cdn.firebase.com/v0/firebase.js'></script>");
                         client.println("<script src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js'></script>");
-                        client.println("<script src='https://raw.github.com/NeilFraser/JS-Interpreter/master/interpreter.js'></script>");
+                        // client.println("<script src='https://raw.github.com/NeilFraser/JS-Interpreter/master/interpreter.js'></script>");
                         client.println("</head>");
                         client.println("<body style=\"background-color: #e75e53; font-family: 'Josefin Sans', sans-serif;\">");
                         client.println("<h1 style=\"font-family: 'Comfortaa', cursive; font-size: 72px; font-weight: normal; color: #96d4f0;\">pixel</h1>");
