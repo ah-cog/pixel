@@ -18,6 +18,12 @@
  * For implementation details of UUIDs, see
  *   http://tools.ietf.org/html/rfc4122
  */
+ 
+void generateUuid(byte* uuidNumber, int length) {
+    for (int i = 0; i < 16; i++) {
+        uuidNumber[i] = (byte) random(0x00, 0xFF);
+    }
+}
 
 void prinUuidtHex(byte number) {
   int topDigit = number >> 4;

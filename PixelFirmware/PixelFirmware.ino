@@ -30,7 +30,6 @@ MinIMU-9-Arduino-AHRS
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
 #include <aJSON.h>
-//#include <TrueRandom.h>
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
 #include <SD.h>
@@ -73,10 +72,10 @@ SdFile root;
 //     Arduino UNO: SCK = 13, MISO = 12, and MOSI = 11
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV2); // you can change this clock speed
 
-#define WLAN_SSID "WhiteGiraffe" // Cannot be longer than 32 characters!
+#define WLAN_SSID "Gubbels Down" // Cannot be longer than 32 characters!
 #define WLAN_PASS "6AzjFtdDFD"
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
-#define WLAN_SECURITY WLAN_SEC_WPA2
+#define WLAN_SECURITY WLAN_SEC_UNSEC // WLAN_SEC_WPA2
 
 #define HTTP_LISTEN_PORT 80 // What TCP port to listen on for connections.  The echo protocol uses port 7.
 
@@ -203,9 +202,11 @@ void setup() {
     //
     // Generate a new UUID to identify the device uniquely among all of them
     // 
-
-    //  TrueRandom.uuid(uuidNumber);
-
+    
+    randomSeed(analogRead(A9)); // Seed pseudo-random number generator
+    generateUuid(uuidNumber, 16); // Generate UUID
+    // TODO: Write UUID to EEPROM if it doesn't already exist
+    
     //
     // Set up RadioBlock module
     //
@@ -1191,19 +1192,20 @@ boolean getWebData() {
                         client.println("<link href='http://fonts.googleapis.com/css?family=Josefin+Sans:100,300,400,600,700,100italic,300italic,400italic,600italic,700italic|Comfortaa:400,300,700' rel='stylesheet' type='text/css'>");
                         client.println("<script src='https://cdn.firebase.com/v0/firebase.js'></script>");
                         client.println("<script src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js'></script>");
+                        client.println("<script src='https://raw.github.com/NeilFraser/JS-Interpreter/master/interpreter.js'></script>");
                         client.println("</head>");
                         client.println("<body style=\"background-color: #e75e53; font-family: 'Josefin Sans', sans-serif;\">");
                         client.println("<h1 style=\"font-family: 'Comfortaa', cursive; font-size: 72px; font-weight: normal; color: #96d4f0;\">pixel</h1>");
                         client.println("<h4 style=\"font-family: 'Comfortaa', cursive; font-size: 14px; font-weight: normal; color: #ffd966ff;\">firmware & introspection</h4>");
-                        // output the value of each analog input pin
-                        //          for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
-                        //            int sensorReading = analogRead(analogChannel);
-                        //            client.print("analog input ");
-                        //            client.print(analogChannel);
-                        //            client.print(" is ");
-                        //            client.print(sensorReading);
-                        //            client.println("<br />");
-                        //          }
+//                        // output the value of each analog input pin
+//                        for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
+//                            int sensorReading = analogRead(analogChannel);
+//                            client.print("analog input ");
+//                            client.print(analogChannel);
+//                            client.print(" is ");
+//                            client.print(sensorReading);
+//                            client.println("<br />");
+//                        }
                         client.println("</body>");
                         client.println("</html>");
                         break;
