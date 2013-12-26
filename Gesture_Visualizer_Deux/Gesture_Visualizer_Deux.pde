@@ -3,6 +3,7 @@ import processing.serial.*;
 Serial serialPort;
 String serialInputString;
 
+int dataTimestamp = 0;
 float roll = 0, minRoll = 0, maxRoll = 0, avgRoll = 0;
 float pitch = 0, minPitch = 0, maxPitch = 0, avgPitch = 0;
 float yaw = 0, minYaw = 0, maxYaw = 0, avgYaw = 0;
@@ -16,6 +17,18 @@ int[] accelerometerHistoryX, accelerometerHistoryY, accelerometerHistoryZ;
 int[] gyroHistoryX, gyroHistoryY, gyroHistoryZ;
 
 PFont f, f2, f3;
+
+PrintWriter sensorDataFile;
+PrintWriter gestureDataFile;
+
+JSONArray gestureDataSample;
+
+boolean isRecordingGesture = false;
+
+int backgroundColor[] = { 255, 255, 255 };
+
+int gestureSampleCount = 0;
+int gestureSensorSampleCount = 0;
 
 void setup () {
   size(1200, 800, P3D);
@@ -33,6 +46,9 @@ void setup () {
   f = createFont("", 64, true);
   f2 = createFont("Arial", 12, true);
   f3 = createFont("Arial", 16, true);
+  
+  // Set up data file
+  sensorDataFile = createWriter("sensorData.txt");
   
   // An array of recent roll values
   rollData = new float[250];
@@ -62,7 +78,7 @@ void setup () {
 void draw () {
   
   // Set background
-  background(255, 255, 255);
+  background(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
   
   pushMatrix(); 
   
@@ -345,6 +361,39 @@ void draw () {
   gyroHistoryY[gyroHistoryY.length-1] = gyroY;
   gyroHistoryZ[gyroHistoryZ.length-1] = gyroZ;
   
+  //
+  // Print data to file
+  //
+  sensorDataFile.print(serialInputString);
+  
+  if (isRecordingGesture) {
+    // gestureDataFile.print(serialInputString);
+    
+    JSONObject gestureDataPoint = new JSONObject();
+    
+    gestureDataPoint.setString("timestamp", str(dataTimestamp));
+    gestureDataPoint.setString("roll", str(roll));
+    gestureDataPoint.setString("pitch", str(pitch));
+    gestureDataPoint.setString("yaw", str(yaw));
+    gestureDataPoint.setString("gyroX", str(gyroX));
+    gestureDataPoint.setString("gyroY", str(gyroY));
+    gestureDataPoint.setString("gyroZ", str(gyroZ));
+    gestureDataPoint.setString("accelerometerX", str(accelerometerX));
+    gestureDataPoint.setString("accelerometerY", str(accelerometerY));
+    gestureDataPoint.setString("accelerometerZ", str(accelerometerZ));
+    gestureDataPoint.setString("magnetometerX", str(magnetometerX));
+    gestureDataPoint.setString("magnetometerY", str(magnetometerY));
+    gestureDataPoint.setString("magnetometerZ", str(magnetometerZ));
+    gestureDataPoint.setString("pressure", str(pressure));
+    gestureDataPoint.setString("altitude", str(altitude));
+    gestureDataPoint.setString("temperature", str(temperature));
+
+    // gestureDataSample.setJSONObject(gestureSensorSampleCount, gestureData);
+    gestureDataSample.append(gestureDataPoint);
+    
+    gestureSensorSampleCount++;
+  }
+  
   
   //text("" + roll + ", " + pitch + ", " + yaw, width / 2, 60);
 }
@@ -354,53 +403,84 @@ void serialEvent (Serial serialPort) {
   // Read serial data
   if ( serialPort.available() > 0) {  // If data is available,
     serialInputString = serialPort.readString();         // read it and store it in val
-    print(serialInputString);
+    // print(serialInputString);
     
     if (serialInputString != null && serialInputString.length() > 0) {
     
-    // Check if the string begins with a '!' (i.e., check if it's a data string)
-    if (serialInputString.charAt(0) == '!') {
-      
-      serialInputString = serialInputString.substring (1);
-      
-      String[] serialInputArray = split(serialInputString, '\t');
-      
-      // Check if array is correct size
-      if (serialInputArray.length >= 3) {
+      // Check if the string begins with a '!' (i.e., check if it's a data string)
+      if (serialInputString.charAt(0) == '!') {
         
-        roll = (float(serialInputArray[0]));
-        pitch = (float(serialInputArray[1]));
-        yaw = (float(serialInputArray[2]));
-        gyroX = int(serialInputArray[3]);
-        gyroY = int(serialInputArray[4]);
-        gyroZ = int(serialInputArray[5]);
-        accelerometerX = int(serialInputArray[6]);
-        accelerometerY = int(serialInputArray[7]);
-        accelerometerZ = int(serialInputArray[8]);
-        magnetometerX = int(serialInputArray[9]);
-        magnetometerX = int(serialInputArray[10]);
-        magnetometerX = int(serialInputArray[11]);
-        pressure = float(serialInputArray[12]);
-        altitude = float(serialInputArray[13]);
-        temperature = float(serialInputArray[14]);
+        serialInputString = serialInputString.substring (1);
         
-        // Update minimum and maximum values
-        if (roll > maxRoll) maxRoll = roll;
-        if (roll < minRoll) minRoll = roll;
-        if (pitch > maxPitch) maxPitch = pitch;
-        if (pitch < minPitch) minPitch = pitch;
-        if (yaw > maxYaw) maxYaw = yaw;
-        if (yaw < minYaw) minYaw = yaw;
+        String[] serialInputArray = split(serialInputString, '\t');
         
-        // Print data
-//        print(serialInputArray[0]);
-//        print("\t");
-//        print(serialInputArray[1]);
-//        print("\t");
-//        println(serialInputArray[2]);
+        // Check if array is correct size
+        if (serialInputArray.length >= 3) {
+          dataTimestamp = millis();
+          
+          roll = (float(serialInputArray[0]));
+          pitch = (float(serialInputArray[1]));
+          yaw = (float(serialInputArray[2]));
+          gyroX = int(serialInputArray[3]);
+          gyroY = int(serialInputArray[4]);
+          gyroZ = int(serialInputArray[5]);
+          accelerometerX = int(serialInputArray[6]);
+          accelerometerY = int(serialInputArray[7]);
+          accelerometerZ = int(serialInputArray[8]);
+          magnetometerX = int(serialInputArray[9]);
+          magnetometerY = int(serialInputArray[10]);
+          magnetometerZ = int(serialInputArray[11]);
+          pressure = float(serialInputArray[12]);
+          altitude = float(serialInputArray[13]);
+          temperature = float(serialInputArray[14]);
+          
+          // Update minimum and maximum values
+          if (roll > maxRoll) maxRoll = roll;
+          if (roll < minRoll) minRoll = roll;
+          if (pitch > maxPitch) maxPitch = pitch;
+          if (pitch < minPitch) minPitch = pitch;
+          if (yaw > maxYaw) maxYaw = yaw;
+          if (yaw < minYaw) minYaw = yaw;
+        }
+        
       }
-      
     }
   }
+}
+
+void keyPressed() {
+  if (key == ' ') {
+   // TODO: Start gesture
+   if (isRecordingGesture == false) {
+     backgroundColor[0] = 232; backgroundColor[1] = 94; backgroundColor[2] = 83;
+     isRecordingGesture = true;
+     gestureSensorSampleCount = 0;
+     //gestureDataFile = createWriter("gestureData.txt");
+     gestureDataSample = new JSONArray();
+   } else {
+     backgroundColor[0] = 255; backgroundColor[1] = 255; backgroundColor[2] = 255;
+     isRecordingGesture = false;
+     // gestureDataFile.flush(); // Writes the remaining data to the file
+     // gestureDataFile.close(); // Finishes the file
+     
+     JSONArray gestureSampleSet;
+     gestureSampleSet = loadJSONArray("data/gestureSampleSet.json"); // Load existing file
+     // TODO: Add "tried gesture" to gesture sample
+     gestureSampleSet.append(gestureDataSample);
+     //gestureSampleSet.setJSONArray(gestureSampleCount, gestureDataSample);
+     
+     saveJSONArray(gestureSampleSet, "data/gestureSampleSet.json");
+     
+     gestureSampleCount++;
+   } 
+  } else if (key == ESC) {
+    sensorDataFile.flush(); // Writes the remaining data to the file
+    sensorDataFile.close(); // Finishes the file
+    exit(); // Stops the program
+  } else if (key == TAB) {
+    fill(0);
+    textFont(f);
+    textAlign(CENTER);
+    text("SHAKE", (width / 2), (height / 2));
   }
 }
