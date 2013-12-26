@@ -6,8 +6,16 @@ String serialInputString;
 float roll = 0, minRoll = 0, maxRoll = 0, avgRoll = 0;
 float pitch = 0, minPitch = 0, maxPitch = 0, avgPitch = 0;
 float yaw = 0, minYaw = 0, maxYaw = 0, avgYaw = 0;
+int gyroX, gyroY, gyroZ;
+int accelerometerX, accelerometerY, accelerometerZ;
+int magnetometerX, magnetometerY, magnetometerZ;
+float pressure, altitude, temperature;
 
-PFont f, f2;
+float[] rollData, pitchData, yawData;
+int[] accelerometerHistoryX, accelerometerHistoryY, accelerometerHistoryZ;
+int[] gyroHistoryX, gyroHistoryY, gyroHistoryZ;
+
+PFont f, f2, f3;
 
 void setup () {
   size(1200, 800, P3D);
@@ -24,6 +32,31 @@ void setup () {
   // Set up font
   f = createFont("", 64, true);
   f2 = createFont("Arial", 12, true);
+  f3 = createFont("Arial", 16, true);
+  
+  // An array of recent roll values
+  rollData = new float[250];
+  for (int i = 0; i < rollData.length; i++) { rollData[i] = 0; }
+  
+  // An array of recent pitch values
+  pitchData = new float[250];
+  for (int i = 0; i < pitchData.length; i++) { pitchData[i] = 0; }
+  
+  // An array of recent yaw values
+  yawData = new float[250];
+  for (int i = 0; i < yawData.length; i++) { yawData[i] = 0; }
+  
+  // An array of recent accelerometer values
+  accelerometerHistoryX = new int[250]; accelerometerHistoryY = new int[250]; accelerometerHistoryZ = new int[250];
+  for (int i = 0; i < accelerometerHistoryX.length; i++) { accelerometerHistoryX[i] = 0; }
+  for (int i = 0; i < accelerometerHistoryY.length; i++) { accelerometerHistoryY[i] = 0; }
+  for (int i = 0; i < accelerometerHistoryZ.length; i++) { accelerometerHistoryZ[i] = 0; }
+  
+  // An array of recent accelerometer values
+  gyroHistoryX = new int[250]; gyroHistoryY = new int[250]; gyroHistoryZ = new int[250];
+  for (int i = 0; i < gyroHistoryX.length; i++) { gyroHistoryX[i] = 0; }
+  for (int i = 0; i < gyroHistoryY.length; i++) { gyroHistoryY[i] = 0; }
+  for (int i = 0; i < gyroHistoryZ.length; i++) { gyroHistoryZ[i] = 0; }
 }
 
 void draw () {
@@ -96,29 +129,224 @@ void draw () {
 
   textAlign(LEFT);
   
+  //
   // Render X
+  //
+  
   fill(0);
   textFont(f);
   text((int) degrees(roll) + "°", (width / 16), 70); // ㎭
   textFont(f2);
   text("Min: " + minRoll + ", Max: " + maxRoll + ", Avg: " + avgRoll + "", width / 16, 90);
   
+  // Draw lines connecting all points
+  for (int i = 0; i < rollData.length-1; i++) {
+    stroke(0);
+    strokeWeight(1);
+    line(
+      map(i, 0, 100, (width / 16), (width / 16) + 80),
+      map(rollData[i], 0, 360, 130, 90+75),
+      map(i+1, 0, 100, (width / 16), (width / 16) + 80),
+      map(rollData[i+1], 0, 360, 130, 90+75)
+    );
+  }
+
+  // Slide everything down in the array
+  for (int i = 0; i < rollData.length-1; i++) {
+    rollData[i] = rollData[i+1];
+  }
+  // Add a new random value
+  rollData[rollData.length-1] = degrees(roll);
+  
+  //
   // Render Y
+  //
+  
   fill(0);
   textFont(f);
   text((int) degrees(pitch) + "°", width / 2 - 100, 70);
   textFont(f2);
   text("Min: " + minPitch + ", Max: " + maxPitch + ", Avg: " + avgPitch + "", width / 2 - 100, 90);
   
+  // Draw lines connecting all points
+  for (int i = 0; i < pitchData.length-1; i++) {
+    stroke(0);
+    strokeWeight(1);
+    line(
+      map(i, 0, 100, (width / 2) - 100, (width / 2) - 20),
+      map(pitchData[i], 0, 360, 130, 90+75),
+      map(i+1, 0, 100, (width / 2) - 100, (width / 2) - 20),
+      map(pitchData[i+1], 0, 360, 130, 90+75)
+    );
+  }
+
+  // Slide everything down in the array
+  for (int i = 0; i < pitchData.length-1; i++) {
+    pitchData[i] = pitchData[i+1];
+  }
+  // Add a new random value
+  pitchData[pitchData.length-1] = degrees(pitch);
+  
+  //
   // Render Z
+  //
+  
   fill(0);
   textFont(f);
   text((int) degrees(yaw) + "°", (width / 2) + 325, 70);
   textFont(f2);
   text("Min: " + minYaw + ", Max: " + maxYaw + ", Avg: " + avgYaw + "", (width / 2) + 325, 90);
   
+  // Draw lines connecting all points
+  for (int i = 0; i < yawData.length-1; i++) {
+    stroke(0);
+    strokeWeight(1);
+    line(
+      map(i, 0, 100, (width / 2) + 325, (width / 2) + 325 + 80),
+      map(yawData[i], 0, 360, 130, 90+75),
+      map(i+1, 0, 100, (width / 2) + 325, (width / 2) + 325 + 80),
+      map(yawData[i+1], 0, 360, 130, 90+75)
+    );
+  }
+
+  // Slide everything down in the array
+  for (int i = 0; i < yawData.length-1; i++) {
+    yawData[i] = yawData[i+1];
+  }
+  // Add a new random value
+  yawData[yawData.length-1] = degrees(yaw);
   
-  text("" + roll + ", " + pitch + ", " + yaw, width / 2, 60);
+  text("N", (width / 2) + 325 - 20, 90 + 25);
+  text("E", (width / 2) + 325 - 20, 90 + 35);
+  text("S", (width / 2) + 325 - 20, 90 + 45);
+  text("W", (width / 2) + 325 - 20, 90 + 55);
+  
+  
+  
+  
+  
+  
+  //
+  // Render Accelerometer Data
+  //
+  
+  fill(0);
+  textFont(f3);
+  text("Accelerometer", (width / 16), height - 150); // ㎭
+  textFont(f2);
+  fill(255, 0, 0); text("X: " + accelerometerX, width / 16, height - 130);
+  fill(0, 255, 0); text("Y: " + accelerometerY, width / 16, height - 110);
+  fill(0, 0, 255); text("Z: " + accelerometerZ, width / 16, height - 90);
+  
+  // Draw lines connecting all points
+  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
+    stroke(255,0,0);
+    strokeWeight(1);
+    line(
+      map(i, 0, 100, (width / 16) + 50, (width / 16) + 80),
+      map(accelerometerHistoryX[i], 0, 360, height - 115, height - 115+100),
+      map(i+1, 0, 100, (width / 16) + 50, (width / 16) + 80),
+      map(accelerometerHistoryX[i+1], 0, 360, height - 115, height - 115+100)
+    );
+  }
+  
+  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
+    stroke(0,255,0);
+    strokeWeight(1);
+    line(
+      map(i, 0, 100, (width / 16) + 50, (width / 16) + 80),
+      map(accelerometerHistoryY[i], 0, 360, height - 115, height - 115+100),
+      map(i+1, 0, 100, (width / 16) + 50, (width / 16) + 80),
+      map(accelerometerHistoryY[i+1], 0, 360, height - 115, height - 115+100)
+    );
+  }
+  
+  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
+    stroke(0,0,255);
+    strokeWeight(1);
+    line(
+      map(i, 0, 100, (width / 16) + 50, (width / 16) + 80),
+      map(accelerometerHistoryZ[i], 0, 360, height - 115, height - 115+100),
+      map(i+1, 0, 100, (width / 16) + 50, (width / 16) + 80),
+      map(accelerometerHistoryZ[i+1], 0, 360, height - 115, height - 115+100)
+    );
+  }
+
+  // Slide everything down in the array
+  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
+    accelerometerHistoryX[i] = accelerometerHistoryX[i+1];
+    accelerometerHistoryY[i] = accelerometerHistoryY[i+1];
+    accelerometerHistoryZ[i] = accelerometerHistoryZ[i+1];
+  }
+  // Add a new random value
+  accelerometerHistoryX[accelerometerHistoryX.length-1] = accelerometerX;
+  accelerometerHistoryY[accelerometerHistoryX.length-1] = accelerometerY;
+  accelerometerHistoryZ[accelerometerHistoryX.length-1] = accelerometerZ;
+  
+  
+  
+  
+  
+  
+  //
+  // Render Gyroscope Data
+  //
+  
+  fill(0);
+  textFont(f3);
+  text("Gyroscope", (width / 2) - 100, height - 150); // ㎭
+  textFont(f2);
+  fill(255, 0, 0); text("X: " + gyroX, (width / 2) - 100, height - 130);
+  fill(0, 255, 0); text("Y: " + gyroY, (width / 2) - 100, height - 110);
+  fill(0, 0, 255); text("Z: " + gyroZ, (width / 2) - 100, height - 90);
+  
+  // Draw lines connecting all points
+  for (int i = 0; i < gyroHistoryX.length-1; i++) {
+    stroke(255,0,0);
+    strokeWeight(1);
+    line(
+      map(i, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
+      map(gyroHistoryX[i], 0, 360, height - 115, height - 115+100),
+      map(i+1, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
+      map(gyroHistoryX[i+1], 0, 360, height - 115, height - 115+100)
+    );
+  }
+  
+  for (int i = 0; i < gyroHistoryY.length-1; i++) {
+    stroke(0,255,0);
+    strokeWeight(1);
+    line(
+      map(i, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
+      map(gyroHistoryY[i], 0, 360, height - 115, height - 115+100),
+      map(i+1, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
+      map(gyroHistoryY[i+1], 0, 360, height - 115, height - 115+100)
+    );
+  }
+  
+  for (int i = 0; i < gyroHistoryZ.length-1; i++) {
+    stroke(0,0,255);
+    strokeWeight(1);
+    line(
+      map(i, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
+      map(gyroHistoryZ[i], 0, 360, height - 115, height - 115+100),
+      map(i+1, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
+      map(gyroHistoryZ[i+1], 0, 360, height - 115, height - 115+100)
+    );
+  }
+
+  // Slide everything down in the array
+  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
+    gyroHistoryX[i] = gyroHistoryX[i+1];
+    gyroHistoryY[i] = gyroHistoryY[i+1];
+    gyroHistoryZ[i] = gyroHistoryZ[i+1];
+  }
+  // Add a new random value
+  gyroHistoryX[gyroHistoryX.length-1] = gyroX;
+  gyroHistoryY[gyroHistoryY.length-1] = gyroY;
+  gyroHistoryZ[gyroHistoryZ.length-1] = gyroZ;
+  
+  
+  //text("" + roll + ", " + pitch + ", " + yaw, width / 2, 60);
 }
 
 void serialEvent (Serial serialPort) {
@@ -139,9 +367,22 @@ void serialEvent (Serial serialPort) {
       
       // Check if array is correct size
       if (serialInputArray.length >= 3) {
+        
         roll = (float(serialInputArray[0]));
         pitch = (float(serialInputArray[1]));
         yaw = (float(serialInputArray[2]));
+        gyroX = int(serialInputArray[3]);
+        gyroY = int(serialInputArray[4]);
+        gyroZ = int(serialInputArray[5]);
+        accelerometerX = int(serialInputArray[6]);
+        accelerometerY = int(serialInputArray[7]);
+        accelerometerZ = int(serialInputArray[8]);
+        magnetometerX = int(serialInputArray[9]);
+        magnetometerX = int(serialInputArray[10]);
+        magnetometerX = int(serialInputArray[11]);
+        pressure = float(serialInputArray[12]);
+        altitude = float(serialInputArray[13]);
+        temperature = float(serialInputArray[14]);
         
         // Update minimum and maximum values
         if (roll > maxRoll) maxRoll = roll;
