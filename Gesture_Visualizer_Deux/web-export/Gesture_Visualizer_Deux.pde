@@ -29,7 +29,7 @@ void setup () {
 void draw () {
   
   // Set background
-  background(255, 255, 255);
+  background(0.5);
   
   pushMatrix(); 
   
@@ -56,7 +56,7 @@ void draw () {
   
   beginShape(QUADS);
   
-  stroke(0, 0, 0);
+  stroke(255, 255, 255);
   
   fill(0, 255, 0); vertex(-1,  1,  1);
   fill(0, 255, 0); vertex( 1,  1,  1);
@@ -97,21 +97,21 @@ void draw () {
   textAlign(LEFT);
   
   // Render X
-  fill(0);
+  fill(255);
   textFont(f);
   text((int) degrees(roll) + "°", (width / 16), 70); // ㎭
   textFont(f2);
   text("Min: " + minRoll + ", Max: " + maxRoll + ", Avg: " + avgRoll + "", width / 16, 90);
   
   // Render Y
-  fill(0);
+  fill(255);
   textFont(f);
   text((int) degrees(pitch) + "°", width / 2 - 100, 70);
   textFont(f2);
   text("Min: " + minPitch + ", Max: " + maxPitch + ", Avg: " + avgPitch + "", width / 2 - 100, 90);
   
   // Render Z
-  fill(0);
+  fill(255);
   textFont(f);
   text((int) degrees(yaw) + "°", (width / 2) + 325, 70);
   textFont(f2);
@@ -163,3 +163,4 @@ void serialEvent (Serial serialPort) {
   }
   }
 }
+
