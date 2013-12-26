@@ -338,6 +338,56 @@ void setup() {
     //
 
     ledFadeOut(); // Fade off to indicate ready
+
+    //
+    // Initialize WiFI
+    //
+
+    // Serial.print("Free RAM: "); Serial.println(getFreeRam(), DEC);
+
+    /* Initialise the module */
+    Serial.println(F("\nInitializing Wi-Fi..."));
+    if (!cc3000.begin()) {
+        Serial.println(F("Couldn't begin()! Check your wiring?"));
+        while(1);
+    }
+
+//    uint16_t firmware = checkFirmwareVersion();
+//    if ((firmware != 0x113) && (firmware != 0x118)) {
+//        hang(F("Wrong firmware version!"));
+//    }
+
+    Serial.println(F("\tConnecting to AP..."));
+    if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
+        Serial.println(F("\tFailed!"));
+        while(1);
+    }
+
+    Serial.println(F("\tConnected!"));
+
+    Serial.println(F("\tRequesting DHCP"));
+    while (!cc3000.checkDHCP()) {
+        delay(100); // ToDo: Insert a DHCP timeout!
+    }
+
+    /* Display the IP address DNS, Gateway, etc. */
+    while (! displayConnectionDetails()) {
+        delay(1000);
+    }
+
+    //
+    // You can safely remove this to save some flash memory!
+    //
+    //  Serial.println(F("\r\nNOTE: This sketch may cause problems with other sketches"));
+    //  Serial.println(F("since the .disconnect() function is never called, so the"));
+    //  Serial.println(F("AP may refuse connection requests from the CC3000 until a"));
+    //  Serial.println(F("timeout period passes.  This is normal behaviour since"));
+    //  Serial.println(F("there isn't an obvious moment to disconnect with a server.\r\n"));
+
+    // Start listening for connections
+    httpServer.begin();
+
+    Serial.println(F("\tListening for web connections..."));
     
     //
     // Initialize SD Card
@@ -426,7 +476,10 @@ void setup() {
 //    } 
 //
 //
-//    dataFile = SD.open("log.txt", FILE_READ);
+    if (!SD.begin(SDCARD_CS)) {
+    }
+     
+//    File dataFile = SD.open("datalog.txt", FILE_READ);
 //    if (dataFile) {
 //        
 //        //client.print('size: ' + dataFile.size());
@@ -438,55 +491,8 @@ void setup() {
 //        Serial.println("DONE READING FILE");
 //    }
 
-    //
-    // Initialize WiFI
-    //
 
-    // Serial.print("Free RAM: "); Serial.println(getFreeRam(), DEC);
-
-    /* Initialise the module */
-    Serial.println(F("\nInitializing Wi-Fi..."));
-    if (!cc3000.begin()) {
-        Serial.println(F("Couldn't begin()! Check your wiring?"));
-        while(1);
-    }
-
-//    uint16_t firmware = checkFirmwareVersion();
-//    if ((firmware != 0x113) && (firmware != 0x118)) {
-//        hang(F("Wrong firmware version!"));
-//    }
-
-    Serial.println(F("\tConnecting to AP..."));
-    if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
-        Serial.println(F("\tFailed!"));
-        while(1);
-    }
-
-    Serial.println(F("\tConnected!"));
-
-    Serial.println(F("\tRequesting DHCP"));
-    while (!cc3000.checkDHCP()) {
-        delay(100); // ToDo: Insert a DHCP timeout!
-    }
-
-    /* Display the IP address DNS, Gateway, etc. */
-    while (! displayConnectionDetails()) {
-        delay(1000);
-    }
-
-    //
-    // You can safely remove this to save some flash memory!
-    //
-    //  Serial.println(F("\r\nNOTE: This sketch may cause problems with other sketches"));
-    //  Serial.println(F("since the .disconnect() function is never called, so the"));
-    //  Serial.println(F("AP may refuse connection requests from the CC3000 until a"));
-    //  Serial.println(F("timeout period passes.  This is normal behaviour since"));
-    //  Serial.println(F("there isn't an obvious moment to disconnect with a server.\r\n"));
-
-    // Start listening for connections
-    httpServer.begin();
-
-    Serial.println(F("\tListening for web connections..."));
+    
 }
 
 // On error, print PROGMEM string to serial monitor and stop
@@ -514,6 +520,18 @@ void loop() {
     //    interface.getAddress();
     //    verifiedAddress = true;
     //  }
+    
+    File dataFile = SD.open("datalog.txt", FILE_READ);
+    if (dataFile) {
+        
+        //client.print('size: ' + dataFile.size());
+        while (dataFile.available()) {
+            Serial.write(dataFile.read());
+            //Serial.println("READING FROM FILE...");
+        }
+        dataFile.close();
+        Serial.println("DONE READING FILE");
+    }
 
     // HACK (for testing/debugging):
     verifiedAddress = true;
@@ -575,7 +593,7 @@ void loop() {
         // Primary event loop
 
         if (sensePhysicalData()) { // Get IMU data
-           // storePhysicalData(); //printData();
+            storePhysicalData(); //printData();
             if (detectMovements()) {
                 // TOOD: Detect gesture (?)
             }
@@ -624,7 +642,7 @@ void storePhysicalData() {
 //        dataFile.close();
 //    }
 //    if (!SD.begin(SDCARD_CS)
-    File dataFile = SD.open("log.txt", FILE_WRITE);
+    File dataFile = SD.open("datalog.txt", FILE_WRITE);
     if (dataFile) {
         dataFile.println("000t000\t000");
         dataFile.flush();
@@ -633,17 +651,17 @@ void storePhysicalData() {
         //  Serial.println(dataString);
         Serial.println("Wrote physical data to log file.");
         
-         dataFile = SD.open("log.txt", FILE_READ);
-        if (dataFile) {
-            
-            //client.print('size: ' + dataFile.size());
-            while (dataFile.available()) {
-                Serial.write(dataFile.read());
-                //Serial.println("READING FROM FILE...");
-            }
-            dataFile.close();
-            Serial.println("DONE READING FILE");
-        }
+//         dataFile = SD.open("log.txt", FILE_READ);
+//        if (dataFile) {
+//            
+//            //client.print('size: ' + dataFile.size());
+//            while (dataFile.available()) {
+//                Serial.write(dataFile.read());
+//                //Serial.println("READING FROM FILE...");
+//            }
+//            dataFile.close();
+//            Serial.println("DONE READING FILE");
+//        }
         
         return;
 
