@@ -8,10 +8,6 @@ int accelerometerX, accelerometerY, accelerometerZ;
 int magnetometerX, magnetometerY, magnetometerZ;
 float pressure, altitude, temperature;
 
-float[] rollData, pitchData, yawData;
-int[] accelerometerHistoryX, accelerometerHistoryY, accelerometerHistoryZ;
-int[] gyroHistoryX, gyroHistoryY, gyroHistoryZ;
-
 PFont f, f2, f3;
 
 PrintWriter sensorDataFile;
@@ -65,33 +61,6 @@ void setup () {
   f = createFont("Quicksand-Regular.ttf", 64, true);
   f2 = createFont("Arial", 12, true);
   f3 = createFont("Arial", 16, true);
-  
-  // Set up data file
-  sensorDataFile = createWriter("sensorData.txt");
-  
-  // An array of recent roll values
-  rollData = new float[250];
-  for (int i = 0; i < rollData.length; i++) { rollData[i] = 0; }
-  
-  // An array of recent pitch values
-  pitchData = new float[250];
-  for (int i = 0; i < pitchData.length; i++) { pitchData[i] = 0; }
-  
-  // An array of recent yaw values
-  yawData = new float[250];
-  for (int i = 0; i < yawData.length; i++) { yawData[i] = 0; }
-  
-  // An array of recent accelerometer values
-  accelerometerHistoryX = new int[250]; accelerometerHistoryY = new int[250]; accelerometerHistoryZ = new int[250];
-  for (int i = 0; i < accelerometerHistoryX.length; i++) { accelerometerHistoryX[i] = 0; }
-  for (int i = 0; i < accelerometerHistoryY.length; i++) { accelerometerHistoryY[i] = 0; }
-  for (int i = 0; i < accelerometerHistoryZ.length; i++) { accelerometerHistoryZ[i] = 0; }
-  
-  // An array of recent accelerometer values
-  gyroHistoryX = new int[250]; gyroHistoryY = new int[250]; gyroHistoryZ = new int[250];
-  for (int i = 0; i < gyroHistoryX.length; i++) { gyroHistoryX[i] = 0; }
-  for (int i = 0; i < gyroHistoryY.length; i++) { gyroHistoryY[i] = 0; }
-  for (int i = 0; i < gyroHistoryZ.length; i++) { gyroHistoryZ[i] = 0; }
   
   gestureSamples = new ArrayList<ArrayList<ArrayList<Integer>>>();
   
