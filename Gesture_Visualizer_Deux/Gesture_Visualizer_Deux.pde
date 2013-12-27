@@ -23,10 +23,37 @@ PrintWriter gestureDataFile;
 
 JSONArray gestureDataSample;
 
+boolean showGesturePrompt = false;
 boolean isRecordingGesture = false;
+int gestureSelectionTime = 0;
 
 int backgroundColor[] = { 255, 255, 255 };
 
+int gestureIndex = 0;
+String gestureName[] = { 
+  "at rest, on table",
+  "at rest, in hand",
+  "pick up",
+  "place down",
+  "tilt left",
+  "tilt right",
+  "shake",
+  "tap to another, as left",
+  "tap to another, as right"
+};
+final int CONTINUOUS = 0;
+final int DISCRETE = 1;
+int gestureTemporalBounds[] = {
+  CONTINUOUS,
+  CONTINUOUS,
+  DISCRETE,
+  DISCRETE,
+  DISCRETE,
+  DISCRETE,
+  CONTINUOUS,
+  DISCRETE,
+  DISCRETE
+};
 int gestureSampleCount = 0;
 int gestureSensorSampleCount = 0;
 
@@ -43,7 +70,7 @@ void setup () {
   serialPort.bufferUntil('\n');
   
   // Set up font
-  f = createFont("", 64, true);
+  f = createFont("Arial", 64, true);
   f2 = createFont("Arial", 12, true);
   f3 = createFont("Arial", 16, true);
   
@@ -143,256 +170,25 @@ void draw () {
   
   // Render text
 
-  textAlign(LEFT);
-  
-  //
-  // Render X
-  //
-  
-  fill(0);
-  textFont(f);
-  text((int) degrees(roll) + "°", (width / 16), 70); // ㎭
-  textFont(f2);
-  text("Min: " + minRoll + ", Max: " + maxRoll + ", Avg: " + avgRoll + "", width / 16, 90);
-  
-  // Draw lines connecting all points
-  for (int i = 0; i < rollData.length-1; i++) {
-    stroke(0);
-    strokeWeight(1);
-    line(
-      map(i, 0, 100, (width / 16), (width / 16) + 80),
-      map(rollData[i], 0, 360, 130, 90+75),
-      map(i+1, 0, 100, (width / 16), (width / 16) + 80),
-      map(rollData[i+1], 0, 360, 130, 90+75)
-    );
-  }
-
-  // Slide everything down in the array
-  for (int i = 0; i < rollData.length-1; i++) {
-    rollData[i] = rollData[i+1];
-  }
-  // Add a new random value
-  rollData[rollData.length-1] = degrees(roll);
-  
-  //
-  // Render Y
-  //
-  
-  fill(0);
-  textFont(f);
-  text((int) degrees(pitch) + "°", width / 2 - 100, 70);
-  textFont(f2);
-  text("Min: " + minPitch + ", Max: " + maxPitch + ", Avg: " + avgPitch + "", width / 2 - 100, 90);
-  
-  // Draw lines connecting all points
-  for (int i = 0; i < pitchData.length-1; i++) {
-    stroke(0);
-    strokeWeight(1);
-    line(
-      map(i, 0, 100, (width / 2) - 100, (width / 2) - 20),
-      map(pitchData[i], 0, 360, 130, 90+75),
-      map(i+1, 0, 100, (width / 2) - 100, (width / 2) - 20),
-      map(pitchData[i+1], 0, 360, 130, 90+75)
-    );
-  }
-
-  // Slide everything down in the array
-  for (int i = 0; i < pitchData.length-1; i++) {
-    pitchData[i] = pitchData[i+1];
-  }
-  // Add a new random value
-  pitchData[pitchData.length-1] = degrees(pitch);
-  
-  //
-  // Render Z
-  //
-  
-  fill(0);
-  textFont(f);
-  text((int) degrees(yaw) + "°", (width / 2) + 325, 70);
-  textFont(f2);
-  text("Min: " + minYaw + ", Max: " + maxYaw + ", Avg: " + avgYaw + "", (width / 2) + 325, 90);
-  
-  // Draw lines connecting all points
-  for (int i = 0; i < yawData.length-1; i++) {
-    stroke(0);
-    strokeWeight(1);
-    line(
-      map(i, 0, 100, (width / 2) + 325, (width / 2) + 325 + 80),
-      map(yawData[i], 0, 360, 130, 90+75),
-      map(i+1, 0, 100, (width / 2) + 325, (width / 2) + 325 + 80),
-      map(yawData[i+1], 0, 360, 130, 90+75)
-    );
-  }
-
-  // Slide everything down in the array
-  for (int i = 0; i < yawData.length-1; i++) {
-    yawData[i] = yawData[i+1];
-  }
-  // Add a new random value
-  yawData[yawData.length-1] = degrees(yaw);
-  
-  text("N", (width / 2) + 325 - 20, 90 + 25);
-  text("E", (width / 2) + 325 - 20, 90 + 35);
-  text("S", (width / 2) + 325 - 20, 90 + 45);
-  text("W", (width / 2) + 325 - 20, 90 + 55);
+  drawOrientationData();
   
   
   
   
   
   
-  //
-  // Render Accelerometer Data
-  //
-  
-  fill(0);
-  textFont(f3);
-  text("Accelerometer", (width / 16), height - 150); // ㎭
-  textFont(f2);
-  fill(255, 0, 0); text("X: " + accelerometerX, width / 16, height - 130);
-  fill(0, 255, 0); text("Y: " + accelerometerY, width / 16, height - 110);
-  fill(0, 0, 255); text("Z: " + accelerometerZ, width / 16, height - 90);
-  
-  // Draw lines connecting all points
-  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
-    stroke(255,0,0);
-    strokeWeight(1);
-    line(
-      map(i, 0, 100, (width / 16) + 50, (width / 16) + 80),
-      map(accelerometerHistoryX[i], 0, 360, height - 115, height - 115+100),
-      map(i+1, 0, 100, (width / 16) + 50, (width / 16) + 80),
-      map(accelerometerHistoryX[i+1], 0, 360, height - 115, height - 115+100)
-    );
-  }
-  
-  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
-    stroke(0,255,0);
-    strokeWeight(1);
-    line(
-      map(i, 0, 100, (width / 16) + 50, (width / 16) + 80),
-      map(accelerometerHistoryY[i], 0, 360, height - 115, height - 115+100),
-      map(i+1, 0, 100, (width / 16) + 50, (width / 16) + 80),
-      map(accelerometerHistoryY[i+1], 0, 360, height - 115, height - 115+100)
-    );
-  }
-  
-  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
-    stroke(0,0,255);
-    strokeWeight(1);
-    line(
-      map(i, 0, 100, (width / 16) + 50, (width / 16) + 80),
-      map(accelerometerHistoryZ[i], 0, 360, height - 115, height - 115+100),
-      map(i+1, 0, 100, (width / 16) + 50, (width / 16) + 80),
-      map(accelerometerHistoryZ[i+1], 0, 360, height - 115, height - 115+100)
-    );
-  }
-
-  // Slide everything down in the array
-  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
-    accelerometerHistoryX[i] = accelerometerHistoryX[i+1];
-    accelerometerHistoryY[i] = accelerometerHistoryY[i+1];
-    accelerometerHistoryZ[i] = accelerometerHistoryZ[i+1];
-  }
-  // Add a new random value
-  accelerometerHistoryX[accelerometerHistoryX.length-1] = accelerometerX;
-  accelerometerHistoryY[accelerometerHistoryX.length-1] = accelerometerY;
-  accelerometerHistoryZ[accelerometerHistoryX.length-1] = accelerometerZ;
   
   
   
   
   
   
-  //
-  // Render Gyroscope Data
-  //
   
-  fill(0);
-  textFont(f3);
-  text("Gyroscope", (width / 2) - 100, height - 150); // ㎭
-  textFont(f2);
-  fill(255, 0, 0); text("X: " + gyroX, (width / 2) - 100, height - 130);
-  fill(0, 255, 0); text("Y: " + gyroY, (width / 2) - 100, height - 110);
-  fill(0, 0, 255); text("Z: " + gyroZ, (width / 2) - 100, height - 90);
+  drawSensorData();
   
-  // Draw lines connecting all points
-  for (int i = 0; i < gyroHistoryX.length-1; i++) {
-    stroke(255,0,0);
-    strokeWeight(1);
-    line(
-      map(i, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
-      map(gyroHistoryX[i], 0, 360, height - 115, height - 115+100),
-      map(i+1, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
-      map(gyroHistoryX[i+1], 0, 360, height - 115, height - 115+100)
-    );
-  }
+  storeSensorData();
   
-  for (int i = 0; i < gyroHistoryY.length-1; i++) {
-    stroke(0,255,0);
-    strokeWeight(1);
-    line(
-      map(i, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
-      map(gyroHistoryY[i], 0, 360, height - 115, height - 115+100),
-      map(i+1, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
-      map(gyroHistoryY[i+1], 0, 360, height - 115, height - 115+100)
-    );
-  }
-  
-  for (int i = 0; i < gyroHistoryZ.length-1; i++) {
-    stroke(0,0,255);
-    strokeWeight(1);
-    line(
-      map(i, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
-      map(gyroHistoryZ[i], 0, 360, height - 115, height - 115+100),
-      map(i+1, 0, 100, (width / 2) - 100 + 50, (width / 2) - 100 + 80),
-      map(gyroHistoryZ[i+1], 0, 360, height - 115, height - 115+100)
-    );
-  }
-
-  // Slide everything down in the array
-  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
-    gyroHistoryX[i] = gyroHistoryX[i+1];
-    gyroHistoryY[i] = gyroHistoryY[i+1];
-    gyroHistoryZ[i] = gyroHistoryZ[i+1];
-  }
-  // Add a new random value
-  gyroHistoryX[gyroHistoryX.length-1] = gyroX;
-  gyroHistoryY[gyroHistoryY.length-1] = gyroY;
-  gyroHistoryZ[gyroHistoryZ.length-1] = gyroZ;
-  
-  //
-  // Print data to file
-  //
-  sensorDataFile.print(serialInputString);
-  
-  if (isRecordingGesture) {
-    // gestureDataFile.print(serialInputString);
-    
-    JSONObject gestureDataPoint = new JSONObject();
-    
-    gestureDataPoint.setString("timestamp", str(dataTimestamp));
-    gestureDataPoint.setString("roll", str(roll));
-    gestureDataPoint.setString("pitch", str(pitch));
-    gestureDataPoint.setString("yaw", str(yaw));
-    gestureDataPoint.setString("gyroX", str(gyroX));
-    gestureDataPoint.setString("gyroY", str(gyroY));
-    gestureDataPoint.setString("gyroZ", str(gyroZ));
-    gestureDataPoint.setString("accelerometerX", str(accelerometerX));
-    gestureDataPoint.setString("accelerometerY", str(accelerometerY));
-    gestureDataPoint.setString("accelerometerZ", str(accelerometerZ));
-    gestureDataPoint.setString("magnetometerX", str(magnetometerX));
-    gestureDataPoint.setString("magnetometerY", str(magnetometerY));
-    gestureDataPoint.setString("magnetometerZ", str(magnetometerZ));
-    gestureDataPoint.setString("pressure", str(pressure));
-    gestureDataPoint.setString("altitude", str(altitude));
-    gestureDataPoint.setString("temperature", str(temperature));
-
-    // gestureDataSample.setJSONObject(gestureSensorSampleCount, gestureData);
-    gestureDataSample.append(gestureDataPoint);
-    
-    gestureSensorSampleCount++;
-  }
+  drawGesturePrompt();
   
   
   //text("" + roll + ", " + pitch + ", " + yaw, width / 2, 60);
@@ -450,6 +246,7 @@ void serialEvent (Serial serialPort) {
 
 void keyPressed() {
   if (key == ' ') {
+    
    // TODO: Start gesture
    if (isRecordingGesture == false) {
      backgroundColor[0] = 232; backgroundColor[1] = 94; backgroundColor[2] = 83;
@@ -463,24 +260,288 @@ void keyPressed() {
      // gestureDataFile.flush(); // Writes the remaining data to the file
      // gestureDataFile.close(); // Finishes the file
      
+     JSONObject gestureSample = new JSONObject();
+     gestureSample.setString("gesture", gestureName[gestureIndex]);
+     gestureSample.setJSONArray("sample", gestureDataSample);
+     
      JSONArray gestureSampleSet;
      gestureSampleSet = loadJSONArray("data/gestureSampleSet.json"); // Load existing file
      // TODO: Add "tried gesture" to gesture sample
-     gestureSampleSet.append(gestureDataSample);
+     //gestureSampleSet.append(gestureDataSample);
+     gestureSampleSet.append(gestureSample);
      //gestureSampleSet.setJSONArray(gestureSampleCount, gestureDataSample);
      
      saveJSONArray(gestureSampleSet, "data/gestureSampleSet.json");
      
      gestureSampleCount++;
    } 
+   
   } else if (key == ESC) {
+    
     sensorDataFile.flush(); // Writes the remaining data to the file
     sensorDataFile.close(); // Finishes the file
     exit(); // Stops the program
+    
   } else if (key == TAB) {
-    fill(0);
-    textFont(f);
-    textAlign(CENTER);
-    text("SHAKE", (width / 2), (height / 2));
+    
+    gestureIndex = (gestureIndex + 1) % gestureName.length;
+    
+    showGesturePrompt = true;
+    gestureSelectionTime = millis();
+  }
+}
+
+/**
+ * Store sensor data sample set (multiple samples)
+ */
+void storeSensorData() {
+  
+  //
+  // Print data to file
+  //
+  sensorDataFile.print(serialInputString);
+  
+  if (isRecordingGesture) {
+    storeGestureData();
+  }
+}
+
+/**
+ * Store gesture data sample, consisting of a sequence of data points 
+ * collected over time, during a specific duration, specified manually 
+ * by a human.
+ */
+void storeGestureData() {
+  
+  JSONObject gestureDataPoint = new JSONObject();
+  
+  gestureDataPoint.setString("timestamp", str(dataTimestamp));
+  gestureDataPoint.setString("roll", str(roll));
+  gestureDataPoint.setString("pitch", str(pitch));
+  gestureDataPoint.setString("yaw", str(yaw));
+  gestureDataPoint.setString("gyroX", str(gyroX));
+  gestureDataPoint.setString("gyroY", str(gyroY));
+  gestureDataPoint.setString("gyroZ", str(gyroZ));
+  gestureDataPoint.setString("accelerometerX", str(accelerometerX));
+  gestureDataPoint.setString("accelerometerY", str(accelerometerY));
+  gestureDataPoint.setString("accelerometerZ", str(accelerometerZ));
+  gestureDataPoint.setString("magnetometerX", str(magnetometerX));
+  gestureDataPoint.setString("magnetometerY", str(magnetometerY));
+  gestureDataPoint.setString("magnetometerZ", str(magnetometerZ));
+  gestureDataPoint.setString("pressure", str(pressure));
+  gestureDataPoint.setString("altitude", str(altitude));
+  gestureDataPoint.setString("temperature", str(temperature));
+
+  // gestureDataSample.setJSONObject(gestureSensorSampleCount, gestureData);
+  gestureDataSample.append(gestureDataPoint);
+  
+  gestureSensorSampleCount++;
+}
+
+/**
+ * Visualize orientation data
+ */
+void drawOrientationData() {
+  
+  drawRollData();
+  drawPitchData();
+  drawYawData();
+}
+
+/**
+ * Visualize roll data
+ */
+void drawRollData() {
+  
+  //
+  // Render X
+  //
+  
+  textAlign(LEFT);
+  
+  fill(0);
+  textFont(f);
+  text((int) degrees(roll) + "°", (width / 16), 70); // ㎭
+  textFont(f2);
+  text("Min: " + minRoll + ", Max: " + maxRoll + ", Avg: " + avgRoll + "", width / 16, 90);
+  
+  // Draw lines connecting all points
+  strokeWeight(1);
+  stroke(0,0,0); drawPlot(rollData, (width / 16), 130, 200, 35, 0, 360);
+
+  // Slide everything down in the array
+  for (int i = 0; i < rollData.length-1; i++) {
+    rollData[i] = rollData[i+1];
+  }
+  // Add a new random value
+  rollData[rollData.length-1] = degrees(roll);
+}
+
+/**
+ * Visualize pitch data
+ */
+void drawPitchData() {
+  //
+  // Render Y
+  //
+  
+  textAlign(LEFT);
+  
+  fill(0);
+  textFont(f);
+  text((int) degrees(pitch) + "°", width / 2 - 100, 70);
+  textFont(f2);
+  text("Min: " + minPitch + ", Max: " + maxPitch + ", Avg: " + avgPitch + "", width / 2 - 100, 90);
+  
+  // Draw lines connecting all points
+  stroke(0,0,0); drawPlot(pitchData, (width / 2) - 100, 130, 200, 35, 0, 360);
+
+  // Slide everything down in the array
+  for (int i = 0; i < pitchData.length-1; i++) {
+    pitchData[i] = pitchData[i+1];
+  }
+  // Add a new random value
+  pitchData[pitchData.length-1] = degrees(pitch);
+}
+
+/**
+ * Visualize yaw data
+ */
+void drawYawData() {
+  
+  //
+  // Render Z
+  //
+  
+  textAlign(LEFT);
+  
+  fill(0);
+  textFont(f);
+  text((int) degrees(yaw) + "°", (width / 2) + 325, 70);
+  textFont(f2);
+  text("Min: " + minYaw + ", Max: " + maxYaw + ", Avg: " + avgYaw + "", (width / 2) + 325, 90);
+  
+  // Draw lines connecting all points
+  stroke(0,0,0); drawPlot(yawData, (width / 2) + 325, 130, 200, 35, 0, 360);
+
+  // Slide everything down in the array
+  for (int i = 0; i < yawData.length-1; i++) {
+    yawData[i] = yawData[i+1];
+  }
+  // Add a new random value
+  yawData[yawData.length-1] = degrees(yaw);
+  
+  text("N", (width / 2) + 325 - 20, 90 + 25);
+  text("E", (width / 2) + 325 - 20, 90 + 35);
+  text("S", (width / 2) + 325 - 20, 90 + 45);
+  text("W", (width / 2) + 325 - 20, 90 + 55);
+}
+
+void drawGesturePrompt() {
+  if (showGesturePrompt && (isRecordingGesture || (millis() - gestureSelectionTime < 2000))) {
+    fill(0); textFont(f); textAlign(CENTER);
+    text(gestureName[gestureIndex], (width / 2), (height / 4));
+  }
+}
+
+void drawSensorData() {
+  drawAccelerometerData();
+  drawGyroscopeData();
+}
+
+/**
+ * Render accelerometer data
+ */
+void drawAccelerometerData() {
+  //
+  // Render Accelerometer Data Plots
+  //
+  
+  fill(0);
+  textFont(f3);
+  text("Accelerometer", (width / 16), height - 150); // ㎭
+  textFont(f2);
+  fill(255, 0, 0); text("X: " + accelerometerX, width / 16, height - 130);
+  fill(0, 255, 0); text("Y: " + accelerometerY, width / 16, height - 110);
+  fill(0, 0, 255); text("Z: " + accelerometerZ, width / 16, height - 90);
+  
+  // Draw lines connecting all points
+  strokeWeight(1);
+  stroke(255,0,0); drawPlot(accelerometerHistoryX, (width / 16) + 50, height - 115, 120, 100, 0, 360);
+  stroke(0,255,0); drawPlot(accelerometerHistoryY, (width / 16) + 50, height - 115, 120, 100, 0, 360);
+  stroke(0,0,255); drawPlot(accelerometerHistoryZ, (width / 16) + 50, height - 115, 120, 100, 0, 360);
+
+  // Slide everything down in the array
+  for (int i = 0; i < accelerometerHistoryX.length-1; i++) {
+    accelerometerHistoryX[i] = accelerometerHistoryX[i+1];
+    accelerometerHistoryY[i] = accelerometerHistoryY[i+1];
+    accelerometerHistoryZ[i] = accelerometerHistoryZ[i+1];
+  }
+  // Add a new random value
+  accelerometerHistoryX[accelerometerHistoryX.length-1] = accelerometerX;
+  accelerometerHistoryY[accelerometerHistoryX.length-1] = accelerometerY;
+  accelerometerHistoryZ[accelerometerHistoryX.length-1] = accelerometerZ;
+}
+
+/**
+ * Render gyroscope data
+ */
+void drawGyroscopeData() {
+
+  //
+  // Render Gyroscope Data
+  //
+  
+  fill(0);
+  textFont(f3);
+  text("Gyroscope", (width / 2) - 100, height - 150); // ㎭
+  textFont(f2);
+  fill(255, 0, 0); text("X: " + gyroX, (width / 2) - 100, height - 130);
+  fill(0, 255, 0); text("Y: " + gyroY, (width / 2) - 100, height - 110);
+  fill(0, 0, 255); text("Z: " + gyroZ, (width / 2) - 100, height - 90);
+  
+  // Draw lines connecting all points
+  strokeWeight(1);
+  stroke(255,0,0); drawPlot(gyroHistoryX, (width / 2) - 100, height - 115, 120, 100, 0, 360);
+  stroke(0,255,0); drawPlot(gyroHistoryY, (width / 2) - 100, height - 115, 120, 100, 0, 360);
+  stroke(0,0,255); drawPlot(gyroHistoryZ, (width / 2) - 100, height - 115, 120, 100, 0, 360);
+
+  // Slide everything down in the array
+  for (int i = 0; i < gyroHistoryX.length-1; i++) {
+    gyroHistoryX[i] = gyroHistoryX[i+1];
+    gyroHistoryY[i] = gyroHistoryY[i+1];
+    gyroHistoryZ[i] = gyroHistoryZ[i+1];
+  }
+  // Add a new random value
+  gyroHistoryX[gyroHistoryX.length-1] = gyroX;
+  gyroHistoryY[gyroHistoryY.length-1] = gyroY;
+  gyroHistoryZ[gyroHistoryZ.length-1] = gyroZ;
+}
+
+void drawPlot(int[] data, int originX, int originY, int plotWidth, int plotHeight, int plotRangeFloor, int plotRangeCeiling) {
+  // Draw lines connecting all points
+  for (int i = 0; i < data.length-1; i++) {
+    // stroke(255,0,0);
+    // strokeWeight(1);
+    line(
+      map(i, 0, data.length, originX, originX + plotWidth),
+      map(data[i], plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight),
+      map(i+1, 0, data.length, originX, originX + plotWidth),
+      map(data[i+1], plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight)
+    );
+  }
+}
+
+void drawPlot(float[] data, int originX, int originY, int plotWidth, int plotHeight, float plotRangeFloor, float plotRangeCeiling) {
+  // Draw lines connecting all points
+  for (int i = 0; i < data.length-1; i++) {
+    // stroke(255,0,0);
+    // strokeWeight(1);
+    line(
+      map(i, 0, data.length, originX, originX + plotWidth),
+      map(data[i], plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight),
+      map(i+1, 0, data.length, originX, originX + plotWidth),
+      map(data[i+1], plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight)
+    );
   }
 }

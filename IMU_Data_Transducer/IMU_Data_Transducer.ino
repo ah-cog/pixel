@@ -30,10 +30,6 @@ MinIMU-9-Arduino-AHRS
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
-#include <MovingAvarageFilter.h>
-
-MovingAvarageFilter movingAvarageFilter(20);
-
 /**
  * Accelerometer Setup
  */
