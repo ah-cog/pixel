@@ -20,7 +20,7 @@ PrintWriter gestureDataFile;
 JSONArray gestureSampleSet;
 JSONArray gestureDataSample;
 
-boolean showGesturePrompt = false;
+boolean showGesturePrompt = true;
 boolean isRecordingGesture = false;
 int gestureSelectionTime = 0;
 
@@ -60,7 +60,7 @@ void setup () {
   size(1200, 800, P3D);
   
   // Set up font
-  f = createFont("Arial", 64, true);
+  f = createFont("Quicksand-Regular.ttf", 64, true);
   f2 = createFont("Arial", 12, true);
   f3 = createFont("Arial", 16, true);
   
@@ -104,8 +104,9 @@ void draw () {
   background(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
 
   // Draw data
-  drawGesturePrompt();
-  drawGesturePlot();
+  drawGestureTitle();
+  //drawGesturePlot();
+  drawGesturePlotBoundaries();
 }
 
 void openGestureData() {
@@ -159,62 +160,30 @@ void keyPressed() {
     
     gestureIndex = (gestureIndex + 1) % gestureName.length;
     
-    showGesturePrompt = true;
     gestureSelectionTime = millis();
     
     updateCurrentGesture();
   }
 }
 
-/**
- * Store gesture data sample, consisting of a sequence of data points 
- * collected over time, during a specific duration, specified manually 
- * by a human.
- */
-void storeGestureData() {
-  
-  JSONObject gestureDataPoint = new JSONObject();
-  
-  gestureDataPoint.setString("timestamp", str(dataTimestamp));
-  gestureDataPoint.setString("roll", str(roll));
-  gestureDataPoint.setString("pitch", str(pitch));
-  gestureDataPoint.setString("yaw", str(yaw));
-  gestureDataPoint.setString("gyroX", str(gyroX));
-  gestureDataPoint.setString("gyroY", str(gyroY));
-  gestureDataPoint.setString("gyroZ", str(gyroZ));
-  gestureDataPoint.setString("accelerometerX", str(accelerometerX));
-  gestureDataPoint.setString("accelerometerY", str(accelerometerY));
-  gestureDataPoint.setString("accelerometerZ", str(accelerometerZ));
-  gestureDataPoint.setString("magnetometerX", str(magnetometerX));
-  gestureDataPoint.setString("magnetometerY", str(magnetometerY));
-  gestureDataPoint.setString("magnetometerZ", str(magnetometerZ));
-  gestureDataPoint.setString("pressure", str(pressure));
-  gestureDataPoint.setString("altitude", str(altitude));
-  gestureDataPoint.setString("temperature", str(temperature));
-
-  // gestureDataSample.setJSONObject(gestureSensorSampleCount, gestureData);
-  gestureDataSample.append(gestureDataPoint);
-  
-  gestureSensorSampleCount++;
-}
-
-void drawGesturePrompt() {
-  if (showGesturePrompt && (isRecordingGesture || (millis() - gestureSelectionTime < 2000))) {
+void drawGestureTitle() {
+  if (showGesturePrompt) {
     fill(0); textFont(f); textAlign(CENTER);
-    text(gestureName[gestureIndex], (width / 2), (height / 4));
+    text("\"" + gestureName[gestureIndex] + "\"", (width / 2), (height / 4));
   }
 }
-
+int maximumSampleSize = 0;
 void updateCurrentGesture() {
   
   gestureSamples.clear();
+  maximumSampleSize = 0;
   
   // Populate gesture data arrays
   for (int i = 0; i < gestureSampleSet.size(); i++) {
     JSONObject gestureSample = gestureSampleSet.getJSONObject(i);
     JSONArray gestureSamplePoints = gestureSample.getJSONArray("sample");
     
-    ArrayList<ArrayList<Integer>> gestureSamples2 = new ArrayList<ArrayList<Integer>>();
+    ArrayList<ArrayList<Integer>> singleGestureSample = new ArrayList<ArrayList<Integer>>();
     
     // Populate data arrays
     if (gestureSample.getString("gesture").equals(gestureName[gestureIndex])) {
@@ -229,42 +198,168 @@ void updateCurrentGesture() {
         gestureSamplePointZ.add(int(gestureSamplePoint.getString("accelerometerZ")));
       }
       
-      gestureSamples2.add(gestureSamplePointX);
-      gestureSamples2.add(gestureSamplePointY);
-      gestureSamples2.add(gestureSamplePointZ);
+      singleGestureSample.add(gestureSamplePointX);
+      singleGestureSample.add(gestureSamplePointY);
+      singleGestureSample.add(gestureSamplePointZ);
+      
+      // Update maximum sample count
+      if (gestureSamplePoints.size() > maximumSampleSize) {
+        maximumSampleSize = gestureSamplePoints.size();
+      }
     }
-    
-//    strokeWeight(1);
-//    stroke(255,0,0); drawPlot(gestureSamplePointX, 0, height / 2, width, height, 0, 1000);
-//    stroke(0,255,0); drawPlot(gestureSamplePointY, 0, height / 2, width, height, 0, 1000);
-//    stroke(0,0,255); drawPlot(gestureSamplePointZ, 0, height / 2, width, height, 0, 1000);
 
-    gestureSamples.add(gestureSamples2);
+    gestureSamples.add(singleGestureSample);
   }
+  
+//  for (int i = 0; i < gestureSamples.size(); i++) {
+//    ArrayList<ArrayList<Integer>> gestureSample = gestureSamples.get(i);
+//    
+//    // Update lengths of samples
+//    if (gestureSample.get(0).size() < maximumSampleSize) {
+//      for (int j = gestureSample.get(0).size(); j < maximumSampleSize; j++) {
+//        gestureSample.get(0)
+//      }
+//    }
+//  }
 }
 
 void drawGesturePlot() {
-  fill(0);
-  textFont(f3);
-  text("Accelerometer", (width / 16), height - 150); // ㎭
-  textFont(f2);
+//  fill(0);
+//  textFont(f3);
+//  text("Accelerometer", (width / 16), height - 150); // ㎭
+//  textFont(f2);
 //  fill(255, 0, 0); text("X: " + accelerometerX, width / 16, height - 130);
 //  fill(0, 255, 0); text("Y: " + accelerometerY, width / 16, height - 110);
 //  fill(0, 0, 255); text("Z: " + accelerometerZ, width / 16, height - 90);
   
   // Draw lines connecting all points
+  smooth();
   strokeWeight(1);
   for (int i = 0; i < gestureSamples.size(); i++) {
     ArrayList<ArrayList<Integer>> gestureSample = gestureSamples.get(i);
     if (gestureSample.size() > 0) {
-    //println(gestureSample.size());
       stroke(255,0,0); drawPlot(gestureSample.get(0), 0, height / 2, width, height, 0, 1000);
       stroke(0,255,0); drawPlot(gestureSample.get(1), 0, height / 2, width, height, 0, 1000);
       stroke(0,0,255); drawPlot(gestureSample.get(2), 0, height / 2, width, height, 0, 1000);
     }
-  //  stroke(0,255,0); drawPlot(accelerometerHistoryY, 0, 0, width, height, 0, 360);
-  //  stroke(0,0,255); drawPlot(accelerometerHistoryZ, 0, 0, width, height, 0, 360);
   }
+}
+
+void drawGesturePlotBoundaries() {
+  
+  ArrayList<ArrayList<Integer>> gestureSampleUpperBounds = new ArrayList<ArrayList<Integer>>();
+  ArrayList<ArrayList<Integer>> gestureSampleLowerBounds = new ArrayList<ArrayList<Integer>>();
+  
+  if (gestureSampleUpperBounds.size() < 3) {
+    gestureSampleUpperBounds.add(new ArrayList<Integer>());
+    gestureSampleUpperBounds.add(new ArrayList<Integer>());
+    gestureSampleUpperBounds.add(new ArrayList<Integer>());
+  }
+  
+  if (gestureSampleLowerBounds.size() < 3) {
+    gestureSampleLowerBounds.add(new ArrayList<Integer>());
+    gestureSampleLowerBounds.add(new ArrayList<Integer>());
+    gestureSampleLowerBounds.add(new ArrayList<Integer>());
+  }
+  
+  // Draw lines connecting all points
+  smooth();
+  strokeWeight(1);
+  for (int i = 0; i < gestureSamples.size(); i++) {
+    
+    ArrayList<ArrayList<Integer>> singleGestureSample = gestureSamples.get(i);
+    
+    if (singleGestureSample.size() > 0) {
+      
+      /**
+       * Draw gesture accelerometer x-axis data
+       */
+      
+      stroke(255,0,0, 20); drawPlot(singleGestureSample.get(0), 0, height / 2, width, height, 0, 1000);
+      
+      // Update list size
+      while (gestureSampleUpperBounds.get(0).size() < singleGestureSample.get(0).size()) {
+        gestureSampleUpperBounds.get(0).add(Integer.MIN_VALUE);
+        gestureSampleLowerBounds.get(0).add(Integer.MAX_VALUE);
+        gestureSampleUpperBounds.get(1).add(Integer.MIN_VALUE);
+        gestureSampleLowerBounds.get(1).add(Integer.MAX_VALUE);
+        gestureSampleUpperBounds.get(2).add(Integer.MIN_VALUE);
+        gestureSampleLowerBounds.get(2).add(Integer.MAX_VALUE);
+      }
+    
+      // Update all upper bounds
+      for (int j = 0; j < singleGestureSample.get(0).size(); j++) {
+        if (singleGestureSample.get(0).get(j) > gestureSampleUpperBounds.get(0).get(j)) { // Check if the current value is greater than the currently-stored upper bound
+          gestureSampleUpperBounds.get(0).set(j, singleGestureSample.get(0).get(j)); // Update value
+        }
+        
+        // Update lower bound
+        if (singleGestureSample.get(0).get(j) < gestureSampleLowerBounds.get(0).get(j)) { // Check if the current value is greater than the currently-stored upper bound
+          gestureSampleLowerBounds.get(0).set(j, singleGestureSample.get(0).get(j)); // Update value
+        }
+      }
+      
+      /**
+       * Draw gesture accelerometer x-axis data
+       */
+      
+      stroke(0,255,0, 20); drawPlot(singleGestureSample.get(1), 0, height / 2, width, height, 0, 1000);
+      
+      // Update list size
+      while (gestureSampleUpperBounds.get(1).size() < singleGestureSample.get(1).size()) {
+        gestureSampleUpperBounds.get(1).add(Integer.MIN_VALUE);
+        gestureSampleLowerBounds.get(1).add(Integer.MAX_VALUE);
+      }
+    
+      // Update all upper bounds
+      for (int j = 0; j < singleGestureSample.get(1).size(); j++) {
+        if (singleGestureSample.get(1).get(j) > gestureSampleUpperBounds.get(1).get(j)) { // Check if the current value is greater than the currently-stored upper bound
+          gestureSampleUpperBounds.get(1).set(j, singleGestureSample.get(1).get(j)); // Update value
+        }
+        
+        // Update lower bound
+        if (singleGestureSample.get(1).get(j) < gestureSampleLowerBounds.get(1).get(j)) { // Check if the current value is greater than the currently-stored upper bound
+          gestureSampleLowerBounds.get(1).set(j, singleGestureSample.get(1).get(j)); // Update value
+        }
+      }
+      
+      /**
+       * Draw gesture accelerometer x-axis data
+       */
+      
+      stroke(0,0,255, 20); drawPlot(singleGestureSample.get(2), 0, height / 2, width, height, 0, 1000);
+      
+      // Update list size
+      while (gestureSampleUpperBounds.get(2).size() < singleGestureSample.get(2).size()) {
+        gestureSampleUpperBounds.get(2).add(Integer.MIN_VALUE);
+        gestureSampleLowerBounds.get(2).add(Integer.MAX_VALUE);
+      }
+    
+      // Update all upper bounds
+      for (int j = 0; j < singleGestureSample.get(2).size(); j++) {
+        if (singleGestureSample.get(2).get(j) > gestureSampleUpperBounds.get(2).get(j)) { // Check if the current value is greater than the currently-stored upper bound
+          gestureSampleUpperBounds.get(2).set(j, singleGestureSample.get(2).get(j)); // Update value
+        }
+        
+        // Update lower bound
+        if (singleGestureSample.get(2).get(j) < gestureSampleLowerBounds.get(2).get(j)) { // Check if the current value is greater than the currently-stored upper bound
+          gestureSampleLowerBounds.get(2).set(j, singleGestureSample.get(2).get(j)); // Update value
+        }
+      }
+      
+//      stroke(0,255,0); drawPlot(singleGestureSample.get(1), 0, height / 2, width, height, 0, 1000);
+//      stroke(0,0,255); drawPlot(singleGestureSample.get(2), 0, height / 2, width, height, 0, 1000);
+    }
+  }
+  
+  stroke(255,0,0); drawPlot(gestureSampleUpperBounds.get(0), 0, height / 2, width, height, 0, 1000);
+  stroke(255,0,0); drawPlot(gestureSampleLowerBounds.get(0), 0, height / 2, width, height, 0, 1000);
+  
+  stroke(0,255,0); drawPlot(gestureSampleUpperBounds.get(1), 0, height / 2, width, height, 0, 1000);
+  stroke(0,255,0); drawPlot(gestureSampleLowerBounds.get(1), 0, height / 2, width, height, 0, 1000);
+  
+  stroke(0,0,255); drawPlot(gestureSampleUpperBounds.get(2), 0, height / 2, width, height, 0, 1000);
+  stroke(0,0,255); drawPlot(gestureSampleLowerBounds.get(2), 0, height / 2, width, height, 0, 1000);
 }
 
 void drawPlot(ArrayList<Integer> data, int originX, int originY, int plotWidth, int plotHeight, int plotRangeFloor, int plotRangeCeiling) {
@@ -274,9 +369,9 @@ void drawPlot(ArrayList<Integer> data, int originX, int originY, int plotWidth, 
     // stroke(255,0,0);
     // strokeWeight(1);
     line(
-      map(i, 0, data.size(), originX, originX + plotWidth),
+      map(i, 0, maximumSampleSize, originX, originX + plotWidth),
       map(data.get(i), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight),
-      map(i+1, 0, data.size(), originX, originX + plotWidth),
+      map(i+1, 0, maximumSampleSize, originX, originX + plotWidth),
       map(data.get(i+1), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight)
     );
     //println("" + (int) data.get(i));
