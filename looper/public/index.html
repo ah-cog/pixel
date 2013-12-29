@@ -123,7 +123,6 @@
             </li>
 
             <li class="pane2">
-              <!-- <h2>pixel 1</h2> -->
               <div class="nodes" style="width:800px; margin:0 auto;">
                 <div class="drag drag1"></div>
                 <div class="drag drag2"></div>
@@ -378,181 +377,187 @@
 
     <script type="application/processing" data-processing-target="canvas1">
 
+        // devices = [];
+
         disableEventCreate = false;
 
-      function Event(options) {
-        var defaults = {
-            x: null,
-            y: null,
-            xTarget: null,
-            yTarget: null,
-            visible: true
-        };
-        var options = options || {};
-        var actual = $.extend({}, defaults, options);
+        function EventLoop(options) {
+            var defaults = {
+                events: []
+            };
+            var options = options || {};
+            var options = $.extend({}, defaults, options);
 
-        this.x = options.x;
-        this.y = options.y;
-
-        this.targetX = options.targetX;
-        this.targetY = options.targetY;
-
-        this.visible = options.visible;
-      }
-
-      function EventLoop() {
-
-      }
-
-      events = []; // events on the event loop
-
-      void setup() {
-        size(screenWidth, screenHeight);
-      }
-
-      void draw() {
-        // erase background
-        background(255, 255, 255, 0);
-
-        //line(0, 0, screenWidth, screenHeight);
-
-        drawEventLoop();
-        drawEvents();
-      }
-
-      void drawEventLoop() {
-
-        pushMatrix();
-
-        // Draw the "loop" circular arc
-        strokeWeight(1.0);
-        stroke("#000000");
-        noFill();
-        smooth();
-        arc(screenWidth / 2, screenHeight / 2, 400, 400, (-PI/2) + 0.05*PI, 1.45*PI);
-
-        // Draw arrow
-        translate(screenWidth / 2, screenHeight / 2);
-        translate(-29, -198);
-        rotate(-0.05*PI);
-        line(0, 0, -16, 16);
-        line(0, 0, -16, -16);
-
-        popMatrix();
-      }
-
-      function drawEvents() {
-
-        pushMatrix();
-
-        var eventCount = events.length;
-        for (var i = 0; i < eventCount; i++) {
-          var loopEvent = events[i];
-
-          if (loopEvent.visible === false) {
-            updatePosition(loopEvent);
-          }
-
-          fill(66, 214, 146);
-          ellipse(loopEvent.x, loopEvent.y, 50, 50);
-
-          // Calculate nearest point on circle
-          //line(loopEvent.x, loopEvent.y, screenWidth / 2, screenHeight / 2);
+            this.events = options.events; // events on the event loop
         }
 
-        popMatrix();
-      }
+        function Event(options) {
+            var defaults = {
+                x: null,
+                y: null,
+                xTarget: null,
+                yTarget: null,
+                visible: true
+            };
+            var options = options || {};
+            var options = $.extend({}, defaults, options);
 
-      function getPointOnCircle(radius, originX, originY, angle) {
-        //var radius = 50;
-        //var originX = 400;
-        //var originY = 400;
-        //var angle = 40;
+            this.x = options.x;
+            this.y = options.y;
 
-        x = originX + radius * Math.cos(angle);
-        y = originY + radius * Math.sin(angle);
+            this.targetX = options.targetX;
+            this.targetY = options.targetY;
 
-        var result = { x: x, y: y };
+            this.visible = options.visible;
+        }
 
-        return result;
-      }
+        eventLoop = new EventLoop();
 
-    function updatePosition(loopEvent) {
+        void setup() {
+            size(screenWidth, screenHeight);
+        }
 
-        deltaX = mouseX - (screenWidth / 2);
-        deltaY = mouseY - (screenHeight / 2);
-        //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
-        angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
+        void draw() {
+            // erase background
+            background(255, 255, 255, 0);
 
-        x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
-        y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+            drawEventLoop();
+            drawEvents();
+        }
 
-        loopEvent.x = x;
-        loopEvent.y = y;
-    }
+        void drawEventLoop() {
 
+            pushMatrix();
 
+            // Draw the "loop" circular arc
+            strokeWeight(1.0);
+            stroke("#000000");
+            noFill();
+            smooth();
+            arc(screenWidth / 2, screenHeight / 2, 400, 400, (-PI/2) + 0.05*PI, 1.45*PI);
 
-    $("#canvas1").hammer({ drag_max_touches: 0 }).on("touch", function(ev) {
-        console.log("Touch canvus event!");
+            // Draw arrow
+            translate(screenWidth / 2, screenHeight / 2);
+            translate(-29, -198);
+            rotate(-0.05*PI);
+            line(0, 0, -16, 16);
+            line(0, 0, -16, -16);
 
-        var touches = ev.gesture.touches;
+            popMatrix();
+        }
 
-        // Get the touched object, if one exists
-        var eventCount = events.length;
-        for (var i = 0; i < eventCount; i++) {
-            var loopEvent = events[i];
-            if ((ev.gesture.center.pageX - 50 < loopEvent.x && loopEvent.x < ev.gesture.center.pageX + 50)
-                && (ev.gesture.center.pageY - 50 < loopEvent.y && loopEvent.y < ev.gesture.center.pageY + 50)) {
+        function drawEvents() {
 
-                loopEvent.visible = false;
-                disableEventCreate = true;
+            pushMatrix();
 
-                console.log("touched event " + i);
-                break;
+            var eventCount = eventLoop.events.length;
+            for (var i = 0; i < eventCount; i++) {
+                var loopEvent = eventLoop.events[i];
+
+                if (loopEvent.visible === false) {
+                    updatePosition(loopEvent);
+                }
+
+                fill(66, 214, 146);
+                ellipse(loopEvent.x, loopEvent.y, 50, 50);
+
+                // Calculate nearest point on circle
+                //line(loopEvent.x, loopEvent.y, screenWidth / 2, screenHeight / 2);
             }
+
+            popMatrix();
+        }
+
+        function getPointOnCircle(radius, originX, originY, angle) {
+            //var radius = 50;
+            //var originX = 400;
+            //var originY = 400;
+            //var angle = 40;
+
+            x = originX + radius * Math.cos(angle);
+            y = originY + radius * Math.sin(angle);
+
+            var result = { x: x, y: y };
+
+            return result;
+        }
+
+        function updatePosition(loopEvent) {
+
+            deltaX = mouseX - (screenWidth / 2);
+            deltaY = mouseY - (screenHeight / 2);
+            //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
+            angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
+
+            x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
+            y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+
+            loopEvent.x = x;
+            loopEvent.y = y;
         }
 
 
-        // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
 
-        // var event2 = new Event(x, y);
-        // events.push(event2);
+        $("#canvas1").hammer({ drag_max_touches: 0 }).on("touch", function(ev) {
+            console.log("Touch canvus event!");
 
-        ev.gesture.preventDefault();
-        ev.stopPropagation();
-        ev.gesture.stopPropagation();
-        return;
-    });
+            var touches = ev.gesture.touches;
 
-    $("#canvas1").hammer({ drag_max_touches: 0 }).on("release", function(ev) {
-        console.log("release event");
+            // Get the touched object, if one exists
+            var eventCount = eventLoop.events.length;
+                for (var i = 0; i < eventCount; i++) {
+                var loopEvent = eventLoop.events[i];
+                if ((ev.gesture.center.pageX - 50 < loopEvent.x && loopEvent.x < ev.gesture.center.pageX + 50)
+                    && (ev.gesture.center.pageY - 50 < loopEvent.y && loopEvent.y < ev.gesture.center.pageY + 50)) {
 
-        var touches = ev.gesture.touches;
+                    loopEvent.visible = false;
+                    disableEventCreate = true;
 
-        // Get the touched object, if one exists
-        var eventCount = events.length;
-        for (var i = 0; i < eventCount; i++) {
-            var loopEvent = events[i];
-            if (loopEvent.visible == false) {
-
-                deltaX = ev.gesture.center.pageX - (screenWidth / 2);
-                deltaY = ev.gesture.center.pageY - (screenHeight / 2);
-                //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
-                angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
-
-                x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
-                y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
-
-                loopEvent.x = x;
-                loopEvent.y = y;
-
-                loopEvent.visible = true;
-                disableEventCreate = false;
-
-                break;
+                    console.log("touched event " + i);
+                    break;
+                }
             }
-        }
+
+
+            // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+
+            // var event2 = new Event(x, y);
+            // events.push(event2);
+
+            ev.gesture.preventDefault();
+            ev.stopPropagation();
+            ev.gesture.stopPropagation();
+            return;
+        });
+
+        $("#canvas1").hammer({ drag_max_touches: 0 }).on("release", function(ev) {
+            console.log("release event");
+
+            var touches = ev.gesture.touches;
+
+            // Get the touched object, if one exists
+            var eventCount = eventLoop.events.length;
+            for (var i = 0; i < eventCount; i++) {
+                var loopEvent = eventLoop.events[i];
+                if (loopEvent.visible == false) {
+
+                    deltaX = ev.gesture.center.pageX - (screenWidth / 2);
+                    deltaY = ev.gesture.center.pageY - (screenHeight / 2);
+                    //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
+                    angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
+
+                    x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
+                    y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+
+                    loopEvent.x = x;
+                    loopEvent.y = y;
+
+                    loopEvent.visible = true;
+                    disableEventCreate = false;
+
+                    break;
+                }
+            }
 
 
         // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
@@ -596,7 +601,7 @@
             
             var event2 = new Event({ x: x, y: y });
             event2.visible = true;
-            events.push(event2);
+            eventLoop.events.push(event2);
         }
 
         ev.gesture.preventDefault();
