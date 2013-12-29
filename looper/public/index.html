@@ -316,31 +316,6 @@
 
         element.hammer({ drag_lock_to_axis: true })
             .on("release dragleft dragright swipeleft swiperight", handleHammer);
-
-        // element
-        //   .hammer({ drag_max_touches: 0 })
-        //   //.on("touch drag dragright dragleft", function(ev) {
-        //   .on("touch", function(ev) {
-        //     console.log("Create circle!");
-
-        //     var touches = ev.gesture.touches;
-
-        //     // for(var t=0,len=touches.length; t<len; t++) {
-        //     //     var target = $(touches[t].target);
-        //     //     target.css({
-        //     //         zIndex: 1337,
-        //     //         left: touches[t].pageX-50,
-        //     //         top: touches[t].pageY-50
-        //     //     });
-        //     // }
-            
-        //     $(".nodes").append("<div class=\"drag drag5\"></div>");
-        //     // <div class="drag drag5"></div>
-        //     ev.gesture.preventDefault();
-        //     ev.stopPropagation();
-        //     ev.gesture.stopPropagation();
-        //     return;
-        //   });
     }
 
 
@@ -377,7 +352,7 @@
 
     <script type="application/processing" data-processing-target="canvas1">
 
-        // devices = [];
+        // devices = []; // detect devices on (1) the mesh, the (2) local network (HTTP), and (3) in the cloud
 
         disableEventCreate = false;
 
@@ -405,8 +380,8 @@
             this.x = options.x;
             this.y = options.y;
 
-            this.targetX = options.targetX;
-            this.targetY = options.targetY;
+            this.xTarget = options.xTarget;
+            this.yTarget = options.yTarget;
 
             this.visible = options.visible;
         }
@@ -458,6 +433,15 @@
                     updatePosition(loopEvent);
                 }
 
+                if (loopEvent.x !== loopEvent.xTarget || loopEvent.y !== loopEvent.yTarget) {
+                    console.log("Rendering ghost");
+                    if () {}
+                        line(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
+                    }
+                    fill(66, 214, 146, 50);
+                    ellipse(loopEvent.xTarget, loopEvent.yTarget, 50, 50);
+                }
+
                 fill(66, 214, 146);
                 ellipse(loopEvent.x, loopEvent.y, 50, 50);
 
@@ -466,6 +450,19 @@
             }
 
             popMatrix();
+        }
+
+        function lineDistance(point1, point2) {
+            var xs = 0;
+            var ys = 0;
+
+            xs = point2.x - point1.x;
+            xs = xs * xs;
+
+            ys = point2.y - point1.y;
+            ys = ys * ys;
+
+            return Math.sqrt( xs + ys );
         }
 
         function getPointOnCircle(radius, originX, originY, angle) {
@@ -559,17 +556,18 @@
                 }
             }
 
+            disableEventCreate = false;
 
-        // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+            // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
 
-        // var event2 = new Event(x, y);
-        // events.push(event2);
+            // var event2 = new Event(x, y);
+            // events.push(event2);
 
-        ev.gesture.preventDefault();
-        ev.stopPropagation();
-        ev.gesture.stopPropagation();
-        return;
-    });
+            ev.gesture.preventDefault();
+            ev.stopPropagation();
+            ev.gesture.stopPropagation();
+            return;
+        });
 
     
 
@@ -579,6 +577,7 @@
         console.log("Create event!");
 
         if (!disableEventCreate) {
+            disableEventCreate = true;
 
             var touches = ev.gesture.touches;
 
@@ -599,7 +598,12 @@
             x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
             y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
             
-            var event2 = new Event({ x: x, y: y });
+            var event2 = new Event({
+                x: ev.gesture.center.pageX,
+                y: ev.gesture.center.pageY,
+                xTarget: x,
+                yTarget: y
+            });
             event2.visible = true;
             eventLoop.events.push(event2);
         }
