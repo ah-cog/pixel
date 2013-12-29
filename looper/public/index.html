@@ -435,9 +435,9 @@
 
                 if (loopEvent.x !== loopEvent.xTarget || loopEvent.y !== loopEvent.yTarget) {
                     console.log("Rendering ghost");
-                    if () {}
+                    // if () {} // Check if under certain distance from the circle (and attach to)
                         line(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
-                    }
+                    // }
                     fill(66, 214, 146, 50);
                     ellipse(loopEvent.xTarget, loopEvent.yTarget, 50, 50);
                 }
@@ -451,19 +451,19 @@
 
             popMatrix();
         }
+        
+        // function lineDistance(point1, point2) {
+        //     var xs = 0;
+        //     var ys = 0;
 
-        function lineDistance(point1, point2) {
-            var xs = 0;
-            var ys = 0;
+        //     xs = point2.x - point1.x;
+        //     xs = xs * xs;
 
-            xs = point2.x - point1.x;
-            xs = xs * xs;
+        //     ys = point2.y - point1.y;
+        //     ys = ys * ys;
 
-            ys = point2.y - point1.y;
-            ys = ys * ys;
-
-            return Math.sqrt( xs + ys );
-        }
+        //     return Math.sqrt( xs + ys );
+        // }
 
         function getPointOnCircle(radius, originX, originY, angle) {
             //var radius = 50;
