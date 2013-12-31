@@ -7,6 +7,7 @@
     <script src="javascripts/interpreter.js"></script>
     <script src="javascripts/processing.js"></script> 
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Didact+Gothic' rel='stylesheet' type='text/css'>
     <style>
 
         html, body, #carousel, #carousel ul, #carousel li {
@@ -78,7 +79,7 @@
             text-shadow: -1px -1px 0 rgba(0,0,0,.2);
         }
 
-        #carousel li.pane1 { background: #42d692; }
+        #carousel li.pane1 { background: #F0F1F0; } // #42d692
         #carousel li.pane2 { background: #4986e7; }
         #carousel li.pane3 { background: #d06b64; }
         #carousel li.pane4 { background: #cd74e6; }
@@ -352,6 +353,17 @@
 
     <script type="application/processing" data-processing-target="canvas1">
 
+        currentCanvas = "#canvas1";
+
+        // sequence = []; // Sequence of events in the event loop (currently)
+        // i.e., the model of the program to run on the device (will show up when log in using web visualization)
+
+        /* @pjs
+        crisp=true;
+        font=DidactGothic.ttf;
+        */
+        PFont font_name;
+
         // devices = []; // detect devices on (1) the mesh, the (2) local network (HTTP), and (3) in the cloud
 
         disableEventCreate = false;
@@ -372,7 +384,8 @@
                 y: null,
                 xTarget: null,
                 yTarget: null,
-                visible: true
+                state: 'INVALID', // INVALID, FLOATING, MOVING, ENTANGLED, SEQUENCED
+                //visible: true
             };
             var options = options || {};
             var options = $.extend({}, defaults, options);
@@ -383,7 +396,9 @@
             this.xTarget = options.xTarget;
             this.yTarget = options.yTarget;
 
-            this.visible = options.visible;
+            this.state = options.state;
+
+            //this.visible = options.visible;
         }
 
         eventLoop = new EventLoop();
@@ -393,8 +408,32 @@
         }
 
         void draw() {
+
             // erase background
             background(255, 255, 255, 0);
+
+            font_name = createFont("DidactGothic.ttf", 32);
+            textFont(font_name);
+            // textSize(30);
+            //PFont font;
+            //font = loadFont("FFScala.ttf");
+            textFont(font_name, 100);
+            textAlign(CENTER);
+            fill(65, 65, 65);
+            text("go", screenWidth / 2, screenHeight / 2 + 20);
+
+            font_name = createFont("DidactGothic.ttf", 16);
+            textFont(font_name);
+            // textSize(30);
+            //PFont font;
+            //font = loadFont("FFScala.ttf");
+            textFont(font_name, 40);
+            textAlign(CENTER);
+            fill(65, 65, 65);
+            text("script", screenWidth / 2, screenHeight / 7 + 20);
+
+            // noFill();
+            // arc(screenWidth / 2 + 95, screenHeight / 7 + 10, 40, 40, (-PI/2) + 0.05*PI, 1.45*PI); // mini event loop indicating "running" (or "updated" or "new")
 
             drawEventLoop();
             drawEvents();
@@ -406,7 +445,7 @@
 
             // Draw the "loop" circular arc
             strokeWeight(1.0);
-            stroke("#000000");
+            stroke(65, 65, 65);
             noFill();
             smooth();
             arc(screenWidth / 2, screenHeight / 2, 400, 400, (-PI/2) + 0.05*PI, 1.45*PI);
@@ -429,19 +468,9 @@
             for (var i = 0; i < eventCount; i++) {
                 var loopEvent = eventLoop.events[i];
 
-                if (loopEvent.visible === false) {
-                    updatePosition(loopEvent);
-                }
+                updatePosition(loopEvent);
 
-                if (loopEvent.x !== loopEvent.xTarget || loopEvent.y !== loopEvent.yTarget) {
-                    console.log("Rendering ghost");
-                    // if () {} // Check if under certain distance from the circle (and attach to)
-                        line(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
-                    // }
-                    fill(66, 214, 146, 50);
-                    ellipse(loopEvent.xTarget, loopEvent.yTarget, 50, 50);
-                }
-
+                // Draw the event node
                 fill(66, 214, 146);
                 ellipse(loopEvent.x, loopEvent.y, 50, 50);
 
@@ -452,18 +481,18 @@
             popMatrix();
         }
         
-        // function lineDistance(point1, point2) {
-        //     var xs = 0;
-        //     var ys = 0;
+        function lineDistance(x1, y1, x2, y2) {
+            var xs = 0;
+            var ys = 0;
 
-        //     xs = point2.x - point1.x;
-        //     xs = xs * xs;
+            xs = x2 - x1;
+            xs = xs * xs;
 
-        //     ys = point2.y - point1.y;
-        //     ys = ys * ys;
+            ys = y2 - y1;
+            ys = ys * ys;
 
-        //     return Math.sqrt( xs + ys );
-        // }
+            return Math.sqrt(xs + ys);
+        }
 
         function getPointOnCircle(radius, originX, originY, angle) {
             //var radius = 50;
@@ -479,7 +508,65 @@
             return result;
         }
 
+        /**
+         * Updates position of event node.
+         * @param  {[type]} loopEvent [description]
+         * @return {[type]}           [description]
+         */
         function updatePosition(loopEvent) {
+
+            //if (loopEvent.visible === false) {
+            if (loopEvent.state === 'MOVING') {
+                loopEvent.x = mouseX;
+                loopEvent.y = mouseY;
+
+                deltaX = mouseX - (screenWidth / 2);
+                deltaY = mouseY - (screenHeight / 2);
+                //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
+                angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
+
+                loopEvent.xTarget = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
+                loopEvent.yTarget = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+            }
+
+            if (loopEvent.x !== loopEvent.xTarget || loopEvent.y !== loopEvent.yTarget) { // FREE
+                //console.log("Rendering ghost");
+            }
+
+            // Check if under certain distance from the circle (and attach to)
+            var distance = lineDistance(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
+            
+            // Check if event node is near to the event loop
+            // if (distance < 110) { // ENTANGLED
+            //     loopEvent.state = 'ENTANGLED';
+            // } else {
+            //     loopEvent.state = 'FLOATING';
+            // }
+
+            if (loopEvent.state === 'MOVING') {
+                if (distance < 110) { // ENTANGLED
+                //if (loopEvent.state === 'ENTANGLED') {
+                    line(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
+
+                    // Draw the "snapped in" position that the event node would occupy
+                    fill(66, 214, 146, 50);
+                    ellipse(loopEvent.xTarget, loopEvent.yTarget, 50, 50);
+
+                    // Snap to event loop
+                    if (!disableEventCreate) {
+                        deltaX = mouseX - (screenWidth / 2);
+                        deltaY = mouseY - (screenHeight / 2);
+                        //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
+                        angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
+
+                        loopEvent.x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
+                        loopEvent.y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+                    }
+                }
+            }
+        }
+
+        function updatePosition2(loopEvent) {
 
             deltaX = mouseX - (screenWidth / 2);
             deltaY = mouseY - (screenHeight / 2);
@@ -493,21 +580,75 @@
             loopEvent.y = y;
         }
 
+        /**
+         * Returns the sequence of events in the event queue.
+         * @return {[type]} [description]
+         */
+        function getEventSequence() {
+            var eventSequence = [];
+            var eventAngles = [];
 
+            var eventCount = eventLoop.events.length;
+            for (var i = 0; i < eventCount; i++) {
+                var loopEvent = eventLoop.events[i];
 
-        $("#canvas1").hammer({ drag_max_touches: 0 }).on("touch", function(ev) {
+                var j;
+                if (eventAngles.length == 0) { 
+                    eventAngles.push(getAngle(loopEvent.x, loopEvent.y));
+                } else {
+                    for (j = 0; j < eventAngles.length; j++) {
+                        console.log(getAngle(loopEvent.x, loopEvent.y));
+                        if (getAngle(loopEvent.x, loopEvent.y) > eventAngles[j]) {
+                            eventAngles.splice(j, 0, getAngle(loopEvent.x, loopEvent.y));
+                            //eventAngles.push(getAngle(loopEvent.x, loopEvent.y));
+                            break;
+                        }
+                    }
+                }
+
+                eventSequence.splice(j, 0, loopEvent);
+            }
+            console.log(eventAngles);
+            console.log(eventSequence);
+        }
+
+        function getAngle(x, y) {
+            var deltaX = x - (screenWidth / 2);
+            var deltaY = y - (screenHeight / 2);
+            var angleInRadians = Math.atan2(deltaY, deltaX); // * 180 / PI;
+            if (angleInRadians < 0) {
+                angleInRadians = PI + (PI + angleInRadians);
+            }
+            return angleInRadians;
+        }
+
+        function getDistanceFromEventLoop(loopEvent) {
+            var distance = lineDistance(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
+            return distance;
+        }
+
+        /**
+         * Touch event handler
+         * @param  {[type]} ev [description]
+         * @return {[type]}    [description]
+         */
+        $(currentCanvas).hammer({ drag_max_touches: 0 }).on("touch", function(ev) {
             console.log("Touch canvus event!");
 
             var touches = ev.gesture.touches;
 
-            // Get the touched object, if one exists
+            //
+            // Get the touched event node, if one exists
+            // 
             var eventCount = eventLoop.events.length;
-                for (var i = 0; i < eventCount; i++) {
+
+            for (var i = 0; i < eventCount; i++) {
                 var loopEvent = eventLoop.events[i];
                 if ((ev.gesture.center.pageX - 50 < loopEvent.x && loopEvent.x < ev.gesture.center.pageX + 50)
                     && (ev.gesture.center.pageY - 50 < loopEvent.y && loopEvent.y < ev.gesture.center.pageY + 50)) {
 
-                    loopEvent.visible = false;
+                    //loopEvent.visible = false;
+                    loopEvent.state = 'MOVING';
                     disableEventCreate = true;
 
                     console.log("touched event " + i);
@@ -515,11 +656,16 @@
                 }
             }
 
+            //
+            // Check of "go" button touched
+            //
+            
+            if ((ev.gesture.center.pageX - 50 < (screenWidth / 2) && (screenWidth / 2) < ev.gesture.center.pageX + 50)
+                && (ev.gesture.center.pageY - 50 < (screenHeight / 2) && (screenHeight / 2) < ev.gesture.center.pageY + 50)) {
 
-            // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
-
-            // var event2 = new Event(x, y);
-            // events.push(event2);
+                //console.log("go");
+                getEventSequence();
+            }
 
             ev.gesture.preventDefault();
             ev.stopPropagation();
@@ -527,7 +673,7 @@
             return;
         });
 
-        $("#canvas1").hammer({ drag_max_touches: 0 }).on("release", function(ev) {
+        $(currentCanvas).hammer({ drag_max_touches: 0 }).on("release", function(ev) {
             console.log("release event");
 
             var touches = ev.gesture.touches;
@@ -536,7 +682,8 @@
             var eventCount = eventLoop.events.length;
             for (var i = 0; i < eventCount; i++) {
                 var loopEvent = eventLoop.events[i];
-                if (loopEvent.visible == false) {
+
+                if (loopEvent.state === 'MOVING') {
 
                     deltaX = ev.gesture.center.pageX - (screenWidth / 2);
                     deltaY = ev.gesture.center.pageY - (screenHeight / 2);
@@ -546,10 +693,15 @@
                     x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
                     y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
 
-                    loopEvent.x = x;
-                    loopEvent.y = y;
+                    var distance = getDistanceFromEventLoop(loopEvent);
+                    if (distance < 110) {
+                        loopEvent.x = x;
+                        loopEvent.y = y;
+                        loopEvent.state = 'SEQUENCED';
+                    } else {
+                        loopEvent.state = 'FLOATING';
+                    }
 
-                    loopEvent.visible = true;
                     disableEventCreate = false;
 
                     break;
@@ -557,11 +709,6 @@
             }
 
             disableEventCreate = false;
-
-            // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
-
-            // var event2 = new Event(x, y);
-            // events.push(event2);
 
             ev.gesture.preventDefault();
             ev.stopPropagation();
@@ -573,22 +720,13 @@
 
 
 
-    $("#canvas1").hammer({ drag_max_touches: 0, hold_timeout: 200 }).on("hold", function(ev) {
+    $(currentCanvas).hammer({ drag_max_touches: 0, hold_timeout: 200 }).on("hold", function(ev) {
         console.log("Create event!");
 
         if (!disableEventCreate) {
             disableEventCreate = true;
 
             var touches = ev.gesture.touches;
-
-            // for(var t=0,len=touches.length; t<len; t++) {
-            //     var target = $(touches[t].target);
-            //     target.css({
-            //         zIndex: 1337,
-            //         left: touches[t].pageX-50,
-            //         top: touches[t].pageY-50
-            //     });
-            // }
             
             deltaX = ev.gesture.center.pageX - (screenWidth / 2);
             deltaY = ev.gesture.center.pageY - (screenHeight / 2);
@@ -604,7 +742,8 @@
                 xTarget: x,
                 yTarget: y
             });
-            event2.visible = true;
+
+            event2.state = 'MOVING';
             eventLoop.events.push(event2);
         }
 
