@@ -387,6 +387,7 @@
                 yTarget: null,
                 state: 'INVALID', // INVALID, FLOATING, MOVING, ENTANGLED, SEQUENCED
                 //visible: true
+                action: null
             };
             var options = options || {};
             var options = $.extend({}, defaults, options);
@@ -398,6 +399,8 @@
             this.yTarget = options.yTarget;
 
             this.state = options.state;
+
+            this.action = options.action;
 
             //this.visible = options.visible;
         }
@@ -592,6 +595,7 @@
             // Populate array for sorting
             for (var i = 0; i < eventCount; i++) {
                 var loopEvent = eventLoop.events[i];
+                loopEvent.action = function() { console.log("action " + i); }
                 eventSequence.push({
                     event: loopEvent,
                     angle: getAngle(loopEvent.x, loopEvent.y)
@@ -613,29 +617,13 @@
 
             console.log(eventSequence);
 
-            return eventSequence;
+            for (var i = 0; i < eventSequence.length; i++) {
+                loopEvent = eventSequence[i];
 
-            for (var i = 0; i < eventCount; i++) {
-                var loopEvent = eventLoop.events[i];
-
-                var j;
-                if (eventAngles.length == 0) { 
-                    eventAngles.push(getAngle(loopEvent.x, loopEvent.y));
-                } else {
-                    for (j = 0; j < eventAngles.length; j++) {
-                        console.log(getAngle(loopEvent.x, loopEvent.y));
-                        if (getAngle(loopEvent.x, loopEvent.y) > eventAngles[j]) {
-                            eventAngles.splice(j, 0, getAngle(loopEvent.x, loopEvent.y));
-                            //eventAngles.push(getAngle(loopEvent.x, loopEvent.y));
-                            break;
-                        }
-                    }
-                }
-
-                eventSequence.splice(j, 0, loopEvent);
+                loopEvent.event.action();
             }
-            console.log(eventAngles);
-            console.log(eventSequence);
+
+            return eventSequence;
         }
 
         function getAngle(x, y) {
@@ -643,7 +631,11 @@
             var deltaY = y - (screenHeight / 2);
             var angleInRadians = Math.atan2(deltaY, deltaX); // * 180 / PI;
             if (angleInRadians < 0) {
-                angleInRadians = PI + (PI + angleInRadians);
+                angleInRadians = Math.PI + (Math.PI + angleInRadians);
+            }
+            angleInRadians = angleInRadians + (Math.PI / 2); // Offset by (PI / 2) radians
+            if (angleInRadians > (2 * Math.PI)) {
+                angleInRadians = angleInRadians - (2 * Math.PI);
             }
             return angleInRadians;
         }
