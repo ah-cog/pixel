@@ -515,26 +515,9 @@
          */
         function updatePosition(loopEvent) {
 
-            //if (loopEvent.visible === false) {
-            if (loopEvent.state === 'MOVING') {
-                loopEvent.x = mouseX;
-                loopEvent.y = mouseY;
-
-                deltaX = mouseX - (screenWidth / 2);
-                deltaY = mouseY - (screenHeight / 2);
-                //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
-                angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
-
-                loopEvent.xTarget = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
-                loopEvent.yTarget = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
-            }
-
             if (loopEvent.x !== loopEvent.xTarget || loopEvent.y !== loopEvent.yTarget) { // FREE
                 //console.log("Rendering ghost");
             }
-
-            // Check if under certain distance from the circle (and attach to)
-            var distance = lineDistance(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
             
             // Check if event node is near to the event loop
             // if (distance < 110) { // ENTANGLED
@@ -544,11 +527,27 @@
             // }
 
             if (loopEvent.state === 'MOVING') {
+
+                // Standard update for a moving event
+                
+                loopEvent.x = mouseX;
+                loopEvent.y = mouseY;
+
+                deltaX = mouseX - (screenWidth / 2);
+                deltaY = mouseY - (screenHeight / 2);
+                angleInDegrees = Math.atan2(deltaY, deltaX);
+
+                loopEvent.xTarget = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
+                loopEvent.yTarget = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+
+                // Check if under certain distance from the circle (and attach to)
+                var distance = lineDistance(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
+
                 if (distance < 110) { // ENTANGLED
                 //if (loopEvent.state === 'ENTANGLED') {
                     line(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
 
-                    // Draw the "snapped in" position that the event node would occupy
+                    // Draw the "would be" position that the event node would occupy
                     fill(66, 214, 146, 50);
                     ellipse(loopEvent.xTarget, loopEvent.yTarget, 50, 50);
 
@@ -563,6 +562,10 @@
                         loopEvent.y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
                     }
                 }
+
+            } else if (loopEvent.state === 'FLOATING') {
+                fill(66, 214, 146, 50);
+                ellipse(loopEvent.x, loopEvent.y, 60, 60);
             }
         }
 
@@ -627,13 +630,28 @@
             return distance;
         }
 
+        function getNearestPositionOnEventLoop(x, y) {
+            var deltaX = x - (screenWidth / 2);
+            var deltaY = y - (screenHeight / 2);
+            var angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
+
+            var nearestX = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
+            var nearestY = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+
+            var nearestPosition = {
+                x: nearestX,
+                y: nearestY
+            };
+            return nearestPosition;
+        }
+
         /**
          * Touch event handler
          * @param  {[type]} ev [description]
          * @return {[type]}    [description]
          */
         $(currentCanvas).hammer({ drag_max_touches: 0 }).on("touch", function(ev) {
-            console.log("Touch canvus event!");
+            console.log("'touch' event!");
 
             var touches = ev.gesture.touches;
 
@@ -651,7 +669,7 @@
                     loopEvent.state = 'MOVING';
                     disableEventCreate = true;
 
-                    console.log("touched event " + i);
+                    console.log("\tevent " + i);
                     break;
                 }
             }
@@ -674,7 +692,7 @@
         });
 
         $(currentCanvas).hammer({ drag_max_touches: 0 }).on("release", function(ev) {
-            console.log("release event");
+            console.log("'release' event!");
 
             var touches = ev.gesture.touches;
 
@@ -685,18 +703,19 @@
 
                 if (loopEvent.state === 'MOVING') {
 
-                    deltaX = ev.gesture.center.pageX - (screenWidth / 2);
-                    deltaY = ev.gesture.center.pageY - (screenHeight / 2);
-                    //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
-                    angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
+                    // deltaX = ev.gesture.center.pageX - (screenWidth / 2);
+                    // deltaY = ev.gesture.center.pageY - (screenHeight / 2);
+                    // //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
+                    // angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
 
-                    x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
-                    y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+                    // x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
+                    // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
 
                     var distance = getDistanceFromEventLoop(loopEvent);
                     if (distance < 110) {
-                        loopEvent.x = x;
-                        loopEvent.y = y;
+                        var nearestPosition = getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
+                        loopEvent.x = nearestPosition.x;
+                        loopEvent.y = nearestPosition.y;
                         loopEvent.state = 'SEQUENCED';
                     } else {
                         loopEvent.state = 'FLOATING';
@@ -721,30 +740,33 @@
 
 
     $(currentCanvas).hammer({ drag_max_touches: 0, hold_timeout: 200 }).on("hold", function(ev) {
-        console.log("Create event!");
+        console.log("'hold' event!");
 
         if (!disableEventCreate) {
             disableEventCreate = true;
 
             var touches = ev.gesture.touches;
             
-            deltaX = ev.gesture.center.pageX - (screenWidth / 2);
-            deltaY = ev.gesture.center.pageY - (screenHeight / 2);
-            //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
-            angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
+            // deltaX = ev.gesture.center.pageX - (screenWidth / 2);
+            // deltaY = ev.gesture.center.pageY - (screenHeight / 2);
+            // //angleInDegrees = Math.atan(deltaY / deltaX) * 180 / PI;
+            // angleInDegrees = Math.atan2(deltaY, deltaX); // * 180 / PI;
 
-            x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
-            y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+            // x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
+            // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
+
+            var nearestPosition = getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
+
             
-            var event2 = new Event({
+            var loopEvent = new Event({
                 x: ev.gesture.center.pageX,
                 y: ev.gesture.center.pageY,
-                xTarget: x,
-                yTarget: y
+                xTarget: nearestPosition.x,
+                yTarget: nearestPosition.y
             });
 
-            event2.state = 'MOVING';
-            eventLoop.events.push(event2);
+            loopEvent.state = 'MOVING';
+            eventLoop.events.push(loopEvent);
         }
 
         ev.gesture.preventDefault();
