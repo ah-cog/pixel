@@ -353,6 +353,7 @@
 
     <script type="application/processing" data-processing-target="canvas1">
 
+        // currentSequencer = "#sequencer1";
         currentCanvas = "#canvas1";
 
         // sequence = []; // Sequence of events in the event loop (currently)
@@ -412,21 +413,17 @@
             // erase background
             background(255, 255, 255, 0);
 
+            // draw "go" button
             font_name = createFont("DidactGothic.ttf", 32);
             textFont(font_name);
-            // textSize(30);
-            //PFont font;
-            //font = loadFont("FFScala.ttf");
             textFont(font_name, 100);
             textAlign(CENTER);
             fill(65, 65, 65);
             text("go", screenWidth / 2, screenHeight / 2 + 20);
 
+            // draw script name
             font_name = createFont("DidactGothic.ttf", 16);
             textFont(font_name);
-            // textSize(30);
-            //PFont font;
-            //font = loadFont("FFScala.ttf");
             textFont(font_name, 40);
             textAlign(CENTER);
             fill(65, 65, 65);
@@ -589,9 +586,35 @@
          */
         function getEventSequence() {
             var eventSequence = [];
-            var eventAngles = [];
 
             var eventCount = eventLoop.events.length;
+
+            // Populate array for sorting
+            for (var i = 0; i < eventCount; i++) {
+                var loopEvent = eventLoop.events[i];
+                eventSequence.push({
+                    event: loopEvent,
+                    angle: getAngle(loopEvent.x, loopEvent.y)
+                });
+            }
+
+            // Perform insertion sort
+            var i, j;
+            var loopEvent;
+            for (var i = 0; i < eventCount; i++) {
+                loopEvent = eventSequence[i];
+
+                for (j = i-1; j > -1 && eventSequence[j].angle > loopEvent.angle; j--) {
+                    eventSequence[j+1] = eventSequence[j];
+                }
+
+                eventSequence[j+1] = loopEvent;
+            }
+
+            console.log(eventSequence);
+
+            return eventSequence;
+
             for (var i = 0; i < eventCount; i++) {
                 var loopEvent = eventLoop.events[i];
 
