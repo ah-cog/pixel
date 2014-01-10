@@ -1,4 +1,6 @@
 
+boolean shiftPressed = false;
+
 int dataTimestamp = 0;
 float roll = 0, minRoll = 0, maxRoll = 0, avgRoll = 0;
 float pitch = 0, minPitch = 0, maxPitch = 0, avgPitch = 0;
@@ -89,6 +91,12 @@ void openGestureData() {
 }
 
 void keyPressed() {
+  if (key == CODED) {
+    if (keyCode == SHIFT) {
+      shiftPressed = true;
+    }
+  }
+  
 //  if (key == ' ') {
 //    
 //   // TODO: Start gesture
@@ -135,11 +143,27 @@ void keyPressed() {
     showAxisZ = !showAxisZ;
   } else if (key == TAB) {
     
-    gestureIndex = (gestureIndex + 1) % gestureName.length;
+    if (shiftPressed) {
+      if (gestureIndex == 0) {
+        gestureIndex = (gestureName.length - 1);
+      } else {
+        gestureIndex = (gestureIndex - 1) % gestureName.length;
+      }
+    } else {
+      gestureIndex = (gestureIndex + 1) % gestureName.length;
+    }
     
     gestureSelectionTime = millis();
     
     updateCurrentGesture();
+  }
+}
+
+void keyReleased() {
+  if (key == CODED) {
+    if (keyCode == SHIFT) {
+      shiftPressed = false;
+    }
   }
 }
 
@@ -254,6 +278,14 @@ void drawGesturePlotBoundaries() {
     gestureSampleAverageCount.add(new ArrayList<Integer>());
   }
   
+  // TODO: Move axisVisible and axisColor elsewhere... for efficiency's sake!
+  boolean axisVisible[] = { showAxisX, showAxisY, showAxisZ };
+  int axisColor[][] = {
+    { 255, 0, 0, 20 },
+    { 0, 255, 0, 20 },
+    { 0, 0, 255, 20 }
+  };
+  
   // Draw lines connecting all points
   smooth();
   strokeWeight(1);
@@ -265,134 +297,52 @@ void drawGesturePlotBoundaries() {
     if (singleGestureSample.size() > 0) {
       sampleCount++;
       
-      /**
-       * Draw gesture accelerometer x-axis data
-       */
-      
-      //stroke(255,0,0, 20); drawPlot(singleGestureSample.get(0), 0, height / 2, width, height, 0, 1000);
-      if (showAxisX) {
-        stroke(255,0,0, 20); drawPlot(singleGestureSample.get(0), 0, height / 2, width, height, 0, 1000);
-      }
-      
-      // Update list size
-      while (gestureSampleUpperBounds.get(0).size() < singleGestureSample.get(0).size()) {
-        gestureSampleUpperBounds.get(0).add(Integer.MIN_VALUE);
-        gestureSampleLowerBounds.get(0).add(Integer.MAX_VALUE);
-        gestureSampleAverageSum.get(0).add(0);
-        gestureSampleAverageCount.get(0).add(0);
-      }
-    
-      // Update all upper bounds
-      for (int j = 0; j < singleGestureSample.get(0).size(); j++) {
-        if (singleGestureSample.get(0).get(j) > gestureSampleUpperBounds.get(0).get(j)) { // Check if the current value is greater than the currently-stored upper bound
-          gestureSampleUpperBounds.get(0).set(j, singleGestureSample.get(0).get(j)); // Update value
+      for (int axis = 0; axis < 3; axis++) {
+        // Draw gesture accelerometer data for current axis
+        
+        //stroke(255,0,0, 20); drawPlot(singleGestureSample.get(0), 0, height / 2, width, height, 0, 1000);
+        if (axisVisible[axis]) {
+          stroke(axisColor[axis][0], axisColor[axis][1], axisColor[axis][2], axisColor[axis][3]); drawPlot(singleGestureSample.get(axis), 0, height / 2, width, height, 0, 1000);
         }
         
-        // Update lower bound
-        if (singleGestureSample.get(0).get(j) < gestureSampleLowerBounds.get(0).get(j)) { // Check if the current value is greater than the currently-stored upper bound
-          gestureSampleLowerBounds.get(0).set(j, singleGestureSample.get(0).get(j)); // Update value
+        // Update list sizes
+        while (gestureSampleUpperBounds.get(axis).size() < singleGestureSample.get(axis).size()) {
+          gestureSampleUpperBounds.get(axis).add(Integer.MIN_VALUE);
+          gestureSampleLowerBounds.get(axis).add(Integer.MAX_VALUE);
+          gestureSampleAverageSum.get(axis).add(0);
+          gestureSampleAverageCount.get(axis).add(0);
         }
-        
-        // Update average
-        int cumulativeGestureSample = singleGestureSample.get(0).get(j) + gestureSampleAverageSum.get(0).get(j);
-        gestureSampleAverageSum.get(0).set(j, cumulativeGestureSample); // Update value
-        // Update average count
-        int gestureSampleCount = gestureSampleAverageCount.get(0).get(j) + 1;
-        gestureSampleAverageCount.get(0).set(j, gestureSampleCount); // Update value
-      }
       
-      /**
-       * Draw gesture accelerometer x-axis data
-       */
-      
-      if (showAxisY) {
-        stroke(0,255,0, 20); drawPlot(singleGestureSample.get(1), 0, height / 2, width, height, 0, 1000);
-      }
-      
-      // Update list size
-      while (gestureSampleUpperBounds.get(1).size() < singleGestureSample.get(1).size()) {
-        gestureSampleUpperBounds.get(1).add(Integer.MIN_VALUE);
-        gestureSampleLowerBounds.get(1).add(Integer.MAX_VALUE);
-        gestureSampleAverageSum.get(1).add(0);
-        gestureSampleAverageCount.get(1).add(0);
-      }
-    
-      // Update all upper bounds
-      for (int j = 0; j < singleGestureSample.get(1).size(); j++) {
-        if (singleGestureSample.get(1).get(j) > gestureSampleUpperBounds.get(1).get(j)) { // Check if the current value is greater than the currently-stored upper bound
-          gestureSampleUpperBounds.get(1).set(j, singleGestureSample.get(1).get(j)); // Update value
+        // Update all upper bounds
+        for (int j = 0; j < singleGestureSample.get(axis).size(); j++) {
+          if (singleGestureSample.get(axis).get(j) > gestureSampleUpperBounds.get(axis).get(j)) { // Check if the current value is greater than the currently-stored upper bound
+            gestureSampleUpperBounds.get(axis).set(j, singleGestureSample.get(axis).get(j)); // Update value
+          }
+          
+          // Update lower bound
+          if (singleGestureSample.get(axis).get(j) < gestureSampleLowerBounds.get(axis).get(j)) { // Check if the current value is greater than the currently-stored upper bound
+            gestureSampleLowerBounds.get(axis).set(j, singleGestureSample.get(axis).get(j)); // Update value
+          }
+          
+          // Update average
+          int cumulativeGestureSample = singleGestureSample.get(axis).get(j) + gestureSampleAverageSum.get(axis).get(j);
+          gestureSampleAverageSum.get(axis).set(j, cumulativeGestureSample); // Update value
+          // Update average count
+          int gestureSampleCount = gestureSampleAverageCount.get(axis).get(j) + 1;
+          gestureSampleAverageCount.get(axis).set(j, gestureSampleCount); // Update value
         }
-        
-        // Update lower bound
-        if (singleGestureSample.get(1).get(j) < gestureSampleLowerBounds.get(1).get(j)) { // Check if the current value is greater than the currently-stored upper bound
-          gestureSampleLowerBounds.get(1).set(j, singleGestureSample.get(1).get(j)); // Update value
-        }
-        
-        // Update average
-        int cumulativeGestureSample = singleGestureSample.get(1).get(j) + gestureSampleAverageSum.get(1).get(j);
-        gestureSampleAverageSum.get(1).set(j, cumulativeGestureSample); // Update value
-        // Update average count
-        int gestureSampleCount = gestureSampleAverageCount.get(1).get(j) + 1;
-        gestureSampleAverageCount.get(1).set(j, gestureSampleCount); // Update value
       }
-      
-      /**
-       * Draw gesture accelerometer x-axis data
-       */
-      
-      if (showAxisZ) {
-        stroke(0,0,255, 20); drawPlot(singleGestureSample.get(2), 0, height / 2, width, height, 0, 1000);
-      }
-      
-      // Update list size
-      while (gestureSampleUpperBounds.get(2).size() < singleGestureSample.get(2).size()) {
-        gestureSampleUpperBounds.get(2).add(Integer.MIN_VALUE);
-        gestureSampleLowerBounds.get(2).add(Integer.MAX_VALUE);
-        gestureSampleAverageSum.get(2).add(0);
-        gestureSampleAverageCount.get(2).add(0);
-      }
-    
-      // Update all upper bounds
-      for (int j = 0; j < singleGestureSample.get(2).size(); j++) {
-        if (singleGestureSample.get(2).get(j) > gestureSampleUpperBounds.get(2).get(j)) { // Check if the current value is greater than the currently-stored upper bound
-          gestureSampleUpperBounds.get(2).set(j, singleGestureSample.get(2).get(j)); // Update value
-        }
-        
-        // Update lower bound
-        if (singleGestureSample.get(2).get(j) < gestureSampleLowerBounds.get(2).get(j)) { // Check if the current value is greater than the currently-stored upper bound
-          gestureSampleLowerBounds.get(2).set(j, singleGestureSample.get(2).get(j)); // Update value
-        }
-        
-        // Update average
-        int cumulativeGestureSample = singleGestureSample.get(2).get(j) + gestureSampleAverageSum.get(2).get(j);
-        gestureSampleAverageSum.get(2).set(j, cumulativeGestureSample); // Update value
-        // Update average count
-        int gestureSampleCount = gestureSampleAverageCount.get(2).get(j) + 1;
-        gestureSampleAverageCount.get(2).set(j, gestureSampleCount); // Update value
-      }
-      
-//      stroke(0,255,0); drawPlot(singleGestureSample.get(1), 0, height / 2, width, height, 0, 1000);
-//      stroke(0,0,255); drawPlot(singleGestureSample.get(2), 0, height / 2, width, height, 0, 1000);
     }
   }
   
   // Compute average of accelerometer x-axis data
-  for (int j = 0; j < gestureSampleAverageSum.get(0).size(); j++) {
-    //int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(0).get(j)) / float(sampleCount));
-    int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(0).get(j)) / float(gestureSampleAverageCount.get(0).get(j)));
-    gestureSampleAverageSum.get(0).set(j, cumulativeGestureSample); // Update value
-  }
-  
-  for (int j = 0; j < gestureSampleAverageSum.get(1).size(); j++) {
-    //int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(1).get(j)) / float(sampleCount));
-    int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(1).get(j)) / float(gestureSampleAverageCount.get(1).get(j)));
-    gestureSampleAverageSum.get(1).set(j, cumulativeGestureSample); // Update value
-  }
-  
-  for (int j = 0; j < gestureSampleAverageSum.get(2).size(); j++) {
-    //int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(2).get(j)) / float(sampleCount));
-    int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(2).get(j)) / float(gestureSampleAverageCount.get(2).get(j)));
-    gestureSampleAverageSum.get(2).set(j, cumulativeGestureSample); // Update value
+  for (int axis = 0; axis < 3; axis++) {
+    // Compute average of accelerometer data for current axis
+    for (int j = 0; j < gestureSampleAverageSum.get(axis).size(); j++) {
+      //int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(0).get(j)) / float(sampleCount));
+      int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(axis).get(j)) / float(gestureSampleAverageCount.get(axis).get(j)));
+      gestureSampleAverageSum.get(axis).set(j, cumulativeGestureSample); // Update value
+    }
   }
   
   // maximumSampleSize
@@ -402,26 +352,28 @@ void drawGesturePlotBoundaries() {
 //    line(0 + (i + 1) * (width / divisions), 0, 0 + (i + 1) * (width / divisions), height);
 //  }
   
-  if (showAxisX) {
-    stroke(255,0,0,85); drawPlot(gestureSampleUpperBounds.get(0), 0, height / 2, width, height, 0, 1000);
-    stroke(255,0,0,85); drawPlot(gestureSampleLowerBounds.get(0), 0, height / 2, width, height, 0, 1000);
-    stroke(255,0,0,180); drawPlot(gestureSampleAverageSum.get(0), 0, height / 2, width, height, 0, 1000);
-    drawPlotNodes(12, gestureSampleAverageSum.get(0), 0, height / 2, width, height, 0, 1000);
+  for (int axis = 0; axis < 3; axis++) {
+    if (axisVisible[axis]) {
+      stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 85); drawPlot(gestureSampleUpperBounds.get(axis), 0, height / 2, width, height, 0, 1000);
+      stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 85); drawPlot(gestureSampleLowerBounds.get(axis), 0, height / 2, width, height, 0, 1000);
+      stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 180); drawPlot(gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
+      drawPlotNodes(12, gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
+    }
   }
   
-  if (showAxisY) {
-    stroke(0,255,0,85); drawPlot(gestureSampleUpperBounds.get(1), 0, height / 2, width, height, 0, 1000);
-    stroke(0,255,0,85); drawPlot(gestureSampleLowerBounds.get(1), 0, height / 2, width, height, 0, 1000);
-    stroke(0,255,0,180); drawPlot(gestureSampleAverageSum.get(1), 0, height / 2, width, height, 0, 1000);
-    drawPlotNodes(12, gestureSampleAverageSum.get(1), 0, height / 2, width, height, 0, 1000);
-  }
-  
-  if (showAxisZ) {
-    stroke(0,0,255,85); drawPlot(gestureSampleUpperBounds.get(2), 0, height / 2, width, height, 0, 1000);
-    stroke(0,0,255,85); drawPlot(gestureSampleLowerBounds.get(2), 0, height / 2, width, height, 0, 1000);
-    stroke(0,0,255,180); drawPlot(gestureSampleAverageSum.get(2), 0, height / 2, width, height, 0, 1000);
-    drawPlotNodes(12, gestureSampleAverageSum.get(2), 0, height / 2, width, height, 0, 1000);
-  }
+//  if (showAxisY) {
+//    stroke(0,255,0,85); drawPlot(gestureSampleUpperBounds.get(1), 0, height / 2, width, height, 0, 1000);
+//    stroke(0,255,0,85); drawPlot(gestureSampleLowerBounds.get(1), 0, height / 2, width, height, 0, 1000);
+//    stroke(0,255,0,180); drawPlot(gestureSampleAverageSum.get(1), 0, height / 2, width, height, 0, 1000);
+//    drawPlotNodes(12, gestureSampleAverageSum.get(1), 0, height / 2, width, height, 0, 1000);
+//  }
+//  
+//  if (showAxisZ) {
+//    stroke(0,0,255,85); drawPlot(gestureSampleUpperBounds.get(2), 0, height / 2, width, height, 0, 1000);
+//    stroke(0,0,255,85); drawPlot(gestureSampleLowerBounds.get(2), 0, height / 2, width, height, 0, 1000);
+//    stroke(0,0,255,180); drawPlot(gestureSampleAverageSum.get(2), 0, height / 2, width, height, 0, 1000);
+//    drawPlotNodes(12, gestureSampleAverageSum.get(2), 0, height / 2, width, height, 0, 1000);
+//  }
 }
 
 void drawPlot(ArrayList<Integer> data, int originX, int originY, int plotWidth, int plotHeight, int plotRangeFloor, int plotRangeCeiling) {

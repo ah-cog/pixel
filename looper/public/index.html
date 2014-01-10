@@ -352,7 +352,7 @@
 
     <script src="javascripts/ga.js"></script>
 
-    <script type="application/processing" data-processing-target="canvas1">
+    <script id="loop1" type="application/processing" data-processing-target="canvas1">
 
         // currentSequencer = "#sequencer1";
         currentCanvas = "#canvas1";
@@ -597,16 +597,19 @@
             // Populate array for sorting
             for (var i = 0; i < eventCount; i++) {
                 var loopEvent = eventLoop.events[i];
-                loopEvent.action = function() { console.log("action " + i); }
-                eventSequence.push({
-                    event: loopEvent,
-                    angle: getAngle(loopEvent.x, loopEvent.y)
-                });
+                if (loopEvent.state === 'SEQUENCED') {
+                    loopEvent.action = function() { console.log("action " + i); }
+                    eventSequence.push({
+                        event: loopEvent,
+                        angle: getAngle(loopEvent.x, loopEvent.y)
+                    });
+                }
             }
 
             // Perform insertion sort
             var i, j;
             var loopEvent;
+            eventCount = eventSequence.length;
             for (var i = 0; i < eventCount; i++) {
                 loopEvent = eventSequence[i];
 
@@ -760,10 +763,10 @@
 
             disableEventCreate = false;
 
-            ev.gesture.preventDefault();
-            ev.stopPropagation();
-            ev.gesture.stopPropagation();
-            return;
+            // ev.gesture.preventDefault();
+            // ev.stopPropagation();
+            // ev.gesture.stopPropagation();
+            // return;
         });
 
     
