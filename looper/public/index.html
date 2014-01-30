@@ -70,13 +70,14 @@
 
         #carousel li h2 {
             color: #fff;
-            font-size: 30px;
+            font-size: 40px;
             text-align: center;
             position: absolute;
             top: 40%;
             left: 0;
             width: 100%;
-            text-shadow: -1px -1px 0 rgba(0,0,0,.2);
+            text-shadow: 0px 0px 0 rgba(0,0,0,.2);
+            font-family: 'Didact Gothic', sans-serif;
         }
 
         #carousel li.pane1 { background: #F0F1F0; } // #42d692
@@ -106,11 +107,101 @@
         .drag5 { background: #9fe1e7; }
 
     </style>
+
+
+
+    
+  <!-- Include Firebase -->
+  <script src="https://cdn.firebase.com/v0/firebase.js"></script>
+
+  <!-- Include ACE and its JavaScript mode and theme files -->
+  <script src="ace/ace.js"></script>
+  <script src="ace/mode-javascript.js"></script>
+  <script src="ace/theme-textmate.js"></script>
+
+  <!-- Include Firepad -->
+  <script src="firepad.js"></script>
+  <link rel="stylesheet" href="firepad.css" />
+
+  <!-- Helper for generating URLs / Firebase references for example purposes.
+       Not necessary in production apps. -->
+  <script src="example-helper.js"></script>
+
+  <style>
+    html { height: 100%; }
+    body { margin: 0; height: 100%; position: relative; }
+    /* Height / width / positioning can be customized for your use case.
+       For demo purposes, we make firepad fill the entire browser. */
+    #firepad-container {
+      position: absolute; left: 0; top: 0; bottom: 0; right: 0;
+    }
+
+    .firepad {
+      width: 700px;
+      height: 450px;
+      background-color: #f62; /* dark orange background */
+    }
+  </style>
 </head>
 
 <body>
 
 <!-- <h1>Drag the balls!</h1> -->
+
+    <div id='overlay'>
+        <input type="button" value="close" onclick="$('#overlay').hide();" />
+        <div id="firepad-container"></div>
+    </div>
+
+    <script>
+        var docHeight = $(document).height();
+
+       //$("body").append("<div id='overlay'><input type=\"button\" value=\"close\" onclick=\"$('#overlay').hide();\" /><div id=\"firepad-container\"></div></div>");
+
+       $("#overlay")
+          .height(docHeight)
+          .css({
+             'opacity' : 0.3,
+             'position': 'absolute',
+             'top': 0,
+             'left': 0,
+             'background-color': '#333333',
+             'width': '100%',
+             'z-index': 5000
+          });
+
+        $("#overlay").hide();
+    </script>
+
+
+    <script>
+    window.onload = function() {
+      //// Initialize Firebase.
+      var firepadRef = getExampleRef();
+      // TODO: Replace above line with:
+      // var ref = new Firebase('<YOUR FIREBASE URL>');
+  
+      //// Create ACE
+      var editor = ace.edit("firepad-container");
+      editor.setTheme("ace/theme/textmate");
+      var session = editor.getSession();
+      session.setUseWrapMode(true);
+      session.setUseWorker(false);
+      session.setMode("ace/mode/javascript");
+  
+      //// Create Firepad.
+      var firepad = Firepad.fromACE(firepadRef, editor);
+      
+      //// Initialize contents.
+      firepad.on('ready', function() {
+        if (firepad.isHistoryEmpty()) {
+          firepad.setText('// JavaScript Editing with Firepad!\nfunction go() {\n  var message = "Hello, world.";\n  console.log(message);\n}');
+        }
+      });
+    };
+  </script>
+
+
 
 
 
@@ -121,6 +212,9 @@
             <li class="pane1">
                 <canvas id="canvas1" style="width: 100%; height: 100%;"></canvas>
             </li>
+
+            <li class="pane4"><h2>script on another module<h2></li>
+            <li class="pane5"><h2>script on yet another module</h2></li>
 
             <li class="pane2">
                 <canvas id="canvas2" style="width: 100%; height: 100%;"></canvas>
@@ -755,6 +849,10 @@
                         loopEvent.state = 'FLOATING';
                     }
 
+                    // TODO: Only show JS editor by default for new nodes
+                    console.log("open editor!");
+                    $('#overlay').show(); // TODO: Append argument
+
                     disableEventCreate = false;
 
                     break;
@@ -768,8 +866,6 @@
             // ev.gesture.stopPropagation();
             // return;
         });
-
-    
 
 
 

@@ -325,39 +325,39 @@ void drawGesturePlotBoundaries() {
   
   // Compute standard deviation of accelerometer x-axis, y-axis, and z-axis data
   
-  for (int axis = 0; axis < 3; axis++) {
-    
-    int pointDeviationSquareSum = 0;
-    
-    //for (int j = 0; j < gestureSampleAverageSum.get(axis).size(); j++) {
-    for (int j = 0; j < singleGestureSample.get(axis).size(); j++) {
-      
-      for (int i = 0; i < gestureSamples.size(); i++) {
-        ArrayList<ArrayList<Integer>> singleGestureSample = gestureSamples.get(i);
-        
-        if (singleGestureSample.size() > 0) {
-          
-          int currentPointValue = singleGestureSample.get(axis).get(j);
-          int pointAverage = gestureSampleAverageSum.get(axis).get(j);
-          pointDeviationSquareSum = pointDeviationSquareSum + int(sq(currentPointValue - pointAverage));
-                
-        //int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(0).get(j)) / float(sampleCount));
-//        int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(axis).get(j)) / float(gestureSampleAverageCount.get(axis).get(j)));
-//        gestureSampleAverageSum.get(axis).set(j, cumulativeGestureSample); // Update value
-        }
-        
-        
-        // Compute average of accelerometer data for current axis
-  //      int pointAverage = gestureSampleAverageSum.get(axis).get(j);
-        
-  //      for (int j = 0; j < gestureSampleDeviationSquaredDeviation.get(axis).size(); j++) {
-  //        //int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(0).get(j)) / float(sampleCount));
-  //        int pointDeviationSquare = gestureSampleAverageSum.get(axis).get(j); // int(float(gestureSampleAverageSum.get(axis).get(j)) / float(gestureSampleAverageCount.get(axis).get(j)));
-  //        gestureSampleAverageSum.get(axis).set(j, cumulativeGestureSample); // Update value
-  //      }
-      }
-    }
-  }
+//  for (int axis = 0; axis < 3; axis++) {
+//    
+//    int pointDeviationSquareSum = 0;
+//    
+//    //for (int j = 0; j < gestureSampleAverageSum.get(axis).size(); j++) {
+//    for (int j = 0; j < singleGestureSample.get(axis).size(); j++) {
+//      
+//      for (int i = 0; i < gestureSamples.size(); i++) {
+//        ArrayList<ArrayList<Integer>> singleGestureSample = gestureSamples.get(i);
+//        
+//        if (singleGestureSample.size() > 0) {
+//          
+//          int currentPointValue = singleGestureSample.get(axis).get(j);
+//          int pointAverage = gestureSampleAverageSum.get(axis).get(j);
+//          pointDeviationSquareSum = pointDeviationSquareSum + int(sq(currentPointValue - pointAverage));
+//                
+//        //int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(0).get(j)) / float(sampleCount));
+////        int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(axis).get(j)) / float(gestureSampleAverageCount.get(axis).get(j)));
+////        gestureSampleAverageSum.get(axis).set(j, cumulativeGestureSample); // Update value
+//        }
+//        
+//        
+//        // Compute average of accelerometer data for current axis
+//  //      int pointAverage = gestureSampleAverageSum.get(axis).get(j);
+//        
+//  //      for (int j = 0; j < gestureSampleDeviationSquaredDeviation.get(axis).size(); j++) {
+//  //        //int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(0).get(j)) / float(sampleCount));
+//  //        int pointDeviationSquare = gestureSampleAverageSum.get(axis).get(j); // int(float(gestureSampleAverageSum.get(axis).get(j)) / float(gestureSampleAverageCount.get(axis).get(j)));
+//  //        gestureSampleAverageSum.get(axis).set(j, cumulativeGestureSample); // Update value
+//  //      }
+//      }
+//    }
+//  }
   
   // Plot sample data
   for (int axis = 0; axis < 3; axis++) {
