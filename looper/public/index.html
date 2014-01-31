@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pixel</title>
+    <title>Looper</title>
     <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
     <script src="javascripts/acorn.js"></script>
     <script src="javascripts/interpreter.js"></script>
@@ -137,7 +137,7 @@
     }
 
     .firepad {
-      width: 700px;
+      /*width: 700px;*/
       height: 450px;
       background-color: #f62; /* dark orange background */
     }
@@ -148,29 +148,25 @@
 
 <!-- <h1>Drag the balls!</h1> -->
 
-    <div id='overlay'>
-        <input type="button" value="close" onclick="$('#overlay').hide();" />
-        <div id="firepad-container"></div>
-    </div>
+    
 
     <script>
-        var docHeight = $(document).height();
 
        //$("body").append("<div id='overlay'><input type=\"button\" value=\"close\" onclick=\"$('#overlay').hide();\" /><div id=\"firepad-container\"></div></div>");
 
-       $("#overlay")
-          .height(docHeight)
-          .css({
-             'opacity' : 0.3,
-             'position': 'absolute',
-             'top': 0,
-             'left': 0,
-             'background-color': '#333333',
-             'width': '100%',
-             'z-index': 5000
-          });
+       // $("#overlay")
+       //    .height(docHeight)
+       //    .css({
+       //       'opacity' : 0.3,
+       //       'position': 'absolute',
+       //       'top': 0,
+       //       'left': 0,
+       //       'background-color': '#333333',
+       //       'width': '100%',
+       //       'z-index': 5000
+       //    });
 
-        $("#overlay").hide();
+        // $("#overlay").hide();
     </script>
 
 
@@ -203,16 +199,35 @@
 
 
 
+    <!-- jQuery is just for the demo! Hammer.js works without jQuery :-) -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="javascripts/modernizr.js"></script>
 
 
     <!--<div id="debug">Log</div>-->
 
     <div id="carousel">
-        <ul>
-            <li class="pane1">
-                <canvas id="canvas1" style="width: 100%; height: 100%;"></canvas>
+        <ul id="panes">
+  <!--           <li class="pane9">
+                <canvas id="canvasA" style="width: 100%; height: 100%;"></canvas>
             </li>
 
+            <li class="pane8">
+                <canvas id="canvasB" style="width: 100%; height: 100%;"></canvas>
+            </li> -->
+
+            <li class="pane1">
+                <div id="overlay" style="width: 100%; height: 100%; position: relative; z-index: 5000;">
+                    <input type="button" value="close" onclick="$('#overlay').hide();" />
+                    <div id="firepad-container"></div>
+                </div>
+                <script>
+                    $('#overlay').hide();
+                </script>
+
+                <canvas id="looperCanvas" style="width: 100%; height: 100%;"></canvas>
+            </li>
+<!-- 
             <li class="pane4"><h2>script on another module<h2></li>
             <li class="pane5"><h2>script on yet another module</h2></li>
 
@@ -230,14 +245,11 @@
               </div>
             </li>
             <li class="pane4"><h2>..or drag...</h2></li>
-            <li class="pane5"><h2>Dit is het einde!</h2></li>
+            <li class="pane5"><h2>Dit is het einde!</h2></li> -->
         </ul>
     </div>
 
 
-    <!-- jQuery is just for the demo! Hammer.js works without jQuery :-) -->
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-    <script src="javascripts/modernizr.js"></script>
 
     <script src="javascripts/jquery.hammer.min.js"></script>
 
@@ -446,10 +458,192 @@
 
     <script src="javascripts/ga.js"></script>
 
-    <script id="loop1" type="application/processing" data-processing-target="canvas1">
+
+
+
+
+    <script>
+    function sketchProc(processing) {
+
+        var backgroundColor = processing.color(Math.random() * 255, Math.random() * 255, Math.random() * 255);
+
+      // Override draw function, by default it will be called 60 times per second
+      processing.draw = function() {
+        // determine center and max clock arm length
+        var centerX = processing.width / 2, centerY = processing.height / 2;
+        var maxArmLength = Math.min(centerX, centerY);
+
+        function drawArm(position, lengthScale, weight) {
+          processing.strokeWeight(weight);
+          processing.line(centerX, centerY,
+            centerX + Math.sin(position * 2 * Math.PI) * lengthScale * maxArmLength,
+            centerY - Math.cos(position * 2 * Math.PI) * lengthScale * maxArmLength);
+        }
+
+        // erase background
+        processing.background(backgroundColor);
+
+        var now = new Date();
+
+        // Moving hours arm by small increments
+        var hoursPosition = (now.getHours() % 12 + now.getMinutes() / 60) / 12;
+        drawArm(hoursPosition, 0.5, 5);
+
+        // Moving minutes arm by small increments
+        var minutesPosition = (now.getMinutes() + now.getSeconds() / 60) / 60;
+        drawArm(minutesPosition, 0.80, 3);
+
+        // Moving hour arm by second increments
+        var secondsPosition = now.getSeconds() / 60;
+        drawArm(secondsPosition, 0.90, 1);
+      };
+    }
+
+
+
+
+
+
+    // function EventLoop(options) {
+    //     var defaults = {
+    //         events: []
+    //     };
+    //     var options = options || {};
+    //     var options = $.extend({}, defaults, options);
+
+    //     this.events = options.events; // events on the event loop
+    // }
+
+    // function Event(options) {
+    //     var defaults = {
+    //         x: null,
+    //         y: null,
+    //         xTarget: null,
+    //         yTarget: null,
+    //         state: 'INVALID', // INVALID, FLOATING, MOVING, ENTANGLED, SEQUENCED
+    //         //visible: true
+    //         go: null
+    //     };
+    //     var options = options || {};
+    //     var options = $.extend({}, defaults, options);
+
+    //     this.x = options.x;
+    //     this.y = options.y;
+
+    //     this.xTarget = options.xTarget;
+    //     this.yTarget = options.yTarget;
+
+    //     this.state = options.state;
+
+    //     this.go = options.go;
+
+    //     //this.visible = options.visible;
+    // }
+
+
+    deviceCount = -1;
+
+    /**
+     * Add an expressive interface to a device.
+     */
+    function addDevice(options) {
+        var defaults = {
+            // canvas: null, // Canvas instance
+        };
+        var options = options || {};
+        var options = $.extend({}, defaults, options);
+
+        // this.canvas = options.canvas; // events on the event loop
+
+        // if (this.canvas === null) {
+        //     alert("No canvas specified.")
+        //     return;
+        // }
+
+        /**
+         * Set up canvas
+         */
+
+        deviceCount = deviceCount + 1;
+        $('#panes').append('<li class="pane' + deviceCount + '"><canvas id="canvas' + deviceCount + '" style="width: 100%; height: 100%;"></canvas></li>');
+        canvas = "canvas" + deviceCount;
+
+        /**
+         * Processing code
+         */
+        var deviceSketch = new Processing.Sketch(function(processing) {
+
+            var backgroundColor = processing.color(Math.random() * 255, Math.random() * 255, Math.random() * 255);
+
+            // Override setup function
+            processing.setup = function() {
+                processing.size(processing.screenWidth, processing.screenHeight);
+            }
+
+            // Override draw function, by default it will be called 60 times per second
+            processing.draw = function() {
+                // determine center and max clock arm length
+                var centerX = processing.width / 2, centerY = processing.height / 2;
+                var maxArmLength = Math.min(centerX, centerY);
+
+                function drawArm(position, lengthScale, weight) {
+                    processing.strokeWeight(weight);
+                    processing.line(centerX, centerY,
+                    centerX + Math.sin(position * 2 * Math.PI) * lengthScale * maxArmLength,
+                    centerY - Math.cos(position * 2 * Math.PI) * lengthScale * maxArmLength);
+                }
+
+                // erase background
+                processing.background(backgroundColor);
+
+                var now = new Date();
+
+                // Moving hours arm by small increments
+                var hoursPosition = (now.getHours() % 12 + now.getMinutes() / 60) / 12;
+                drawArm(hoursPosition, 0.5, 5);
+
+                // Moving minutes arm by small increments
+                var minutesPosition = (now.getMinutes() + now.getSeconds() / 60) / 60;
+                drawArm(minutesPosition, 0.80, 3);
+
+                // Moving hour arm by second increments
+                var secondsPosition = now.getSeconds() / 60;
+                drawArm(secondsPosition, 0.90, 1);
+            };
+        });
+        // deviceSketch.options.crispLines = true;
+        var processingInstance = new Processing(canvas, deviceSketch);
+
+        // var pi = new Processing("myCanvas");
+        // pi.externals.sketch.options.crispLines = true;
+
+        var carousel = new Carousel("#carousel");
+        carousel.init();
+        carousel.showPane(deviceCount);
+    }
+
+    // var canvasA = document.getElementById("canvasA");
+    // var processingInstance1 = new Processing(canvasA, sketchProc);
+    // addDevice({ canvas: "canvasA" });
+    // addDevice({ canvas: "canvasB" });
+    // addDevice({ canvas: "canvasC" });
+    addDevice();
+
+    // var canvasB = document.getElementById("canvasB"); // attaching the sketchProc function to the canvas
+    // var processingInstance2 = new Processing(canvasB, sketchProc);
+    </script>
+    
+
+
+
+
+
+
+
+    <script id="loop1" type="application/processing" data-processing-target="looperCanvas">
 
         // currentSequencer = "#sequencer1";
-        currentCanvas = "#canvas1";
+        currentCanvas = "#looperCanvas";
 
         // sequence = []; // Sequence of events in the event loop (currently)
         // i.e., the model of the program to run on the device (will show up when log in using web visualization)
@@ -466,6 +660,18 @@
         scriptName = "script";
 
         disableEventCreate = false;
+
+        showPalette = false;
+
+        function Medium(options) {
+            var defaults = {
+                devices: []
+            };
+            var options = options || {};
+            var options = $.extend({}, defaults, options);
+
+            this.devices = [];
+        }
 
         function EventLoop(options) {
             var defaults = {
@@ -485,7 +691,7 @@
                 yTarget: null,
                 state: 'INVALID', // INVALID, FLOATING, MOVING, ENTANGLED, SEQUENCED
                 //visible: true
-                action: null
+                go: null
             };
             var options = options || {};
             var options = $.extend({}, defaults, options);
@@ -498,7 +704,7 @@
 
             this.state = options.state;
 
-            this.action = options.action;
+            this.go = options.go;
 
             //this.visible = options.visible;
         }
@@ -532,7 +738,10 @@
             // arc(screenWidth / 2 + 95, screenHeight / 7 + 10, 40, 40, (-PI/2) + 0.05*PI, 1.45*PI); // mini event loop indicating "running" (or "updated" or "new")
 
             drawEventLoop();
+            // repositionEvents();
             drawEvents();
+
+            // drawPalette();
         }
 
         void drawEventLoop() {
@@ -568,13 +777,71 @@
 
                 // Draw the event node
                 fill(66, 214, 146);
-                ellipse(loopEvent.x, loopEvent.y, 50, 50);
+                ellipse(loopEvent.x, loopEvent.y, 60, 60);
 
                 // Calculate nearest point on circle
                 //line(loopEvent.x, loopEvent.y, screenWidth / 2, screenHeight / 2);
             }
 
             popMatrix();
+        }
+
+        function repositionEvents() {
+
+            var eventCount = eventLoop.events.length;
+
+            var min = 0;
+            var max = 2 * Math.PI;
+            var angleStep = (max - min) / eventCount;
+
+            // var deltaX = x - (screenWidth / 2);
+            // var deltaY = y - (screenHeight / 2);
+
+            for (var i = 0; i < eventCount; i++) {
+                var loopEvent = eventLoop.events[i];
+
+                var newPosition = getPosition(angleStep * i);
+                loopEvent.x = newPosition.x;
+                loopEvent.y = newPosition.y;
+            }
+        }
+
+        function drawPalette() {
+
+            if (showPalette) {
+
+                pushMatrix();
+
+                // arc(screenWidth / 2, screenHeight / 2, 400, 400, (-PI/2) + 0.05*PI, 1.45*PI);
+
+                fill(66, 214, 146);
+                ellipse(xPalette + 50, yPalette, 50, 50);
+
+                fill(66, 214, 146);
+                ellipse(xPalette - 50, yPalette, 50, 50);
+
+                fill(66, 214, 146);
+                ellipse(xPalette, yPalette + 50, 50, 50);
+
+                fill(66, 214, 146);
+                ellipse(xPalette, yPalette - 50, 50, 50);
+
+                popMatrix();
+            }
+
+            // var eventCount = eventLoop.events.length;
+            // for (var i = 0; i < eventCount; i++) {
+            //     var loopEvent = eventLoop.events[i];
+
+            //     updatePosition(loopEvent);
+
+            //     // Draw the event node
+            //     fill(66, 214, 146);
+            //     ellipse(loopEvent.x, loopEvent.y, 50, 50);
+
+            //     // Calculate nearest point on circle
+            //     //line(loopEvent.x, loopEvent.y, screenWidth / 2, screenHeight / 2);
+            // }
         }
         
         function lineDistance(x1, y1, x2, y2) {
@@ -661,7 +928,7 @@
 
             } else if (loopEvent.state === 'FLOATING') {
                 fill(66, 214, 146, 50);
-                ellipse(loopEvent.x, loopEvent.y, 60, 60);
+                ellipse(loopEvent.x, loopEvent.y, 70, 70);
             }
         }
 
@@ -692,7 +959,7 @@
             for (var i = 0; i < eventCount; i++) {
                 var loopEvent = eventLoop.events[i];
                 if (loopEvent.state === 'SEQUENCED') {
-                    loopEvent.action = function() { console.log("action " + i); }
+                    loopEvent.go = function() { console.log("action " + i); }
                     eventSequence.push({
                         event: loopEvent,
                         angle: getAngle(loopEvent.x, loopEvent.y)
@@ -719,10 +986,22 @@
             for (var i = 0; i < eventSequence.length; i++) {
                 loopEvent = eventSequence[i];
 
-                loopEvent.event.action();
+                loopEvent.event.go();
             }
 
             return eventSequence;
+        }
+
+        function getPosition(angle) {
+
+            var nearestX = screenWidth / 2 + (400 / 2) * Math.cos(angle);
+            var nearestY = screenHeight / 2 + (400 / 2) * Math.sin(angle);
+
+            var nearestPosition = {
+                x: nearestX,
+                y: nearestY
+            };
+            return nearestPosition;
         }
 
         function getAngle(x, y) {
@@ -851,7 +1130,7 @@
 
                     // TODO: Only show JS editor by default for new nodes
                     console.log("open editor!");
-                    $('#overlay').show(); // TODO: Append argument
+                    // $('#overlay').show(); // TODO: Append argument
 
                     disableEventCreate = false;
 
@@ -887,6 +1166,9 @@
 
             var nearestPosition = getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
 
+            xPalette = mouseX;
+            yPalette = mouseY;
+            showPalette = true;
             
             var loopEvent = new Event({
                 x: ev.gesture.center.pageX,
