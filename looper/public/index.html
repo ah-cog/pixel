@@ -203,18 +203,17 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
     <script src="javascripts/modernizr.js"></script>
 
+    <script>
+
+        disableEventCreate = false;
+        showPalette = false;
+
+    </script>
 
     <!--<div id="debug">Log</div>-->
 
     <div id="carousel">
         <ul id="panes">
-  <!--           <li class="pane9">
-                <canvas id="canvasA" style="width: 100%; height: 100%;"></canvas>
-            </li>
-
-            <li class="pane8">
-                <canvas id="canvasB" style="width: 100%; height: 100%;"></canvas>
-            </li> -->
 
             <li class="pane1">
                 <div id="overlay" style="width: 100%; height: 100%; position: relative; z-index: 5000;">
@@ -460,7 +459,15 @@
 
 
 
+    <script type="application/processing" data-processing-target="looperCanvas">
 
+        /*
+        @pjs
+        crisp=true;
+        font=DidactGothic.ttf;
+        */
+
+    </script>
 
     <script>
 
@@ -681,18 +688,19 @@
 
         /** Set up object defaults */
         var defaults = {
-            // canvas: null, // Canvas instance
+            canvas: null, // Canvas instance
             // eventLoop: null
         };
         var options = options || {};
         var options = $.extend({}, defaults, options);
 
-        // if (this.eventLoop === null) {
-        //     this.eventLoop = new EventLoop();
-        // }
+        if (options.canvas === null) {
+            alert("No canvas specified.");
+            return;
+        }
 
+        this.canvas = options.canvas;
 
-        
         this.scriptName = "script";
         // this.disableEventCreate = false;
         this.showPalette = false;
@@ -709,10 +717,10 @@
          * Create new canvas element for the device interface
          */
 
-        deviceCount = deviceCount + 1;
-        $('#panes').append('<li class="pane' + deviceCount + '"><canvas id="canvas' + deviceCount + '" style="width: 100%; height: 100%;"></canvas></li>');
-        canvas = "canvas" + deviceCount;
-        this.canvas = canvas; // hack hack hack
+        // deviceCount = deviceCount + 1;
+        // $('#panes').append('<li class="pane' + deviceCount + '"><canvas id="canvas' + deviceCount + '" style="width: 100%; height: 100%;"></canvas></li>');
+        // canvas = "canvas" + deviceCount;
+        // this.canvas = canvas; // hack hack hack
 
         /**
          * Processing sketch code
@@ -1044,90 +1052,37 @@
     // medium.devices.push(device);    
 
     // Add device
-    var device = new Device();
+    // var device = new Device();
     // devices.push(device);
 
     /**
      * Setup gestures
      */
 
-    jqCanvas = "#" + device.canvas;
-    setupGestures(jqCanvas, device);
+    // jqCanvas = "#" + device.canvas;
+    // setupGestures(jqCanvas, device);
 
 
 
-    var device = new Device();
-    jqCanvas = "#" + device.canvas;
-    setupGestures(jqCanvas, device);
+    // var device = new Device();
+    // jqCanvas = "#" + device.canvas;
+    // setupGestures(jqCanvas, device);
+
+    function addDevice() {
+
+        deviceCount = deviceCount + 1;
+        $('#panes').append('<li class="pane' + deviceCount + '"><canvas id="canvas' + deviceCount + '" style="width: 100%; height: 100%;"></canvas></li>');
+        canvas = "canvas" + deviceCount;
+
+        var device = new Device({ canvas: canvas });
+        jqCanvas = "#" + device.canvas;
+        setupGestures(jqCanvas, device);
+    }
+
+    addDevice();
+    addDevice();
 
 
-
-    </script>
-    
-
-
-
-
-
-
-
-    <script>
-
-        // devices = []; // detect devices on (1) the mesh, the (2) local network (HTTP), and (3) in the cloud
-        
-        scriptName = "script";
-
-        disableEventCreate = false;
-
-        showPalette = false;
-
-        function Medium(options) {
-            var defaults = {
-                devices: []
-            };
-            var options = options || {};
-            var options = $.extend({}, defaults, options);
-
-            this.devices = [];
-        }
-
-        function EventLoop(options) {
-            var defaults = {
-                events: []
-            };
-            var options = options || {};
-            var options = $.extend({}, defaults, options);
-
-            this.events = options.events; // events on the event loop
-        }
-
-        function Event(options) {
-            var defaults = {
-                x: null,
-                y: null,
-                xTarget: null,
-                yTarget: null,
-                state: 'INVALID', // INVALID, FLOATING, MOVING, ENTANGLED, SEQUENCED
-                //visible: true
-                go: null
-            };
-            var options = options || {};
-            var options = $.extend({}, defaults, options);
-
-            this.x = options.x;
-            this.y = options.y;
-
-            this.xTarget = options.xTarget;
-            this.yTarget = options.yTarget;
-
-            this.state = options.state;
-
-            this.go = options.go;
-
-            //this.visible = options.visible;
-        }
-
-        eventLoop = new EventLoop();
 
     </script>
 
