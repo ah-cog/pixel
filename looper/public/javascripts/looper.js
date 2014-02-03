@@ -196,10 +196,6 @@ function setupGestures(device) {
                 // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
 
                 var distance = device.processingInstance.getDistanceFromEventLoop(loopEvent);
-                console.log(distance);
-
-                console.log('DISTANCE');
-                console.log(distance);
 
                 if (distance < 110) {
                     var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
@@ -428,12 +424,6 @@ function Device(options) {
                 // }
 
                 if (loopEvent.state === 'MOVING') {
-
-                    // console.log(processing.mouseX);
-                    // console.log($('#' + processing.canvas).offset());
-                    console.log(processing.screenWidth * (processing.deviceCount + 1) + processing.mouseX);
-                    console.log(processing.mouseY);
-                    // console.log($(processing.canvas).offset());
 
                     // Standard update for a moving event
                     currentMouseX = processing.screenWidth * (processing.deviceCount + 1) + processing.mouseX;
