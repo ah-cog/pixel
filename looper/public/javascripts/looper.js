@@ -4,7 +4,8 @@ showPalette = false;
 //function ComputationInterface(options) {
 function Looper(options) {
     var defaults = {
-        devices: []
+        devices: [],
+        going: false
     };
     var options = options || {};
     var options = $.extend({}, defaults, options);
@@ -50,6 +51,27 @@ function EventLoop(options) {
     var options = $.extend({}, defaults, options);
 
     this.events = options.events; // events on the event loop
+
+    this.going = options.going;
+
+    function go() {
+        this.going = true;
+    }
+    this.go = go;
+
+    function stop() {
+        this.going = false;
+    }
+    this.stop = stop;
+
+    function toggle() {
+        if (this.going) {
+            this.stop();
+        } else {
+            this.go();
+        }
+    }
+    this.toggle = toggle;
 }
 
 function Event(options) {
@@ -130,6 +152,7 @@ function setupGestures(device) {
 
             //console.log("go");
             device.processingInstance.getEventSequence();
+            device.processingInstance.eventLoop.toggle(); // toggle "go" and "stop"
         }
 
         //
@@ -595,7 +618,11 @@ function Device(options) {
             processing.textFont(primaryFont, 100);
             processing.textAlign(processing.CENTER);
             processing.fill(65, 65, 65);
-            processing.text("go", processing.screenWidth / 2, processing.screenHeight / 2 + 20);
+            if (processing.eventLoop.going) {
+                processing.text("stop", processing.screenWidth / 2, processing.screenHeight / 2 + 20);
+            } else {
+                processing.text("go", processing.screenWidth / 2, processing.screenHeight / 2 + 20);
+            }
 
             // draw script name
             primaryFont = processing.createFont("DidactGothic.ttf", 16);
