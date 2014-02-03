@@ -296,7 +296,6 @@
     var carousel = new Carousel("#carousel");
     carousel.init();
 
-
     // $(".drag")
     //   .hammer({ drag_max_touches: 0 })
     //   .on("touch drag dragright dragleft", function(ev) {
@@ -319,7 +318,6 @@
     //     return;
     //   });
 
-
     </script>
 
     <script src="javascripts/ga.js"></script>
@@ -330,12 +328,31 @@
         crisp=true;
         font=DidactGothic.ttf;
         */
+        PFont primaryFont;
+
+        void setup() {
+            size(screenWidth, screenHeight);
+
+            primaryFont = loadFont("DidactGothic.ttf");
+        }   
+        
+        void draw() {
+            background(#F0F1F0);
+            primaryFont = createFont("DidactGothic.ttf", 32);
+            textFont(primaryFont, 100);
+            textAlign(CENTER);
+            fill(65, 65, 65);
+            text("looper", screenWidth / 2, screenHeight / 2 + 20);
+        }     
     </script>
+
     <script src="javascripts/looper.js"></script>
     <script>
         looper = new Looper();
         looper.addDevice();
         looper.addDevice();
+        looper.addDevice();
+        looper.showDeviceByIndex(0);
     </script>
 
 </body>

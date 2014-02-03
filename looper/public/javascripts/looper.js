@@ -11,6 +11,11 @@ function Looper(options) {
 
     this.devices = [];
 
+    this.commands = [];
+    this.commands.push("turn on");
+    this.commands.push("turn off");
+    this.commands.push("delay");
+
     function addDevice() {
 
         deviceCount = deviceCount + 1;
@@ -18,17 +23,23 @@ function Looper(options) {
         canvas = "canvas" + deviceCount;
 
         var device = new Device({ canvas: canvas });
+        device.looper = this;
         setupGestures(device);
-        devices.push(device);
+        this.devices.push(device);
 
         /**
          * Re-initialize Carousel after adding the new device pane
          */
-        var carousel = new Carousel("#carousel");
-        carousel.init();
-        carousel.showPane(deviceCount);
+        this.carousel = new Carousel("#carousel");
+        this.carousel.init();
+        // this.carousel.showPane(deviceCount);
     }
     this.addDevice = addDevice;
+
+    function showDeviceByIndex(index) {
+        this.carousel.showPane(index + 1);
+    }
+    this.showDeviceByIndex = showDeviceByIndex;
 }
 
 function EventLoop(options) {
@@ -98,6 +109,9 @@ function setupGestures(device) {
                 //loopEvent.visible = false;
                 loopEvent.state = 'MOVING';
                 disableEventCreate = true;
+
+                var index = Math.random() * 2;
+                loopEvent.go = device.looper.commands[parseInt(index)];
 
                 console.log("\tevent " + i);
                 break;
@@ -230,8 +244,7 @@ function setupGestures(device) {
     });
 }
 
-
-devices = [];
+// devices = [];
 deviceCount = -1;
 
 /**
@@ -422,7 +435,14 @@ function Device(options) {
                 for (var i = 0; i < eventCount; i++) {
                     var loopEvent = processing.eventLoop.events[i];
                     if (loopEvent.state === 'SEQUENCED') {
-                        loopEvent.go = function() { console.log("action " + i); }
+                        // loopEvent.go = function() { console.log("action " + i); }
+                        loopEvent.go = function() { 
+                            // var command = loopEvent.go;
+                            var index = Math.random() * 2;
+                            // command = this.looper.commands[parseInt(index)];
+                            command = "turn on";
+                            console.log("instr: " + command);
+                        }
                         eventSequence.push({
                             event: loopEvent,
                             angle: getAngle(loopEvent.x, loopEvent.y)
