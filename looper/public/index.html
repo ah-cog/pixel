@@ -32,7 +32,7 @@
         body { margin: 0; height: 100%; position: relative; }
             /* Height / width / positioning can be customized for your use case.
             For demo purposes, we make firepad fill the entire browser. */
-            #firepad-container {
+            .firepad-container {
             position: absolute; left: 0; top: 0; bottom: 0; right: 0;
         }
 
@@ -46,10 +46,14 @@
 
 <body>
 
+    <!-- jQuery is just for the demo! Hammer.js works without jQuery :-) -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="javascripts/modernizr.js"></script>
+
     <script>
        //$("body").append("<div id='overlay'><input type=\"button\" value=\"close\" onclick=\"$('#overlay').hide();\" /><div id=\"firepad-container\"></div></div>");
 
-       // $("#overlay")
+       // $(".overlay")
        //    .height(docHeight)
        //    .css({
        //       'opacity' : 0.3,
@@ -66,14 +70,15 @@
 
 
     <script>
-        window.onload = function() {
+        //window.onload = function() {
+        function setupFirepad(container) {
             //// Initialize Firebase.
             var firepadRef = getExampleRef();
             // TODO: Replace above line with:
             // var ref = new Firebase('<YOUR FIREBASE URL>');
 
             //// Create ACE
-            var editor = ace.edit("firepad-container");
+            var editor = ace.edit(container);
             editor.setTheme("ace/theme/textmate");
             var session = editor.getSession();
             session.setUseWrapMode(true);
@@ -91,10 +96,6 @@
             });
         };
     </script>
-
-    <!-- jQuery is just for the demo! Hammer.js works without jQuery :-) -->
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-    <script src="javascripts/modernizr.js"></script>
 
     <!--<div id="debug">Log</div>-->
 
