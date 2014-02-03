@@ -60,7 +60,8 @@ function Event(options) {
         yTarget: null,
         state: 'INVALID', // INVALID, FLOATING, MOVING, ENTANGLED, SEQUENCED
         //visible: true
-        go: null
+        go: null,
+        label: '?'
     };
     var options = options || {};
     var options = $.extend({}, defaults, options);
@@ -74,6 +75,8 @@ function Event(options) {
     this.state = options.state;
 
     this.go = options.go;
+
+    this.label = options.label;
 
     //this.visible = options.visible;
 }
@@ -206,6 +209,29 @@ function setupGestures(device) {
 
     $(currentCanvas).hammer({ drag_max_touches: 0, hold_timeout: 200 }).on("hold", function(ev) {
         console.log("'hold' event!");
+
+        //
+        // Get the touched event node, if one exists
+        // 
+        // var eventCount = device.processingInstance.eventLoop.events.length;
+
+        // for (var i = 0; i < eventCount; i++) {
+        //     var loopEvent = device.processingInstance.eventLoop.events[i];
+        //     if ((ev.gesture.center.pageX - 50 < loopEvent.x && loopEvent.x < ev.gesture.center.pageX + 50)
+        //         && (ev.gesture.center.pageY - 50 < loopEvent.y && loopEvent.y < ev.gesture.center.pageY + 50)) {
+
+        //         //loopEvent.visible = false;
+        //         // loopEvent.state = 'MOVING';
+        //         // disableEventCreate = true;
+
+        //         // var index = Math.random() * 2;
+        //         // loopEvent.go = device.looper.commands[parseInt(index)];
+        //         alert("foo");
+
+        //         console.log("\tevent " + i);
+        //         break;
+        //     }
+        // }
 
         if (!disableEventCreate) {
             disableEventCreate = true;
@@ -346,6 +372,12 @@ function Device(options) {
                     // Draw the event node
                     processing.fill(66, 214, 146);
                     processing.ellipse(loopEvent.x, loopEvent.y, 60, 60);
+
+                    primaryFont = processing.createFont("DidactGothic.ttf", 32);
+                    processing.textFont(primaryFont, 16);
+                    processing.textAlign(processing.CENTER);
+                    processing.fill(65, 65, 65);
+                    processing.text(loopEvent.label, loopEvent.x, loopEvent.y + 4);
 
                     // Calculate nearest point on circle
                     //line(loopEvent.x, loopEvent.y, screenWidth / 2, screenHeight / 2);
