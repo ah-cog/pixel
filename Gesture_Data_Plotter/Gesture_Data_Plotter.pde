@@ -50,6 +50,7 @@ int gestureSampleCount = 0;
 int gestureSensorSampleCount = 0;
 
 ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples;
+ArrayList<String> gestureSampleNames;
 
 boolean showAxisX = true, showAxisY = true, showAxisZ = true;
 
@@ -64,6 +65,7 @@ void setup () {
   // Sample:
   // [sequence][axis][time]
   gestureSamples = new ArrayList<ArrayList<ArrayList<Integer>>>();
+  gestureSampleNames = new ArrayList<String>();
   
   print("Opening gesture data... ");
   openGestureData();
@@ -144,6 +146,8 @@ void updateCurrentGesture() {
   maximumSampleSize = 0;
   maximumSampleDuration = Integer.MIN_VALUE;
   
+  gestureSampleNames.clear();
+  
   // Populate gesture data arrays
   for (int i = 0; i < gestureSampleSet.size(); i++) {
     JSONObject gestureSample = gestureSampleSet.getJSONObject(i);
@@ -186,9 +190,14 @@ void updateCurrentGesture() {
       if (gestureSamplePoints.size() > maximumSampleSize) {
         maximumSampleSize = gestureSamplePoints.size();
       }
+      
+      gestureSamples.add(singleGestureSample);
+      
+      String gestureName = gestureSample.getString("gesture");
+      gestureSampleNames.add(gestureName);
     }
-
-    gestureSamples.add(singleGestureSample);
+    
+    // gestureSamples.add(singleGestureSample);
   }
   
   // Resize sample sequences to be equal to the length of the maximum sample
@@ -368,6 +377,85 @@ void drawGesturePlotBoundaries() {
       drawPlotNodes(12, gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
     }
   }
+  
+//  // Classify gesture
+//  float deltaTotal = 0;
+//  for (int axis = 0; axis < 3; axis++) {
+//    if (axisVisible[axis]) {
+////      stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 85); drawPlot(gestureSampleUpperBounds.get(axis), 0, height / 2, width, height, 0, 1000);
+////      stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 85); drawPlot(gestureSampleLowerBounds.get(axis), 0, height / 2, width, height, 0, 1000);
+////      stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 180); drawPlot(gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
+////      drawPlotNodes(12, gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
+//      
+//      ArrayList<Integer> liveData = gestureSampleAverageSum.get(axis);
+//      float delta = classifyGesture(12, gestureSampleAverageSum.get(axis), liveData, 0, height / 2, width, height, 0, 1000);
+//      deltaTotal = deltaTotal + delta;
+//      
+//      print(delta);
+//      print("\t");
+//    }
+//  }
+//  println();
+  
+  
+        
+        
+
+        
+        
+        
+        // Classify gesture
+//        float deltaTotal = 0;
+//        if (axisVisible[axis]) {
+//          
+//          ArrayList<Integer> liveData = singleGestureSample.get(axis);
+//          float delta = classifyGesture(12, gestureSampleAverageSum.get(axis), liveData, 0, height / 2, width, height, 0, 1000);
+//          deltaTotal = deltaTotal + delta;
+//          
+//          print(delta);
+//          print("\t");
+//        }
+//        println();
+        
+  classifyGestures(gestureSampleAverageSum);
+
+}
+
+void classifyGestures(ArrayList<ArrayList<Integer>> gestureSampleAverageSum) {
+  int sampleCount = 0;
+  
+  // Classify the current gesture data (TODO: Replace with live data)
+  for (int i = 0; i < gestureSamples.size(); i++) {
+    
+    //text("\"" + gestureName[gestureIndex] + "\"", (width / 2), (height / 4));
+    
+    ArrayList<ArrayList<Integer>> singleGestureSample = gestureSamples.get(i);
+    
+    if (singleGestureSample.size() > 0) {
+      sampleCount++;
+      
+      float deltaTotal = 0;
+      
+      for (int axis = 0; axis < 3; axis++) {
+
+        // Get live data from accelerometer
+        ArrayList<Integer> liveGestureSample = singleGestureSample.get(axis);
+        
+        float delta = classifyGesture(12, gestureSampleAverageSum.get(axis), liveGestureSample, 0, height / 2, width, height, 0, 1000);
+        deltaTotal = deltaTotal + delta;
+          
+        print(delta);
+        print("\t");
+      }
+      
+      print(deltaTotal);
+      print("\t");
+      
+      print(gestureSampleNames.get(i)); // Print sample label
+      
+      println();
+    }
+  }
 }
 
 void drawPlot(ArrayList<Integer> data, int originX, int originY, int plotWidth, int plotHeight, int plotRangeFloor, int plotRangeCeiling) {
@@ -434,4 +522,44 @@ void drawPlot(float[] data, int originX, int originY, int plotWidth, int plotHei
       map(data[i+1], plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight)
     );
   }
+}
+
+float classifyGesture(int divisions, ArrayList<Integer> data, ArrayList<Integer> liveData, int originX, int originY, int plotWidth, int plotHeight, int plotRangeFloor, int plotRangeCeiling) {
+  
+  // maximumSampleSize
+  int currentDivision = 0;
+  int lastDivisionValue = 0;
+  
+  float delta = 0; // sum of difference between average x curve and most-recent x data
+//  float yDelta = 0;
+//  float zDelta = 0;
+    
+  for (int i = 0; i < data.size(); i++) {
+    
+    if (liveData.size() > i) {
+    
+      //if (i == ((i + 1) * (data.size() / divisions))) {
+      if (i == floor((currentDivision + 1) * (data.size() / (divisions - 1)))) {
+      
+        float difference = data.get(i) - liveData.get(i);
+        delta = delta + difference;
+        
+        // Draw circle over key moment used for gesture classification (recognition)
+  //      fill(255,255,255,0);
+  //      ellipse(
+  //        map(i, 0, maximumSampleSize, originX, originX + plotWidth),
+  //        map(data.get(i), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight),
+  //        20,
+  //        20
+  //      );
+        
+        currentDivision++;
+      }
+    
+    } else {
+//      println("foo");
+    }
+  }
+  
+  return delta;
 }

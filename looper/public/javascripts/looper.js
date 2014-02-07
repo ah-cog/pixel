@@ -36,7 +36,7 @@ function Looper(options) {
 
         var device = new Device({ canvas: canvas });
         device.looper = this;
-        device.index = deviceCount;
+        device.index = deviceCount; // TODO: Replace with node/node UUID
         setupGestures(device);
         this.devices.push(device);
 
@@ -47,7 +47,8 @@ function Looper(options) {
         this.carousel.init();
         // this.carousel.showPane(deviceCount);
 
-        setupFirepad("firepad-container-" + deviceCount);
+        device.firepad = setupFirepad("firepad-container-" + deviceCount);
+
         $('#overlay' + deviceCount).hide();
     }
     this.addDevice = addDevice;
@@ -190,6 +191,7 @@ function setupGestures(device) {
                 && (ev.gesture.center.pageY - 50 < loopEvent.y && loopEvent.y < ev.gesture.center.pageY + 50)) {
 
                 $('#overlay' + device.index).show();
+                eval(device.firepad.getText());
 
                 // loopEvent.state = 'MOVING';
                 // disableEventCreate = true;

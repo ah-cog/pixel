@@ -4793,7 +4793,7 @@ firepad.Firepad = (function(global) {
       this.firepadWrapper_.className += ' firepad-richtext firepad-with-toolbar';
     }
 
-    this.addPoweredByLogo_();
+    // this.addPoweredByLogo_();
 
     // Now that we've mucked with CodeMirror, refresh it.
     if (this.codeMirror_)

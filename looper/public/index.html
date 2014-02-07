@@ -28,18 +28,19 @@
     <script src="example-helper.js"></script>
 
     <style>
-        html { height: 100%; }
-        body { margin: 0; height: 100%; position: relative; }
+        /*html { height: 100%; }*/
+        /*body { margin: 0; height: 100%; position: relative; }*/
             /* Height / width / positioning can be customized for your use case.
             For demo purposes, we make firepad fill the entire browser. */
-            .firepad-container {
+        .firepad-container {
             position: absolute; left: 0; top: 0; bottom: 0; right: 0;
         }
 
         .firepad {
             /*width: 700px;*/
-            height: 450px;
-            background-color: #f62; /* dark orange background */
+            /*height: 450px;*/
+            height: 100%;
+            /*background-color: #f62;*/
         }
     </style>
 </head>
@@ -91,9 +92,11 @@
             //// Initialize contents.
             firepad.on('ready', function() {
                 if (firepad.isHistoryEmpty()) {
-                    firepad.setText('// JavaScript Editing with Firepad!\nfunction go() {\n  var message = "Hello, world.";\n  console.log(message);\n}');
+                    firepad.setText('// JavaScript Editing with Firepad!\nfunction go() {\n  var message = "Hello, world.";\n  alert(message);\n}\ngo();');
                 }
             });
+
+            return firepad;
         };
     </script>
 
@@ -103,14 +106,6 @@
         <ul id="panes">
 
             <li class="pane1">
-                <div id="overlay" style="width: 100%; height: 100%; position: relative; z-index: 5000;">
-                    <input type="button" value="close" onclick="$('#overlay').hide();" />
-                    <div id="firepad-container"></div>
-                </div>
-                <script>
-                    $('#overlay').hide();
-                </script>
-
                 <canvas id="looperCanvas" style="width: 100%; height: 100%;"></canvas>
             </li>
 
