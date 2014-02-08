@@ -91,19 +91,37 @@ void draw () {
   drawGesturePlotBoundaries();
   // Compute averages
   
+  ArrayList<Float> gestureClassificationScore = new ArrayList<Float>();
+  
   // Get most-recent live gesture data
   for (int i = 0; i < getGestureCount(); i++) {
     ArrayList<ArrayList<ArrayList<Integer>>> liveSampleSet = getGestureSamples(i);
     
+    // Add counter to compute classification score
+    int correctClassificationCount = 0;
+    
     for (int j = 0; j < liveSampleSet.size(); j++) {
-      ArrayList<ArrayList<Integer>> liveSample = liveSampleSet.get(j); 
+      ArrayList<ArrayList<Integer>> liveSample = liveSampleSet.get(j);
       
-      int classifiedGestureIndex = classifyGesture(liveSample);
+      // Classify the gesture
+      int classifiedGestureIndex = classifyGesture(liveSample, 20);
         
-      println("Gesture classification: " + classifiedGestureIndex + ", " + i);
+//      println("Gesture classification: " + gestureName[classifiedGestureIndex] + "? it's " + gestureName[i]);
+      
+      // Compute classification score
+      if (classifiedGestureIndex == i) {
+        correctClassificationCount = correctClassificationCount + 1;
+      }
 //      println("Deviation: " + gestureIndex);
     }
+    
+    // Add gesture classification percentage correct
+    gestureClassificationScore.add(((float) correctClassificationCount) / (float) liveSampleSet.size());
+    
+    //print(gestureClassificationScore.get(gestureClassificationScore.size() - 1) + "\t");
+    print(correctClassificationCount + "/" + liveSampleSet.size() + "/" + (correctClassificationCount / (float) liveSampleSet.size()) + "\t");
   }
+  println();
     
         // Plot sample data
 //    for (int axis = 0; axis < 3; axis++) {
@@ -121,20 +139,19 @@ void draw () {
  * Classify the gesture. Choose the gesture that has a "signature" time series that best  
  * matches the recent window of live data.
  */
-int classifyGesture(ArrayList<ArrayList<Integer>> liveSample) {
+int classifyGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
   int minimumDeviationIndex = -1;
   int minimumDeviation = Integer.MAX_VALUE;
     
   for (int gestureSignatureIndex = 0; gestureSignatureIndex < getGestureCount(); gestureSignatureIndex++) {
 
-//        ArrayList<ArrayList<Integer>> liveSample = getGestureSamples(gestureSignatureIndex).get(0);
       ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
       ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
       
       // Calculate the gesture's deviation from the gesture signature
-      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, 12);
-      print(gestureDeviation);
-      println();
+      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, comparisonFrequency);
+//      print(gestureDeviation);
+//      println();
       
       // Check if the sample's deviation
       if (minimumDeviationIndex == -1 || gestureDeviation < minimumDeviation) {
@@ -160,30 +177,20 @@ int getGestureDeviation(ArrayList<ArrayList<Integer>> averageSample, ArrayList<A
     for (int axis = 0; axis < 3; axis++) {
       ArrayList<Integer> liveSampleAxis = liveSample.get(axis);
       
-      int delta = getGestureAxisDeviation(averageSample.get(axis), liveSample.get(axis), comparisonFrequency);
-      deltaTotal = deltaTotal + abs(delta);
+      int delta = getGestureAxisDeviation2(averageSample.get(axis), liveSample.get(axis), comparisonFrequency);
+      deltaTotal = deltaTotal + delta;
         
-      print(delta);
-      print("\t");
+//      print(delta);
+//      print("\t");
     }
-    
-//    if (minimumDeviationSampleIndex == -1 || deltaTotal < minimumDeltaTotal) {
-//      minimumDeviationSampleIndex = i;
-//      minimumDeltaTotal = deltaTotal;
-//    }
-    
-//    print(deltaTotal);
-//      //    print("\t");
-    
-//    print(completeGestureSampleNames.get(i)); // Print sample label
-    
-//    print(deltaTotal);
-//    println();
   }
   
   return deltaTotal;
 }
 
+/**
+ * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
+ */
 int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonFrequency) {
   
   int currentDivision = 0;
@@ -194,13 +201,34 @@ int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer>
     if (liveSample.size() > i) {
       if (i == floor((currentDivision + 1) * (gestureSample.size() / (comparisonFrequency - 1)))) {
       
-        int difference = gestureSample.get(i) - liveSample.get(i);
+        int difference = abs(gestureSample.get(i) - liveSample.get(i));
         delta = delta + difference;
         
         currentDivision++;
       }
-    } else {
+    }
+//    else {
 //      println("foo");
+//    }
+  }
+  
+  return delta;
+}
+
+/**
+ * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
+ */
+int getGestureAxisDeviation2(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonFrequency) {
+  
+  int delta = 0; // sum of difference between average x curve and most-recent x data
+    
+  for (int i = 0; i < gestureSample.size(); i++) {
+    if (i < liveSample.size() && i < gestureSample.size()) {
+//      if (i == floor((currentDivision + 1) * (gestureSample.size() / (comparisonFrequency - 1)))) {
+      
+        int difference = abs(gestureSample.get(i) - liveSample.get(i));
+        delta = delta + difference;
+//      }
     }
   }
   
