@@ -51,6 +51,10 @@ int gestureSensorSampleCount = 0;
 
 ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples;
 ArrayList<String> gestureSampleNames;
+ArrayList<ArrayList<ArrayList<Integer>>> completeGestureSamples;
+ArrayList<String> completeGestureSampleNames;
+
+ArrayList<ArrayList<ArrayList<Integer>>> gestureSampleAverage;
 
 boolean showAxisX = true, showAxisY = true, showAxisZ = true;
 
@@ -65,7 +69,11 @@ void setup () {
   // Sample:
   // [sequence][axis][time]
   gestureSamples = new ArrayList<ArrayList<ArrayList<Integer>>>();
+  completeGestureSamples = new ArrayList<ArrayList<ArrayList<Integer>>>();
   gestureSampleNames = new ArrayList<String>();
+  completeGestureSampleNames = new ArrayList<String>();
+  
+  gestureSampleAverage = new ArrayList<ArrayList<ArrayList<Integer>>>();
   
   print("Opening gesture data... ");
   openGestureData();
@@ -81,6 +89,23 @@ void draw () {
   drawGestureTitle();
   //drawGesturePlot();
   drawGesturePlotBoundaries();
+  
+  // Compute averages
+//  for (int i = 0; i < getGestureCount(); i++) {
+//    int gestureIndex = i;
+    ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureIndex);
+    ArrayList<ArrayList<Integer>> averageSample = getGestureSampleAverage(gestureSamples);
+    
+        // Plot sample data
+    for (int axis = 0; axis < 3; axis++) {
+  //    if (axisVisible[axis]) {
+  //      stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 180);
+        stroke(255, 0, 0, 180);
+        drawPlot(averageSample.get(axis), 0, height / 2, width, height, 0, 1000);
+        drawPlotNodes(12, averageSample.get(axis), 0, height / 2, width, height, 0, 1000);
+  //    }
+    }
+//  }
 }
 
 void openGestureData() {
@@ -132,6 +157,13 @@ void keyReleased() {
   }
 }
 
+/**
+ * Returns the number of gestures.
+ */
+int getGestureCount() {
+  return gestureName.length;
+}
+
 void drawGestureTitle() {
   if (showGesturePrompt) {
     fill(0); textFont(f); textAlign(CENTER);
@@ -142,11 +174,14 @@ int maximumSampleSize = 0;
 int maximumSampleDuration = 0;
 void updateCurrentGesture() {
   
+  completeGestureSamples.clear();
+  
   gestureSamples.clear();
   maximumSampleSize = 0;
   maximumSampleDuration = Integer.MIN_VALUE;
   
   gestureSampleNames.clear();
+  completeGestureSampleNames.clear();
   
   // Populate gesture data arrays
   for (int i = 0; i < gestureSampleSet.size(); i++) {
@@ -195,7 +230,54 @@ void updateCurrentGesture() {
       
       String gestureName = gestureSample.getString("gesture");
       gestureSampleNames.add(gestureName);
-    }
+      
+      completeGestureSamples.add(singleGestureSample);
+      completeGestureSampleNames.add(gestureName);
+      
+    } else {
+      
+      ArrayList<Integer> gestureSamplePointX = new ArrayList<Integer>();
+      ArrayList<Integer> gestureSamplePointY = new ArrayList<Integer>();
+      ArrayList<Integer> gestureSamplePointZ = new ArrayList<Integer>();
+      ArrayList<Integer> gestureSamplePointT = new ArrayList<Integer>();
+      
+      // Get gesture duration and set to maximum duration (if that's the case)
+      sampleTimeStart = int(gestureSamplePoints.getJSONObject(0).getString("timestamp"));
+      sampleTimeEnd = int(gestureSamplePoints.getJSONObject(gestureSamplePoints.size() - 1).getString("timestamp"));
+      sampleDuration = sampleTimeEnd - sampleTimeStart;
+//      if (sampleDuration > maximumSampleDuration) {
+//        maximumSampleDuration = sampleDuration;
+//      }
+      sampleTimeOffset = int(gestureSamplePoints.getJSONObject(0).getString("timestamp")); // The offset for the current sample (reset offset so time starts at zero)
+      
+      for (int j = 0; j < gestureSamplePoints.size(); j++) {
+        JSONObject gestureSamplePoint = gestureSamplePoints.getJSONObject(j);
+        gestureSamplePointX.add(int(gestureSamplePoint.getString("accelerometerX")));
+        gestureSamplePointY.add(int(gestureSamplePoint.getString("accelerometerY")));
+        gestureSamplePointZ.add(int(gestureSamplePoint.getString("accelerometerZ")));
+        gestureSamplePointT.add(int(gestureSamplePoint.getString("timestamp")) - sampleTimeOffset);
+      }
+      
+      singleGestureSample.add(gestureSamplePointX);
+      singleGestureSample.add(gestureSamplePointY);
+      singleGestureSample.add(gestureSamplePointZ);
+      singleGestureSample.add(gestureSamplePointT);
+      
+      // Update maximum sample count
+//      if (gestureSamplePoints.size() > maximumSampleSize) {
+//        maximumSampleSize = gestureSamplePoints.size();
+//      }
+      
+//      gestureSamples.add(singleGestureSample);
+      
+//      String gestureName = gestureSample.getString("gesture");
+//      gestureSampleNames.add(gestureName);
+      
+      completeGestureSamples.add(singleGestureSample);
+      
+      String gestureName = gestureSample.getString("gesture");
+      completeGestureSampleNames.add(gestureName);
+    } 
     
     // gestureSamples.add(singleGestureSample);
   }
@@ -223,6 +305,166 @@ void drawGesturePlot() {
       stroke(0,0,255); drawPlot(singleGestureSample.get(2), 0, height / 2, width, height, 0, 1000);
     }
   }
+}
+
+/**
+ * Returns a list of all gesture samples for the gesture with the specified index.
+ * The returned list is in the following format:
+ *    samples[sampleIndex][axis][pointIndex], where
+ *      sampleIndex : [0, sampleCount]
+ *      axis : [0, 1, 2] -> [x, y, z]
+ *      pointIndex : [0, pointIndexCount]
+ */
+ArrayList<ArrayList<ArrayList<Integer>>> getGestureSamples(int gestureIndex) {
+  
+  // Declare the list that will store the gesture samples for the gesture with the specified index
+  ArrayList<ArrayList<ArrayList<Integer>>> selectedGestureSamples = new ArrayList<ArrayList<ArrayList<Integer>>>();
+  
+  // Populate gesture data arrays
+  for (int i = 0; i < gestureSampleSet.size(); i++) {
+    JSONObject gestureSample = gestureSampleSet.getJSONObject(i);
+    JSONArray gestureSamplePoints = gestureSample.getJSONArray("sample");
+    
+    // Variables to store time characteristics of the current, single gesture sample
+    int sampleTimeStart  = 0; // Gesture sample start time
+    int sampleTimeEnd    = 0; // Gesture sample end time
+    int sampleDuration   = 0; // Gesture sample duration
+    int sampleTimeOffset = 0; // Gesture time offset
+    
+    // List to store the time process (multiple series)
+    ArrayList<ArrayList<Integer>> singleGestureSample = new ArrayList<ArrayList<Integer>>();
+    
+    // Populate lists of gesture sample data
+    //if (gestureSample.getString("gesture").equals(gestureName[gestureIndex])) {
+    if (gestureSample.getString("gesture").equals(gestureName[gestureIndex])) {
+      
+      // Time series data for gesture
+      ArrayList<Integer> gestureSamplePointX = new ArrayList<Integer>();
+      ArrayList<Integer> gestureSamplePointY = new ArrayList<Integer>();
+      ArrayList<Integer> gestureSamplePointZ = new ArrayList<Integer>();
+      ArrayList<Integer> gestureSamplePointT = new ArrayList<Integer>();
+      
+      // Get gesture duration and set to maximum duration (if that's the case)
+      sampleTimeStart = int(gestureSamplePoints.getJSONObject(0).getString("timestamp"));
+      sampleTimeEnd = int(gestureSamplePoints.getJSONObject(gestureSamplePoints.size() - 1).getString("timestamp"));
+      sampleDuration = sampleTimeEnd - sampleTimeStart;
+      if (sampleDuration > maximumSampleDuration) {
+        maximumSampleDuration = sampleDuration;
+      }
+      sampleTimeOffset = int(gestureSamplePoints.getJSONObject(0).getString("timestamp")); // The offset for the current sample (reset offset so time starts at zero)
+      
+      for (int j = 0; j < gestureSamplePoints.size(); j++) {
+        JSONObject gestureSamplePoint = gestureSamplePoints.getJSONObject(j);
+        gestureSamplePointX.add(int(gestureSamplePoint.getString("accelerometerX")));
+        gestureSamplePointY.add(int(gestureSamplePoint.getString("accelerometerY")));
+        gestureSamplePointZ.add(int(gestureSamplePoint.getString("accelerometerZ")));
+        gestureSamplePointT.add(int(gestureSamplePoint.getString("timestamp")) - sampleTimeOffset);
+      }
+      
+      // Add data point to time the series
+      singleGestureSample.add(gestureSamplePointX);
+      singleGestureSample.add(gestureSamplePointY);
+      singleGestureSample.add(gestureSamplePointZ);
+      singleGestureSample.add(gestureSamplePointT);
+      
+      // Update maximum sample count
+      if (gestureSamplePoints.size() > maximumSampleSize) {
+        maximumSampleSize = gestureSamplePoints.size();
+      }
+      
+      // Add gesture process to list that will be returned
+      selectedGestureSamples.add(singleGestureSample);
+      
+//      String gestureName = gestureSample.getString("gesture");
+//      gestureSampleNames.add(gestureName);
+      
+//      completeGestureSamples.add(singleGestureSample);
+//      completeGestureSampleNames.add(gestureName);
+      
+    }
+  }
+  
+  return selectedGestureSamples;
+}
+
+//ArrayList<ArrayList<ArrayList<Integer>>> getGestureSamples(int gestureIndex) {
+//  
+//}
+
+/**
+ * Returns the average time series curve (i.e., the average gesture signature)
+ * used for gesture classification.
+ *
+ * Note: This function was made to be called after
+ *       ArrayList<ArrayList<ArrayList<Integer>>> getGestureSamples(int gestureIndex).
+ */
+ArrayList<ArrayList<Integer>> getGestureSampleAverage(ArrayList<ArrayList<ArrayList<Integer>>> currentGestureSamples) {
+  
+  ArrayList<ArrayList<Integer>> gestureSampleAverageSum = new ArrayList<ArrayList<Integer>>();
+  ArrayList<ArrayList<Integer>> gestureSampleAverageCount = new ArrayList<ArrayList<Integer>>();
+  
+  // Create lists
+//  for (int i = 0; i < 3; i++) {
+//    gestureSampleAverageSum.add(new ArrayList<Integer>());
+//    gestureSampleAverageCount.add(new ArrayList<Integer>());
+//  }
+  
+  if (gestureSampleAverageSum.size() < 3) {
+    gestureSampleAverageSum.add(new ArrayList<Integer>());
+    gestureSampleAverageSum.add(new ArrayList<Integer>());
+    gestureSampleAverageSum.add(new ArrayList<Integer>());
+  }
+  
+  if (gestureSampleAverageCount.size() < 3) {
+    gestureSampleAverageCount.add(new ArrayList<Integer>());
+    gestureSampleAverageCount.add(new ArrayList<Integer>());
+    gestureSampleAverageCount.add(new ArrayList<Integer>());
+  }
+  
+  // Compute averages
+  int sampleCount = 0;
+  for (int i = 0; i < currentGestureSamples.size(); i++) {
+    
+    ArrayList<ArrayList<Integer>> singleGestureSample = currentGestureSamples.get(i);
+    
+    if (singleGestureSample.size() > 0) {
+      sampleCount++;
+      
+      for (int axis = 0; axis < 3; axis++) {
+        
+        // Update list sizes
+        while (gestureSampleAverageSum.get(axis).size() < singleGestureSample.get(axis).size()) {
+//          gestureSampleUpperBounds.get(axis).add(Integer.MIN_VALUE);
+//          gestureSampleLowerBounds.get(axis).add(Integer.MAX_VALUE);
+          gestureSampleAverageSum.get(axis).add(0);
+          gestureSampleAverageCount.get(axis).add(0);
+        }
+      
+        // Update averages
+        for (int j = 0; j < singleGestureSample.get(axis).size(); j++) {
+          
+          // Update average
+          int cumulativeGestureSample = singleGestureSample.get(axis).get(j) + gestureSampleAverageSum.get(axis).get(j);
+          gestureSampleAverageSum.get(axis).set(j, cumulativeGestureSample); // Update value
+          
+          // Update average count
+          int gestureSampleCount = gestureSampleAverageCount.get(axis).get(j) + 1;
+          gestureSampleAverageCount.get(axis).set(j, gestureSampleCount); // Update value
+        }
+      }
+    }
+  }
+  
+  // Compute average of accelerometer x-axis, y-axis, and z-axis data
+  for (int axis = 0; axis < 3; axis++) {
+    // Compute average of accelerometer data for current axis
+    for (int j = 0; j < gestureSampleAverageSum.get(axis).size(); j++) {
+      int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(axis).get(j)) / float(gestureSampleAverageCount.get(axis).get(j)));
+      gestureSampleAverageSum.get(axis).set(j, cumulativeGestureSample); // Update value
+    }
+  }
+
+  return gestureSampleAverageSum;
 }
 
 void drawGesturePlotBoundaries() {
@@ -424,12 +666,16 @@ void drawGesturePlotBoundaries() {
 void classifyGestures(ArrayList<ArrayList<Integer>> gestureSampleAverageSum) {
   int sampleCount = 0;
   
+  int minimumDeviationSampleIndex = -1;
+  float minimumDeltaTotal = 0;
+  
   // Classify the current gesture data (TODO: Replace with live data)
-  for (int i = 0; i < gestureSamples.size(); i++) {
+//  for (int i = 0; i < gestureSamples.size(); i++) {
+  for (int i = 0; i < completeGestureSamples.size(); i++) {
     
     //text("\"" + gestureName[gestureIndex] + "\"", (width / 2), (height / 4));
     
-    ArrayList<ArrayList<Integer>> singleGestureSample = gestureSamples.get(i);
+    ArrayList<ArrayList<Integer>> singleGestureSample = completeGestureSamples.get(i);
     
     if (singleGestureSample.size() > 0) {
       sampleCount++;
@@ -448,10 +694,15 @@ void classifyGestures(ArrayList<ArrayList<Integer>> gestureSampleAverageSum) {
         print("\t");
       }
       
+      if (minimumDeviationSampleIndex == -1 || deltaTotal < minimumDeltaTotal) {
+        minimumDeviationSampleIndex = i;
+        minimumDeltaTotal = deltaTotal;
+      }
+      
       print(deltaTotal);
       print("\t");
       
-      print(gestureSampleNames.get(i)); // Print sample label
+      print(completeGestureSampleNames.get(i)); // Print sample label
       
       println();
     }
