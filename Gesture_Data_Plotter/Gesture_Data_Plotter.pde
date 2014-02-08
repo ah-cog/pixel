@@ -35,17 +35,17 @@ String gestureName[] = {
 };
 final int CONTINUOUS = 0;
 final int DISCRETE = 1;
-int gestureTemporalBounds[] = {
-  CONTINUOUS,
-  CONTINUOUS,
-  DISCRETE,
-  DISCRETE,
-  DISCRETE,
-  DISCRETE,
-  CONTINUOUS,
-  DISCRETE,
-  DISCRETE
-};
+//int gestureTemporalBounds[] = {
+//  CONTINUOUS,
+//  CONTINUOUS,
+//  DISCRETE,
+//  DISCRETE,
+//  DISCRETE,
+//  DISCRETE,
+//  CONTINUOUS,
+//  DISCRETE,
+//  DISCRETE
+//};
 int gestureSampleCount = 0;
 int gestureSensorSampleCount = 0;
 
@@ -54,15 +54,31 @@ ArrayList<String> gestureSampleNames;
 ArrayList<ArrayList<ArrayList<Integer>>> completeGestureSamples;
 ArrayList<String> completeGestureSampleNames;
 
-ArrayList<ArrayList<ArrayList<Integer>>> gestureSampleAverage;
+import processing.serial.*;
+
+Serial serialPort;
+String serialInputString;
+
+//ArrayList<Integer> gestureSampleAverage;
+ArrayList<ArrayList<Integer>> liveGestureSample;
 
 boolean showAxisX = true, showAxisY = true, showAxisZ = true;
 
 void setup () {
   size(1200, 800, P3D);
   
+  // Print serial ports
+  println(Serial.list().length);
+  println(Serial.list());
+  
+  // Connect to the corresponding serial port
+  serialPort = new Serial(this, Serial.list()[7], 9600);
+  
+  // Defer callback until new line
+  serialPort.bufferUntil('\n');
+  
   // Set up font
-  f = createFont("Quicksand-Regular.ttf", 64, true);
+  f = createFont("DidactGothic.ttf", 64, true);
   f2 = createFont("Arial", 12, true);
   f3 = createFont("Arial", 16, true);
   
@@ -73,22 +89,32 @@ void setup () {
   gestureSampleNames = new ArrayList<String>();
   completeGestureSampleNames = new ArrayList<String>();
   
-  gestureSampleAverage = new ArrayList<ArrayList<ArrayList<Integer>>>();
+  //gestureSampleAverage = new ArrayList<ArrayList<ArrayList<Integer>>>();
+//  gestureSampleAverage = new ArrayList<ArrayList<ArrayList<Integer>>>();
+  
+  liveGestureSample = new ArrayList<ArrayList<Integer>>();
+  liveGestureSample.add(new ArrayList<Integer>()); // X axis data
+  liveGestureSample.add(new ArrayList<Integer>()); // Y
+  liveGestureSample.add(new ArrayList<Integer>()); // Z
   
   print("Opening gesture data... ");
   openGestureData();
   println("Done.");
 }
 
+int classifiedGestureIndex = -1;
+
 void draw() {
   
   // Set background
-  background(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
+  //background(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
+  background(#F0F1F0);
 
   // Draw data
   drawGestureTitle();
   //drawGesturePlot();
   drawGesturePlotBoundaries();
+  drawLiveGesturePlot();
   
   // Compute averages
   ArrayList<Float> gestureClassificationScore = new ArrayList<Float>();
@@ -105,7 +131,10 @@ void draw() {
       ArrayList<ArrayList<Integer>> liveSample = liveSampleSet.get(j);
       
       // Classify the gesture
-      int classifiedGestureIndex = classifyGesture(liveSample, 20);
+      //classifiedGestureIndex = classifyGesture(liveSample, 20);
+//      if (liveGestureSample.get(0).size() >= liveGestureSize) {
+//        classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
+//      }
         
 //      println("Gesture classification: " + gestureName[classifiedGestureIndex] + "? it's " + gestureName[i]);
       
@@ -120,9 +149,80 @@ void draw() {
     gestureClassificationScore.add(((float) correctClassificationCount) / (float) liveSampleSet.size());
     
     //print(gestureClassificationScore.get(gestureClassificationScore.size() - 1) + "\t");
-    print(correctClassificationCount + "/" + liveSampleSet.size() + "/" + (correctClassificationCount / (float) liveSampleSet.size()) + "\t");
+//    print(correctClassificationCount + "/" + liveSampleSet.size() + "/" + (correctClassificationCount / (float) liveSampleSet.size()) + "\t");
   }
-  println();
+//  println();
+
+  drawClassifiedGestureTitle();
+}
+
+int liveGestureSize = 50;
+void serialEvent (Serial serialPort) {
+  
+  // Read serial data
+  if (serialPort.available() > 0) {  // If data is available,
+    serialInputString = serialPort.readString();         // read it and store it in val
+    // print(serialInputString);
+    
+    if (serialInputString != null && serialInputString.length() > 0) {
+    
+      // Check if the string begins with a '!' (i.e., check if it's a data string)
+      if (serialInputString.charAt(0) == '!') {
+        
+        serialInputString = serialInputString.substring (1);
+        
+        String[] serialInputArray = split(serialInputString, '\t');
+        
+        // Check if array is correct size
+        if (serialInputArray.length >= 3) {
+          dataTimestamp = millis();
+          
+          roll = (float(serialInputArray[0]));
+          pitch = (float(serialInputArray[1]));
+          yaw = (float(serialInputArray[2]));
+          gyroX = int(serialInputArray[3]);
+          gyroY = int(serialInputArray[4]);
+          gyroZ = int(serialInputArray[5]);
+          accelerometerX = int(serialInputArray[6]);
+          accelerometerY = int(serialInputArray[7]);
+          accelerometerZ = int(serialInputArray[8]);
+          magnetometerX = int(serialInputArray[9]);
+          magnetometerY = int(serialInputArray[10]);
+          magnetometerZ = int(serialInputArray[11]);
+          pressure = float(serialInputArray[12]);
+          altitude = float(serialInputArray[13]);
+          temperature = float(serialInputArray[14]);
+          
+          // Update minimum and maximum values
+          if (roll > maxRoll) maxRoll = roll;
+          if (roll < minRoll) minRoll = roll;
+          if (pitch > maxPitch) maxPitch = pitch;
+          if (pitch < minPitch) minPitch = pitch;
+          if (yaw > maxYaw) maxYaw = yaw;
+          if (yaw < minYaw) minYaw = yaw;
+          
+          // Push live gesture sample onto queue  
+          liveGestureSample.get(0).add(accelerometerX);
+          liveGestureSample.get(1).add(accelerometerY);
+          liveGestureSample.get(2).add(accelerometerZ);
+          
+          // Remove oldest element from live gesture queue if greater than threshold
+          if (liveGestureSample.get(0).size() > liveGestureSize) {
+            liveGestureSample.get(0).remove(0);
+            liveGestureSample.get(1).remove(0);
+            liveGestureSample.get(2).remove(0);
+          }
+          println(liveGestureSample.get(0).size());
+
+          // Classify live gesture sample
+          if (liveGestureSample.get(0).size() >= liveGestureSize) {
+            classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
+          }
+        }
+        
+      }
+    }
+  }
 }
 
 /**
@@ -159,7 +259,7 @@ int classifyGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFreq
 int getGestureDeviation(ArrayList<ArrayList<Integer>> averageSample, ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
   int deltaTotal = 0;
   
-  if (averageSample.size() > 0) {
+  if (averageSample.size() > 0 && liveSample.size() > 0) {
     
     // Compare the difference between the average sample for each axis and the live sample
     for (int axis = 0; axis < 3; axis++) {
@@ -179,26 +279,26 @@ int getGestureDeviation(ArrayList<ArrayList<Integer>> averageSample, ArrayList<A
 /**
  * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
  */
-int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonFrequency) {
-  
-  int currentDivision = 0;
-  
-  int delta = 0; // sum of difference between average x curve and most-recent x data
-    
-  for (int i = 0; i < gestureSample.size(); i++) {
-    if (liveSample.size() > i) {
-      if (i == floor((currentDivision + 1) * (gestureSample.size() / (comparisonFrequency - 1)))) {
-      
-        int difference = abs(gestureSample.get(i) - liveSample.get(i));
-        delta = delta + difference;
-        
-        currentDivision++;
-      }
-    }
-  }
-  
-  return delta;
-}
+//int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonFrequency) {
+//  
+//  int currentDivision = 0;
+//  
+//  int delta = 0; // sum of difference between average x curve and most-recent x data
+//    
+//  for (int i = 0; i < gestureSample.size(); i++) {
+//    if (i < gestureSample.size() && i < liveSample.size()) {
+//      if (i == floor((currentDivision + 1) * (gestureSample.size() / (comparisonFrequency - 1)))) {
+//      
+//        int difference = abs(gestureSample.get(i) - liveSample.get(i));
+//        delta = delta + difference;
+//        
+//        currentDivision++;
+//      }
+//    }
+//  }
+//  
+//  return delta;
+//}
 
 /**
  * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
@@ -207,13 +307,10 @@ int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer>
   
   int delta = 0; // sum of difference between average x curve and most-recent x data
     
-  for (int i = 0; i < gestureSample.size(); i++) {
+  for (int i = 0; i < liveSample.size(); i++) {
     if (i < liveSample.size() && i < gestureSample.size()) {
-//      if (i == floor((currentDivision + 1) * (gestureSample.size() / (comparisonFrequency - 1)))) {
-      
         int difference = abs(gestureSample.get(i) - liveSample.get(i));
         delta = delta + difference;
-//      }
     }
   }
   
@@ -282,6 +379,16 @@ void drawGestureTitle() {
     text("\"" + gestureName[gestureIndex] + "\"", (width / 2), (height / 4));
   }
 }
+
+void drawClassifiedGestureTitle() {
+  if (showGesturePrompt) {
+    if (classifiedGestureIndex != -1) {
+      fill(0); textFont(f); textAlign(CENTER);
+      text("\"" + gestureName[classifiedGestureIndex] + "\"", (width / 2), (height / 4) + 100);
+    }
+  }
+}
+
 int maximumSampleSize = 0;
 int maximumSampleDuration = 0;
 void updateCurrentGesture() {
@@ -399,6 +506,18 @@ void drawGesturePlot() {
   }
 }
 
+void drawLiveGesturePlot() {
+  
+  // Draw lines connecting all points
+  smooth();
+  strokeWeight(1);
+  if (liveGestureSample.size() > 0) {
+    stroke(255,0,0); drawPlot(liveGestureSample.get(0), 0, height / 2, width, height, 0, 1000);
+    stroke(0,255,0); drawPlot(liveGestureSample.get(1), 0, height / 2, width, height, 0, 1000);
+    stroke(0,0,255); drawPlot(liveGestureSample.get(2), 0, height / 2, width, height, 0, 1000);
+  }
+}
+
 ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> cachedGestureSamples = new ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>>();
 ArrayList<Boolean> hasCachedGestureSamples = new ArrayList<Boolean>();
 ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> getGestureSamples() {
@@ -417,9 +536,8 @@ ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> getGestureSamples() {
   for(int i = 0; i < getGestureCount(); i++) {
     if (!hasCachedGestureSamples.get(i)) {
       ArrayList<ArrayList<ArrayList<Integer>>> cachedGestureSample = getGestureSamples(i);
-      cachedGestureSamples.set(i, cachedGestureSample);
-      
-      hasCachedGestureSamples.set(i, true);
+      cachedGestureSamples.set(i, cachedGestureSample); // Cache the samples
+      hasCachedGestureSamples.set(i, true); // Flag the samples as cached
     }
   }
   

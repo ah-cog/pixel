@@ -64,7 +64,7 @@ void setup () {
   println(Serial.list());
   
   // Connect to the corresponding serial port
-  serialPort = new Serial(this, Serial.list()[10], 9600);
+  serialPort = new Serial(this, Serial.list()[7], 9600);
   
   // Defer callback until new line
   serialPort.bufferUntil('\n');
