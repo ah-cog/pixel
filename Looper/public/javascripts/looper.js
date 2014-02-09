@@ -1,6 +1,8 @@
 disableEventCreate = false;
 showPalette = false;
 
+// TODO: Define a domain-specific language for the microcontroller.
+
 //function ComputationInterface(options) {
 function Looper(options) {
     var defaults = {
@@ -9,6 +11,8 @@ function Looper(options) {
     };
     var options = options || {};
     var options = $.extend({}, defaults, options);
+
+    this.palette = null;
 
     this.devices = [];
 
@@ -167,8 +171,67 @@ function Event(options) {
     this.toggle = toggle;
 }
 
+function BehaviorPalette(options) {
+    var defaults = {
+        x: null,
+        y: null,
+        xTarget: null,
+        yTarget: null,
+        // state: 'INVALID', // INVALID, FLOATING, MOVING, ENTANGLED, SEQUENCED
+        //visible: true
+        // go: null,
+        // going: false,
+        label: '?',
+        visible: false
+    };
+    var options = options || {};
+    var options = $.extend({}, defaults, options);
 
+    this.x = options.x;
+    this.y = options.y;
 
+    this.xTarget = options.xTarget;
+    this.yTarget = options.yTarget;
+
+    // this.state = options.state;
+
+    // this.go = options.go;
+
+    this.label = options.label;
+
+    this.visible = options.visible;
+
+    function setPosition(x, y) {
+        this.xTarget = x;
+        this.yTarget = y;
+    }
+    this.setPosition = setPosition;
+
+    function updatePosition() {
+        this.x = this.xTarget;
+        this.y = this.yTarget;
+    }
+    this.updatePosition = updatePosition;
+
+    function show() {
+        this.visible = true;
+    }
+    this.show = show;
+
+    function hide() {
+        this.visible = false;
+    }
+    this.hide = hide;
+
+    function toggle() {
+        if (this.visible) {
+            this.visible = false;
+        } else {
+            this.visible = true;
+        }
+    }
+    this.toggle = toggle;
+}
 
 
 function setupGestures(device) {
@@ -214,6 +277,31 @@ function setupGestures(device) {
         console.log("'touch' event!");
 
         var touches = ev.gesture.touches;
+
+        //
+        // Check if palette option was selected
+        //
+
+        var behaviorPalette = device.processingInstance.behaviorPalette;
+        if ((ev.gesture.center.pageX - 50 < behaviorPalette.x && behaviorPalette.x < ev.gesture.center.pageX + 50)
+            && (ev.gesture.center.pageY - 50 < behaviorPalette.y && behaviorPalette.y < ev.gesture.center.pageY + 50)) {
+
+            // behaviorPalette.hide();
+            device.processingInstance.behaviorPalette.visible = false;
+
+            // Create behavior
+            var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
+
+            var loopEvent = new Event({
+                x: device.processingInstance.behaviorPalette.x, //ev.gesture.center.pageX,
+                y: device.processingInstance.behaviorPalette.y, // ev.gesture.center.pageY,
+                xTarget: nearestPosition.x,
+                yTarget: nearestPosition.y
+            });
+
+            loopEvent.state = 'MOVING';
+            device.processingInstance.eventLoop.events.push(loopEvent);
+        }
 
         //
         // Get the touched event node, if one exists
@@ -359,21 +447,23 @@ function setupGestures(device) {
             // x = screenWidth / 2 + (400 / 2) * Math.cos(angleInDegrees);
             // y = screenHeight / 2 + (400 / 2) * Math.sin(angleInDegrees);
 
-            var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
+            // var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
 
-            // xPalette = device.processingInstance.mouseX;
-            // yPalette = device.processingInstance.mouseY;
-            // showPalette = true;
+            // Show behavior palette
+            device.processingInstance.behaviorPalette.setPosition(ev.gesture.center.pageX, ev.gesture.center.pageY);
+            device.processingInstance.behaviorPalette.show();
 
-            var loopEvent = new Event({
-                x: ev.gesture.center.pageX,
-                y: ev.gesture.center.pageY,
-                xTarget: nearestPosition.x,
-                yTarget: nearestPosition.y
-            });
+            // var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
 
-            loopEvent.state = 'MOVING';
-            device.processingInstance.eventLoop.events.push(loopEvent);
+            // var loopEvent = new Event({
+            //     x: ev.gesture.center.pageX,
+            //     y: ev.gesture.center.pageY,
+            //     xTarget: nearestPosition.x,
+            //     yTarget: nearestPosition.y
+            // });
+
+            // loopEvent.state = 'MOVING';
+            // device.processingInstance.eventLoop.events.push(loopEvent);
         }
 
         ev.gesture.preventDefault();
@@ -445,6 +535,15 @@ function Device(options) {
 
         processing.eventLoop = new EventLoop();
 
+        // Create behavior palette
+        processing.behaviorPalette = new BehaviorPalette({
+            // x: ev.gesture.center.pageX,
+            // y: ev.gesture.center.pageY,
+            // xTarget: nearestPosition.x,
+            // yTarget: nearestPosition.y
+            visible: false
+        });
+
         // Override setup function
         processing.setup = function() {
             processing.size(processing.screenWidth, processing.screenHeight);
@@ -505,6 +604,38 @@ function Device(options) {
                 }
 
                 processing.popMatrix();
+            }
+
+            function drawBehaviorPalette() {
+
+                processing.behaviorPalette.updatePosition();
+
+                if (processing.behaviorPalette.visible) {
+                    processing.pushMatrix();
+
+                    // Draw the palette
+                    processing.fill(66, 214, 146);
+                    processing.ellipse(processing.behaviorPalette.x, processing.behaviorPalette.y, 80, 80);
+
+                    processing.fill(66, 214, 33);
+                    processing.ellipse(processing.behaviorPalette.x - 100, processing.behaviorPalette.y, 80, 80); // left
+
+                    processing.fill(66, 100, 146);
+                    processing.ellipse(processing.behaviorPalette.x + 100, processing.behaviorPalette.y, 80, 80); // right
+                    // if (behaviorPalette.going) {
+                    //     processing.ellipse(loopEvent.x, loopEvent.y, 80, 80);
+                    // } else {
+                    //     processing.ellipse(loopEvent.x, loopEvent.y, 60, 60);
+                    // }
+
+                    // primaryFont = processing.createFont("DidactGothic.ttf", 32);
+                    // processing.textFont(primaryFont, 16);
+                    // processing.textAlign(processing.CENTER);
+                    // processing.fill(65, 65, 65);
+                    // processing.text(loopEvent.label, loopEvent.x, loopEvent.y + 4);
+
+                    processing.popMatrix();
+                }
             }
 
             /**
@@ -732,6 +863,8 @@ function Device(options) {
 
             drawEventLoop();
             drawEvents();
+
+            drawBehaviorPalette();
         };
     });
 
