@@ -129,7 +129,7 @@ function Event(options) {
         yTarget: null,
         state: 'INVALID', // INVALID, FLOATING, MOVING, ENTANGLED, SEQUENCED
         //visible: true
-        go: null,
+        behavior: null,
         going: false,
         label: '?'
     };
@@ -183,7 +183,7 @@ function Behavior(options) {
         // going: false,
         label: '?',
         visible: false,
-        go: null
+        script: null // The script to do the behavior. The "script" to run to execute the behavior.
     };
     var options = options || {};
     var options = $.extend({}, defaults, options);
@@ -197,6 +197,8 @@ function Behavior(options) {
     this.label = options.label;
 
     this.visible = options.visible;
+
+    this.script = options.script;
 
     function setPosition(x, y) {
         this.xTarget = x;
@@ -298,7 +300,10 @@ function BehaviorPalette(options) {
             y: y, // ev.gesture.center.pageY,
             xTarget: x,
             yTarget: y,
-            label: label
+            label: label,
+            script: function() {
+                console.log("DOING " + this.label);
+            }
         });
         this.behaviors.push(behavior);
     }
@@ -380,13 +385,14 @@ function setupGestures(device) {
 
                     // Update for selected behavior
                     loopEvent.label = behavior.label;
-                    loopEvent.behavior = function() { 
-                        // var command = loopEvent.go;
-                        var index = Math.random() * 2;
-                        // command = this.looper.commands[parseInt(index)];
-                        command = this.label;
-                        console.log("instr: " + command);
-                    }
+                    loopEvent.behavior = behavior.script;
+                    // loopEvent.behavior = function() { 
+                    //     // var command = loopEvent.go;
+                    //     var index = Math.random() * 2;
+                    //     // command = this.looper.commands[parseInt(index)];
+                    //     command = this.label;
+                    //     console.log("instr: " + command);
+                    // }
 
                     console.log(loopEvent);
 
