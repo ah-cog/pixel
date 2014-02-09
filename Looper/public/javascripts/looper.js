@@ -171,7 +171,7 @@ function Event(options) {
     this.toggle = toggle;
 }
 
-function BehaviorPalette(options) {
+function Behavior(options) {
     var defaults = {
         x: null,
         y: null,
@@ -182,7 +182,8 @@ function BehaviorPalette(options) {
         // go: null,
         // going: false,
         label: '?',
-        visible: false
+        visible: false,
+        go: null
     };
     var options = options || {};
     var options = $.extend({}, defaults, options);
@@ -192,10 +193,6 @@ function BehaviorPalette(options) {
 
     this.xTarget = options.xTarget;
     this.yTarget = options.yTarget;
-
-    // this.state = options.state;
-
-    // this.go = options.go;
 
     this.label = options.label;
 
@@ -233,6 +230,80 @@ function BehaviorPalette(options) {
     this.toggle = toggle;
 }
 
+function BehaviorPalette(options) {
+    var defaults = {
+        x: null,
+        y: null,
+        xTarget: null,
+        yTarget: null,
+        // state: 'INVALID', // INVALID, FLOATING, MOVING, ENTANGLED, SEQUENCED
+        //visible: true
+        // go: null,
+        // going: false,
+        behaviors: [],
+        label: '?',
+        visible: false
+    };
+    var options = options || {};
+    var options = $.extend({}, defaults, options);
+
+    this.x = options.x;
+    this.y = options.y;
+
+    this.xTarget = options.xTarget;
+    this.yTarget = options.yTarget;
+
+    this.behaviors = options.behaviors;
+
+    // this.state = options.state;
+
+    this.label = options.label;
+
+    this.visible = options.visible;
+
+    function setPosition(x, y) {
+        this.xTarget = x;
+        this.yTarget = y;
+    }
+    this.setPosition = setPosition;
+
+    function updatePosition() {
+        this.x = this.xTarget;
+        this.y = this.yTarget;
+    }
+    this.updatePosition = updatePosition;
+
+    function show() {
+        this.visible = true;
+    }
+    this.show = show;
+
+    function hide() {
+        this.visible = false;
+    }
+    this.hide = hide;
+
+    function toggle() {
+        if (this.visible) {
+            this.visible = false;
+        } else {
+            this.visible = true;
+        }
+    }
+    this.toggle = toggle;
+
+    function addBehavior(x, y, label) {
+        var behavior = new Behavior({
+            x: x, //ev.gesture.center.pageX,
+            y: y, // ev.gesture.center.pageY,
+            xTarget: x,
+            yTarget: y,
+            label: label
+        });
+        this.behaviors.push(behavior);
+    }
+    this.addBehavior = addBehavior;
+}
 
 function setupGestures(device) {
 
@@ -283,25 +354,40 @@ function setupGestures(device) {
         //
 
         var behaviorPalette = device.processingInstance.behaviorPalette;
-        if ((ev.gesture.center.pageX - 50 < behaviorPalette.x && behaviorPalette.x < ev.gesture.center.pageX + 50)
-            && (ev.gesture.center.pageY - 50 < behaviorPalette.y && behaviorPalette.y < ev.gesture.center.pageY + 50)) {
 
-            // behaviorPalette.hide();
-            device.processingInstance.behaviorPalette.visible = false;
+        if (behaviorPalette.visible) {
 
-            // Create behavior
-            var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
+            var behaviorCount = device.processingInstance.behaviorPalette.behaviors.length;
+            for(var i = 0; i < behaviorCount; i++) {
+                var behavior = device.processingInstance.behaviorPalette.behaviors[i];
 
-            var loopEvent = new Event({
-                x: device.processingInstance.behaviorPalette.x, //ev.gesture.center.pageX,
-                y: device.processingInstance.behaviorPalette.y, // ev.gesture.center.pageY,
-                xTarget: nearestPosition.x,
-                yTarget: nearestPosition.y
-            });
+                if ((ev.gesture.center.pageX - 50 < behaviorPalette.x + behavior.x && behaviorPalette.x + behavior.x < ev.gesture.center.pageX + 50)
+                    && (ev.gesture.center.pageY - 50 < behaviorPalette.y + behavior.y && behaviorPalette.y + behavior.y < ev.gesture.center.pageY + 50)) {
 
-            loopEvent.state = 'MOVING';
-            device.processingInstance.eventLoop.events.push(loopEvent);
+                    // behaviorPalette.hide();
+                    device.processingInstance.behaviorPalette.visible = false;
+
+                    // Create behavior
+                    var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
+
+                    var loopEvent = new Event({
+                        x: device.processingInstance.behaviorPalette.x + behavior.x, //ev.gesture.center.pageX,
+                        y: device.processingInstance.behaviorPalette.y + behavior.y, // ev.gesture.center.pageY,
+                        xTarget: nearestPosition.x,
+                        yTarget: nearestPosition.y
+                    });
+
+                    loopEvent.state = 'MOVING';
+                    device.processingInstance.eventLoop.events.push(loopEvent);
+                }
+
+            }
         }
+
+
+
+
+                
 
         //
         // Get the touched event node, if one exists
@@ -544,6 +630,11 @@ function Device(options) {
             visible: false
         });
 
+        // Add "default" behaviors to palette
+        processing.behaviorPalette.addBehavior(0, 0, 'get');
+        processing.behaviorPalette.addBehavior(100, 0, 'on');
+        processing.behaviorPalette.addBehavior(-100, 0, 'off');
+
         // Override setup function
         processing.setup = function() {
             processing.size(processing.screenWidth, processing.screenHeight);
@@ -611,30 +702,32 @@ function Device(options) {
                 processing.behaviorPalette.updatePosition();
 
                 if (processing.behaviorPalette.visible) {
-                    processing.pushMatrix();
 
-                    // Draw the palette
-                    processing.fill(66, 214, 146);
-                    processing.ellipse(processing.behaviorPalette.x, processing.behaviorPalette.y, 80, 80);
+                    var behaviorCount = processing.behaviorPalette.behaviors.length;
+                    for(var i = 0; i < behaviorCount; i++) {
+                        var behavior = processing.behaviorPalette.behaviors[i];
 
-                    processing.fill(66, 214, 33);
-                    processing.ellipse(processing.behaviorPalette.x - 100, processing.behaviorPalette.y, 80, 80); // left
+                        processing.pushMatrix();
 
-                    processing.fill(66, 100, 146);
-                    processing.ellipse(processing.behaviorPalette.x + 100, processing.behaviorPalette.y, 80, 80); // right
-                    // if (behaviorPalette.going) {
-                    //     processing.ellipse(loopEvent.x, loopEvent.y, 80, 80);
-                    // } else {
-                    //     processing.ellipse(loopEvent.x, loopEvent.y, 60, 60);
-                    // }
+                        // Draw the palette
+                        processing.fill(66, 214, 146);
+                        processing.ellipse(processing.behaviorPalette.x + behavior.x, processing.behaviorPalette.y + behavior.y, 80, 80);
 
-                    // primaryFont = processing.createFont("DidactGothic.ttf", 32);
-                    // processing.textFont(primaryFont, 16);
-                    // processing.textAlign(processing.CENTER);
-                    // processing.fill(65, 65, 65);
-                    // processing.text(loopEvent.label, loopEvent.x, loopEvent.y + 4);
+                        // processing.fill(66, 214, 33);
+                        // processing.ellipse(processing.behaviorPalette.x - 100, processing.behaviorPalette.y, 80, 80); // left
 
-                    processing.popMatrix();
+                        // processing.fill(66, 100, 146);
+                        // processing.ellipse(processing.behaviorPalette.x + 100, processing.behaviorPalette.y, 80, 80); // right
+
+                        // primaryFont = processing.createFont("DidactGothic.ttf", 32);
+                        // processing.textFont(primaryFont, 16);
+                        // processing.textAlign(processing.CENTER);
+                        // processing.fill(65, 65, 65);
+                        // processing.text(loopEvent.label, loopEvent.x, loopEvent.y + 4);
+
+                        processing.popMatrix();
+                    }
+                    
                 }
             }
 
