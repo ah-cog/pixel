@@ -2,6 +2,10 @@ disableEventCreate = false;
 showPalette = false;
 
 // TODO: Define a domain-specific language for the microcontroller.
+function saveScript() {
+    var script = "" + firepadDevice.firepad.getText();
+    firepadEvent.behavior = eval('(' + script + ')');
+}
 
 //function ComputationInterface(options) {
 function Looper(options) {
@@ -27,7 +31,7 @@ function Looper(options) {
 
         var overlay = '';
         overlay += '<div id="overlay' + deviceCount + '" style="width: 100%; height: 100%; position: relative; z-index: 5000;">';
-        overlay += '<input type="button" value="close" onclick="$(\'#overlay' + deviceCount + '\').hide();" />';
+        overlay += '<input type="button" value="close" onclick="saveScript();$(\'#overlay' + deviceCount + '\').hide();" />';
         overlay += '<div id="firepad-container-' + deviceCount + '" class="firepad-container"></div>';
         overlay += '</div>';
         // <script>
@@ -84,6 +88,12 @@ function EventLoop(options) {
 
     function stop() {
         this.going = false;
+
+        // Stop all events in the event loop
+        for (var i = 0; i < this.events.length; i++) {
+            this.events[i].stop();
+        }
+        this.position = 0; // Reset position
     }
     this.stop = stop;
 
@@ -329,8 +339,14 @@ function setupGestures(device) {
             if ((ev.gesture.center.pageX - 50 < loopEvent.x && loopEvent.x < ev.gesture.center.pageX + 50)
                 && (ev.gesture.center.pageY - 50 < loopEvent.y && loopEvent.y < ev.gesture.center.pageY + 50)) {
 
+                firepadDevice = device;
+                firepadEvent = loopEvent;
                 $('#overlay' + device.index).show();
-                eval(device.firepad.getText());
+                device.firepad.setText("" + loopEvent.behavior);
+                // eval(device.firepad.getText());
+
+
+
 
                 // loopEvent.state = 'MOVING';
                 // disableEventCreate = true;
@@ -892,7 +908,7 @@ function Device(options) {
 
                     console.log(loopEvent);
 
-                    loopEvent.event.behavior();
+                    var behaviorScript = loopEvent.event.behavior;
                 }
 
                 return eventSequence;
