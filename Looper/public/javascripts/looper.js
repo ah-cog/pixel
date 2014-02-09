@@ -342,8 +342,18 @@ function setupGestures(device) {
                 firepadDevice = device;
                 firepadEvent = loopEvent;
                 $('#overlay' + device.index).show();
-                device.firepad.setText("" + loopEvent.behavior);
-                // eval(device.firepad.getText());
+                // var jsString = "" + loopEvent.behavior;
+                // var jsb = beautify(jsString, {
+                //     'indent_size': 1,
+                //     'indent_char': '\t'
+                // });
+                var beautifulScript = js_beautify("" + loopEvent.behavior, {
+                    'indent_size': 1,
+                    'indent_char': '\t'
+                });
+                //device.firepad.setText("" + loopEvent.behavior);
+                device.firepad.setText(beautifulScript);
+                // device.firepad.setText(jsString);
 
 
 
@@ -463,7 +473,8 @@ function setupGestures(device) {
         //
         
         if ((ev.gesture.center.pageX - 50 < (device.processingInstance.screenWidth / 2) && (device.processingInstance.screenWidth / 2) < ev.gesture.center.pageX + 50)
-            && (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight / 7 + 20) && (device.processingInstance.screenHeight / 7 + 20) < ev.gesture.center.pageY + 50)) {
+            && (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight / 2 - 90) && (device.processingInstance.screenHeight / 2 - 90) < ev.gesture.center.pageY + 50)) {
+            //&& (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight / 7 + 20) && (device.processingInstance.screenHeight / 7 + 20) < ev.gesture.center.pageY + 50)) {
 
             // Prompt for new script name
             var newScriptName = prompt("Type a name for this script", "script");
@@ -1013,7 +1024,8 @@ function Device(options) {
             processing.textFont(primaryFont, 40);
             processing.textAlign(processing.CENTER);
             processing.fill(65, 65, 65);
-            processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 7 + 20);
+            //processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 7 + 20);
+            processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 2 - 90);
 
             // step to next node in loop
             processing.currentTime = (new Date()).getTime();
