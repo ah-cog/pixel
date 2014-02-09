@@ -380,6 +380,15 @@ function setupGestures(device) {
 
                     // Update for selected behavior
                     loopEvent.label = behavior.label;
+                    loopEvent.behavior = function() { 
+                        // var command = loopEvent.go;
+                        var index = Math.random() * 2;
+                        // command = this.looper.commands[parseInt(index)];
+                        command = this.label;
+                        console.log("instr: " + command);
+                    }
+
+                    console.log(loopEvent);
 
                     loopEvent.state = 'MOVING';
                     device.processingInstance.eventLoop.events.push(loopEvent);
@@ -407,8 +416,8 @@ function setupGestures(device) {
                 loopEvent.state = 'MOVING';
                 disableEventCreate = true;
 
-                var index = Math.random() * 2;
-                loopEvent.go = device.looper.commands[parseInt(index)];
+                // var index = Math.random() * 2;
+                // loopEvent.behavior = device.looper.commands[parseInt(index)];
 
                 console.log("\tevent " + i);
                 break;
@@ -841,13 +850,14 @@ function Device(options) {
                     var loopEvent = processing.eventLoop.events[i];
                     if (loopEvent.state === 'SEQUENCED') {
                         // loopEvent.go = function() { console.log("action " + i); }
-                        loopEvent.behavior = function() { 
-                            // var command = loopEvent.go;
-                            var index = Math.random() * 2;
-                            // command = this.looper.commands[parseInt(index)];
-                            command = "turn on";
-                            console.log("instr: " + command);
-                        }
+                        // loopEvent.behavior = function() { 
+                        // loopEvent.go = function() { 
+                        //     // var command = loopEvent.go;
+                        //     var index = Math.random() * 2;
+                        //     // command = this.looper.commands[parseInt(index)];
+                        //     command = "turn on";
+                        //     console.log("instr: " + command);
+                        // }
                         eventSequence.push({
                             event: loopEvent,
                             angle: getAngle(loopEvent.x, loopEvent.y)
@@ -874,7 +884,9 @@ function Device(options) {
                 for (var i = 0; i < eventSequence.length; i++) {
                     loopEvent = eventSequence[i];
 
-                    loopEvent.event.go();
+                    console.log(loopEvent);
+
+                    loopEvent.event.behavior();
                 }
 
                 return eventSequence;
