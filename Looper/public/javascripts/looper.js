@@ -82,11 +82,13 @@ function EventLoop(options) {
     this.going = options.going;
 
     function go() {
+        this.updateLoopOrdering();
         this.going = true;
     }
     this.go = go;
 
     function stop() {
+        this.updateLoopOrdering();
         this.going = false;
 
         // Stop all events in the event loop
@@ -129,6 +131,76 @@ function EventLoop(options) {
         }
     }
     this.step = step;
+
+    function getAngle(x, y) {
+        var deltaX = x - ($(window).width() / 2);
+        var deltaY = y - ($(window).height() / 2);
+        var angleInRadians = Math.atan2(deltaY, deltaX); // * 180 / PI;
+        if (angleInRadians < 0) {
+            angleInRadians = Math.PI + (Math.PI + angleInRadians);
+        }
+        angleInRadians = angleInRadians + (Math.PI / 2); // Offset by (PI / 2) radians
+        if (angleInRadians > (2 * Math.PI)) {
+            angleInRadians = angleInRadians - (2 * Math.PI);
+        }
+        return angleInRadians;
+    }
+    // processing.getAngle;
+
+    /**
+     * Re-orders the events in the event loop.
+     */
+    function updateLoopOrdering() {
+        var eventSequence = [];
+
+        var eventCount = this.events.length;
+
+        // Populate array for sorting
+        for (var i = 0; i < eventCount; i++) {
+            var loopEvent = this.events[i];
+            if (loopEvent.state === 'SEQUENCED') {
+                eventSequence.push({
+                    event: loopEvent,
+                    angle: getAngle(loopEvent.x, loopEvent.y)
+                });
+            }
+        }
+
+        // Perform insertion sort
+        var i, j;
+        var loopEvent;
+        eventCount = eventSequence.length;
+        for (var i = 0; i < eventCount; i++) {
+            loopEvent = eventSequence[i];
+
+            for (j = i-1; j > -1 && eventSequence[j].angle > loopEvent.angle; j--) {
+                eventSequence[j+1] = eventSequence[j];
+            }
+
+            eventSequence[j+1] = loopEvent;
+        }
+
+        // console.log(eventSequence);
+
+        // for (var i = 0; i < eventSequence.length; i++) {
+        //     loopEvent = eventSequence[i];
+
+        //     // console.log(loopEvent);
+
+        //     var behaviorScript = loopEvent.event.behavior;
+        // }
+
+        //return eventSequence;
+
+        var updatedEventLoop = [];
+        for (var i = 0; i < eventSequence.length; i++) {
+            loopEvent = eventSequence[i];
+            updatedEventLoop.push(loopEvent.event);
+        }
+
+        this.events = updatedEventLoop;
+    }
+    this.updateLoopOrdering = updateLoopOrdering;
 }
 
 function Event(options) {
@@ -893,7 +965,7 @@ function Device(options) {
                         // }
                         eventSequence.push({
                             event: loopEvent,
-                            angle: getAngle(loopEvent.x, loopEvent.y)
+                            angle: processing.getAngle(loopEvent.x, loopEvent.y)
                         });
                     }
                 }
@@ -980,6 +1052,7 @@ function Device(options) {
                 }
                 return angleInRadians;
             }
+            processing.getAngle = getAngle;
 
             function getNearestPositionOnEventLoop(x, y) {
                 var deltaX = x - (processing.screenWidth / 2);
