@@ -361,6 +361,7 @@ function setupGestures(device) {
             for(var i = 0; i < behaviorCount; i++) {
                 var behavior = device.processingInstance.behaviorPalette.behaviors[i];
 
+                // Check if palette option is touched
                 if ((ev.gesture.center.pageX - 50 < behaviorPalette.x + behavior.x && behaviorPalette.x + behavior.x < ev.gesture.center.pageX + 50)
                     && (ev.gesture.center.pageY - 50 < behaviorPalette.y + behavior.y && behaviorPalette.y + behavior.y < ev.gesture.center.pageY + 50)) {
 
@@ -376,6 +377,9 @@ function setupGestures(device) {
                         xTarget: nearestPosition.x,
                         yTarget: nearestPosition.y
                     });
+
+                    // Update for selected behavior
+                    loopEvent.label = behavior.label;
 
                     loopEvent.state = 'MOVING';
                     device.processingInstance.eventLoop.events.push(loopEvent);
@@ -703,6 +707,12 @@ function Device(options) {
 
                 if (processing.behaviorPalette.visible) {
 
+                    drawBehaviors();
+                    
+                }
+
+                function drawBehaviors() {
+
                     var behaviorCount = processing.behaviorPalette.behaviors.length;
                     for(var i = 0; i < behaviorCount; i++) {
                         var behavior = processing.behaviorPalette.behaviors[i];
@@ -713,21 +723,45 @@ function Device(options) {
                         processing.fill(66, 214, 146);
                         processing.ellipse(processing.behaviorPalette.x + behavior.x, processing.behaviorPalette.y + behavior.y, 80, 80);
 
-                        // processing.fill(66, 214, 33);
-                        // processing.ellipse(processing.behaviorPalette.x - 100, processing.behaviorPalette.y, 80, 80); // left
-
-                        // processing.fill(66, 100, 146);
-                        // processing.ellipse(processing.behaviorPalette.x + 100, processing.behaviorPalette.y, 80, 80); // right
-
-                        // primaryFont = processing.createFont("DidactGothic.ttf", 32);
-                        // processing.textFont(primaryFont, 16);
-                        // processing.textAlign(processing.CENTER);
-                        // processing.fill(65, 65, 65);
-                        // processing.text(loopEvent.label, loopEvent.x, loopEvent.y + 4);
+                        primaryFont = processing.createFont("DidactGothic.ttf", 32);
+                        processing.textFont(primaryFont, 16);
+                        processing.textAlign(processing.CENTER);
+                        processing.fill(65, 65, 65);
+                        processing.text(behavior.label, processing.behaviorPalette.x + behavior.x, processing.behaviorPalette.y + behavior.y + 4);
 
                         processing.popMatrix();
                     }
-                    
+
+
+
+
+                    // processing.pushMatrix();
+
+                    // var eventCount = processing.eventLoop.events.length;
+                    // for (var i = 0; i < eventCount; i++) {
+                    //     var loopEvent = processing.eventLoop.events[i];
+
+                    //     processing.updatePosition(loopEvent);
+
+                    //     // Draw the event node
+                    //     processing.fill(66, 214, 146);
+                    //     if (loopEvent.going) {
+                    //         processing.ellipse(loopEvent.x, loopEvent.y, 80, 80);
+                    //     } else {
+                    //         processing.ellipse(loopEvent.x, loopEvent.y, 60, 60);
+                    //     }
+
+                    //     primaryFont = processing.createFont("DidactGothic.ttf", 32);
+                    //     processing.textFont(primaryFont, 16);
+                    //     processing.textAlign(processing.CENTER);
+                    //     processing.fill(65, 65, 65);
+                    //     processing.text(loopEvent.label, loopEvent.x, loopEvent.y + 4);
+
+                    //     // Calculate nearest point on circle
+                    //     //line(loopEvent.x, loopEvent.y, screenWidth / 2, screenHeight / 2);
+                    // }
+
+                    // processing.popMatrix();
                 }
             }
 
