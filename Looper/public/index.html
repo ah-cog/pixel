@@ -4,7 +4,7 @@
     <title>Looper</title>
 
     <!-- Include beautify.js -->
-    <script src="beautify.js"></script>
+    <script src="javascripts/beautify.js"></script>
 
     <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
     <script src="javascripts/acorn.js"></script>
@@ -19,17 +19,17 @@
     <script src="https://cdn.firebase.com/v0/firebase.js"></script>
 
     <!-- Include ACE and its JavaScript mode and theme files -->
-    <script src="ace/ace.js"></script>
-    <script src="ace/mode-javascript.js"></script>
-    <script src="ace/theme-textmate.js"></script>
+    <script src="javascripts/ace/ace.js"></script>
+    <script src="javascripts/ace/mode-javascript.js"></script>
+    <script src="javascripts/ace/theme-textmate.js"></script>
 
     <!-- Include Firepad -->
-    <script src="firepad.js"></script>
-    <link rel="stylesheet" href="firepad.css" />
+    <script src="javascripts/firepad.js"></script>
+    <link rel="stylesheet" href="stylesheets/firepad.css" />
 
     <!-- Helper for generating URLs / Firebase references for example purposes.
          Not necessary in production apps. -->
-    <script src="example-helper.js"></script>
+    <script src="javascripts/example-helper.js"></script>
 
     <style>
         /*html { height: 100%; }*/
@@ -75,6 +75,21 @@
        //    });
 
         // $("#overlay").hide();
+
+
+        // $.ajax({
+        //   url: "http://api.foodessentials.com/createsession?uid=demoUID_01&devid=demoDev_01&appid=demoApp_01&f=json&api_key=4ztjtgqwyuastptk9pxwsmgr",
+        //   beforeSend: function(xhr) {
+        //     xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+        //     xhr.setRequestHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        //     xhr.setRequestHeader("Access-Control-Allow-Headers", "*");
+        //   },
+        //   success: function(data) {
+        //     alert("yeah!");
+        //   }
+        // });
+
+
     </script>
 
 
@@ -82,19 +97,20 @@
         //window.onload = function() {
         firepadDevice = null;
         firepadEvent = null;
-        function setupFirepad(container) {
+        function setupFirepad(container, device, behavior) {
             //// Initialize Firebase.
-            var firepadRef = getExampleRef();
+            //var firepadRef = getExampleRef();
+            var firepadRef = getBehaviorRef(device, behavior);
             // TODO: Replace above line with:
             // var ref = new Firebase('<YOUR FIREBASE URL>');
 
             //// Create ACE
             var editor = ace.edit(container);
-            editor.setTheme("ace/theme/textmate");
+            editor.setTheme("javascripts/ace/theme/textmate");
             var session = editor.getSession();
             session.setUseWrapMode(true);
             session.setUseWorker(false);
-            session.setMode("ace/mode/javascript");
+            session.setMode("javascripts/ace/mode/javascript");
 
             //// Create Firepad.
             var firepad = Firepad.fromACE(firepadRef, editor);

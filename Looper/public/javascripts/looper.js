@@ -376,16 +376,17 @@ function BehaviorPalette(options) {
     }
     this.toggle = toggle;
 
-    function addBehavior(x, y, label) {
+    function addBehavior(x, y, label, script) {
         var behavior = new Behavior({
             x: x, //ev.gesture.center.pageX,
             y: y, // ev.gesture.center.pageY,
             xTarget: x,
             yTarget: y,
             label: label,
-            script: function() {
-                console.log("DOING " + this.label);
-            }
+            // script: function() {
+            //     console.log("DOING " + this.label);
+            // }
+            script: script
         });
         this.behaviors.push(behavior);
     }
@@ -426,6 +427,27 @@ function setupGestures(device) {
                 //device.firepad.setText("" + loopEvent.behavior);
                 device.firepad.setText(beautifulScript);
                 // device.firepad.setText(jsString);
+
+
+
+                // firepadDevice = device;
+                // firepadEvent = loopEvent;
+                // if (device.firepad === undefined) {
+                //     device.firepad = setupFirepad("firepad-container-" + device.index, device.index, loopEvent.label); // Set up Firebase storage for behavior with specified name on specified device
+                // }
+                // $('#overlay' + device.index).show();
+                // // var jsString = "" + loopEvent.behavior;
+                // // var jsb = beautify(jsString, {
+                // //     'indent_size': 1,
+                // //     'indent_char': '\t'
+                // // });
+                // var beautifulScript = js_beautify("" + loopEvent.behavior, {
+                //     'indent_size': 1,
+                //     'indent_char': '\t'
+                // });
+                // // device.firepad.setText('');
+                // device.firepad.setText('');
+                // device.firepad.setText(beautifulScript);
 
 
 
@@ -749,9 +771,22 @@ function Device(options) {
         });
 
         // Add "default" behaviors to palette
-        processing.behaviorPalette.addBehavior(0, 0, 'get');
-        processing.behaviorPalette.addBehavior(100, 0, 'on');
-        processing.behaviorPalette.addBehavior(-100, 0, 'off');
+        // processing.behaviorPalette.addBehavior(0, 0, 'get');
+        // processing.behaviorPalette.addBehavior(100, 0, 'on');
+        // processing.behaviorPalette.addBehavior(-100, 0, 'off');
+        processing.behaviorPalette.addBehavior(0, 0, 'chart', function() {
+            //console.log("DOING " + this.label);
+            
+            console.log('I just set up a <div> to render a chart from JavaScript.')
+        });
+        processing.behaviorPalette.addBehavior(100, 0, 'data', function() {
+            
+            console.log('I just retreived a data set via HTTP requests in JavaScript.')
+        });
+        processing.behaviorPalette.addBehavior(-100, 0, 'plot', function() {
+            
+            console.log('I just plotted the data using D3 on an overlay.')
+        });
 
         // Override setup function
         processing.setup = function() {
