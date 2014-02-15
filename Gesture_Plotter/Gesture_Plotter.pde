@@ -1,3 +1,7 @@
+import processing.serial.*;
+
+Serial serialPort;
+String serialInputString;
 
 boolean shiftPressed = false;
 
@@ -19,7 +23,7 @@ boolean showGesturePrompt = true;
 boolean isRecordingGesture = false;
 int gestureSelectionTime = 0;
 
-int backgroundColor[] = { 255, 255, 255 };
+//int backgroundColor[] = { 255, 255, 255 };
 
 int gestureIndex = 0;
 String gestureName[] = { 
@@ -49,16 +53,18 @@ String gestureName[] = {
 int gestureSampleCount = 0;
 int gestureSensorSampleCount = 0;
 
+boolean isFullScreen = true;
+
 ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples;
 ArrayList<String> gestureSampleNames;
 ArrayList<Integer> gestureSampleWindow;
 ArrayList<ArrayList<ArrayList<Integer>>> completeGestureSamples;
 ArrayList<String> completeGestureSampleNames;
 
-import processing.serial.*;
-
-Serial serialPort;
-String serialInputString;
+//import processing.serial.*;
+//
+//Serial serialPort;
+//String serialInputString;
 
 //ArrayList<Integer> gestureSampleAverage;
 ArrayList<ArrayList<Integer>> liveGestureSample;
@@ -66,22 +72,13 @@ ArrayList<ArrayList<Integer>> liveGestureSample;
 boolean showAxisX = true, showAxisY = true, showAxisZ = true;
 
 void setup () {
-  size(1200, 800, P3D);
-  
-  // Print serial ports
-  println(Serial.list().length);
-  println(Serial.list());
-  
-  // Connect to the corresponding serial port
-  serialPort = new Serial(this, Serial.list()[7], 9600);
-  
-  // Defer callback until new line
-  serialPort.bufferUntil('\n');
+  // size(1200, 800, P3D);
+  size(displayWidth, displayHeight, P3D);
   
   // Set up font
   f = createFont("DidactGothic.ttf", 64, true);
-  f2 = createFont("Arial", 12, true);
-  f3 = createFont("Arial", 16, true);
+  f2 = createFont("DidactGothic.ttf", 12, true);
+  f3 = createFont("DidactGothic.ttf", 40, true);
   
   // Sample:
   // [sequence][axis][time]
@@ -129,15 +126,33 @@ void setup () {
 //      println("\t},");
 //  }
 //  println("};");
+  
+  // Print serial ports
+  println(Serial.list().length);
+  println(Serial.list());
+  
+  // Connect to the corresponding serial port
+  serialPort = new Serial(this, Serial.list()[7], 9600);
+  
+  // Defer callback until new line
+  serialPort.bufferUntil('\n');
 }
 
 int classifiedGestureIndex = -1;
+color backgroundColor = #F0F1F0;
 
 void draw() {
   
+  // Check if classified gesture is correct
+  if (gestureIndex == classifiedGestureIndex) {
+    backgroundColor = #ff0000;
+  } else {
+    backgroundColor = #F0F1F0;
+  }
+  
   // Set background
   //background(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
-  background(#F0F1F0);
+  background(backgroundColor);
 
   // Draw data
   drawGestureTitle();
@@ -183,6 +198,10 @@ void draw() {
 //  println();
 
   drawClassifiedGestureTitle();
+}
+
+boolean sketchFullScreen() {
+  return isFullScreen;
 }
 
 int liveGestureSize = 50;
@@ -491,15 +510,15 @@ int getGestureCount() {
 void drawGestureTitle() {
   if (showGesturePrompt) {
     fill(0); textFont(f); textAlign(CENTER);
-    text("\"" + gestureName[gestureIndex] + "\"", (width / 2), (height / 4));
+    text("\"" + gestureName[gestureIndex] + "\"", (width / 2), (height / 4) - 50);
   }
 }
 
 void drawClassifiedGestureTitle() {
   if (showGesturePrompt) {
     if (classifiedGestureIndex != -1) {
-      fill(0); textFont(f); textAlign(CENTER);
-      text("\"" + gestureName[classifiedGestureIndex] + "\"", (width / 2), (height / 4) + 100);
+      fill(0); textFont(f3); textAlign(CENTER);
+      text("\"" + gestureName[classifiedGestureIndex] + "\"", (width / 2), (height / 4) + 20);
     }
   }
 }

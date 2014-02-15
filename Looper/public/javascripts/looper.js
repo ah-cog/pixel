@@ -7,7 +7,9 @@ function saveScript() {
     firepadEvent.behavior = eval('(' + script + ')');
 }
 
-//function ComputationInterface(options) {
+/**
+ * The main Looper class.
+ */
 function Looper(options) {
     var defaults = {
         devices: [],
@@ -16,15 +18,21 @@ function Looper(options) {
     var options = options || {};
     var options = $.extend({}, defaults, options);
 
+    /** The behavior palette. */
     this.palette = null;
 
+    /** The devices in the local mesh network. */
     this.devices = [];
 
+    /** The domain-specific language. */
     this.commands = [];
     this.commands.push("turn on");
     this.commands.push("turn off");
     this.commands.push("delay");
 
+    /**
+     * Add a device to the list of devices in the mesh network.
+     */
     function addDevice() {
 
         deviceCount = deviceCount + 1;
@@ -734,7 +742,7 @@ function Device(options) {
 
         processing.currentTime = 0;
         processing.previousTime = 0;
-        processing.stepFrequency = 1000;
+        processing.stepFrequency = 100;
 
         var backgroundColor = processing.color(Math.random() * 255, Math.random() * 255, Math.random() * 255);
         function generateRandomColor(red, green, blue) {
@@ -770,21 +778,20 @@ function Device(options) {
             visible: false
         });
 
+        // 
+
         // Add "default" behaviors to palette
         // processing.behaviorPalette.addBehavior(0, 0, 'get');
         // processing.behaviorPalette.addBehavior(100, 0, 'on');
-        // processing.behaviorPalette.addBehavior(-100, 0, 'off');
-        processing.behaviorPalette.addBehavior(0, 0, 'chart', function() {
+        // processing.behaviorPalette.addBehavior(-100, 0, 'off');  
+        processing.behaviorPalette.addBehavior(0, 0, 'get', function() {
             //console.log("DOING " + this.label);
-            
             console.log('I just set up a <div> to render a chart from JavaScript.')
         });
-        processing.behaviorPalette.addBehavior(100, 0, 'data', function() {
-            
+        processing.behaviorPalette.addBehavior(100, 0, 'button', function() {
             console.log('I just retreived a data set via HTTP requests in JavaScript.')
         });
-        processing.behaviorPalette.addBehavior(-100, 0, 'plot', function() {
-            
+        processing.behaviorPalette.addBehavior(-100, 0, 'on', function() {
             console.log('I just plotted the data using D3 on an overlay.')
         });
 

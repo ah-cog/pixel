@@ -27,10 +27,6 @@
     <script src="javascripts/firepad.js"></script>
     <link rel="stylesheet" href="stylesheets/firepad.css" />
 
-    <!-- Helper for generating URLs / Firebase references for example purposes.
-         Not necessary in production apps. -->
-    <script src="javascripts/example-helper.js"></script>
-
     <style>
         /*html { height: 100%; }*/
         /*body { margin: 0; height: 100%; position: relative; }*/
@@ -89,41 +85,110 @@
         //   }
         // });
 
+        /**
+         * Helper for generating URLs / Firebase references for example purposes.
+         * Not necessary in production apps.
+         */
+        function getFirebaseBehaviorScriptRef(device, behavior) {
+            // Get hash from end of URL or generate a random one.
+
+            var ref = new Firebase('https://looper.firebaseio.com/firepad');
+            // var hash = window.location.hash.replace(/#/g, '');
+            // if (hash) {
+            //   ref = ref.child(hash);
+            // } else {
+            //   ref = ref.push(); // generate unique location.
+            //   window.location = window.location + '#' + ref.name(); // add it as a hash to the URL.
+            // }
+
+            //ref = ref.push(); // generate unique location.
+            var hash = '' + device + '/' + behavior;
+            ref = ref.child(hash);
+            // window.location = window.location + '#' + ref.name(); // add it as a hash to the URL.
+
+            if (typeof console !== 'undefined') {
+                console.log('Firebase data: ', ref.toString());
+            }
+
+            return ref;
+        }
+
+        // function getExampleRef() {
+        //     // Get hash from end of URL or generate a random one.
+
+        //     var ref = new Firebase('https://pixel-coder.firebaseio.com');
+        //     var hash = window.location.hash.replace(/#/g, '');
+        //     if (hash) {
+        //     ref = ref.child(hash);
+        //     } else {
+        //     ref = ref.push(); // generate unique location.
+        //     window.location = window.location + '#' + ref.name(); // add it as a hash to the URL.
+        //     }
+
+        //     if (typeof console !== 'undefined')
+        //     console.log('Firebase data: ', ref.toString());
+
+        //     return ref;
+        // }
+
+        function saveBehaviorScript(name, script) {
+            var ref = new Firebase('https://looper.firebaseio.com/behaviors/');
+            var behaviorRef = ref.child(name);
+
+            behaviorRef.child('name').set(name);
+            behaviorRef.child('script').set(script);
+        }
+
+        function loadBehaviorScript(name) {
+            var ref = new Firebase('https://looper.firebaseio.com/behaviors/' + name);
+            ref.on('value', function(snapshot) {
+                console.log(snapshot.val());
+                var val = snapshot.val();
+                return val;
+            });
+        }
+
+        function loadBehaviors(name) {
+            var ref = new Firebase('https://looper.firebaseio.com/behaviors/');
+            ref.on('value', function(snapshot) {
+                console.log(snapshot.val());
+            });
+        }
 
     </script>
 
 
     <script>
-        //window.onload = function() {
-        firepadDevice = null;
-        firepadEvent = null;
-        function setupFirepad(container, device, behavior) {
-            //// Initialize Firebase.
-            //var firepadRef = getExampleRef();
-            var firepadRef = getBehaviorRef(device, behavior);
-            // TODO: Replace above line with:
-            // var ref = new Firebase('<YOUR FIREBASE URL>');
+    //window.onload = function() {
+    firepadDevice = null;
+    firepadEvent = null;
+    function setupFirepad(container, device, behavior) {
+        //// Initialize Firebase.x
+        //var firepadRef = getExampleRef();
+        var firepadRef = getFirebaseBehaviorScriptRef(device, behavior);
+        // TODO: Replace above line with:
+        // var ref = new Firebase('<YOUR FIREBASE URL>');
 
-            //// Create ACE
-            var editor = ace.edit(container);
-            editor.setTheme("javascripts/ace/theme/textmate");
-            var session = editor.getSession();
-            session.setUseWrapMode(true);
-            session.setUseWorker(false);
-            session.setMode("javascripts/ace/mode/javascript");
+        //// Create ACE
+        var editor = ace.edit(container);
+        editor.setTheme("javascripts/ace/theme/textmate");
+        var session = editor.getSession();
+        session.setUseWrapMode(true);
+        session.setUseWorker(false);
+        session.setMode("javascripts/ace/mode/javascript");
 
-            //// Create Firepad.
-            var firepad = Firepad.fromACE(firepadRef, editor);
+        //// Create Firepad.
+        var firepad = Firepad.fromACE(firepadRef, editor);
 
-            //// Initialize contents.
-            firepad.on('ready', function() {
-                if (firepad.isHistoryEmpty()) {
-                    firepad.setText('// JavaScript Editing with Firepad!\nfunction go() {\n  var message = "Hello, world.";\n  alert(message);\n}\ngo();');
-                }
-            });
+        //// Initialize contents.
+        firepad.on('ready', function() {
+            if (firepad.isHistoryEmpty()) {
+                firepad.setText('// JavaScript Editing with Firepad!\nfunction go() {\n  var message = "Hello, world.";\n  alert(message);\n}\ngo();');
+            }
+        });
 
-            return firepad;
-        };
+        return firepad;
+    };
     </script>
 
     <!--<div id="debug">Log</div>-->
