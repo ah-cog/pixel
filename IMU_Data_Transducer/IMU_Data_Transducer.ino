@@ -32,30 +32,32 @@ MinIMU-9-Arduino-AHRS
 
 //---
 
-//int gestureIndex = 0;
-//String gestureName[] = { 
-//  "at rest, on table",
-//  "at rest, in hand",
-//  "pick up",
-//  "place down",
-//  "tilt left",
-//  "tilt right",
-//  "shake",
-//  "tap to another, as left",
-//  "tap to another, as right"
-//};
-//int gestureSampleCount = 0;
-//int gestureSensorSampleCount = 0;
-
 #define GESTURE_COUNT 9
 #define AXIS_COUNT 3
 #define GESTURE_SIGNATURE_SIZE 50
+
+int gestureIndex = 0;
+char* gestureName[GESTURE_COUNT] = { 
+  "at rest, on table",
+  "at rest, in hand",
+  "pick up",
+  "place down",
+  "tilt left",
+  "tilt right",
+  "shake",
+  "tap to another, as left",
+  "tap to another, as right"
+};
+int gestureSampleCount = 0;
+int gestureSensorSampleCount = 0;
 
 int gestureCandidate[AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
+int gestureCandidateSize = 0;
+
 //int gestureSignature1[GESTURE_COUNT][GESTURE_SIGNATURE_SIZE] = {
 int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
   //as many vals as dimenstion 1
@@ -115,36 +117,117 @@ int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
   }, 
 };
 
+//int classifiedGestureIndex = 0;
+//  "at rest, on table",
+//  "at rest, in hand",
+//  "pick up",
+//  "place down",
+//  "tilt left",
+//  "tilt right",
+//  "shake",
+//  "tap to another, as left",
+//  "tap to another, as right"
+int gestureTransitions[GESTURE_COUNT][GESTURE_COUNT] = {
+  { 0,  2, -1, -1, -1, -1, -1, -1, -1 },
+  { 1,  3,  4,  5,  6,  7,  8, -1, -1 },
+  { 2,  1, -1, -1, -1, -1, -1, -1, -1 },
+  { 0, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 4,  1, -1, -1, -1, -1, -1, -1, -1 },
+  { 5,  1, -1, -1, -1, -1, -1, -1, -1 },
+  { 6,  1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, -1, -1, -1, -1, -1, -1, -1, -1 }
+};
+int classifiedGestureIndex = 0;
+
+#define MAX_INTEGER_VALUE 32767
+
 //int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
-int classifyGestureFromTransitions(int gestureCandidate[AXIS_COUNT][GESTURE_SIGNATURE_SIZE]) {
-  return 0;
-//  int minimumDeviationIndex = -1;
-//  int minimumDeviation = Integer.MAX_VALUE;
-//    
-//  ArrayList<Integer> possibleGestures = gestureTransitions.get(classifiedGestureIndex); // Get list of possible gestures based on current state
+int classifyGestureFromTransitions() { // int gestureCandidate[AXIS_COUNT][GESTURE_SIGNATURE_SIZE]) {
+  int minimumDeviationIndex = -1;
+  int minimumDeviation = MAX_INTEGER_VALUE; // Integer.MAX_VALUE;
+
+  // ArrayList<Integer> possibleGestures = gestureTransitions.get(classifiedGestureIndex); // Get list of possible gestures based on current state
+  
+  for (int i = 0; i < GESTURE_COUNT; i++) {
+    
+      int gestureSignatureIndex = gestureTransitions[classifiedGestureIndex][i]; // Get index of possible gesture
+      
+      if (gestureSignatureIndex != -1) {
+  
+  //      ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
+  //      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+        
+        // Calculate the gesture's deviation from the gesture signature
+        int gestureDeviation = getGestureDeviation(gestureSignatureIndex); // (gestureSignature[classifiedGestureIndex], gestureCandidate);
+  //      //int gestureInstability = 0;
+  //      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, liveGestureSize);
+  ////      print(gestureDeviation);
+  ////      println();
+//          Serial.print("gestureDeviation = ");
+//          Serial.println(gestureDeviation);
+  //      
+        // Check if the sample's deviation
+  //      if (minimumDeviationIndex == -1 || (gestureDeviation + gestureInstability) < minimumDeviation) {
+        if (minimumDeviationIndex == -1 || (gestureDeviation + 0) < minimumDeviation) {
+          minimumDeviationIndex = gestureSignatureIndex;
+          // minimumDeviation = gestureDeviation + gestureInstability;
+          minimumDeviation = gestureDeviation + 0;
+        }
+    }
+  }
 //  
-//  for (int i = 0; i < possibleGestures.size(); i++) {
-//    
-//      int gestureSignatureIndex = possibleGestures.get(i); // Get index of possible gesture
-//
-//      ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
-//      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
-//      
-//      // Calculate the gesture's deviation from the gesture signature
-//      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, liveGestureSize);
-//      //int gestureInstability = 0;
-//      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, liveGestureSize);
-////      print(gestureDeviation);
-////      println();
-//      
-//      // Check if the sample's deviation
-//      if (minimumDeviationIndex == -1 || (gestureDeviation + gestureInstability) < minimumDeviation) {
-//        minimumDeviationIndex = gestureSignatureIndex;
-//        minimumDeviation = gestureDeviation + gestureInstability;
-//      }
+  return minimumDeviationIndex;
+}
+
+/**
+ * Calculates the deviation between the sampled live gesture and the gesture signature sample.
+ */
+int getGestureDeviation(int classifiedGestureIndex) { // int averageSample[AXIS_COUNT][GESTURE_SIGNATURE_SIZE], int gestureCandidate[AXIS_COUNT][GESTURE_SIGNATURE_SIZE]) {
+  int deltaTotal = 0;
+  
+//  if (averageSample.length > 0 && gestureCandidate.length > 0) {
+    
+    // Compare the difference between the average sample for each axis and the live sample
+    for (int axis = 0; axis < 3; axis++) {
+      // ArrayList<Integer> liveSampleAxis = liveSample.get(axis);
+      //int liveSampleAxis[] = liveSample.get(axis);
+      
+      //int delta = getGestureAxisDeviation(averageSample.get(axis), liveSample.get(axis), comparisonWindowSize);
+      int delta = getGestureAxisDeviation(classifiedGestureIndex, axis); // gestureSignature[classifiedGestureIndex][axis], gestureCandidate[axis]);
+      deltaTotal = deltaTotal + delta;
+      
+//      print(delta);
+//      print("\t");
+    }
+//    println();
 //  }
-//  
-//  return minimumDeviationIndex;
+  
+  return deltaTotal;
+}
+
+/**
+ * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
+ */
+int getGestureAxisDeviation(int gestureSignatureIndex, int axis) { // (int gestureSample[GESTURE_SIGNATURE_SIZE], int gestureCandidate[GESTURE_SIGNATURE_SIZE]) {
+  
+  int delta = 0; // sum of difference between average x curve and most-recent x data
+  
+//  for (int i = liveSample.size() - comparisonWindowSize; i < liveSample.size(); i++) {
+//    if (i < liveSample.size() && i < gestureSample.size()) {
+//        int difference = abs(gestureSample.get(i) - liveSample.get(i));
+//        delta = delta + difference;
+//    }
+//  }
+
+  for (int point = 0; point < GESTURE_SIGNATURE_SIZE; point++) {
+//    if (i < liveSample.size() && i < gestureSample.size()) {
+        int difference = abs(gestureSignature[gestureSignatureIndex][axis][point] - gestureCandidate[axis][point]);
+        delta = delta + difference;
+//    }
+  }
+  
+  return delta;
 }
 
 // Print signature
@@ -329,32 +412,43 @@ unsigned long dataPrintTime = 0UL;
 
 void loop() {
   
-    for(int gesture = 0; gesture < GESTURE_COUNT; gesture++) {  
-      for(int axis = 0; axis < AXIS_COUNT; axis++) {
-        for(int point = 0; point < GESTURE_SIGNATURE_SIZE; point++) {
-          Serial.print(gestureSignature[gesture][axis][point]);
-          Serial.print(" ");
-        }
-        Serial.println();
-      }
-      Serial.println();
-    }
-    Serial.println();
+//    for(int gesture = 0; gesture < GESTURE_COUNT; gesture++) {  
+//      for(int axis = 0; axis < AXIS_COUNT; axis++) {
+//        for(int point = 0; point < GESTURE_SIGNATURE_SIZE; point++) {
+//          Serial.print(gestureSignature[gesture][axis][point]);
+//          Serial.print(" ");
+//        }
+//        Serial.println();
+//      }
+//      Serial.println();
+//    }
+//    Serial.println();
     
     // TODO: Write code to allow Processing sketch (or other software) to automatically connect to this serial port. Send a "waiting for connection" signal.
     
     // Sense phsyical orientation data
     if (sensePhysicalData()) {
-        printData();
+        // printData();
+        storeData();
+        
+//        for (int axis = 0; axis < AXIS_COUNT; axis++) {
+//          for (int point = 0; point < GESTURE_SIGNATURE_SIZE; point++) {
+//            Serial.print(gestureCandidate[axis][point]); // Shift point left by one
+//            Serial.print(' ');
+//          }
+//          Serial.println();
+//        }
+//        Serial.println();
     }
     
     
     // Classify live gesture sample
 //    if (gestureCandidate.get(0).size() >= liveGestureSize) {
     // classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
-    int classifiedGestureIndex = classifyGestureFromTransitions(gestureCandidate);
-    Serial.print("Gesture: ");
-    Serial.println(classifiedGestureIndex);
+    classifiedGestureIndex = classifyGestureFromTransitions(); // (gestureCandidate);
+    Serial.print("Classified gesture: ");
+    Serial.print(gestureName[classifiedGestureIndex]);
+    Serial.println();
 //    }
 }
 
@@ -398,6 +492,29 @@ boolean sensePhysicalData() {
     } else {
         return false;
     }
+}
+
+void storeData() {
+  
+  // Shift points left by one
+  if (gestureCandidateSize >= (50 - 1)) {
+    for (int axis = 0; axis < AXIS_COUNT; axis++) {
+      for (int point = 0; point < GESTURE_SIGNATURE_SIZE - 1; point++) {
+        gestureCandidate[axis][point] = gestureCandidate[axis][point + 1]; // Shift point left by one
+      }
+    }
+  }
+  
+  // Push latest accelerometer data point onto the end of the array
+  gestureCandidate[0][gestureCandidateSize] = AN[3]; // accelerometer x
+  gestureCandidate[1][gestureCandidateSize] = AN[4]; // accelerometer y
+  gestureCandidate[2][gestureCandidateSize] = AN[5]; // accelerometer z
+  
+  // Increment gesture candidate size (if less than 50)
+  if (gestureCandidateSize < (50 - 1)) {
+    // Increment gesture candidate size
+    gestureCandidateSize = gestureCandidateSize + 1;
+  }
 }
 
 void printData (void) {
