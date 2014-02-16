@@ -117,16 +117,16 @@ int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
   }, 
 };
 
-//int classifiedGestureIndex = 0;
-//  "at rest, on table",
-//  "at rest, in hand",
-//  "pick up",
-//  "place down",
-//  "tilt left",
-//  "tilt right",
-//  "shake",
-//  "tap to another, as left",
-//  "tap to another, as right"
+// Gestures (index, title):
+//  0   "at rest, on table"
+//  1   "at rest, in hand"
+//  2   "pick up"
+//  3   "place down"
+//  4   "tilt left"
+//  5   "tilt right"
+//  6   "shake"
+//  7   "tap to another, as left"
+//  8   "tap to another, as right"
 int gestureTransitions[GESTURE_COUNT][GESTURE_COUNT] = {
   { 0,  2, -1, -1, -1, -1, -1, -1, -1 },
   { 1,  3,  4,  5,  6,  7,  8, -1, -1 },
@@ -142,66 +142,46 @@ int classifiedGestureIndex = 0;
 
 #define MAX_INTEGER_VALUE 32767
 
-//int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
-int classifyGestureFromTransitions() { // int gestureCandidate[AXIS_COUNT][GESTURE_SIGNATURE_SIZE]) {
+/**
+ * Classify the gesture. Choose the gesture that has a "signature" time series that best  
+ * matches the recent window of live data.
+ */
+int classifyGestureFromTransitions() {
   int minimumDeviationIndex = -1;
-  int minimumDeviation = MAX_INTEGER_VALUE; // Integer.MAX_VALUE;
-
-  // ArrayList<Integer> possibleGestures = gestureTransitions.get(classifiedGestureIndex); // Get list of possible gestures based on current state
+  int minimumDeviation = MAX_INTEGER_VALUE;
   
   for (int i = 0; i < GESTURE_COUNT; i++) {
     
       int gestureSignatureIndex = gestureTransitions[classifiedGestureIndex][i]; // Get index of possible gesture
       
-      if (gestureSignatureIndex != -1) {
-  
-  //      ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
-  //      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+      if (gestureSignatureIndex != -1) { // Make sure the transition is valid before continuing
         
         // Calculate the gesture's deviation from the gesture signature
-        int gestureDeviation = getGestureDeviation(gestureSignatureIndex); // (gestureSignature[classifiedGestureIndex], gestureCandidate);
-  //      //int gestureInstability = 0;
-  //      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, liveGestureSize);
-  ////      print(gestureDeviation);
-  ////      println();
-//          Serial.print("gestureDeviation = ");
-//          Serial.println(gestureDeviation);
-  //      
+        int gestureDeviation = getGestureDeviation(gestureSignatureIndex);
+        int gestureInstability = getGestureInstability(gestureSignatureIndex);
+
         // Check if the sample's deviation
-  //      if (minimumDeviationIndex == -1 || (gestureDeviation + gestureInstability) < minimumDeviation) {
-        if (minimumDeviationIndex == -1 || (gestureDeviation + 0) < minimumDeviation) {
+        if (minimumDeviationIndex == -1 || (gestureDeviation + gestureInstability) < minimumDeviation) {
           minimumDeviationIndex = gestureSignatureIndex;
-          // minimumDeviation = gestureDeviation + gestureInstability;
-          minimumDeviation = gestureDeviation + 0;
+          minimumDeviation = gestureDeviation + gestureInstability;
         }
     }
   }
-//  
+
   return minimumDeviationIndex;
 }
 
 /**
  * Calculates the deviation between the sampled live gesture and the gesture signature sample.
  */
-int getGestureDeviation(int classifiedGestureIndex) { // int averageSample[AXIS_COUNT][GESTURE_SIGNATURE_SIZE], int gestureCandidate[AXIS_COUNT][GESTURE_SIGNATURE_SIZE]) {
+int getGestureDeviation(int classifiedGestureIndex) {
   int deltaTotal = 0;
-  
-//  if (averageSample.length > 0 && gestureCandidate.length > 0) {
     
-    // Compare the difference between the average sample for each axis and the live sample
-    for (int axis = 0; axis < 3; axis++) {
-      // ArrayList<Integer> liveSampleAxis = liveSample.get(axis);
-      //int liveSampleAxis[] = liveSample.get(axis);
-      
-      //int delta = getGestureAxisDeviation(averageSample.get(axis), liveSample.get(axis), comparisonWindowSize);
-      int delta = getGestureAxisDeviation(classifiedGestureIndex, axis); // gestureSignature[classifiedGestureIndex][axis], gestureCandidate[axis]);
-      deltaTotal = deltaTotal + delta;
-      
-//      print(delta);
-//      print("\t");
-    }
-//    println();
-//  }
+  // Compare the difference between the average sample for each axis and the live sample
+  for (int axis = 0; axis < 3; axis++) {
+    int delta = getGestureAxisDeviation(classifiedGestureIndex, axis); // gestureSignature[classifiedGestureIndex][axis], gestureCandidate[axis]);
+    deltaTotal = deltaTotal + delta;
+  }
   
   return deltaTotal;
 }
@@ -220,14 +200,52 @@ int getGestureAxisDeviation(int gestureSignatureIndex, int axis) { // (int gestu
 //    }
 //  }
 
+  // Compare the first 50 points of the gesture signature to the most recent 50 accelerometer data points
   for (int point = 0; point < GESTURE_SIGNATURE_SIZE; point++) {
-//    if (i < liveSample.size() && i < gestureSample.size()) {
-        int difference = abs(gestureSignature[gestureSignatureIndex][axis][point] - gestureCandidate[axis][point]);
-        delta = delta + difference;
-//    }
+      int difference = abs(gestureSignature[gestureSignatureIndex][axis][point] - gestureCandidate[axis][point]);
+      delta = delta + difference;
   }
   
   return delta;
+}
+
+/**
+ * Calculates the deviation between the sampled live gesture and the gesture signature sample.
+ */
+int getGestureInstability(int classifiedGestureIndex) {
+  int instabilityTotal = 0;
+    
+  // Compare the difference between the average sample for each axis and the live sample
+  for (int axis = 0; axis < 3; axis++) {
+    int instability = getGestureAxisInstability(classifiedGestureIndex, axis); // gestureSignature[classifiedGestureIndex][axis], gestureCandidate[axis]);
+    instabilityTotal = instabilityTotal + instability;
+  }
+  
+  return instabilityTotal;
+}
+
+/**
+ * Relative instability. How relative is the live sample in comparison to a gesture's signature sample?
+ */
+int getGestureAxisInstability(int gestureSignatureIndex, int axis) { // (int gestureSample[GESTURE_SIGNATURE_SIZE], int gestureCandidate[GESTURE_SIGNATURE_SIZE]) {
+  
+  int relativeInstability = 0; // sum of difference between average x curve and most-recent x data
+  
+//  for (int i = liveSample.size() - comparisonWindowSize; i < liveSample.size(); i++) {
+//    if (i < liveSample.size() && i < gestureSample.size()) {
+//        int difference = abs(gestureSample.get(i) - liveSample.get(i));
+//        delta = delta + difference;
+//    }
+//  }
+
+  for (int point = 0; point < GESTURE_SIGNATURE_SIZE - 1; point++) {
+      int signatureDifference = abs(gestureSignature[gestureSignatureIndex][axis][point + 1] - gestureCandidate[axis][point]);
+      int liveDifference = abs(gestureCandidate[axis][point + 1] - gestureCandidate[axis][point]);
+      int instabilityDifference = abs(signatureDifference - liveDifference);
+      relativeInstability = relativeInstability + instabilityDifference;
+  }
+  
+  return relativeInstability;
 }
 
 // Print signature
