@@ -14,7 +14,7 @@ int accelerometerX, accelerometerY, accelerometerZ;
 int magnetometerX, magnetometerY, magnetometerZ;
 float pressure, altitude, temperature;
 
-PFont gestureFont, f2, classifiedGestureFont;
+PFont gestureFont, classifiedGestureFont;
 
 JSONArray gestureSampleSet;
 JSONArray gestureDataSample;
@@ -38,20 +38,10 @@ String gestureName[] = {
 int gestureSampleCount = 0;
 int gestureSensorSampleCount = 0;
 
-int getGestureIndex(String findGestureName) {
-  for (int i = 0; i < gestureName.length; i++) {
-    if (gestureName[i].equals(findGestureName)) {
-      return i;
-    }
-  }
-  return -1;
-}
+boolean isFullScreen = true;
 
 // Gesture state machine
 ArrayList<ArrayList<Integer>> gestureTransitions = new ArrayList<ArrayList<Integer>>();
-// Set up gesture state machine
-
-boolean isFullScreen = true;
 
 ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples;
 ArrayList<String> gestureSampleNames;
@@ -59,13 +49,7 @@ ArrayList<Integer> gestureSampleWindow;
 ArrayList<ArrayList<ArrayList<Integer>>> completeGestureSamples;
 ArrayList<String> completeGestureSampleNames;
 
-//import processing.serial.*;
-//
-//Serial serialPort;
-//String serialInputString;
-
-//ArrayList<Integer> gestureSampleAverage;
-ArrayList<ArrayList<Integer>> liveGestureSample;
+ArrayList<ArrayList<Integer>> liveGestureSample; // The latest accelerometer data
 
 boolean showAxisX = true, showAxisY = true, showAxisZ = true;
 
@@ -77,8 +61,8 @@ int liveGestureSize = 50;
 int maximumSampleSize = 0;
 int maximumSampleDuration = 0;
 
-ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> cachedGestureSamples = new ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>>();
-ArrayList<Boolean> hasCachedGestureSamples = new ArrayList<Boolean>();
+ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> cachedGestureSamples;
+ArrayList<Boolean> hasCachedGestureSamples;
 
 void setup () {
   // size(1200, 800, P3D);
@@ -86,8 +70,10 @@ void setup () {
   
   // Set up font
   gestureFont = createFont("DidactGothic.ttf", 64, true);
-  f2 = createFont("DidactGothic.ttf", 12, true);
   classifiedGestureFont = createFont("DidactGothic.ttf", 40, true);
+  
+  cachedGestureSamples = new ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>>();
+  hasCachedGestureSamples = new ArrayList<Boolean>();
   
   // Sample:
   // [sequence][axis][time]
@@ -108,35 +94,12 @@ void setup () {
   openGestureData();
   println("Done.");
   
-  // Write out gesture signature curve 
-  
-//  println("{");
-//  for (int gestureSignatureIndex = 0; gestureSignatureIndex < getGestureCount(); gestureSignatureIndex++) {
-//
-//      ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
-//      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
-//      
-//      println("\t{");
-//      for(int i = 0; i < gestureSignatureSample.size(); i++) {
-////        print(gestureSampleNames.get(gestureSignatureIndex));
-//        //print("gestureSignature[" + gestureSignatureIndex + "][" + i + "] = { ");
-//        print("\t\t{ ");
-//        for(int j = 0; j < 100; j++) {
-//          if (j < gestureSignatureSample.get(i).size()) {
-//            print(gestureSignatureSample.get(i).get(j) + (j < gestureSignatureSample.get(i).size() - 1 ? ", " : ", "));
-//          } else {
-//            print("0" + (j < 100 - 1 ? ", " : " "));
-//          }
-//        }
-//        println(" },");
-//      }
-//      println("\t},");
-//  }
-//  println("};");
+  updateCurrentGesture();
 
+  // Setup gesture state machine
   setupGestureTransitions();
   
-  // Print serial ports
+  // Set up serial ports
   println(Serial.list().length);
   println(Serial.list());
   
@@ -145,62 +108,6 @@ void setup () {
   
   // Defer callback until new line
   serialPort.bufferUntil('\n');
-}
-
-/**
- * Set up the gesture transitions that can occur from each gesture.
- */
-void setupGestureTransitions() {
-  
-  // Set the gesture transitions
-  for (int i = 0; i < gestureName.length; i++) {
-    ArrayList<Integer> currentTransitions = new ArrayList<Integer>(); // Create list for current gesture's transitions
-    
-    if (gestureName[i] == "at rest, on table") {
-      currentTransitions.add(getGestureIndex("at rest, on table")); // note, becasue it's a continous gesture
-      currentTransitions.add(getGestureIndex("pick up"));
-      
-    } else if (gestureName[i] == "at rest, in hand") {
-      currentTransitions.add(getGestureIndex("at rest, in hand")); // note, becasue it's a continous gesture
-      currentTransitions.add(getGestureIndex("place down"));
-      
-      currentTransitions.add(getGestureIndex("shake"));
-      currentTransitions.add(getGestureIndex("tilt left"));
-      currentTransitions.add(getGestureIndex("tilt right"));
-      currentTransitions.add(getGestureIndex("tap to another, as left"));
-      currentTransitions.add(getGestureIndex("tap to another, as right"));
-      
-    } else if (gestureName[i] == "pick up") {
-      currentTransitions.add(getGestureIndex("pick up")); // note, becasue it's a continous gesture
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
-      
-    } else if (gestureName[i] == "place down") {
-      currentTransitions.add(getGestureIndex("at rest, on table"));
-      
-    } else if (gestureName[i] == "tilt left") {
-      currentTransitions.add(getGestureIndex("tilt left"));
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
-      
-    } else if (gestureName[i] == "tilt right") {
-      currentTransitions.add(getGestureIndex("tilt right"));
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
-      
-    } else if (gestureName[i] == "shake") {
-      currentTransitions.add(getGestureIndex("shake"));
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
-      
-    } else if (gestureName[i] == "tap to another, as left") {
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
-      
-    } else if (gestureName[i] == "tap to another, as right") {
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
-    } 
-    
-    gestureTransitions.add(currentTransitions);
-  }
-  
-  // Set the initial state
-  classifiedGestureIndex = 0;
 }
 
 void draw() {
@@ -215,50 +122,38 @@ void draw() {
   // Set background
   //background(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
   background(backgroundColor);
-
-  // Draw data
-  drawGestureTitle();
-  //drawGesturePlot();
+  
+  // Draw data plots
   drawGesturePlotBoundaries();
   drawLiveGesturePlot();
   
-  // Compute averages
-  ArrayList<Float> gestureClassificationScore = new ArrayList<Float>();
-  
-  // Get most-recent live gesture data
-  getGestureSamples();
-  for (int i = 0; i < getGestureCount(); i++) {
-    ArrayList<ArrayList<ArrayList<Integer>>> liveSampleSet = getGestureSamples(i);
-    
-    // Add counter to compute classification score
-    int correctClassificationCount = 0;
-    
-    for (int j = 0; j < liveSampleSet.size(); j++) {
-      ArrayList<ArrayList<Integer>> liveSample = liveSampleSet.get(j);
-      
-      // Classify the gesture
-      //classifiedGestureIndex = classifyGesture(liveSample, 20);
-//      if (liveGestureSample.get(0).size() >= liveGestureSize) {
-//        classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
+//  // Compute averages
+//  ArrayList<Float> gestureClassificationScore = new ArrayList<Float>();
+//  
+//  // Get most-recent live gesture data
+//  getGestureSamples();
+//  for (int i = 0; i < getGestureCount(); i++) {
+//    ArrayList<ArrayList<ArrayList<Integer>>> liveSampleSet = getGestureSamples(i);
+//    
+//    // Add counter to compute classification score
+//    int correctClassificationCount = 0;
+//    
+//    for (int j = 0; j < liveSampleSet.size(); j++) {
+//      ArrayList<ArrayList<Integer>> liveSample = liveSampleSet.get(j);
+//      
+//      // Compute classification score
+//      if (classifiedGestureIndex == i) {
+//        correctClassificationCount = correctClassificationCount + 1;
 //      }
-        
-//      println("Gesture classification: " + gestureName[classifiedGestureIndex] + "? it's " + gestureName[i]);
-      
-      // Compute classification score
-      if (classifiedGestureIndex == i) {
-        correctClassificationCount = correctClassificationCount + 1;
-      }
-      // println("Deviation: " + gestureIndex);
-    }
-    
-    // Add gesture classification percentage correct
-    gestureClassificationScore.add(((float) correctClassificationCount) / (float) liveSampleSet.size());
-    
-    //print(gestureClassificationScore.get(gestureClassificationScore.size() - 1) + "\t");
-//    print(correctClassificationCount + "/" + liveSampleSet.size() + "/" + (correctClassificationCount / (float) liveSampleSet.size()) + "\t");
-  }
-//  println();
+//    }
+//    
+//    // Add gesture classification percentage correct
+//    gestureClassificationScore.add(((float) correctClassificationCount) / (float) liveSampleSet.size());
+//  }
 
+  // Draw gesture label and classified gesture lable
+  drawGestureTitle();
+  //drawGesturePlot();
   drawClassifiedGestureTitle();
 }
 
@@ -325,14 +220,82 @@ void serialEvent (Serial serialPort) {
 
           // Classify live gesture sample
           if (liveGestureSample.get(0).size() >= liveGestureSize) {
-            //classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
-            classifiedGestureIndex = classifyPossibleGesture(liveGestureSample, liveGestureSize);
+            // classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
+            classifiedGestureIndex = classifyGestureFromTransitions(liveGestureSample, liveGestureSize);
           }
         }
         
       }
     }
   }
+}
+
+/**
+ * Set up the gesture transitions that can occur from each gesture.
+ */
+void setupGestureTransitions() {
+  
+  // Set the gesture transitions
+  for (int i = 0; i < gestureName.length; i++) {
+    ArrayList<Integer> currentTransitions = new ArrayList<Integer>(); // Create list for current gesture's transitions
+    
+    if (gestureName[i] == "at rest, on table") {
+      currentTransitions.add(getGestureIndex("at rest, on table")); // note, becasue it's a continous gesture
+      currentTransitions.add(getGestureIndex("pick up"));
+      
+    } else if (gestureName[i] == "at rest, in hand") {
+      currentTransitions.add(getGestureIndex("at rest, in hand")); // note, becasue it's a continous gesture
+      currentTransitions.add(getGestureIndex("place down"));
+      
+      currentTransitions.add(getGestureIndex("shake"));
+      currentTransitions.add(getGestureIndex("tilt left"));
+      currentTransitions.add(getGestureIndex("tilt right"));
+      currentTransitions.add(getGestureIndex("tap to another, as left"));
+      currentTransitions.add(getGestureIndex("tap to another, as right"));
+      
+    } else if (gestureName[i] == "pick up") {
+      currentTransitions.add(getGestureIndex("pick up")); // note, becasue it's a continous gesture
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "place down") {
+      currentTransitions.add(getGestureIndex("at rest, on table"));
+      
+    } else if (gestureName[i] == "tilt left") {
+      currentTransitions.add(getGestureIndex("tilt left"));
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "tilt right") {
+      currentTransitions.add(getGestureIndex("tilt right"));
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "shake") {
+      currentTransitions.add(getGestureIndex("shake"));
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "tap to another, as left") {
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "tap to another, as right") {
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+    } 
+    
+    gestureTransitions.add(currentTransitions);
+  }
+  
+  // Set the initial state
+  classifiedGestureIndex = 0;
+}
+
+/**
+ * Gets the index associated with the specified gesture.
+ */
+int getGestureIndex(String findGestureName) {
+  for (int i = 0; i < gestureName.length; i++) {
+    if (gestureName[i].equals(findGestureName)) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 /**
@@ -349,11 +312,8 @@ int classifyGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFreq
       ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
       
       // Calculate the gesture's deviation from the gesture signature
-      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, 50);
-      //int gestureInstability = 0;
-      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, 50);
-//      print(gestureDeviation);
-//      println();
+      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, liveGestureSize);
+      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, liveGestureSize);
       
       // Check if the sample's deviation
       if (minimumDeviationIndex == -1 || (gestureDeviation + gestureInstability) < minimumDeviation) {
@@ -369,7 +329,7 @@ int classifyGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFreq
  * Classify the gesture. Choose the gesture that has a "signature" time series that best  
  * matches the recent window of live data.
  */
-int classifyPossibleGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
+int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
   int minimumDeviationIndex = -1;
   int minimumDeviation = Integer.MAX_VALUE;
     
@@ -383,9 +343,9 @@ int classifyPossibleGesture(ArrayList<ArrayList<Integer>> liveSample, int compar
       ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
       
       // Calculate the gesture's deviation from the gesture signature
-      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, 50);
+      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, liveGestureSize);
       //int gestureInstability = 0;
-      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, 50);
+      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, liveGestureSize);
 //      print(gestureDeviation);
 //      println();
       
@@ -451,30 +411,6 @@ int getGestureDeviation(ArrayList<ArrayList<Integer>> averageSample, ArrayList<A
 /**
  * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
  */
-//int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonFrequency) {
-//  
-//  int currentDivision = 0;
-//  
-//  int delta = 0; // sum of difference between average x curve and most-recent x data
-//    
-//  for (int i = 0; i < gestureSample.size(); i++) {
-//    if (i < gestureSample.size() && i < liveSample.size()) {
-//      if (i == floor((currentDivision + 1) * (gestureSample.size() / (comparisonFrequency - 1)))) {
-//      
-//        int difference = abs(gestureSample.get(i) - liveSample.get(i));
-//        delta = delta + difference;
-//        
-//        currentDivision++;
-//      }
-//    }
-//  }
-//  
-//  return delta;
-//}
-
-/**
- * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
- */
 int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonWindowSize) {
   
   int delta = 0; // sum of difference between average x curve and most-recent x data
@@ -489,21 +425,6 @@ int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer>
   
   return delta;
 }
-
-//int getGestureAxisInstability(ArrayList<Integer> liveSample, int comparisonWindowSize) {
-//  
-//  int instability = 0; // sum of difference between average x curve and most-recent x data
-//    
-//  for (int i = 0; i < liveSample.size() - 1; i++) {
-////    for (int i = liveSample.size() - comparisonWindowSize; i < liveSample.size(); i++) {
-////    if (i < liveSample.size() && i < gestureSample.size()) {
-//        int difference = abs(liveSample.get(i + 1) - liveSample.get(i));
-//        instability = instability + difference;
-////    }
-//  }
-//  
-//  return instability;
-//}
 
 /**
  * Relative instability. How relative is the live sample in comparison to a gesture's signature sample?
@@ -526,33 +447,12 @@ int getGestureAxisInstability(ArrayList<Integer> gestureSample, ArrayList<Intege
   return relativeInstability;
 }
 
-//int getGestureAxisRelativeInstability(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonFrequency) {
-//  
-//  int currentDivision = 0;
-//  
-//  int delta = 0; // sum of difference between average x curve and most-recent x data
-//    
-//  for (int i = 0; i < gestureSample.size(); i++) {
-//    if (i < gestureSample.size() && i < liveSample.size()) {
-//      if (i == floor((currentDivision + 1) * (gestureSample.size() / (comparisonFrequency - 1)))) {
-//      
-//        int difference = abs(gestureSample.get(i) - liveSample.get(i));
-//        delta = delta + difference;
-//        
-//        currentDivision++;
-//      }
-//    }
-//  }
-//  
-//  return delta;
-//}
-
 void openGestureData() {
   
   // Load existing gesture data file
   gestureSampleSet = loadJSONArray("data/gestureSampleSet.json");
   
-  updateCurrentGesture();
+  // updateCurrentGesture();
 }
 
 void keyPressed() {
@@ -655,17 +555,7 @@ void updateCurrentGesture() {
       }
       sampleTimeOffset = int(gestureSamplePoints.getJSONObject(0).getString("timestamp")); // The offset for the current sample (reset offset so time starts at zero)
       
-//      int offset = 0;
-//      if (gestureIndex == 2) { offset = 5; }
-//      else if (gestureIndex == 3) { offset = 5; }
-//      else if (gestureIndex == 4) { offset = 30; } // tilt left
-//      else if (gestureIndex == 5) { offset = 30; } // tilt right
-//      else if (gestureIndex == 6) { offset = 5; } // shake
-//      else if (gestureIndex == 7) { offset = 5; } // tap to another, as left
-//      else if (gestureIndex == 8) { offset = 5; } // tap to another, as right
       for (int j = 0; j < gestureSamplePoints.size(); j++) {
-      //for (int j = offset; j < gestureSamplePoints.size(); j++) {
-//      for (int j = offset; (j < gestureSamplePoints.size()) && (j < (offset + gestureSampleWindow.get(gestureIndex))); j++) {
         JSONObject gestureSamplePoint = gestureSamplePoints.getJSONObject(j);
         gestureSamplePointX.add(int(gestureSamplePoint.getString("accelerometerX")));
         gestureSamplePointY.add(int(gestureSamplePoint.getString("accelerometerY")));
@@ -702,9 +592,6 @@ void updateCurrentGesture() {
       sampleTimeStart = int(gestureSamplePoints.getJSONObject(0).getString("timestamp"));
       sampleTimeEnd = int(gestureSamplePoints.getJSONObject(gestureSamplePoints.size() - 1).getString("timestamp"));
       sampleDuration = sampleTimeEnd - sampleTimeStart;
-//      if (sampleDuration > maximumSampleDuration) {
-//        maximumSampleDuration = sampleDuration;
-//      }
       sampleTimeOffset = int(gestureSamplePoints.getJSONObject(0).getString("timestamp")); // The offset for the current sample (reset offset so time starts at zero)
       
       for (int j = 0; j < gestureSamplePoints.size(); j++) {
@@ -729,21 +616,27 @@ void updateCurrentGesture() {
   }
 }
 
-void drawGesturePlot() {
-  
-  // Draw lines connecting all points
-  smooth();
-  strokeWeight(1);
-  for (int i = 0; i < gestureSamples.size(); i++) {
-    ArrayList<ArrayList<Integer>> singleGestureSample = gestureSamples.get(i);
-    if (singleGestureSample.size() > 0) {
-      stroke(255,0,0); drawPlot(singleGestureSample.get(0), 0, height / 2, width, height, 0, 1000);
-      stroke(0,255,0); drawPlot(singleGestureSample.get(1), 0, height / 2, width, height, 0, 1000);
-      stroke(0,0,255); drawPlot(singleGestureSample.get(2), 0, height / 2, width, height, 0, 1000);
-    }
-  }
-}
+/**
+ * Draw the plot for the currently selected gesture signature.
+ */
+//void drawGesturePlot() {
+//  
+//  // Draw lines connecting all points
+//  smooth();
+//  strokeWeight(1);
+//  for (int i = 0; i < gestureSamples.size(); i++) {
+//    ArrayList<ArrayList<Integer>> singleGestureSample = gestureSamples.get(i);
+//    if (singleGestureSample.size() > 0) {
+//      stroke(255,0,0); drawPlot(singleGestureSample.get(0), 0, height / 2, width, height, 0, 1000);
+//      stroke(0,255,0); drawPlot(singleGestureSample.get(1), 0, height / 2, width, height, 0, 1000);
+//      stroke(0,0,255); drawPlot(singleGestureSample.get(2), 0, height / 2, width, height, 0, 1000);
+//    }
+//  }
+//}
 
+/**
+ * Draw the plot for the latest accelerometer data.
+ */
 void drawLiveGesturePlot() {
   
   // Draw lines connecting all points
@@ -756,6 +649,9 @@ void drawLiveGesturePlot() {
   }
 }
 
+/**
+ * Get the accelerometer data samples for all gestures. Cache the gesture samples in memory. 
+ */
 ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> getGestureSamples() {
   
   // Initialize caching flags 
@@ -872,18 +768,14 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage(ArrayList<ArrayList<ArrayL
   ArrayList<ArrayList<Integer>> gestureSampleAverageSum = new ArrayList<ArrayList<Integer>>();
   ArrayList<ArrayList<Integer>> gestureSampleAverageCount = new ArrayList<ArrayList<Integer>>();
   
-  // Create lists
-//  for (int i = 0; i < 3; i++) {
-//    gestureSampleAverageSum.add(new ArrayList<Integer>());
-//    gestureSampleAverageCount.add(new ArrayList<Integer>());
-//  }
-  
+  // Create array to store average of accelerometer sample data
   if (gestureSampleAverageSum.size() < 3) {
     gestureSampleAverageSum.add(new ArrayList<Integer>());
     gestureSampleAverageSum.add(new ArrayList<Integer>());
     gestureSampleAverageSum.add(new ArrayList<Integer>());
   }
   
+  // Create array to store the number of accelerometer sample data points (for the division in the computation of the accelerometer point averages)
   if (gestureSampleAverageCount.size() < 3) {
     gestureSampleAverageCount.add(new ArrayList<Integer>());
     gestureSampleAverageCount.add(new ArrayList<Integer>());
@@ -1040,7 +932,7 @@ void drawGesturePlotBoundaries() {
       stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 85); drawPlot(gestureSampleUpperBounds.get(axis), 0, height / 2, width, height, 0, 1000);
       stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 85); drawPlot(gestureSampleLowerBounds.get(axis), 0, height / 2, width, height, 0, 1000);
       stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 180); drawPlot(gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
-      drawPlotNodes(12, gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
+      //drawPlotNodes(12, gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
     }
   }
 }
@@ -1050,9 +942,9 @@ void drawPlot(ArrayList<Integer> data, int originX, int originY, int plotWidth, 
   // Plot data
   for (int i = 0; i < data.size() - 1; i++) {
     line(
-      map(i, 0, maximumSampleSize, originX, originX + plotWidth),
+      map(i, 0, data.size() - 1, originX, originX + plotWidth),
       map(data.get(i), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight),
-      map(i+1, 0, maximumSampleSize, originX, originX + plotWidth),
+      map(i+1, 0, data.size() - 1, originX, originX + plotWidth),
       map(data.get(i+1), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight)
     );
   }
