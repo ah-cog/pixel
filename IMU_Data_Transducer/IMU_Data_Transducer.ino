@@ -47,9 +47,15 @@ MinIMU-9-Arduino-AHRS
 //int gestureSampleCount = 0;
 //int gestureSensorSampleCount = 0;
 
-#define GESTURE_COUNT 9 // 9
+#define GESTURE_COUNT 9
 #define AXIS_COUNT 3
 #define GESTURE_SIGNATURE_SIZE 50
+
+int gestureCandidate[AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
 //int gestureSignature1[GESTURE_COUNT][GESTURE_SIGNATURE_SIZE] = {
 int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
   //as many vals as dimenstion 1
@@ -108,6 +114,38 @@ int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
     { 224, 226, 228, 227, 226, 223, 221, 218, 216, 216, 216, 216, 219, 222, 230, 237, 244, 246, 248, 246, 244, 239, 231, 228, 223, 216, 207, 197, 189, 186, 190, 175, 175, 224, 218, 215, 230, 193, 198, 210, 199, 204, 205, 213, 209, 205, 205, 206, 208, 212 }
   }, 
 };
+
+//int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
+int classifyGestureFromTransitions(int gestureCandidate[AXIS_COUNT][GESTURE_SIGNATURE_SIZE]) {
+  return 0;
+//  int minimumDeviationIndex = -1;
+//  int minimumDeviation = Integer.MAX_VALUE;
+//    
+//  ArrayList<Integer> possibleGestures = gestureTransitions.get(classifiedGestureIndex); // Get list of possible gestures based on current state
+//  
+//  for (int i = 0; i < possibleGestures.size(); i++) {
+//    
+//      int gestureSignatureIndex = possibleGestures.get(i); // Get index of possible gesture
+//
+//      ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
+//      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+//      
+//      // Calculate the gesture's deviation from the gesture signature
+//      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, liveGestureSize);
+//      //int gestureInstability = 0;
+//      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, liveGestureSize);
+////      print(gestureDeviation);
+////      println();
+//      
+//      // Check if the sample's deviation
+//      if (minimumDeviationIndex == -1 || (gestureDeviation + gestureInstability) < minimumDeviation) {
+//        minimumDeviationIndex = gestureSignatureIndex;
+//        minimumDeviation = gestureDeviation + gestureInstability;
+//      }
+//  }
+//  
+//  return minimumDeviationIndex;
+}
 
 // Print signature
 //for(int axis = 0; axis < AXIS_COUNT; axis++) {
@@ -309,6 +347,15 @@ void loop() {
     if (sensePhysicalData()) {
         printData();
     }
+    
+    
+    // Classify live gesture sample
+//    if (gestureCandidate.get(0).size() >= liveGestureSize) {
+    // classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
+    int classifiedGestureIndex = classifyGestureFromTransitions(gestureCandidate);
+    Serial.print("Gesture: ");
+    Serial.println(classifiedGestureIndex);
+//    }
 }
 
 boolean sensePhysicalData() {
