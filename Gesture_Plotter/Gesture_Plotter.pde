@@ -14,7 +14,7 @@ int accelerometerX, accelerometerY, accelerometerZ;
 int magnetometerX, magnetometerY, magnetometerZ;
 float pressure, altitude, temperature;
 
-PFont f, f2, f3;
+PFont gestureFont, f2, classifiedGestureFont;
 
 JSONArray gestureSampleSet;
 JSONArray gestureDataSample;
@@ -22,8 +22,6 @@ JSONArray gestureDataSample;
 boolean showGesturePrompt = true;
 boolean isRecordingGesture = false;
 int gestureSelectionTime = 0;
-
-//int backgroundColor[] = { 255, 255, 255 };
 
 int gestureIndex = 0;
 String gestureName[] = { 
@@ -37,21 +35,21 @@ String gestureName[] = {
   "tap to another, as left",
   "tap to another, as right"
 };
-//final int CONTINUOUS = 0;
-//final int DISCRETE = 1;
-//int gestureTemporalBounds[] = {
-//  CONTINUOUS,
-//  CONTINUOUS,
-//  DISCRETE,
-//  DISCRETE,
-//  DISCRETE,
-//  DISCRETE,
-//  CONTINUOUS,
-//  DISCRETE,
-//  DISCRETE
-//};
 int gestureSampleCount = 0;
 int gestureSensorSampleCount = 0;
+
+int getGestureIndex(String findGestureName) {
+  for (int i = 0; i < gestureName.length; i++) {
+    if (gestureName[i].equals(findGestureName)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+// Gesture state machine
+ArrayList<ArrayList<Integer>> gestureTransitions = new ArrayList<ArrayList<Integer>>();
+// Set up gesture state machine
 
 boolean isFullScreen = true;
 
@@ -71,14 +69,25 @@ ArrayList<ArrayList<Integer>> liveGestureSample;
 
 boolean showAxisX = true, showAxisY = true, showAxisZ = true;
 
+int classifiedGestureIndex = -1;
+color backgroundColor = #F0F1F0;
+
+int liveGestureSize = 50;
+
+int maximumSampleSize = 0;
+int maximumSampleDuration = 0;
+
+ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> cachedGestureSamples = new ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>>();
+ArrayList<Boolean> hasCachedGestureSamples = new ArrayList<Boolean>();
+
 void setup () {
   // size(1200, 800, P3D);
   size(displayWidth, displayHeight, P3D);
   
   // Set up font
-  f = createFont("DidactGothic.ttf", 64, true);
+  gestureFont = createFont("DidactGothic.ttf", 64, true);
   f2 = createFont("DidactGothic.ttf", 12, true);
-  f3 = createFont("DidactGothic.ttf", 40, true);
+  classifiedGestureFont = createFont("DidactGothic.ttf", 40, true);
   
   // Sample:
   // [sequence][axis][time]
@@ -98,8 +107,6 @@ void setup () {
   print("Opening gesture data... ");
   openGestureData();
   println("Done.");
-  
-  
   
   // Write out gesture signature curve 
   
@@ -126,6 +133,8 @@ void setup () {
 //      println("\t},");
 //  }
 //  println("};");
+
+  setupGestureTransitions();
   
   // Print serial ports
   println(Serial.list().length);
@@ -138,14 +147,67 @@ void setup () {
   serialPort.bufferUntil('\n');
 }
 
-int classifiedGestureIndex = -1;
-color backgroundColor = #F0F1F0;
+/**
+ * Set up the gesture transitions that can occur from each gesture.
+ */
+void setupGestureTransitions() {
+  
+  // Set the gesture transitions
+  for (int i = 0; i < gestureName.length; i++) {
+    ArrayList<Integer> currentTransitions = new ArrayList<Integer>(); // Create list for current gesture's transitions
+    
+    if (gestureName[i] == "at rest, on table") {
+      currentTransitions.add(getGestureIndex("at rest, on table")); // note, becasue it's a continous gesture
+      currentTransitions.add(getGestureIndex("pick up"));
+      
+    } else if (gestureName[i] == "at rest, in hand") {
+      currentTransitions.add(getGestureIndex("at rest, in hand")); // note, becasue it's a continous gesture
+      currentTransitions.add(getGestureIndex("place down"));
+      
+      currentTransitions.add(getGestureIndex("shake"));
+      currentTransitions.add(getGestureIndex("tilt left"));
+      currentTransitions.add(getGestureIndex("tilt right"));
+      currentTransitions.add(getGestureIndex("tap to another, as left"));
+      currentTransitions.add(getGestureIndex("tap to another, as right"));
+      
+    } else if (gestureName[i] == "pick up") {
+      currentTransitions.add(getGestureIndex("pick up")); // note, becasue it's a continous gesture
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "place down") {
+      currentTransitions.add(getGestureIndex("at rest, on table"));
+      
+    } else if (gestureName[i] == "tilt left") {
+      currentTransitions.add(getGestureIndex("tilt left"));
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "tilt right") {
+      currentTransitions.add(getGestureIndex("tilt right"));
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "shake") {
+      currentTransitions.add(getGestureIndex("shake"));
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "tap to another, as left") {
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      
+    } else if (gestureName[i] == "tap to another, as right") {
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
+    } 
+    
+    gestureTransitions.add(currentTransitions);
+  }
+  
+  // Set the initial state
+  classifiedGestureIndex = 0;
+}
 
 void draw() {
   
   // Check if classified gesture is correct
   if (gestureIndex == classifiedGestureIndex) {
-    backgroundColor = #ff0000;
+    backgroundColor = #cc0000;
   } else {
     backgroundColor = #F0F1F0;
   }
@@ -204,7 +266,6 @@ boolean sketchFullScreen() {
   return isFullScreen;
 }
 
-int liveGestureSize = 50;
 void serialEvent (Serial serialPort) {
   
   // Read serial data
@@ -264,7 +325,8 @@ void serialEvent (Serial serialPort) {
 
           // Classify live gesture sample
           if (liveGestureSample.get(0).size() >= liveGestureSize) {
-            classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
+            //classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
+            classifiedGestureIndex = classifyPossibleGesture(liveGestureSample, liveGestureSize);
           }
         }
         
@@ -282,6 +344,40 @@ int classifyGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFreq
   int minimumDeviation = Integer.MAX_VALUE;
     
   for (int gestureSignatureIndex = 0; gestureSignatureIndex < getGestureCount(); gestureSignatureIndex++) {
+
+      ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
+      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+      
+      // Calculate the gesture's deviation from the gesture signature
+      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, 50);
+      //int gestureInstability = 0;
+      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, 50);
+//      print(gestureDeviation);
+//      println();
+      
+      // Check if the sample's deviation
+      if (minimumDeviationIndex == -1 || (gestureDeviation + gestureInstability) < minimumDeviation) {
+        minimumDeviationIndex = gestureSignatureIndex;
+        minimumDeviation = gestureDeviation + gestureInstability;
+      }
+  }
+  
+  return minimumDeviationIndex;
+}
+
+/**
+ * Classify the gesture. Choose the gesture that has a "signature" time series that best  
+ * matches the recent window of live data.
+ */
+int classifyPossibleGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
+  int minimumDeviationIndex = -1;
+  int minimumDeviation = Integer.MAX_VALUE;
+    
+  ArrayList<Integer> possibleGestures = gestureTransitions.get(classifiedGestureIndex); // Get list of possible gestures based on current state
+  
+  for (int i = 0; i < possibleGestures.size(); i++) {
+    
+      int gestureSignatureIndex = possibleGestures.get(i); // Get index of possible gesture
 
       ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
       ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
@@ -509,7 +605,7 @@ int getGestureCount() {
 
 void drawGestureTitle() {
   if (showGesturePrompt) {
-    fill(0); textFont(f); textAlign(CENTER);
+    fill(0); textFont(gestureFont); textAlign(CENTER);
     text("\"" + gestureName[gestureIndex] + "\"", (width / 2), (height / 4) - 50);
   }
 }
@@ -517,14 +613,12 @@ void drawGestureTitle() {
 void drawClassifiedGestureTitle() {
   if (showGesturePrompt) {
     if (classifiedGestureIndex != -1) {
-      fill(0); textFont(f3); textAlign(CENTER);
+      fill(0); textFont(classifiedGestureFont); textAlign(CENTER);
       text("\"" + gestureName[classifiedGestureIndex] + "\"", (width / 2), (height / 4) + 20);
     }
   }
 }
 
-int maximumSampleSize = 0;
-int maximumSampleDuration = 0;
 void updateCurrentGesture() {
   
   completeGestureSamples.clear();
@@ -662,8 +756,6 @@ void drawLiveGesturePlot() {
   }
 }
 
-ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> cachedGestureSamples = new ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>>();
-ArrayList<Boolean> hasCachedGestureSamples = new ArrayList<Boolean>();
 ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> getGestureSamples() {
   
   // Initialize caching flags 
