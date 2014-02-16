@@ -414,9 +414,15 @@ int getGestureDeviation(ArrayList<ArrayList<Integer>> averageSample, ArrayList<A
 int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonWindowSize) {
   
   int delta = 0; // sum of difference between average x curve and most-recent x data
-    
-  //for (int i = 0; i < liveSample.size(); i++) {
-  for (int i = liveSample.size() - comparisonWindowSize; i < liveSample.size(); i++) {
+  
+//  for (int i = liveSample.size() - comparisonWindowSize; i < liveSample.size(); i++) {
+//    if (i < liveSample.size() && i < gestureSample.size()) {
+//        int difference = abs(gestureSample.get(i) - liveSample.get(i));
+//        delta = delta + difference;
+//    }
+//  }
+
+  for (int i = 0; i < liveSample.size(); i++) {
     if (i < liveSample.size() && i < gestureSample.size()) {
         int difference = abs(gestureSample.get(i) - liveSample.get(i));
         delta = delta + difference;
@@ -433,8 +439,17 @@ int getGestureAxisInstability(ArrayList<Integer> gestureSample, ArrayList<Intege
   
   int relativeInstability = 0; // sum of difference between average x curve and most-recent x data
     
-  // for (int i = 0; i < liveSample.size() - 1; i++) {
-  for (int i = liveSample.size() - comparisonWindowSize; i < liveSample.size() - 1; i++) {
+//  for (int i = liveSample.size() - comparisonWindowSize; i < liveSample.size() - 1; i++) {
+//    if (i < liveSample.size() && i < gestureSample.size()) {
+//        int signatureDifference = abs(gestureSample.get(i + 1) - gestureSample.get(i));
+//        int liveDifference = abs(liveSample.get(i + 1) - liveSample.get(i));
+//        int instabilityDifference = abs(signatureDifference - liveDifference);
+//        
+//        relativeInstability = relativeInstability + instabilityDifference;
+//    }
+//  }
+
+  for (int i = 0; i < liveSample.size() - 1; i++) {
     if (i < liveSample.size() && i < gestureSample.size()) {
         int signatureDifference = abs(gestureSample.get(i + 1) - gestureSample.get(i));
         int liveDifference = abs(liveSample.get(i + 1) - liveSample.get(i));
@@ -573,6 +588,8 @@ void updateCurrentGesture() {
         maximumSampleSize = gestureSamplePoints.size();
       }
       
+      // println(maximumSampleSize);
+      
       gestureSamples.add(singleGestureSample);
       
       String gestureName = gestureSample.getString("gesture");
@@ -642,11 +659,17 @@ void drawLiveGesturePlot() {
   // Draw lines connecting all points
   smooth();
   strokeWeight(1);
+  // int sampleSize = averageSample.get(0).size();
+  int scaledWidth = int((float(liveGestureSize) / float(maximumSampleSize)) * width);
+  //int scaledWidth = int((float(liveGestureSize) / float(averageSample.get(0).size())) * width);
   if (liveGestureSample.size() > 0) {
-    stroke(255,0,0); drawPlot(liveGestureSample.get(0), 0, height / 2, width, height, 0, 1000);
-    stroke(0,255,0); drawPlot(liveGestureSample.get(1), 0, height / 2, width, height, 0, 1000);
-    stroke(0,0,255); drawPlot(liveGestureSample.get(2), 0, height / 2, width, height, 0, 1000);
+    stroke(255,0,0); drawPlot(liveGestureSample.get(0), 0, height / 2, scaledWidth, height, 0, 1000);
+    stroke(0,255,0); drawPlot(liveGestureSample.get(1), 0, height / 2, scaledWidth, height, 0, 1000);
+    stroke(0,0,255); drawPlot(liveGestureSample.get(2), 0, height / 2, scaledWidth, height, 0, 1000);
   }
+  
+  stroke(128, 128, 128);
+  line(scaledWidth, 0, scaledWidth, height);
 }
 
 /**
@@ -892,6 +915,8 @@ void drawGesturePlotBoundaries() {
           gestureSampleAverageSum.get(axis).add(0);
           gestureSampleAverageCount.get(axis).add(0);
         }
+        
+        // println(singleGestureSample.get(axis).size());
       
         // Update all upper bounds
         for (int j = 0; j < singleGestureSample.get(axis).size(); j++) {
@@ -962,7 +987,7 @@ void drawPlotNodes(int divisions, ArrayList<Integer> data, int originX, int orig
     if (i == floor((currentDivision + 1) * (data.size() / (divisions - 1)))) {
     
       // Draw circle over key moment used for gesture classification (recognition)
-      fill(255,255,255,0);
+      fill(255, 255, 255, 0);
       ellipse(
         map(i, 0, maximumSampleSize, originX, originX + plotWidth),
         map(data.get(i), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight),
