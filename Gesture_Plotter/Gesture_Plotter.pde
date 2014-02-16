@@ -103,6 +103,9 @@ void setup () {
   println(Serial.list().length);
   println(Serial.list());
   
+  // Draw out gesture data
+  printGestureSignatures();
+  
   // Connect to the corresponding serial port
   serialPort = new Serial(this, Serial.list()[7], 9600);
   
@@ -697,6 +700,31 @@ ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> getGestureSamples() {
   }
   
   return cachedGestureSamples;
+}
+
+void printGestureSignatures() {
+  
+  for (int gestureSignatureIndex = 0; gestureSignatureIndex < getGestureCount(); gestureSignatureIndex++) {
+    
+    ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
+    ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+    
+    for (int axis = 0; axis < gestureSignatureSample.size(); axis++) {
+       print("gestureSignatures[" + gestureSignatureIndex + "][" + axis + "] = { ");
+       // int gestureSignatureSize = gestureSignatureSample.get(axis).size();
+       int gestureSignatureSize = 50;
+       for (int pointIndex = 0; pointIndex < gestureSignatureSize; pointIndex++) {
+         print("" + gestureSignatureSample.get(axis).get(pointIndex));
+         if (pointIndex < gestureSignatureSize - 1) {
+           print(", ");
+         } else {
+           print(" };");
+         }
+       }
+       println();
+    }
+    println();
+  }
 }
 
 /**
