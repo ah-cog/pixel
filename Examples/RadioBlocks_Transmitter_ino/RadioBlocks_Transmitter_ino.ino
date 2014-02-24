@@ -13,8 +13,8 @@ uint8_t payload[] = { 2 };
 #define CODE_LED    3
 #define CODE_VALVE  4
 
-#define OUR_ADDRESS   0x0002
-#define THEIR_ADDRESS 0x0001
+#define OUR_ADDRESS   0x0001
+#define THEIR_ADDRESS 0x0002
 
 // These #define's are copied from the RadioBlock.cpp file
 #define TYPE_UINT8 	1
@@ -53,12 +53,13 @@ void setup()
   interface.setAddress(OUR_ADDRESS);
     
   Serial.begin(9600); 
-  while (!Serial) { } // wait for serial port to connect. Needed for Leonardo only
+  //while (!Serial) { } // wait for serial port to connect. Needed for Leonardo only
   Serial.println("Starting...");
 }
 
-#define RADIOBLOCK_PACKET_READ_TIMEOUT 1000
+#define RADIOBLOCK_PACKET_READ_TIMEOUT 10 // 100
 #define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload
+#define RADIOBLOCK_PACKET_WRITE_TIMEOUT 20 // 200
 
 void loop() // run over and over
 { 
@@ -67,9 +68,11 @@ void loop() // run over and over
 //    Serial.println("New Response...");
 //  }
 
-  if (interface.readPacket(RADIOBLOCK_PACKET_READ_TIMEOUT)) { // Waits a maximum of <i>timeout</i> milliseconds for a response packet before timing out; returns true if packet is read. Returns false if timeout or error occurs.
-          // interface.readPacket(); // Read the packet (NOTE: Seemingly must do this for isAvailable() to work properly.)
-          // if (interface.getResponse().isAvailable()) {
+  //if (interface.readPacket(RADIOBLOCK_PACKET_READ_TIMEOUT)) { // Waits a maximum of <i>timeout</i> milliseconds for a response packet before timing out; returns true if packet is read. Returns false if timeout or error occurs.
+
+//  if (!interface.getResponse().isAvailable()) {
+  interface.readPacket(); // Read the packet (NOTE: Seemingly must do this for isAvailable() to work properly.)
+  if (interface.getResponse().isAvailable()) {
           // TODO: Change this to interface.isAvailable() so it doesn't block and wait for any time, so it just reads "when available" (in quotes because it's doing polling)
   
           // General command format (sizes are in bytes), Page 4:
@@ -92,7 +95,7 @@ void loop() // run over and over
           // 
           // [ Command ID (1) | Source Address (2) | Options (1) | LQI (1) | RSSI (1) | Payload (Variable) ]
           //
-          // NOTE: I believe this constitutes a "frame".f
+          // NOTE: I believe this constitutes a "frame".
   
           if (interface.getResponse().getErrorCode() == APP_STATUS_SUCESS) {
               Serial.println("\n\n\n\nReceived packet.");
@@ -113,6 +116,8 @@ void loop() // run over and over
                   Serial.println(interface.getResponse().getFrameData()[0], HEX); // Source address
   
               } else if (commandId == APP_COMMAND_DATA_IND) { // (i.e., 0x22) [Page 15]
+              
+                ledToggle();
   
                 Serial.print(interface.getResponse().getFrameData()[0], HEX); // Frame options
                 Serial.print(" | ");
@@ -317,16 +322,17 @@ void loop() // run over and over
   
           // return true; // Return true if a packet was read (i.e., received) successfully
   
-      } else { // Timeout or error occurred
-//          return false;
+      } else if (interface.getResponse().isError()) { 
+        Serial.println("ERROR!");
       }
+//      else { // Timeout or error occurred
+//        Serial.println("UNKNOWN ERROR!");
+//      }
   
   //Oops?
-  if (interface.getResponse().isError()) {
-    Serial.println("You had ONE job Arduino. ONE job.");
-  }
-  
-  delay(1000);
+//  if (interface.getResponse().isError()) {
+//    Serial.println("You had ONE job Arduino. ONE job.");
+//  }
   
   //We use the 'setupMessage()' call if we want to use a bunch of data,
   //otherwise can use sendData() calls to directly send a few bytes
@@ -354,7 +360,8 @@ void loop() // run over and over
   // sendCounter()
   if (OUR_ADDRESS == 0x0001) {
     unsigned long currentTime = millis();
-    if (currentTime - lastCount > 1000) {
+    //if (currentTime - lastCount > random(RADIOBLOCK_PACKET_WRITE_TIMEOUT, 1000)) {
+    if (currentTime - lastCount > RADIOBLOCK_PACKET_WRITE_TIMEOUT) {
       
       Serial.println("Tick.");
       
@@ -376,10 +383,10 @@ void loop() // run over and over
       // Package the data payload for transmission
       interface.addData(1, (unsigned char) 0x13); // TYPE_UINT8
       //  interface.addData(1, (char) 0x14); // TYPE_INT8
-      interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
-      interface.addData(1, (short) 0xABCD); // TYPE_INT16
-      interface.addData(14, (unsigned long) 0xDDDDCCAA); // TYPE_UINT32
-      interface.addData(9, (long) 0xFF03CCAA); // TYPE_INT32
+//      interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
+//      interface.addData(1, (short) 0xABCD); // TYPE_INT16
+//      interface.addData(14, (unsigned long) 0xDDDDCCAA); // TYPE_UINT32
+//      interface.addData(9, (long) 0xFF03CCAA); // TYPE_INT32
       
       //  //Send state of pot (potentimeter, not drug manufacturing)
       //  interface.addData(CODE_VALVE, analogRead(1));
@@ -392,5 +399,25 @@ void loop() // run over and over
       
       lastCount = millis();
     }
+  }
+}
+
+int ledState = 0;
+
+void ledOn() {
+  ledState = 0;
+  analogWrite(6, ledState);
+}
+
+void ledOff() {
+  ledState = 255;
+  analogWrite(6, ledState);
+}
+
+void ledToggle() {
+  if (ledState == 0) {
+    ledOff();
+  } else {
+    ledOn();
   }
 }
