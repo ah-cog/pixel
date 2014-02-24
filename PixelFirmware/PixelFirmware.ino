@@ -38,8 +38,8 @@ projects is shown below.
 #include <RadioBlock.h>
 #include <SPI.h>
 
-#define OUR_ADDRESS   0x0002
-#define THEIR_ADDRESS 0x0001
+#define DEVICE_ADDRESS   0x0002
+#define NEIGHBOR_ADDRESS 0x0001
 
 // These #define's are copied from the RadioBlock.cpp file
 #define TYPE_UINT8 	1
@@ -427,6 +427,15 @@ unsigned long lastCount = 0;
 unsigned short int neighbors[NEIGHBOR_COUNT];
 unsigned short int next[1];
 
+//            _               
+//           | |              
+//   ___  ___| |_ _   _ _ __  
+//  / __|/ _ \ __| | | | '_ \ 
+//  \__ \  __/ |_| |_| | |_) |
+//  |___/\___|\__|\__,_| .__/ 
+//                     | |    
+//                     |_|    
+
 void setup() {
 
   //
@@ -447,7 +456,7 @@ void setup() {
   
   interface.setChannel(15);
   interface.setPanID(0xBAAD);
-  interface.setAddress(OUR_ADDRESS);
+  interface.setAddress(DEVICE_ADDRESS);
   
   //
   // Setup serial communication (for debugging)
@@ -500,13 +509,20 @@ void setup() {
     counter = 0;
 }
 
-unsigned long dataPrintTime = 0UL;
+//   _                   
+//  | |                  
+//  | | ___   ___  _ __  
+//  | |/ _ \ / _ \| '_ \ 
+//  | | (_) | (_) | |_) |
+//  |_|\___/ \___/| .__/ 
+//                | |    
+//                |_|    
 
 void loop() {
   
   // Get data from mesh network
   boolean hasReceivedMeshData = false;
-  hasReceivedMeshData = getMeshData();
+  hasReceivedMeshData = receiveMeshData();
   
 //  for(int gesture = 0; gesture < GESTURE_COUNT; gesture++) {  
 //    for(int axis = 0; axis < AXIS_COUNT; axis++) {
@@ -546,7 +562,7 @@ void loop() {
   }
   
   if (hasGestureChanged) {
-    Serial.println("Gesture has changed");
+    // Serial.println("Gesture has changed");
     
     // TODO: Process newly classified gesture
   }
@@ -561,9 +577,16 @@ void loop() {
     
     // Process outgoing mesh network messages
     
-    Serial.println("Tick.");
+    // Serial.println("Tick.");
     
-    if (classifiedGestureIndex == 7) { // Check if gesture is "tap to another, as left"
+    if (classifiedGestureIndex == 0) { // Check if gesture is "at rest, on table"
+    } else if (classifiedGestureIndex == 1) { // Check if gesture is "at rest, in hand"
+    } else if (classifiedGestureIndex == 2) {
+    } else if (classifiedGestureIndex == 3) {
+    } else if (classifiedGestureIndex == 4) {
+    } else if (classifiedGestureIndex == 5) {
+    } else if (classifiedGestureIndex == 6) {
+    } else if (classifiedGestureIndex == 7) { // Check if gesture is "tap to another, as left"
         
         // Send to all linked devices
   //      for (int i = 0; i < 1; i++) {
@@ -578,28 +601,37 @@ void loop() {
   //          // delayUntilConfirmation();
   //      }
   
-      interface.setupMessage(THEIR_ADDRESS);
-          
-      // Package the data payload for transmission
-      interface.addData(1, (unsigned char) 0x13); // TYPE_UINT8
-      //  interface.addData(1, (char) 0x14); // TYPE_INT8
-  //      interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
-  //      interface.addData(1, (short) 0xABCD); // TYPE_INT16
-  //      interface.addData(14, (unsigned long) 0xDDDDCCAA); // TYPE_UINT32
-  //      interface.addData(9, (long) 0xFF03CCAA); // TYPE_INT32
-        
-        //  //Send state of pot (potentimeter, not drug manufacturing)
-        //  interface.addData(CODE_VALVE, analogRead(1));
-        //  
-        //  //Toggle other other guys LED on RadioBlock
-        //  interface.addData(CODE_LED, 1);
-       
-      //Send data OTA
-      interface.sendMessage();
+      queueMeshMessage();
+      
+    } else if (classifiedGestureIndex == 8) {
     }
     
     lastCount = millis();
   }
+}
+
+// Push a message onto the queue of messages to be processed and sent via the mesh network.
+boolean queueMeshMessage() {
+  interface.setupMessage(NEIGHBOR_ADDRESS);
+          
+  // Package the data payload for transmission
+  //interface.addData(1, (unsigned char) 0x13); // TYPE_UINT8
+  interface.addData(1, (unsigned char) classifiedGestureIndex); // TYPE_UINT8
+  //  interface.addData(1, (char) 0x14); // TYPE_INT8
+  
+  //      interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
+  //      interface.addData(1, (short) 0xABCD); // TYPE_INT16
+  //      interface.addData(14, (unsigned long) 0xDDDDCCAA); // TYPE_UINT32
+  //      interface.addData(9, (long) 0xFF03CCAA); // TYPE_INT32
+    
+    //  //Send state of pot (potentimeter, not drug manufacturing)
+    //  interface.addData(CODE_VALVE, analogRead(1));
+    //  
+    //  //Toggle other other guys LED on RadioBlock
+    //  interface.addData(CODE_LED, 1);
+   
+  //Send data OTA
+  interface.sendMessage();
 }
 
 boolean sensePhysicalData() {
@@ -679,7 +711,7 @@ void printData (void) {
 /**
  * Read received (and buffered) data from the RadioBlock.
  */
-boolean getMeshData() {
+boolean receiveMeshData() {
 
   // if (interface.readPacket(RADIOBLOCK_PACKET_READ_TIMEOUT)) { // Waits a maximum of <i>timeout</i> milliseconds for a response packet before timing out; returns true if packet is read. Returns false if timeout or error occurs.
   interface.readPacket(); // Read the packet (NOTE: Seemingly must do this for isAvailable() to work properly.)
