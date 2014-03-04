@@ -65,16 +65,29 @@ projects is shown below.
 
 int gestureIndex = 0;
 char* gestureName[GESTURE_COUNT] = {
-  "at rest, on table",
-  "at rest, in hand",
-  "pick up",
-  "place down",
-  "tilt left",
-  "tilt right",
-  "shake",
-  "tap to another, as left",
-  "tap to another, as right"
+   "at rest, on table",
+   "at rest, in hand",
+   "pick up",
+   "place down",
+   "tilt left",
+   "tilt right",
+   "shake",
+   "tap to another, as left",
+   "tap to another, as right"
 };
+
+int gestureSustainDuration[GESTURE_COUNT] = {
+  0, // "at rest, on table"
+  0, // "at rest, in hand"
+  0, // "pick up"
+  0, // "place down"
+  0, // "tilt left"
+  0, // "tilt right"
+  0, // "shake"
+  200, // "tap to another, as left"
+  200  // "tap to another, as right"
+};
+
 int gestureSampleCount = 0;
 int gestureSensorSampleCount = 0;
 
@@ -167,6 +180,7 @@ int gestureTransitions[GESTURE_COUNT][GESTURE_COUNT] = {
 };
 int classifiedGestureIndex = 0;
 int previousClassifiedGestureIndex = -1;
+unsigned long lastGestureClassificationTime = 0L; // Time of last gesture classification
 
 #define MAX_INTEGER_VALUE 32767
 
@@ -545,7 +559,12 @@ void loop() {
     storeData();
     
     // Classify live gesture sample
-    classifiedGestureIndex = classifyGestureFromTransitions(); // (gestureCandidate);
+    unsigned long currentTime = millis();
+    if (currentTime - lastGestureClassificationTime >= gestureSustainDuration[classifiedGestureIndex]) { // Check if gesture duration has expired
+      classifiedGestureIndex = classifyGestureFromTransitions(); // (gestureCandidate);
+      
+      lastGestureClassificationTime = millis(); // Update time of most recent gesture classification
+    }
     
     // Update current gesture (if it has changed)
     if (classifiedGestureIndex != previousClassifiedGestureIndex) {
@@ -558,6 +577,7 @@ void loop() {
       hasGestureChanged = true;
       
       // TODO: Process newly classified gesture
+      // TODO: Make sure the transition can happen (with respect to timing, "transition cooldown")
     }
   }
   
@@ -578,13 +598,30 @@ void loop() {
     // Process outgoing mesh network messages
     
     // Serial.println("Tick.");
+    ledOff();
     
+    // Gesture
+    // "at rest, on table",
+    // "at rest, in hand",
+    // "pick up",
+    // "place down",
+    // "tilt left",
+    // "tilt right",
+    // "shake",
+    // "tap to another, as left",
+    // "tap to another, as right"
     if (classifiedGestureIndex == 0) { // Check if gesture is "at rest, on table"
+      gestureAtRestOnTable();
     } else if (classifiedGestureIndex == 1) { // Check if gesture is "at rest, in hand"
+      gestureAtRestInHand();
     } else if (classifiedGestureIndex == 2) {
     } else if (classifiedGestureIndex == 3) {
     } else if (classifiedGestureIndex == 4) {
     } else if (classifiedGestureIndex == 5) {
+      delay(20);
+      ledOn();
+      delay(20);
+      ledOff();
     } else if (classifiedGestureIndex == 6) {
     } else if (classifiedGestureIndex == 7) { // Check if gesture is "tap to another, as left"
         
@@ -608,6 +645,14 @@ void loop() {
     
     lastCount = millis();
   }
+}
+
+boolean gestureAtRestOnTable() {
+  ledOff();
+}
+
+boolean gestureAtRestInHand() {
+  ledOn();
 }
 
 // Push a message onto the queue of messages to be processed and sent via the mesh network.
@@ -884,7 +929,7 @@ boolean receiveMeshData() {
                         Serial.println(interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 1]);
 
                         // Append message to message queue
-//                                  messageQueue = interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 1];
+//                        messageQueue = interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 1];
 
                         payloadOffset = payloadOffset + sizeof(unsigned char) + 1;
 
