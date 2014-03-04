@@ -15,6 +15,7 @@ int magnetometerX, magnetometerY, magnetometerZ;
 float pressure, altitude, temperature;
 
 PFont gestureFont, classifiedGestureFont;
+PFont boundaryLabelFont;
 
 JSONArray gestureSampleSet;
 JSONArray gestureDataSample;
@@ -38,6 +39,49 @@ String gestureName[] = {
 int gestureSampleCount = 0;
 int gestureSensorSampleCount = 0;
 
+int liveGestureSize = 50;
+
+int maximumSampleSize = 0;
+int maximumSampleDuration = 0;
+
+// The beginning and end of the signature feature that will be compared (i.e., x1, x2)
+//int gestureSignatureBoundingIndices[][] = {
+//  { 0, liveGestureSize }, 
+//  { 0, liveGestureSize }, 
+//  { 0, liveGestureSize },
+//  { 0, liveGestureSize },
+//  { 0, liveGestureSize },
+//  { 0, liveGestureSize },
+//  { 0, liveGestureSize },
+//  { 0, liveGestureSize },
+//  { 0, liveGestureSize }
+//};
+
+// The center of the sampling window for each gesture
+int gestureSignatureOffset[] = {
+  20,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+};
+
+int gestureSignatureSize[] = {
+  liveGestureSize,
+  liveGestureSize,
+  liveGestureSize,
+  liveGestureSize,
+  liveGestureSize,
+  liveGestureSize,
+  liveGestureSize,
+  liveGestureSize,
+  liveGestureSize
+};
+
 boolean isFullScreen = true;
 
 // Gesture state machine
@@ -56,11 +100,6 @@ boolean showAxisX = true, showAxisY = true, showAxisZ = true;
 int classifiedGestureIndex = -1;
 color backgroundColor = #F0F1F0;
 
-int liveGestureSize = 50;
-
-int maximumSampleSize = 0;
-int maximumSampleDuration = 0;
-
 ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> cachedGestureSamples;
 ArrayList<Boolean> hasCachedGestureSamples;
 
@@ -71,6 +110,7 @@ void setup () {
   // Set up font
   gestureFont = createFont("DidactGothic.ttf", 64, true);
   classifiedGestureFont = createFont("DidactGothic.ttf", 40, true);
+  boundaryLabelFont = createFont("DidactGothic.ttf", 14, true);
   
   cachedGestureSamples = new ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>>();
   hasCachedGestureSamples = new ArrayList<Boolean>();
@@ -129,6 +169,8 @@ void draw() {
   // Draw data plots
   drawGesturePlotBoundaries();
   drawLiveGesturePlot();
+  
+//  drawGestureSignatureBoundaries();
   
 //  // Compute averages
 //  ArrayList<Float> gestureClassificationScore = new ArrayList<Float>();
@@ -478,6 +520,24 @@ void keyPressed() {
     if (keyCode == SHIFT) {
       shiftPressed = true;
     }
+    
+    // Change position of left boundary
+    if (keyCode == LEFT) {
+      if (shiftPressed) {
+        gestureSignatureOffset[gestureIndex] = gestureSignatureOffset[gestureIndex] - 1;
+      } else {
+        gestureSignatureOffset[gestureIndex] = gestureSignatureOffset[gestureIndex] + 1;
+      }
+    }
+    
+    // Change position of right boundary
+    if (keyCode == RIGHT) {
+      if (shiftPressed) {
+        gestureSignatureSize[gestureIndex] = gestureSignatureSize[gestureIndex] - 1;
+      } else {
+        gestureSignatureSize[gestureIndex] = gestureSignatureSize[gestureIndex] + 1;
+      }
+    }
   }
   
   if (key == ESC) {
@@ -536,6 +596,37 @@ void drawClassifiedGestureTitle() {
     }
   }
 }
+
+//void drawGestureSignatureBoundaries() {
+//  // gestureSignatureBoundingIndices
+//  // gestureIndex
+//  
+//  // Draw lines connecting all points
+//  smooth();
+//  strokeWeight(1);
+//  
+//  // int sampleSize = averageSample.get(0).size();
+//  int scaledBoundLeft = int((float(gestureSignatureBoundingIndices[gestureIndex][0]) / float(maximumSampleSize)) * width);
+//  int scaledBoundRight = int((float(gestureSignatureBoundingIndices[gestureIndex][1]) / float(maximumSampleSize)) * width);
+//  //int scaledWidth = int((float(liveGestureSize) / float(averageSample.get(0).size())) * width);
+////  if (liveGestureSample.size() > 0) {
+////    stroke(255,0,0); drawPlot(liveGestureSample.get(0), 0, height / 2, scaledWidth, height, 0, 1000);
+////    stroke(0,255,0); drawPlot(liveGestureSample.get(1), 0, height / 2, scaledWidth, height, 0, 1000);
+////    stroke(0,0,255); drawPlot(liveGestureSample.get(2), 0, height / 2, scaledWidth, height, 0, 1000);
+////  }
+//  
+//  
+//  // Draw starting boundary of gesture signature
+//  stroke(128, 128, 128);
+//  line(scaledBoundLeft, 0, scaledBoundLeft, height);
+//  //line(gestureSignatureBoundingIndices[gestureIndex][0], 0, gestureSignatureBoundingIndices[gestureIndex][0], height);
+//  
+//  // Draw stopping boundary of gesture signature 
+//  stroke(128, 128, 128);
+//  line(scaledBoundRight, 0, scaledBoundRight, height);
+//  //line(scaledWidth, 0, scaledWidth, height);
+//  //line(gestureSignatureBoundingIndices[gestureIndex][1], 0, gestureSignatureBoundingIndices[gestureIndex][1], height);
+//}
 
 void updateCurrentGesture() {
   
@@ -662,17 +753,31 @@ void drawLiveGesturePlot() {
   // Draw lines connecting all points
   smooth();
   strokeWeight(1);
+  
+  int scaledBoundLeft = int((float(gestureSignatureOffset[gestureIndex]) / float(maximumSampleSize)) * width);
+  int scaledBoundRight = int((float(gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) / float(maximumSampleSize)) * width);
+  //int signatureSize = (gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) - gestureSignatureOffset[gestureIndex];
+  
   // int sampleSize = averageSample.get(0).size();
-  int scaledWidth = int((float(liveGestureSize) / float(maximumSampleSize)) * width);
+//  int scaledOffsetStart = int((float(gestureSIgnatureOffset[gestureIndex]) / float(maximumSampleSize)) * width);
+  //int scaledWidth = int((float(liveGestureSize + gestureSignatureOffset[gestureIndex]) / float(maximumSampleSize)) * width);
   //int scaledWidth = int((float(liveGestureSize) / float(averageSample.get(0).size())) * width);
   if (liveGestureSample.size() > 0) {
-    stroke(255,0,0); drawPlot(liveGestureSample.get(0), 0, height / 2, scaledWidth, height, 0, 1000);
-    stroke(0,255,0); drawPlot(liveGestureSample.get(1), 0, height / 2, scaledWidth, height, 0, 1000);
-    stroke(0,0,255); drawPlot(liveGestureSample.get(2), 0, height / 2, scaledWidth, height, 0, 1000);
+    // TODO: Check here with an "if" whether the index should be drawn (if it's in the boundary range)
+    stroke(255,0,0); drawPlot(liveGestureSample.get(0), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
+    stroke(0,255,0); drawPlot(liveGestureSample.get(1), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
+    stroke(0,0,255); drawPlot(liveGestureSample.get(2), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
   }
   
   stroke(128, 128, 128);
-  line(scaledWidth, 0, scaledWidth, height);
+  line(scaledBoundLeft, 0, scaledBoundLeft, height);
+  fill(0); textFont(boundaryLabelFont); textAlign(LEFT);
+  text("LEAST RECENT", scaledBoundLeft + 8, 30);
+  
+  stroke(128, 128, 128);
+  line(scaledBoundRight, 0, scaledBoundRight, height);
+  fill(0); textFont(boundaryLabelFont); textAlign(RIGHT);
+  text("NOW", scaledBoundRight - 8, 30);
 }
 
 /**
@@ -987,6 +1092,20 @@ void drawGesturePlotBoundaries() {
       stroke(axisColor[axis][0], axisColor[axis][1],axisColor[axis][2], 180); drawPlot(gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
       //drawPlotNodes(12, gestureSampleAverageSum.get(axis), 0, height / 2, width, height, 0, 1000);
     }
+  }
+}
+
+void drawPlot(ArrayList<Integer> data, int dataOffset, int dataSize, int originX, int originY, int plotWidth, int plotHeight, int plotRangeFloor, int plotRangeCeiling) {
+    
+  // Plot data
+  int dataRange = min(data.size(), dataSize) - 1;
+  for (int i = 0; i < dataRange; i++) {
+    line(
+      map(i, 0, dataRange, originX, originX + plotWidth), // x1
+      map(data.get(i), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight), // y1
+      map(i+1, 0, dataRange, originX, originX + plotWidth), // x2
+      map(data.get(i+1), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight) // y2
+    );
   }
 }
 

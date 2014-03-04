@@ -446,8 +446,8 @@ void loop() {
     
     // Sense phsyical orientation data
     if (sensePhysicalData()) {
-        // printData();
-        storeData();
+        printData();
+        //storeData();
         
 //        for (int axis = 0; axis < AXIS_COUNT; axis++) {
 //          for (int point = 0; point < GESTURE_SIGNATURE_SIZE; point++) {
@@ -463,10 +463,10 @@ void loop() {
     // Classify live gesture sample
 //    if (gestureCandidate.get(0).size() >= liveGestureSize) {
     // classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
-    classifiedGestureIndex = classifyGestureFromTransitions(); // (gestureCandidate);
-    Serial.print("Classified gesture: ");
-    Serial.print(gestureName[classifiedGestureIndex]);
-    Serial.println();
+//    classifiedGestureIndex = classifyGestureFromTransitions(); // (gestureCandidate);
+//    Serial.print("Classified gesture: ");
+//    Serial.print(gestureName[classifiedGestureIndex]);
+//    Serial.println();
 //    }
 }
 
