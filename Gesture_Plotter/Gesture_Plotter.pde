@@ -44,22 +44,9 @@ int liveGestureSize = 50;
 int maximumSampleSize = 0;
 int maximumSampleDuration = 0;
 
-// The beginning and end of the signature feature that will be compared (i.e., x1, x2)
-//int gestureSignatureBoundingIndices[][] = {
-//  { 0, liveGestureSize }, 
-//  { 0, liveGestureSize }, 
-//  { 0, liveGestureSize },
-//  { 0, liveGestureSize },
-//  { 0, liveGestureSize },
-//  { 0, liveGestureSize },
-//  { 0, liveGestureSize },
-//  { 0, liveGestureSize },
-//  { 0, liveGestureSize }
-//};
-
 // The center of the sampling window for each gesture
 int gestureSignatureOffset[] = {
-  20,
+  0,
   0,
   0,
   0,
@@ -70,16 +57,18 @@ int gestureSignatureOffset[] = {
   0
 };
 
+// The number of data points that make of each gesture signature (starting at the offset) 
+int defaultLiveGestureSize = 50;
 int gestureSignatureSize[] = {
-  liveGestureSize,
-  liveGestureSize,
-  liveGestureSize,
-  liveGestureSize,
-  liveGestureSize,
-  liveGestureSize,
-  liveGestureSize,
-  liveGestureSize,
-  liveGestureSize
+  defaultLiveGestureSize,
+  defaultLiveGestureSize,
+  defaultLiveGestureSize,
+  defaultLiveGestureSize,
+  defaultLiveGestureSize,
+  defaultLiveGestureSize,
+  defaultLiveGestureSize,
+  defaultLiveGestureSize,
+  defaultLiveGestureSize
 };
 
 boolean isFullScreen = true;
@@ -256,7 +245,7 @@ void serialEvent (Serial serialPort) {
           liveGestureSample.get(2).add(accelerometerZ);
           
           // Remove oldest element from live gesture queue if greater than threshold
-          if (liveGestureSample.get(0).size() > liveGestureSize) {
+          if (liveGestureSample.get(0).size() > liveGestureSize) { // TODO: In classifier function, compare only the "latest" values... 
             liveGestureSample.get(0).remove(0);
             liveGestureSample.get(1).remove(0);
             liveGestureSample.get(2).remove(0);
@@ -265,8 +254,7 @@ void serialEvent (Serial serialPort) {
 
           // Classify live gesture sample
           if (liveGestureSample.get(0).size() >= liveGestureSize) {
-            // classifiedGestureIndex = classifyGesture(liveGestureSample, liveGestureSize);
-            classifiedGestureIndex = classifyGestureFromTransitions(liveGestureSample, liveGestureSize);
+            classifiedGestureIndex = classifyGestureFromTransitions(liveGestureSample);
           }
         }
         
@@ -357,8 +345,8 @@ int classifyGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFreq
       ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
       
       // Calculate the gesture's deviation from the gesture signature
-      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, liveGestureSize);
-      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, liveGestureSize);
+      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample);
+      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample);
       
       // Check if the sample's deviation
       if (minimumDeviationIndex == -1 || (gestureDeviation + gestureInstability) < minimumDeviation) {
@@ -374,7 +362,7 @@ int classifyGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFreq
  * Classify the gesture. Choose the gesture that has a "signature" time series that best  
  * matches the recent window of live data.
  */
-int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
+int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample) {
   int minimumDeviationIndex = -1;
   int minimumDeviation = Integer.MAX_VALUE;
     
@@ -385,13 +373,14 @@ int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample, int
       int gestureSignatureIndex = possibleGestures.get(i); // Get index of possible gesture
 
       ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
-      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+//      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex]);
       
       // Calculate the gesture's deviation from the gesture signature
-      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample, liveGestureSize);
+      int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample);
       //int gestureInstability = 0;
-      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample, liveGestureSize);
-//      print(gestureDeviation);
+      int gestureInstability = getGestureInstability(gestureSignatureSample, liveSample);
+      println("gestureDeviation = " + gestureDeviation + ", gestureInstability = " + gestureInstability);
 //      println();
       
       // Check if the sample's deviation
@@ -407,7 +396,7 @@ int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample, int
 /**
  * Calculates the deviation between the sampled live gesture and the gesture signature sample.
  */
-int getGestureInstability(ArrayList<ArrayList<Integer>> averageSample, ArrayList<ArrayList<Integer>> liveSample, int comparisonWindowSize) {
+int getGestureInstability(ArrayList<ArrayList<Integer>> averageSample, ArrayList<ArrayList<Integer>> liveSample) {
   int instabilityTotal = 0;
   
   if (averageSample.size() > 0 && liveSample.size() > 0) {
@@ -416,7 +405,7 @@ int getGestureInstability(ArrayList<ArrayList<Integer>> averageSample, ArrayList
     for (int axis = 0; axis < 3; axis++) {
       ArrayList<Integer> liveSampleAxis = liveSample.get(axis);
       
-      int instability = getGestureAxisInstability(averageSample.get(axis), liveSample.get(axis), comparisonWindowSize);
+      int instability = getGestureAxisInstability(averageSample.get(axis), liveSample.get(axis));
       instabilityTotal = instabilityTotal + instability;
 //      print(instability);
 //      print("\t");
@@ -432,21 +421,21 @@ int getGestureInstability(ArrayList<ArrayList<Integer>> averageSample, ArrayList
 /**
  * Calculates the deviation between the sampled live gesture and the gesture signature sample.
  */
-int getGestureDeviation(ArrayList<ArrayList<Integer>> averageSample, ArrayList<ArrayList<Integer>> liveSample, int comparisonWindowSize) {
+int getGestureDeviation(ArrayList<ArrayList<Integer>> averageSample, ArrayList<ArrayList<Integer>> liveSample) {
   int deltaTotal = 0;
   
-  if (averageSample.size() > 0 && liveSample.size() > 0) {
+//  if (averageSample.size() > 0 && liveSample.size() > 0 && averageSample.size() < liveSample.size()) {
     
     // Compare the difference between the average sample for each axis and the live sample
     for (int axis = 0; axis < 3; axis++) {
       ArrayList<Integer> liveSampleAxis = liveSample.get(axis);
       
-      int delta = getGestureAxisDeviation(averageSample.get(axis), liveSample.get(axis), comparisonWindowSize);
+      int delta = getGestureAxisDeviation(averageSample.get(axis), liveSample.get(axis));
       deltaTotal = deltaTotal + delta;
       
 //      print(delta);
 //      print("\t");
-    }
+//    }
 //    println();
   }
   
@@ -456,7 +445,7 @@ int getGestureDeviation(ArrayList<ArrayList<Integer>> averageSample, ArrayList<A
 /**
  * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
  */
-int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonWindowSize) {
+int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample) {
   
   int delta = 0; // sum of difference between average x curve and most-recent x data
   
@@ -467,7 +456,7 @@ int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer>
 //    }
 //  }
 
-  for (int i = 0; i < liveSample.size(); i++) {
+  for (int i = 0; i < gestureSample.size(); i++) {
     if (i < liveSample.size() && i < gestureSample.size()) {
         int difference = abs(gestureSample.get(i) - liveSample.get(i));
         delta = delta + difference;
@@ -480,7 +469,7 @@ int getGestureAxisDeviation(ArrayList<Integer> gestureSample, ArrayList<Integer>
 /**
  * Relative instability. How relative is the live sample in comparison to a gesture's signature sample?
  */
-int getGestureAxisInstability(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample, int comparisonWindowSize) {
+int getGestureAxisInstability(ArrayList<Integer> gestureSample, ArrayList<Integer> liveSample) {
   
   int relativeInstability = 0; // sum of difference between average x curve and most-recent x data
     
@@ -494,8 +483,8 @@ int getGestureAxisInstability(ArrayList<Integer> gestureSample, ArrayList<Intege
 //    }
 //  }
 
-  for (int i = 0; i < liveSample.size() - 1; i++) {
-    if (i < liveSample.size() && i < gestureSample.size()) {
+  for (int i = 0; i < gestureSample.size() - 1; i++) {
+    if (i < liveSample.size() && i < gestureSample.size() && gestureSample.size() < liveSample.size()) {
         int signatureDifference = abs(gestureSample.get(i + 1) - gestureSample.get(i));
         int liveDifference = abs(liveSample.get(i + 1) - liveSample.get(i));
         int instabilityDifference = abs(signatureDifference - liveDifference);
@@ -524,18 +513,47 @@ void keyPressed() {
     // Change position of left boundary
     if (keyCode == LEFT) {
       if (shiftPressed) {
-        gestureSignatureOffset[gestureIndex] = gestureSignatureOffset[gestureIndex] - 1;
+        // TODO: ?
       } else {
-        gestureSignatureOffset[gestureIndex] = gestureSignatureOffset[gestureIndex] + 1;
+        // Increase the offset
+        if (gestureSignatureOffset[gestureIndex] > 0) {
+          gestureSignatureOffset[gestureIndex] = gestureSignatureOffset[gestureIndex] - 1;
+//          printGestureSignatures();
+        }
       }
     }
     
     // Change position of right boundary
     if (keyCode == RIGHT) {
       if (shiftPressed) {
-        gestureSignatureSize[gestureIndex] = gestureSignatureSize[gestureIndex] - 1;
+        // TODO: ?
       } else {
-        gestureSignatureSize[gestureIndex] = gestureSignatureSize[gestureIndex] + 1;
+        // Increase the offset
+//        if ((gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) < liveGestureSize) {
+          gestureSignatureOffset[gestureIndex] = gestureSignatureOffset[gestureIndex] + 1;
+//          printGestureSignatures();
+//        }
+      }
+    }
+    
+    if (keyCode == UP) {
+      if (shiftPressed) {
+        // TODO: ?
+      } else {
+        // Increase the offset
+//        if ((gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) < liveGestureSize) {
+          gestureSignatureSize[gestureIndex] = gestureSignatureSize[gestureIndex] + 1;
+//          printGestureSignatures();
+//        }
+      }
+    }
+    
+    if (keyCode == DOWN) {
+      if (shiftPressed) {
+        // TODO: ?
+      } else {
+        gestureSignatureSize[gestureIndex] = gestureSignatureSize[gestureIndex] - 1;
+//        printGestureSignatures();
       }
     }
   }
@@ -769,15 +787,17 @@ void drawLiveGesturePlot() {
     stroke(0,0,255); drawPlot(liveGestureSample.get(2), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
   }
   
+  // Draw beginning bound of gesture signature
   stroke(128, 128, 128);
   line(scaledBoundLeft, 0, scaledBoundLeft, height);
   fill(0); textFont(boundaryLabelFont); textAlign(LEFT);
-  text("LEAST RECENT", scaledBoundLeft + 8, 30);
+  text("LEAST RECENT\nOFFSET " + gestureSignatureOffset[gestureIndex], scaledBoundLeft + 8, 30);
   
+  // Draw ending bound of gesture signature
   stroke(128, 128, 128);
   line(scaledBoundRight, 0, scaledBoundRight, height);
   fill(0); textFont(boundaryLabelFont); textAlign(RIGHT);
-  text("NOW", scaledBoundRight - 8, 30);
+  text("NOW\nSIZE " + gestureSignatureSize[gestureIndex], scaledBoundRight - 8, 30);
 }
 
 /**
@@ -812,12 +832,13 @@ void printGestureSignatures() {
   for (int gestureSignatureIndex = 0; gestureSignatureIndex < getGestureCount(); gestureSignatureIndex++) {
     
     ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
-    ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+    //ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+    ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex]);
+    println("Size: " + gestureSignatureSample.get(0).size());
     
     for (int axis = 0; axis < gestureSignatureSample.size(); axis++) {
        print("gestureSignatures[" + gestureSignatureIndex + "][" + axis + "] = { ");
-       // int gestureSignatureSize = gestureSignatureSample.get(axis).size();
-       int gestureSignatureSize = 50;
+       int gestureSignatureSize = gestureSignatureSample.get(0).size(); // 50;
        for (int pointIndex = 0; pointIndex < gestureSignatureSize; pointIndex++) {
          print("" + gestureSignatureSample.get(axis).get(pointIndex));
          if (pointIndex < gestureSignatureSize - 1) {
@@ -860,7 +881,7 @@ ArrayList<ArrayList<ArrayList<Integer>>> getGestureSamples(int gestureIndex) {
       int sampleTimeStart  = 0; // Gesture sample start time
       int sampleTimeEnd    = 0; // Gesture sample end time
       int sampleDuration   = 0; // Gesture sample duration
-      int sampleTimeOffset = 0; // Gesture time offset
+      int sampleTimeOffset = 0; // Gesture time offset // TODO: Rather than sliding everything to the left, find the best fit for each to each other
       
       // List to store the time process (multiple series)
       ArrayList<ArrayList<Integer>> singleGestureSample = new ArrayList<ArrayList<Integer>>();
@@ -910,6 +931,24 @@ ArrayList<ArrayList<ArrayList<Integer>>> getGestureSamples(int gestureIndex) {
     }
     return selectedGestureSamples;
   }
+}
+
+ArrayList<ArrayList<Integer>> getGestureSampleAverage2(ArrayList<ArrayList<ArrayList<Integer>>> currentGestureSamples, int offset, int size) {
+  ArrayList<ArrayList<Integer>> averageSample = getGestureSampleAverage(currentGestureSamples);
+  ArrayList<ArrayList<Integer>> slicedAverageSample = new ArrayList<ArrayList<Integer>>();
+  slicedAverageSample.add(new ArrayList<Integer>()); // initialize x-value list
+  slicedAverageSample.add(new ArrayList<Integer>()); // y
+  slicedAverageSample.add(new ArrayList<Integer>()); // z
+  if (offset >= 0 && (offset + size) < averageSample.get(0).size()) {
+    for (int i = offset; i < offset + size; i++) {
+      slicedAverageSample.get(0).add(averageSample.get(0).get(i));
+      slicedAverageSample.get(1).add(averageSample.get(1).get(i));
+      slicedAverageSample.get(2).add(averageSample.get(2).get(i));
+    }
+    return slicedAverageSample;
+  }
+  println("offset = " + offset + ", size = " + size + ", size(sample) = " + averageSample.get(0).size() + ", size(slice) = " + slicedAverageSample.get(0).size());
+  return averageSample;  
 }
 
 /**
@@ -1096,7 +1135,18 @@ void drawGesturePlotBoundaries() {
 }
 
 void drawPlot(ArrayList<Integer> data, int dataOffset, int dataSize, int originX, int originY, int plotWidth, int plotHeight, int plotRangeFloor, int plotRangeCeiling) {
-    
+
+//  int dataRange = data.size() - 1;
+//  int min = min(data.size() - 1, dataOffset); // Move -1 to the end of the expression?
+//  for (int i = data.size() - 1; i > min; i--) {
+//    line(
+//      map(i - 1, min, dataRange, originX, originX + plotWidth), // x1
+//      map(data.get(i - 1), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight), // y1
+//      map(i, min, dataRange, originX, originX + plotWidth), // x2
+//      map(data.get(i), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight) // y2
+//    );
+//  }
+  
   // Plot data
   int dataRange = min(data.size(), dataSize) - 1;
   for (int i = 0; i < dataRange; i++) {
