@@ -478,7 +478,7 @@ void setup() {
   
     Serial.begin(9600);
 
-    Serial.println(F("IMU Sensor Data Transducer (Version 2013.12.26.01.01.15)"));
+    Serial.println(F("IMU Sensor Data Transducer (Version 2014.03.10.18.03.30)"));
 
     //
     // Initialize IMU
@@ -521,6 +521,19 @@ void setup() {
     timer = millis();
     delay(20);
     counter = 0;
+    
+    // Flash RGB LEDs
+    ledOn();
+    delay(100);
+    ledOff();
+    delay(100);
+    ledOn();
+    delay(100);
+    ledOff();
+    delay(100);
+    ledOn();
+    delay(100);
+    ledOff();
 }
 
 //   _                   
@@ -531,6 +544,8 @@ void setup() {
 //  |_|\___/ \___/| .__/ 
 //                | |    
 //                |_|    
+
+boolean hasGestureProcessed = false;
 
 void loop() {
   
@@ -575,17 +590,49 @@ void loop() {
       previousClassifiedGestureIndex = classifiedGestureIndex;
       
       hasGestureChanged = true;
+      hasGestureProcessed = false;
       
       // TODO: Process newly classified gesture
       // TODO: Make sure the transition can happen (with respect to timing, "transition cooldown")
     }
   }
   
-  if (hasGestureChanged) {
+  if (hasGestureChanged) { // Only executed when the gesture has changed
+    if (!hasGestureProcessed) { // Only executed when the gesture hasn't yet been processed
+      // TODO: Write code to process the gesture!
+      
+      ledOff();
+      
+      // Handle gesture
+      // TODO: Consider moving this... is this the right place? Should I care what the gesture is at this point or just send messages? Processing should be done by this point, right?
+      if (classifiedGestureIndex == 0) { // Check if gesture is "at rest, on table"
+        handleGestureAtRestOnTable();
+      } else if (classifiedGestureIndex == 1) { // Check if gesture is "at rest, in hand"
+        handleGestureAtRestInHand();
+      } else if (classifiedGestureIndex == 2) { // Check if gesture is "pick up"
+        handleGesturePickUp();
+      } else if (classifiedGestureIndex == 3) { // Check if gesture is "place down"
+        handleGesturePlaceDown();
+      } else if (classifiedGestureIndex == 4) { // Check if gesture is "tilt left"
+        handleGestureTiltLeft();
+      } else if (classifiedGestureIndex == 5) { // Check if gesture is "tilt right"
+        handleGestureTiltRight();
+      } else if (classifiedGestureIndex == 6) { // Check if gesture is "shake"
+        handleGestureShake();
+      } else if (classifiedGestureIndex == 7) { // Check if gesture is "tap to another, as left"
+        handleGestureTapToAnotherAsLeft();    
+      } else if (classifiedGestureIndex == 8) { // Check if gesture is "tap to another, as right"
+        handleGestureTapToAnotherAsRight();
+      }
+      
+      hasGestureProcessed = true; // Set flag indicating gesture has been processed
+    }
     // Serial.println("Gesture has changed");
     
     // TODO: Process newly classified gesture
   }
+  
+  // TODO: Handle "ongoing" gesture (i.e., do the stuff that should be done more than once, or as long as the gesture is active)
   
   //
   // Send message with updated gesture
@@ -597,62 +644,118 @@ void loop() {
     
     // Process outgoing mesh network messages
     
+    // TODO: Check if there are any queued messages and if so, send them, bit by bit!
+    
     // Serial.println("Tick.");
-    ledOff();
+//    ledOff();
+//    
+//    // Handle gesture
+//    // TODO: Consider moving this... is this the right place? Should I care what the gesture is at this point or just send messages? Processing should be done by this point, right?
+//    if (classifiedGestureIndex == 0) { // Check if gesture is "at rest, on table"
+//      handleGestureAtRestOnTable();
+//    } else if (classifiedGestureIndex == 1) { // Check if gesture is "at rest, in hand"
+//      handleGestureAtRestInHand();
+//    } else if (classifiedGestureIndex == 2) { // Check if gesture is "pick up"
+//      handleGesturePickUp();
+//    } else if (classifiedGestureIndex == 3) { // Check if gesture is "place down"
+//      handleGesturePlaceDown();
+//    } else if (classifiedGestureIndex == 4) { // Check if gesture is "tilt left"
+//      handleGestureTiltLeft();
+//    } else if (classifiedGestureIndex == 5) { // Check if gesture is "tilt right"
+//      handleGestureTiltRight();
+//    } else if (classifiedGestureIndex == 6) { // Check if gesture is "shake"
+//      handleGestureShake();
+//    } else if (classifiedGestureIndex == 7) { // Check if gesture is "tap to another, as left"
+//      handleGestureTapToAnotherAsLeft();    
+//    } else if (classifiedGestureIndex == 8) { // Check if gesture is "tap to another, as right"
+//      handleGestureTapToAnotherAsRight();
+//    }
     
-    // Gesture
-    // "at rest, on table",
-    // "at rest, in hand",
-    // "pick up",
-    // "place down",
-    // "tilt left",
-    // "tilt right",
-    // "shake",
-    // "tap to another, as left",
-    // "tap to another, as right"
-    if (classifiedGestureIndex == 0) { // Check if gesture is "at rest, on table"
-      gestureAtRestOnTable();
-    } else if (classifiedGestureIndex == 1) { // Check if gesture is "at rest, in hand"
-      gestureAtRestInHand();
-    } else if (classifiedGestureIndex == 2) {
-    } else if (classifiedGestureIndex == 3) {
-    } else if (classifiedGestureIndex == 4) {
-    } else if (classifiedGestureIndex == 5) {
-      delay(20);
-      ledOn();
-      delay(20);
-      ledOff();
-    } else if (classifiedGestureIndex == 6) {
-    } else if (classifiedGestureIndex == 7) { // Check if gesture is "tap to another, as left"
-        
-        // Send to all linked devices
-  //      for (int i = 0; i < 1; i++) {
-  //          // Set the destination address
-  //          interface.setupMessage(next[i]);
-  //  
-  //          // Package the data payload for transmission
-  //          interface.addData(1, (byte) 0x1F); // TYPE_INT8
-  //          interface.sendMessage(); // Send data OTA
-  //  
-  //          // Wait for confirmation
-  //          // delayUntilConfirmation();
-  //      }
-  
-      queueMeshMessage();
-      
-    } else if (classifiedGestureIndex == 8) {
-    }
-    
+    // Update the time that a message was most-recently dispatched
     lastCount = millis();
   }
 }
 
-boolean gestureAtRestOnTable() {
+/**
+ * Handle "at rest, on table" gesture.
+ */
+boolean handleGestureAtRestOnTable() {
   ledOff();
 }
 
-boolean gestureAtRestInHand() {
+/**
+ * Handle "at rest, in hand" gesture.
+ */
+boolean handleGestureAtRestInHand() {
   ledOn();
+}
+
+/**
+ * Handle "pick up" gesture.
+ */
+boolean handleGesturePickUp() {
+  // TODO:
+}
+
+/**
+ * Handle "place down" gesture.
+ */
+boolean handleGesturePlaceDown() {
+  // TODO:
+}
+
+/**
+ * Handle "tilt left" gesture.
+ */
+boolean handleGestureTiltLeft() {
+  delay(5);
+  ledOn();
+  delay(5);
+  ledOff();
+}
+
+/**
+ * Handle "tilt right" gesture.
+ */
+boolean handleGestureTiltRight() {
+  delay(20);
+  ledOn();
+  delay(20);
+  ledOff();
+}
+
+/**
+ * Handle "shake" gesture.
+ */
+boolean handleGestureShake() {
+  // TODO:
+}
+
+/**
+ * Handle "tap to another, as left" gesture.
+ */
+boolean handleGestureTapToAnotherAsLeft() {
+  // TODO:
+}
+
+/**
+ * Handle "tap to another, as right" gesture.
+ */
+boolean handleGestureTapToAnotherAsRight() {
+  // Send to all linked devices
+//      for (int i = 0; i < 1; i++) {
+//          // Set the destination address
+//          interface.setupMessage(next[i]);
+//  
+//          // Package the data payload for transmission
+//          interface.addData(1, (byte) 0x1F); // TYPE_INT8
+//          interface.sendMessage(); // Send data OTA
+//  
+//          // Wait for confirmation
+//          // delayUntilConfirmation();
+//      }
+
+  queueMeshMessage();
 }
 
 // Push a message onto the queue of messages to be processed and sent via the mesh network.

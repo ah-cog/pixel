@@ -275,10 +275,12 @@ void setupGestureTransitions() {
     if (gestureName[i] == "at rest, on table") {
       currentTransitions.add(getGestureIndex("at rest, on table")); // note, becasue it's a continous gesture
       currentTransitions.add(getGestureIndex("pick up"));
+//      currentTransitions.add(getGestureIndex("at rest, in hand"));
       
     } else if (gestureName[i] == "at rest, in hand") {
       currentTransitions.add(getGestureIndex("at rest, in hand")); // note, becasue it's a continous gesture
       currentTransitions.add(getGestureIndex("place down"));
+//      currentTransitions.add(getGestureIndex("at rest, on table"));
       
       currentTransitions.add(getGestureIndex("shake"));
       currentTransitions.add(getGestureIndex("tilt left"));
