@@ -133,6 +133,7 @@ void draw () {
   beginShape(QUADS);
   
   stroke(0, 0, 0);
+  strokeWeight(0);
   
   fill(0, 255, 0); vertex(-1,  1,  1);
   fill(0, 255, 0); vertex( 1,  1,  1);
