@@ -133,7 +133,8 @@ void setup () {
   println(Serial.list());
   
   // Draw out gesture data
-  printGestureSignatures();
+  //printGestureSignatures();
+  saveGestureModelFile();
   
   // Connect to the corresponding serial port
   serialPort = new Serial(this, Serial.list()[7], 9600);
@@ -403,7 +404,7 @@ int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample) {
 int getGestureInstability(ArrayList<ArrayList<Integer>> averageSample, ArrayList<ArrayList<Integer>> liveSample) {
   int instabilityTotal = 0;
   
-  println("averageSample = " + averageSample.get(0).size() + ", liveSample = " + liveSample.get(0).size());
+//  println("averageSample = " + averageSample.get(0).size() + ", liveSample = " + liveSample.get(0).size());
 //  if (averageSample.get(0).size() > 0 && liveSample.get(0).size() > 0) {
     
     // Compare the difference between the average sample for each axis and the live sample
@@ -866,28 +867,160 @@ void printGestureSignatures() {
  */
 void saveGestureModelFile() {
   
+  PrintWriter gestureFile = createWriter("Gestures.h");
+  
+  // GESTURE_COUNT 9
+  // AXIS_COUNT 3
+  // GESTURE_SIGNATURE_SIZE 50
+  
+  gestureFile.println("#define GESTURE_COUNT 9");
+  gestureFile.println("#define AXIS_COUNT 3");
+  gestureFile.println("#define GESTURE_SIGNATURE_SIZE 50");
+  gestureFile.println("#define DEFAULT_GESTURE_SIGNATURE_SIZE 50");
+  gestureFile.println("#define GESTURE_CANDIDATE_SIZE 50 // The number of most recent live data points to store");
+  gestureFile.println();
+  
+  gestureFile.println("int gestureIndex = 0;");
+  gestureFile.println();
+  
+  gestureFile.println("char* gestureName[GESTURE_COUNT] = {");
+  for (int i = 0; i < getGestureCount(); i++) {
+    if (i < getGestureCount() - 1) {
+      gestureFile.println("\t\"" + gestureName[i] + "\",");
+    } else {
+      gestureFile.println("\t\"" + gestureName[i] + "\"");
+    }
+  }
+  gestureFile.println("};");
+  gestureFile.println();
+  
+  gestureFile.println("int gestureSignatureOffset[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };");
+  gestureFile.println();
+  
+  gestureFile.println("int gestureSignatureSize[] = {");
+  for (int i = 0; i < getGestureCount(); i++) {
+    if (i < getGestureCount() - 1) {
+      gestureFile.println("\tDEFAULT_GESTURE_SIGNATURE_SIZE,");
+    } else {
+      gestureFile.println("\tDEFAULT_GESTURE_SIGNATURE_SIZE");
+    }
+  }
+  gestureFile.println("};");
+  gestureFile.println();
+  
+  gestureFile.println("int gestureSustainDuration[GESTURE_COUNT] = {");
+  gestureFile.println("\t0, // \"at rest, on table\"");
+  gestureFile.println("\t0, // \"at rest, in hand\"");
+  gestureFile.println("\t0, // \"pick up\"");
+  gestureFile.println("\t0, // \"place down\"");
+  gestureFile.println("\t0, // \"tilt left\"");
+  gestureFile.println("\t0, // \"tilt right\"");
+  gestureFile.println("\t0, // \"shake\"");
+  gestureFile.println("\t200, // \"tap to another, as left\"");
+  gestureFile.println("\t200  // \"tap to another, as right\"");
+  gestureFile.println("};");
+  gestureFile.println();
+  
+  gestureFile.println("int gestureTransitions[GESTURE_COUNT][GESTURE_COUNT] = {");
+  for (int i = 0; i < gestureTransitions.size(); i++) {
+    gestureFile.print("\t{");
+    
+    for (int j = 0; j < gestureTransitions.size(); j++) {
+      if (j < gestureTransitions.get(i).size()) {
+        gestureFile.print(" " + gestureTransitions.get(i).get(j));
+      } else {
+        gestureFile.print(" -1");
+      }
+      
+      if (j < gestureTransitions.size() - 1) {
+        gestureFile.print(",");
+      }
+    }
+    
+    // Write either "}," or "}" to the file, depending on whether the data for the last axis are being written or not
+    if (i < gestureTransitions.size() - 1) {
+      gestureFile.println(" },");
+    } else {
+      gestureFile.println(" }");
+    }
+  }
+  gestureFile.println("};");
+  
+  gestureFile.println("int gestureCandidateSize = 0; // Current size of the live gesture data");
+  
+  gestureFile.println("int gestureCandidate[AXIS_COUNT][GESTURE_CANDIDATE_SIZE] = {");
+  for (int axis = 0; axis < 3; axis++) {
+    gestureFile.print("\t{");
+    for (int i = 0; i < liveGestureSize; i++) {
+      gestureFile.print(" 0");
+       if (i < liveGestureSize - 1) {
+         gestureFile.print(",");
+       } else {
+         // Write either "}," or "}" to the file, depending on whether the data for the last axis are being written or not
+         if (axis < 3 - 1) {
+           gestureFile.println(" },");
+         } else {
+           gestureFile.println(" }");
+         }
+       }
+    }
+  }
+  gestureFile.println("};");
+  
+  gestureFile.println("\n");
+  
+  gestureFile.println("int gestureSampleCount = 0;");
+  gestureFile.println("int gestureSensorSampleCount = 0;");
+  
+  gestureFile.println("int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {");
+  
   for (int gestureSignatureIndex = 0; gestureSignatureIndex < getGestureCount(); gestureSignatureIndex++) {
     
     ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
     //ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
     ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex]);
-    println("Size: " + gestureSignatureSample.get(0).size());
+    //println("Size: " + gestureSignatureSample.get(0).size());
+    
+    gestureFile.println("\t{");
     
     for (int axis = 0; axis < gestureSignatureSample.size(); axis++) {
-       print("gestureSignatures[" + gestureSignatureIndex + "][" + axis + "] = { ");
+       //print("gestureSignature[" + gestureSignatureIndex + "][" + axis + "] = { ");
+       
+       gestureFile.print("\t\t{ ");
+       
        int gestureSignatureSize = gestureSignatureSample.get(0).size(); // 50;
+       
        for (int pointIndex = 0; pointIndex < gestureSignatureSize; pointIndex++) {
-         print("" + gestureSignatureSample.get(axis).get(pointIndex));
+         gestureFile.print("" + gestureSignatureSample.get(axis).get(pointIndex));
          if (pointIndex < gestureSignatureSize - 1) {
-           print(", ");
+           gestureFile.print(", ");
          } else {
-           print(" };");
+           // Write either "}," or "}" to the file, depending on whether the data for the last axis are being written or not
+           if (axis < gestureSignatureSample.size() - 1) {
+             gestureFile.println(" },");
+           } else {
+             gestureFile.println(" }");
+           }
          }
        }
-       println();
     }
-    println();
+    
+    // Write "}," or "}" to the end of the line, depending on whether it's the last gesture or not
+    if (gestureSignatureIndex < getGestureCount() - 1) {
+      gestureFile.println("\t},");
+    } else {
+      gestureFile.println("\t}");
+    }
+    
   }
+  gestureFile.println("};");
+  
+  gestureFile.println("int classifiedGestureIndex = 0;");
+  gestureFile.println("int previousClassifiedGestureIndex = -1;");
+  gestureFile.println("unsigned long lastGestureClassificationTime = 0L; // Time of last gesture classification");
+  
+  gestureFile.flush(); // Write remaining data to file
+  gestureFile.close(); // Finish writing to the file and close it
 }
 
 /**
@@ -985,7 +1118,7 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage2(ArrayList<ArrayList<Array
   averageSubsample.add(new ArrayList<Integer>()); // z
   
   // Calculate the starting index of the sublist
-  int sublistStartIndex = 0;  
+  int sublistStartIndex = 0;
   if (size < averageSample.get(0).size()) {
     sublistStartIndex = (averageSample.get(0).size() - size); // Set new start index for list
   }
@@ -1000,7 +1133,7 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage2(ArrayList<ArrayList<Array
       averageSubsample.get(2).add(averageSample.get(2).get(i));
     }
     
-    println("offset = " + offset + ", size = " + size + ", size(sample) = " + averageSample.get(0).size() + ", size(slice) = " + averageSubsample.get(0).size());
+//    println("offset = " + offset + ", size = " + size + ", size(sample) = " + averageSample.get(0).size() + ", size(slice) = " + averageSubsample.get(0).size());
     
     return averageSubsample;
   }

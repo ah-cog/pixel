@@ -114,4 +114,3 @@ int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
 int classifiedGestureIndex = 0;
 int previousClassifiedGestureIndex = -1;
 unsigned long lastGestureClassificationTime = 0L; // Time of last gesture classification
-

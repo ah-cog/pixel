@@ -601,9 +601,9 @@ void loop() {
     }
   }
   
-  Serial.print("hasGestureChanged = ");
-  Serial.print(hasGestureChanged);
-  Serial.println();
+//  Serial.print("hasGestureChanged = ");
+//  Serial.print(hasGestureChanged);
+//  Serial.println();
   
   // Process current gesture (if it hasn't been processed yet)
   if (hasGestureChanged) { // Only executed when the gesture has changed
