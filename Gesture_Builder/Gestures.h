@@ -43,6 +43,7 @@ int gestureSustainDuration[GESTURE_COUNT] = {
 	200, // "tap to another, as left"
 	200  // "tap to another, as right"
 };
+
 int gestureTransitions[GESTURE_COUNT][GESTURE_COUNT] = {
 	{ 0, 2, -1, -1, -1, -1, -1, -1, -1 },
 	{ 1, 3, 6, 4, 5, 7, 8, -1, -1 },
