@@ -19,7 +19,7 @@ PFont boundaryLabelFont;
 
 JSONArray gestureSampleSet;
 JSONArray gestureDataSample;
-
+  
 boolean showGesturePrompt = true;
 boolean isRecordingGesture = false;
 int gestureSelectionTime = 0;
@@ -370,6 +370,8 @@ int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample) {
     
   ArrayList<Integer> possibleGestures = gestureTransitions.get(classifiedGestureIndex); // Get list of possible gestures based on current state
   
+  // Loop through possible gestures, calculate the deviation betwen the gesture's signature 
+  // and the live sensor data sample.
   for (int i = 0; i < possibleGestures.size(); i++) {
     
       int gestureSignatureIndex = possibleGestures.get(i); // Get index of possible gesture
@@ -860,6 +862,35 @@ void printGestureSignatures() {
 }
 
 /**
+ * Writes the current gesture model to a .h header file for use with Arduino sketches.
+ */
+void saveGestureModelFile() {
+  
+  for (int gestureSignatureIndex = 0; gestureSignatureIndex < getGestureCount(); gestureSignatureIndex++) {
+    
+    ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
+    //ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+    ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex]);
+    println("Size: " + gestureSignatureSample.get(0).size());
+    
+    for (int axis = 0; axis < gestureSignatureSample.size(); axis++) {
+       print("gestureSignatures[" + gestureSignatureIndex + "][" + axis + "] = { ");
+       int gestureSignatureSize = gestureSignatureSample.get(0).size(); // 50;
+       for (int pointIndex = 0; pointIndex < gestureSignatureSize; pointIndex++) {
+         print("" + gestureSignatureSample.get(axis).get(pointIndex));
+         if (pointIndex < gestureSignatureSize - 1) {
+           print(", ");
+         } else {
+           print(" };");
+         }
+       }
+       println();
+    }
+    println();
+  }
+}
+
+/**
  * Returns a list of all gesture samples for the gesture with the specified index.
  * The returned list is in the following format:
  *    samples[sampleIndex][axis][pointIndex], where
@@ -939,6 +970,9 @@ ArrayList<ArrayList<ArrayList<Integer>>> getGestureSamples(int gestureIndex) {
   }
 }
 
+/**
+ * Returns a subsample of the gesture signature of the specified size starting from the specified offset.
+ */
 ArrayList<ArrayList<Integer>> getGestureSampleAverage2(ArrayList<ArrayList<ArrayList<Integer>>> currentGestureSamples, int offset, int size) {
   
   // Get a list containing the average of gesture examples (i.e., the average sample)
@@ -950,12 +984,13 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage2(ArrayList<ArrayList<Array
   averageSubsample.add(new ArrayList<Integer>()); // y
   averageSubsample.add(new ArrayList<Integer>()); // z
   
-  int sublistStartIndex = 0;
-  
+  // Calculate the starting index of the sublist
+  int sublistStartIndex = 0;  
   if (size < averageSample.get(0).size()) {
     sublistStartIndex = (averageSample.get(0).size() - size); // Set new start index for list
   }
   
+  // Create sublist. Copy elements from gesture signature to a new list structure (the sublist).
   // if (offset >= 0 && (offset + size) < averageSample.get(0).size()) {
 //  if (offset >= 0 && (offset + size) < averageSample.get(0).size()) {
 //    for (int i = offset; i < offset + size; i++) {
