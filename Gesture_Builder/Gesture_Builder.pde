@@ -41,7 +41,18 @@ int gestureSensorSampleCount = 0;
 
 int liveGestureSize = 50;
 
-int maximumSampleSize = 0;
+int maximumSampleSize[] = {
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+};
+
 int maximumSampleDuration = 0;
 
 // The center of the sampling window for each gesture
@@ -134,7 +145,6 @@ void setup () {
   
   // Draw out gesture data
   //printGestureSignatures();
-  saveGestureModelFile();
   
   // Connect to the corresponding serial port
   serialPort = new Serial(this, Serial.list()[7], 9600);
@@ -379,7 +389,8 @@ int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample) {
 
       ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
 //      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
-      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex]);
+      //ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex]);
+      ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureSignatureIndex], gestureSignatureSize[gestureSignatureIndex]);
       
       // Calculate the gesture's deviation from the gesture signature
       int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample);
@@ -525,7 +536,7 @@ void keyPressed() {
         // Increase the offset
         if (gestureSignatureOffset[gestureIndex] > 0) {
           gestureSignatureOffset[gestureIndex] = gestureSignatureOffset[gestureIndex] - 1;
-//          printGestureSignatures();
+          printGestureSignatures();
         }
       }
     }
@@ -538,7 +549,7 @@ void keyPressed() {
         // Increase the offset
 //        if ((gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) < liveGestureSize) {
           gestureSignatureOffset[gestureIndex] = gestureSignatureOffset[gestureIndex] + 1;
-//          printGestureSignatures();
+          printGestureSignatures();
 //        }
       }
     }
@@ -552,7 +563,7 @@ void keyPressed() {
         if (gestureSignatureSize[gestureIndex] < liveGestureSize) {
           gestureSignatureSize[gestureIndex] = gestureSignatureSize[gestureIndex] + 1;
         }
-//          printGestureSignatures();
+          printGestureSignatures();
 //        }
       }
     }
@@ -562,7 +573,7 @@ void keyPressed() {
         // TODO: ?
       } else {
         gestureSignatureSize[gestureIndex] = gestureSignatureSize[gestureIndex] - 1;
-//        printGestureSignatures();
+        printGestureSignatures();
       }
     }
   }
@@ -575,6 +586,8 @@ void keyPressed() {
     showAxisY = !showAxisY;
   } else if (key == 'z') {
     showAxisZ = !showAxisZ;
+  } else if (key == 's') {
+    saveGestureModelFile();
   } else if (key == TAB) {
     
     if (shiftPressed) {
@@ -660,7 +673,7 @@ void updateCurrentGesture() {
   completeGestureSamples.clear();
   
   gestureSamples.clear();
-  maximumSampleSize = 0;
+  maximumSampleSize[gestureIndex] = 0;
   maximumSampleDuration = Integer.MIN_VALUE;
   
   gestureSampleNames.clear();
@@ -705,8 +718,8 @@ void updateCurrentGesture() {
       singleGestureSample.add(gestureSamplePointT);
       
       // Update maximum sample count
-      if (gestureSamplePoints.size() > maximumSampleSize) {
-        maximumSampleSize = gestureSamplePoints.size();
+      if (gestureSamplePoints.size() > maximumSampleSize[gestureIndex]) {
+        maximumSampleSize[gestureIndex] = gestureSamplePoints.size();
       }
       
       // println(maximumSampleSize);
@@ -781,8 +794,8 @@ void drawLiveGesturePlot() {
   smooth();
   strokeWeight(1);
   
-  int scaledBoundLeft = int((float(gestureSignatureOffset[gestureIndex]) / float(maximumSampleSize)) * width);
-  int scaledBoundRight = int((float(gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) / float(maximumSampleSize)) * width);
+  int scaledBoundLeft = int((float(gestureSignatureOffset[gestureIndex]) / float(maximumSampleSize[gestureIndex])) * width);
+  int scaledBoundRight = int((float(gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) / float(maximumSampleSize[gestureIndex])) * width);
   //int signatureSize = (gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) - gestureSignatureOffset[gestureIndex];
   
   // int sampleSize = averageSample.get(0).size();
@@ -842,7 +855,7 @@ void printGestureSignatures() {
     
     ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
     //ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
-    ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex]);
+    ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureSignatureIndex], gestureSignatureSize[gestureSignatureIndex]);
     println("Size: " + gestureSignatureSample.get(0).size());
     
     for (int axis = 0; axis < gestureSignatureSample.size(); axis++) {
@@ -1090,8 +1103,8 @@ ArrayList<ArrayList<ArrayList<Integer>>> getGestureSamples(int gestureIndex) {
         singleGestureSample.add(gestureSamplePointT);
         
         // Update maximum sample count
-        if (gestureSamplePoints.size() > maximumSampleSize) {
-          maximumSampleSize = gestureSamplePoints.size();
+        if (gestureSamplePoints.size() > maximumSampleSize[gestureIndex]) {
+          maximumSampleSize[gestureIndex] = gestureSamplePoints.size();
         }
         
         // Add gesture process to list that will be returned
@@ -1118,16 +1131,29 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage2(ArrayList<ArrayList<Array
   averageSubsample.add(new ArrayList<Integer>()); // z
   
   // Calculate the starting index of the sublist
+//  int sublistStartIndex = 0;
+//  if (size < averageSample.get(0).size()) {
+//    sublistStartIndex = (averageSample.get(0).size() - size); // Set new start index for list
+//  }
+
   int sublistStartIndex = 0;
   if (size < averageSample.get(0).size()) {
-    sublistStartIndex = (averageSample.get(0).size() - size); // Set new start index for list
+    sublistStartIndex = offset; // Set new start index for list
   }
+  
+//  println();
+//  println("gestureIndex = " + gestureIndex);
+//  println("offset = " + offset);
+//  println("size = " + size);
+//  println("averageSample.get(" + gestureIndex + ").size() = " + averageSample.get(0).size());
+//  println("sublistStartIndex = " + sublistStartIndex);
   
   // Create sublist. Copy elements from gesture signature to a new list structure (the sublist).
   // if (offset >= 0 && (offset + size) < averageSample.get(0).size()) {
 //  if (offset >= 0 && (offset + size) < averageSample.get(0).size()) {
 //    for (int i = offset; i < offset + size; i++) {
-    for (int i = sublistStartIndex; i < averageSample.get(0).size(); i++) {
+    //for (int i = sublistStartIndex; i < averageSample.get(0).size(); i++) {
+    for (int i = sublistStartIndex; i < offset + size; i++) {
       averageSubsample.get(0).add(averageSample.get(0).get(i));
       averageSubsample.get(1).add(averageSample.get(1).get(i));
       averageSubsample.get(2).add(averageSample.get(2).get(i));
@@ -1379,7 +1405,7 @@ void drawPlotNodes(int divisions, ArrayList<Integer> data, int originX, int orig
       // Draw circle over key moment used for gesture classification (recognition)
       fill(255, 255, 255, 0);
       ellipse(
-        map(i, 0, maximumSampleSize, originX, originX + plotWidth),
+        map(i, 0, maximumSampleSize[gestureIndex], originX, originX + plotWidth),
         map(data.get(i), plotRangeFloor, plotRangeCeiling, originY, originY + plotHeight),
         20,
         20
