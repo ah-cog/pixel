@@ -194,7 +194,7 @@ float Temporary_Matrix[3][3] = {
  * RadioBlocks Setup
  */
  
-#define RADIOBLOCK_ADDRESS   0x0002
+#define RADIOBLOCK_ADDRESS   0x0001
 
 #define RADIOBLOCK_PACKET_READ_TIMEOUT 100 // 40
 #define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload

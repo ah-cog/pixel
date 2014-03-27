@@ -40,8 +40,8 @@ projects is shown below.
 
 #include "Gestures.h"
 
-#define DEVICE_ADDRESS   0x0002
-#define NEIGHBOR_ADDRESS 0x0001
+#define DEVICE_ADDRESS   0x0001
+#define NEIGHBOR_ADDRESS 0x0002
 
 // These #define's are copied from the RadioBlock.cpp file
 #define TYPE_UINT8 	1
@@ -526,15 +526,20 @@ void loop() {
   //
   // Send message with updated gesture
   //
+  
+  // Process mesh message queue  
+  if (meshMessageQueueSize > 0) {
+    sendMeshMessage();
+  }
     
   unsigned long currentTime = millis();
   //if (currentTime - lastCount > random(RADIOBLOCK_PACKET_WRITE_TIMEOUT, 1000)) {
   if (currentTime - lastCount > RADIOBLOCK_PACKET_WRITE_TIMEOUT) {
   
     // Process mesh message queue  
-    if (meshMessageQueueSize > 0) {
-      sendMeshMessage();
-    }
+//    if (meshMessageQueueSize > 0) {
+//      sendMeshMessage();
+//    }
     
     // Process outgoing mesh network messages
     
@@ -583,7 +588,7 @@ boolean handleGestureAtRestOnTable() {
  */
 boolean handleGestureAtRestInHand() {
   ledOn();
-  queueMeshMessage(3);
+  queueMeshMessage(2);
 }
 
 /**
@@ -591,7 +596,7 @@ boolean handleGestureAtRestInHand() {
  */
 boolean handleGesturePickUp() {
   // TODO:
-  queueMeshMessage(2);
+  queueMeshMessage(3);
 }
 
 /**
@@ -599,13 +604,14 @@ boolean handleGesturePickUp() {
  */
 boolean handleGesturePlaceDown() {
   // TODO:
+  queueMeshMessage(4);
 }
 
 /**
  * Handle "tilt left" gesture.
  */
 boolean handleGestureTiltLeft() {
-  queueMeshMessage(4);
+  queueMeshMessage(5);
   
   delay(5);
   ledOn();
@@ -617,7 +623,7 @@ boolean handleGestureTiltLeft() {
  * Handle "tilt right" gesture.
  */
 boolean handleGestureTiltRight() {
-  queueMeshMessage(5);
+  queueMeshMessage(6);
   
   delay(20);
   ledOn();
@@ -630,6 +636,7 @@ boolean handleGestureTiltRight() {
  */
 boolean handleGestureShake() {
   // TODO:
+  queueMeshMessage(7);
 }
 
 /**
@@ -637,6 +644,7 @@ boolean handleGestureShake() {
  */
 boolean handleGestureTapToAnotherAsLeft() {
   // TODO:
+  queueMeshMessage(8);
 }
 
 /**
@@ -688,11 +696,25 @@ boolean sendMeshMessage() {
     }
     meshMessageQueue[MESH_QUEUE_CAPACITY - 1] = 0; // Set last message to "noop"
     
-    Serial.print("dequeueing message: ");
-    Serial.print(message);
-    Serial.print (" (size: ");
-    Serial.print(meshMessageQueueSize);
-    Serial.print(")\n");
+//    Serial.print("dequeueing message: ");
+//    Serial.print(message);
+//    Serial.print (" (size: ");
+//    Serial.print(meshMessageQueueSize);
+//    Serial.print(")\n");
+
+
+//  interface.setLED(true);
+//  delay(200);
+//  interface.setLED(false);
+//  delay(200);
+//  interface.setLED(true);
+//  delay(200);
+//  interface.setLED(false);
+//  delay(200);
+//  interface.setLED(true);
+//  delay(200);
+//  interface.setLED(false);
+//  delay(200);
     
     // Actually send the message
     interface.setupMessage(NEIGHBOR_ADDRESS);
@@ -700,10 +722,10 @@ boolean sendMeshMessage() {
     // Package the data payload for transmission
     //interface.addData(1, (unsigned char) 0x13); // TYPE_UINT8
     
-    Serial.println("sending message: " + message);
+//    Serial.println("sending message: " + message);
     
 //    interface.addData(1, (unsigned char) classifiedGestureIndex); // TYPE_UINT8
-    interface.addData(message, (unsigned char) classifiedGestureIndex); // TYPE_UINT8
+    interface.addData(1, (unsigned char) message); // TYPE_UINT8
     
     //  interface.addData(1, (char) 0x14); // TYPE_INT8
     
