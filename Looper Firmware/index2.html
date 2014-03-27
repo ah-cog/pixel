@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pixel</title>
+    <script>
+    function turnOn(led) {
+		var xmlHttp = null;
+		xmlHttp = new XMLHttpRequest();
+		xmlHttp.open("POST", "http://192.168.1.143/led/" + led + "/on", false);
+		xmlHttp.send(null);
+		return xmlHttp.responseText;
+    }
+    function turnOff(led) {
+		var xmlHttp = null;
+		xmlHttp = new XMLHttpRequest();
+		xmlHttp.open("POST", "http://192.168.1.143/led/" + led + "/off", false);
+		xmlHttp.send(null);
+		return xmlHttp.responseText;
+    }
+    </script>
+</head>
+
+<body>
+    <h1>Pixel<h1>
+   	<h2>on</h2>
+    <input type="button" value="LED 1" onclick="turnOn(1);" />
+    <input type="button" value="LED 2" onclick="turnOn(2);" />
+    <input type="button" value="LED 3" onclick="turnOn(3);" />
+    <h2>off</h2>
+    <input type="button" value="LED 1" onclick="turnOff(1);" />
+    <input type="button" value="LED 2" onclick="turnOff(2);" />
+    <input type="button" value="LED 3" onclick="turnOff(3);" />
+</body>
+</html>
