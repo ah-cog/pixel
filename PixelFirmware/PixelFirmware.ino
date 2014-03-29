@@ -170,6 +170,7 @@ void setup() {
     counter = 0;
     
     // Flash RGB LEDs
+    setColor(255, 255, 255);
     ledOn();
     delay(100);
     ledOff();
@@ -344,7 +345,8 @@ void loop() {
  * Handle "at rest, on table" gesture.
  */
 boolean handleGestureAtRestOnTable() {
-  ledOff();
+  fadeOff();
+  
   queueMeshMessage(1);
 }
 
@@ -352,7 +354,16 @@ boolean handleGestureAtRestOnTable() {
  * Handle "at rest, in hand" gesture.
  */
 boolean handleGestureAtRestInHand() {
-  ledOn();
+  setColor(0, 0, 0);
+  fadeOn();
+  
+  crossfadeColor(255, 0, 0);
+  crossfadeColor(0, 255, 0);
+  crossfadeColor(0, 0, 255);
+  crossfadeColor(255, 255, 0);
+  crossfadeColor(0, 255, 255);
+  crossfadeColor(255, 255, 255);
+  
   queueMeshMessage(2);
 }
 
@@ -378,10 +389,8 @@ boolean handleGesturePlaceDown() {
 boolean handleGestureTiltLeft() {
   queueMeshMessage(5);
   
-  delay(5);
+  setColor(255, 0, 0);
   ledOn();
-  delay(5);
-  ledOff();
 }
 
 /**
@@ -390,10 +399,8 @@ boolean handleGestureTiltLeft() {
 boolean handleGestureTiltRight() {
   queueMeshMessage(6);
   
-  delay(20);
+  setColor(0, 0, 255);
   ledOn();
-  delay(20);
-  ledOff();
 }
 
 /**
@@ -433,7 +440,9 @@ boolean handleGestureTapToAnotherAsRight() {
 //  sendMeshMessage(8);
 }
 
-// Push a message onto the queue of messages to be processed and sent via the mesh network.
+/**
+ * Push a message onto the queue of messages to be processed and sent via the mesh network.
+ */
 boolean queueMeshMessage(int message) {
   // TODO: Add message to queue... and use sendMeshMessage to send the messages...
   
@@ -448,38 +457,21 @@ boolean queueMeshMessage(int message) {
   Serial.print(")\n");
 }
 
+/**
+ * Sends the top message on the mesh's message queue.
+ */
 boolean sendMeshMessage() {
   if (meshMessageQueueSize > 0) {
     
-    // Get the next message
+    // Get the next message from the front of the queue
     unsigned short int message = meshMessageQueue[0]; // Get message on front of queue
     meshMessageQueueSize--;
     
-    // Shift messages in queue
+    // Shift the remaining messages forward one position in the queue
     for (int i = 0; i < MESH_QUEUE_CAPACITY - 1; i++) {
       meshMessageQueue[i] = meshMessageQueue[i + 1];
     }
     meshMessageQueue[MESH_QUEUE_CAPACITY - 1] = 0; // Set last message to "noop"
-    
-//    Serial.print("dequeueing message: ");
-//    Serial.print(message);
-//    Serial.print (" (size: ");
-//    Serial.print(meshMessageQueueSize);
-//    Serial.print(")\n");
-
-
-//  interface.setLED(true);
-//  delay(200);
-//  interface.setLED(false);
-//  delay(200);
-//  interface.setLED(true);
-//  delay(200);
-//  interface.setLED(false);
-//  delay(200);
-//  interface.setLED(true);
-//  delay(200);
-//  interface.setLED(false);
-//  delay(200);
     
     // Actually send the message
     interface.setupMessage(NEIGHBOR_ADDRESS);
@@ -510,6 +502,10 @@ boolean sendMeshMessage() {
   }
 }
 
+/**
+ * Read the IMU sensor data and estimate the module's orientation. Orientation is 
+ * estimated using the DCM (Direction Cosine Matrix).
+ */
 boolean sensePhysicalData() {
 
     if ((millis() - timer) >= 20) { // Main loop runs at 50Hz
@@ -551,10 +547,6 @@ boolean sensePhysicalData() {
         return false;
     }
 }
-
-
-
-
 
 /**
  * Read received (and buffered) data from the RadioBlock.
