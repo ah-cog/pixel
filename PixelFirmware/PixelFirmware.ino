@@ -38,6 +38,7 @@ projects is shown below.
 #include <RadioBlock.h>
 #include <SPI.h>
 
+#include "Light.h"
 #include "Gestures.h"
 
 #define DEVICE_ADDRESS   0x0001
@@ -59,12 +60,12 @@ projects is shown below.
 #define TYPE_16BYTES	13
 #define TYPE_ASCII	14
 
-#define MAX_INTEGER_VALUE 32767
-
 // Mesh message queue
 #define MESH_QUEUE_CAPACITY 20
 unsigned short int meshMessageQueue[MESH_QUEUE_CAPACITY] = { 0 };
 int meshMessageQueueSize = 0;
+
+#define MAX_INTEGER_VALUE 32767
 
 /**
  * Classify the gesture. Choose the gesture that has a "signature" time series that best  
@@ -333,11 +334,6 @@ unsigned short int next[1];
 //                     |_|    
 
 void setup() {
-  
-      // Flash RGB LEDs
-    fadeOn();
-    delay(1000);
-    fadeOff();
 
   //
   // Setup RadioBlocks
@@ -1091,65 +1087,5 @@ boolean receiveMeshData() {
     // Serial.println("UNKNOWN ERROR!");
     return true; // TODO: Add a third state other than true or false
 
-  }
-}
-
-
-
-
-#define RED_LED_PIN 3
-#define GREEN_LED_PIN 4
-#define BLUE_LED_PIN 5
-
-int ledState = 0;
-int ledColor[3] = { 255, 255, 255 };
-
-void ledOn() {
-  analogWrite(RED_LED_PIN, ledColor[0]);
-  analogWrite(GREEN_LED_PIN, ledColor[1]);
-  analogWrite(BLUE_LED_PIN, ledColor[2]);
-}
-
-void ledOff() {
-  analogWrite(RED_LED_PIN, ledColor[0]);
-  analogWrite(GREEN_LED_PIN, ledColor[1]);
-  analogWrite(BLUE_LED_PIN, ledColor[2]);
-}
-
-void fadeOn() {
-  while (ledColor[0] > 0 && ledColor[1] > 0 && ledColor[2] > 0) {
-    if (ledColor[0] > 0) ledColor[0] -= 20;
-    if (ledColor[1] > 0) ledColor[1] -= 20;
-    if (ledColor[2] > 0) ledColor[2] -= 20;
-    analogWrite(RED_LED_PIN, ledColor[0]);
-    analogWrite(GREEN_LED_PIN, ledColor[1]);
-    analogWrite(BLUE_LED_PIN, ledColor[2]);
-    delay(100);
-  }
-}
-
-void fadeOff() {
-  while (ledColor[0] < 255 && ledColor[1] < 255 && ledColor[2] < 255) {
-    if (ledColor[0] < 255) ledColor[0] += 20;
-    if (ledColor[1] < 255) ledColor[1] += 20;
-    if (ledColor[2] < 255) ledColor[2] += 20;
-    analogWrite(RED_LED_PIN, ledColor[0]);
-    analogWrite(GREEN_LED_PIN, ledColor[1]);
-    analogWrite(BLUE_LED_PIN, ledColor[2]);
-    delay(100);
-  }
-}
-
-void setColor(int red, int green, int blue) {
-  ledColor[0] = abs(red - 255);
-  ledColor[1] = abs(green - 255);
-  ledColor[2] = abs(blue - 255);
-}
-
-void ledToggle() {
-  if (ledState == 0) {
-    ledOff();
-  } else {
-    ledOn();
   }
 }
