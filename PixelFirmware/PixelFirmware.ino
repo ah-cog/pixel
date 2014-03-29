@@ -256,7 +256,7 @@ void loop() {
     if (!hasGestureProcessed) { // Only executed when the gesture hasn't yet been processed
       // TODO: Write code to process the gesture!
       
-      ledOff();
+//      ledOff();
       
       // Handle gesture
       // TODO: Consider moving this... is this the right place? Should I care what the gesture is at this point or just send messages? Processing should be done by this point, right?
@@ -354,15 +354,16 @@ boolean handleGestureAtRestOnTable() {
  * Handle "at rest, in hand" gesture.
  */
 boolean handleGestureAtRestInHand() {
-  setColor(0, 0, 0);
-  fadeOn();
-  
-  crossfadeColor(255, 0, 0);
-  crossfadeColor(0, 255, 0);
-  crossfadeColor(0, 0, 255);
-  crossfadeColor(255, 255, 0);
-  crossfadeColor(0, 255, 255);
+//  setColor(0, 0, 0);
+//  fadeOn();
   crossfadeColor(255, 255, 255);
+  
+//  crossfadeColor(255, 0, 0);
+//  crossfadeColor(0, 255, 0);
+//  crossfadeColor(0, 0, 255);
+//  crossfadeColor(255, 255, 0);
+//  crossfadeColor(0, 255, 255);
+//  crossfadeColor(255, 255, 255);
   
   queueMeshMessage(2);
 }
@@ -389,8 +390,7 @@ boolean handleGesturePlaceDown() {
 boolean handleGestureTiltLeft() {
   queueMeshMessage(5);
   
-  setColor(255, 0, 0);
-  ledOn();
+  crossfadeColor(0, 0, 255);
 }
 
 /**
@@ -399,15 +399,16 @@ boolean handleGestureTiltLeft() {
 boolean handleGestureTiltRight() {
   queueMeshMessage(6);
   
-  setColor(0, 0, 255);
-  ledOn();
+  crossfadeColor(0, 255, 0);
 }
 
 /**
  * Handle "shake" gesture.
  */
 boolean handleGestureShake() {
-  // TODO:
+  setColor(255, 0, 0);
+  ledOn();
+  
   queueMeshMessage(7);
 }
 
@@ -600,7 +601,8 @@ boolean receiveMeshData() {
 
       } else if (commandId == APP_COMMAND_DATA_IND) { // (i.e., 0x22) [Page 15]
       
-        ledToggle();
+//        ledToggle();
+        // TODO: Add a "blink" or "flash burst"
   
         Serial.print(interface.getResponse().getFrameData()[0], HEX); // Frame options
         Serial.print(" | ");

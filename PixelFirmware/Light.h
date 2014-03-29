@@ -22,6 +22,14 @@ void ledOff() {
   analogWrite(BLUE_LED_PIN, 255);
 }
 
+void ledToggle() {
+  if (ledColor[0] == 255 && ledColor[1] == 255 && ledColor[2] == 255) {
+    ledOff();
+  } else {
+    ledOn();
+  }
+}
+
 void fadeOn() {
   while (ledColor[0] > 0 && ledColor[1] > 0 && ledColor[2] > 0) {
     if (ledColor[0] > 0) ledColor[0] -= 20;
@@ -46,17 +54,13 @@ void fadeOff() {
   }
 }
 
-void ledToggle() {
-  if (ledColor[0] == 255 && ledColor[1] == 255 && ledColor[2] == 255) {
-    ledOff();
-  } else {
-    ledOn();
-  }
-}
-
-//int prevR = 0, prevG = 0, prevB = 0; // all of the previous RGB values
-
+/**
+ * Gradually transition from the current color to the specified color.
+ */
 void crossfadeColor(int red, int green, int blue) {
+  red = abs(red - 255);
+  green = abs(green - 255);
+  blue = abs(blue - 255);
   for (int i = 0; i <= 255; i++) {
     if (i >= ledColor[0] - red && ledColor[0] < red) {
       analogWrite(RED_LED_PIN, ledColor[0] + i);
