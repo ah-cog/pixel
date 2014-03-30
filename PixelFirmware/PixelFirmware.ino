@@ -66,8 +66,14 @@ projects is shown below.
 unsigned short int meshMessageQueue[MESH_QUEUE_CAPACITY] = { 0 };
 int meshMessageQueueSize = 0;
 
+typedef struct {
+  int source;
+  int message;
+} Message;
+
 #define MESH_INCOMING_QUEUE_CAPACITY 20
-unsigned short int meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY] = { 0 };
+//unsigned short int meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY] = { 0 };
+Message meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY];
 int meshIncomingMessageQueueSize = 0;
 
 /**
@@ -299,11 +305,12 @@ void loop() {
   
   if (meshIncomingMessageQueueSize > 0) {
     int message = dequeueIncomingMeshMessage();
+    
     Serial.print("received message: ");
     Serial.print(message);
     Serial.print(" (of ");
     Serial.print(meshIncomingMessageQueueSize);
-    Serial.print("\n");
+    Serial.print(")\n");
     
 //        ledToggle();
         // TODO: Add a "blink" or "flash burst"
@@ -577,12 +584,13 @@ boolean sendMeshMessage() {
 /**
  * Push a message onto the queue of messages to be processed and sent via the mesh network.
  */
-boolean queueIncomingMeshMessage(int sender, int message) {
+boolean queueIncomingMeshMessage(int source, int message) {
   // TODO: Add message to queue... and use sendMeshMessage to send the messages...
   
   if (meshIncomingMessageQueueSize < MESH_INCOMING_QUEUE_CAPACITY) {
     // Add message to queue
-    meshIncomingMessages[meshIncomingMessageQueueSize] = message; // Add message to the back of the queue
+    meshIncomingMessages[meshIncomingMessageQueueSize].source = source;
+    meshIncomingMessages[meshIncomingMessageQueueSize].message = message; // Add message to the back of the queue
     meshIncomingMessageQueueSize++; // Increment the message count
   }
   
@@ -599,14 +607,16 @@ int dequeueIncomingMeshMessage() {
   if (meshIncomingMessageQueueSize > 0) {
     
     // Get the next message from the front of the queue
-    unsigned short int message = meshIncomingMessages[0]; // Get message on front of queue
+    unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
     meshIncomingMessageQueueSize--;
     
     // Shift the remaining messages forward one position in the queue
     for (int i = 0; i < MESH_INCOMING_QUEUE_CAPACITY - 1; i++) {
-      meshIncomingMessages[i] = meshMessageQueue[i + 1];
+      meshIncomingMessages[i].source = meshIncomingMessages[i + 1].source;
+      meshIncomingMessages[i].message = meshIncomingMessages[i + 1].message;
     }
-    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1] = 0; // Set last message to "noop"
+    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
+    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
     
     return message;
   }
@@ -666,8 +676,8 @@ boolean receiveMeshData() {
 
       } else if (commandId == APP_COMMAND_DATA_IND) { // (i.e., 0x22) [Page 15]
       
-        // Queue incoming message!
-        queueIncomingMeshMessage(0, 8);
+//        // Queue incoming message!
+//        queueIncomingMeshMessage(0, 8);
   
         Serial.print(interface.getResponse().getFrameData()[0], HEX); // Frame options
         Serial.print(" | ");
@@ -792,6 +802,10 @@ boolean receiveMeshData() {
 
                         // Append message to message queue
 //                        messageQueue = interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 1];
+                        int newMessage = interface.getResponse().getFrameData()[PAYLOAD_START_INDEX + payloadOffset + 1];
+
+                        // Queue incoming message!
+                        queueIncomingMeshMessage(sourceAddress, newMessage);
 
                         payloadOffset = payloadOffset + sizeof(unsigned char) + 1;
 
