@@ -96,6 +96,8 @@ ArrayList<String> completeGestureSampleNames;
 ArrayList<ArrayList<Integer>> liveGestureSample; // The latest accelerometer data
 
 boolean showAxisX = true, showAxisY = true, showAxisZ = true;
+boolean showGestureCandidate = true;
+boolean showOrientationVisualization = true;
 
 int classifiedGestureIndex = -1;
 color backgroundColor = #F0F1F0;
@@ -169,38 +171,119 @@ void draw() {
   // Draw data plots
   drawGesturePlotBoundaries();
   drawSignatureData();
-  drawLiveGesturePlot();
+  if (showGestureCandidate) {
+    drawLiveGesturePlot();
+    
+    // Visualize the module's orientation
+    if (showOrientationVisualization) {
+      drawOrientationVisualization();
+    }
+  }
 
   //  drawGestureSignatureBoundaries();
 
-  //  // Compute averages
-  //  ArrayList<Float> gestureClassificationScore = new ArrayList<Float>();
-  //  
-  //  // Get most-recent live gesture data
-  //  getGestureSamples();
-  //  for (int i = 0; i < getGestureCount(); i++) {
-  //    ArrayList<ArrayList<ArrayList<Integer>>> liveSampleSet = getGestureSamples(i);
-  //    
-  //    // Add counter to compute classification score
-  //    int correctClassificationCount = 0;
-  //    
-  //    for (int j = 0; j < liveSampleSet.size(); j++) {
-  //      ArrayList<ArrayList<Integer>> liveSample = liveSampleSet.get(j);
-  //      
-  //      // Compute classification score
-  //      if (classifiedGestureIndex == i) {
-  //        correctClassificationCount = correctClassificationCount + 1;
-  //      }
-  //    }
-  //    
-  //    // Add gesture classification percentage correct
-  //    gestureClassificationScore.add(((float) correctClassificationCount) / (float) liveSampleSet.size());
-  //  }
+  // Compute averages
+  ArrayList<Float> gestureClassificationScore = new ArrayList<Float>();
+  
+  // Get most-recent live gesture data
+  getGestureSamples();
+  for (int i = 0; i < getGestureCount(); i++) {
+    ArrayList<ArrayList<ArrayList<Integer>>> gestureExamples = getGestureSamples(i);
+    
+    // Add counter to compute classification score
+    int correctClassificationCount = 0;
+    
+    for (int j = 0; j < gestureExamples.size(); j++) {
+      ArrayList<ArrayList<Integer>> liveSample = gestureExamples.get(j);
+      
+      // Compute classification score
+      if (classifiedGestureIndex == i) {
+        correctClassificationCount = correctClassificationCount + 1;
+      }
+    }
+    
+    // Add gesture classification percentage correct
+    gestureClassificationScore.add(((float) correctClassificationCount) / (float) gestureExamples.size());
+    
+    println("accuracy: " + gestureClassificationScore.get(gestureClassificationScore.size() - 1));
+  }
 
   // Draw gesture label and classified gesture lable
   drawGestureTitle();
   //drawGesturePlot();
-  drawClassifiedGestureTitle();
+  //drawExampleGestureTitle();
+}
+
+void drawOrientationVisualization() {
+  
+  int scaledBoundLeft = int((float(gestureSignatureOffset[gestureIndex]) / float(maximumSampleSize[gestureIndex])) * width);
+  int scaledBoundRight = int((float(gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) / float(maximumSampleSize[gestureIndex])) * width);
+  
+  int scaledCenter = int((float(scaledBoundRight) + float(scaledBoundLeft)) / 2.0);
+  
+  pushMatrix(); 
+  
+  //translate(width/2, height/2, -30);
+ //translate(scaledCenter, height - 100, -30); 
+ translate((width / 2) - 300, (height / 4) - 70);
+  
+  // Rotate
+  rotateX(pitch); // rotateX(((float)pitch)*-PI/180.0); 
+  rotateY(yaw); // rotateY(((float)yaw)*-PI/180.0); 
+  rotateZ(roll); // rotateZ(((float)roll)*-PI/180.0);  
+  
+  // Draw X, Y, and Z axes
+  strokeWeight(1);
+  stroke(255, 0, 0); line(-100, 0, 0, 100, 0, 0); // X axis
+  stroke(0, 255, 0); line(0, -100, 0, 0, 100, 0); // Y axis 
+  stroke(0, 0, 255); line(0, 0, -100, 0, 0, 100); // Z axis
+  
+  // Draw X, Y, and Z acceleration vectors
+  strokeWeight(4);
+  stroke(255, 0, 0); line(-50, 0, 0, 50, 0, 0); // X axis
+  stroke(0, 255, 0); line(0, -50, 0, 0, 50, 0); // Y axis 
+  stroke(0, 0, 255); line(0, 0, -50, 0, 0, 50); // Z axis
+  
+  scale(30);
+  
+  beginShape(QUADS);
+  
+  stroke(0, 0, 0);
+  strokeWeight(0);
+  
+  fill(0, 255, 0); vertex(-1,  1,  1);
+  fill(0, 255, 0); vertex( 1,  1,  1);
+  fill(0, 255, 0); vertex( 1, -1,  1);
+  fill(0, 255, 0); vertex(-1, -1,  1);
+  
+  fill(0, 255, 255); vertex( 1,  1,  1);
+  fill(0, 255, 255); vertex( 1,  1, -1);
+  fill(0, 255, 255); vertex( 1, -1, -1);
+  fill(0, 255, 255); vertex( 1, -1,  1);
+  
+  fill(255, 0, 255); vertex( 1,  1, -1);
+  fill(255, 0, 255); vertex(-1,  1, -1);
+  fill(255, 0, 255); vertex(-1, -1, -1);
+  fill(255, 0, 255); vertex( 1, -1, -1);
+  
+  fill(255, 255, 0); vertex(-1,  1, -1);
+  fill(255, 255, 0); vertex(-1,  1,  1);
+  fill(255, 255, 0); vertex(-1, -1,  1);
+  fill(255, 255, 0); vertex(-1, -1, -1);
+  
+  fill(255, 0, 0); vertex(-1,  1, -1);
+  fill(255, 0, 0); vertex( 1,  1, -1);
+  fill(255, 0, 0); vertex( 1,  1,  1);
+  fill(255, 0, 0); vertex(-1,  1,  1);
+  
+  fill(0, 0, 255); vertex(-1, -1, -1);
+  fill(0, 0, 255); vertex( 1, -1, -1);
+  fill(0, 0, 255); vertex( 1, -1,  1);
+  fill(0, 0, 255); vertex(-1, -1,  1);
+  
+  endShape();
+  
+  popMatrix();
 }
 
 boolean sketchFullScreen() {
@@ -300,7 +383,6 @@ void setupGestureTransitions() {
       currentTransitions.add(getGestureIndex("tap to another, as right"));
     } 
     else if (gestureName[i] == "pick up") {
-      currentTransitions.add(getGestureIndex("pick up")); // note, becasue it's a continous gesture
       currentTransitions.add(getGestureIndex("at rest, in hand"));
     } 
     else if (gestureName[i] == "place down") {
@@ -593,7 +675,11 @@ void keyPressed() {
   } 
   else if (key == 'z') {
     showAxisZ = !showAxisZ;
-  } 
+  } else if (key == 'o') {
+    showOrientationVisualization = !showOrientationVisualization;
+  } else if (key == 'c') {
+    showGestureCandidate = !showGestureCandidate;
+  }
   else if (key == 's') {
     saveGestureModelFile();
   } 
@@ -641,7 +727,7 @@ void drawGestureTitle() {
   }
 }
 
-void drawClassifiedGestureTitle() {
+void drawExampleGestureTitle() {
   if (showGesturePrompt) {
     if (classifiedGestureIndex != -1) {
       fill(0); 
@@ -746,8 +832,8 @@ void updateCurrentGesture() {
 
       completeGestureSamples.add(singleGestureSample);
       completeGestureSampleNames.add(gestureName);
-    } 
-    else {
+    
+    } else {
 
       ArrayList<Integer> gestureSamplePointX = new ArrayList<Integer>();
       ArrayList<Integer> gestureSamplePointY = new ArrayList<Integer>();
@@ -906,6 +992,16 @@ void printGestureSignatures() {
   }
 }
 
+int getGestureSignatureMaximumSize() {
+  int maximumSize = 0;
+  for (int i = 0; i < getGestureCount(); i++) {
+    if (gestureSignatureSize[i] > maximumSize) {
+      maximumSize = gestureSignatureSize[i];
+    }
+  }
+  return maximumSize;
+}
+
 /**
  * Writes the current gesture model to a .h header file for use with Arduino sketches.
  */
@@ -915,21 +1011,22 @@ void saveGestureModelFile() {
 
   // GESTURE_COUNT 9
   // AXIS_COUNT 3
-  // GESTURE_SIGNATURE_SIZE 50
+  // GESTURE_SIGNATURE_MAXIMUM_SIZE 50
   int GESTURE_COUNT = getGestureCount();
   int AXIS_COUNT = 3;
-  int GESTURE_SIGNATURE_SIZE = 50;
-//  int DEFAULT_GESTURE_SIGNATURE_SIZE = 50;
-  int GESTURE_CANDIDATE_SIZE = liveGestureSize;
+  int GESTURE_SIGNATURE_MAXIMUM_SIZE = getGestureSignatureMaximumSize();
+  int GESTURE_CANDIDATE_SIZE = GESTURE_SIGNATURE_MAXIMUM_SIZE; // The gesture candidate can be no larger than the maximum gesture signature size, so limit it to that.
 
   gestureFile.println("#define GESTURE_COUNT " + GESTURE_COUNT + "");
   gestureFile.println("#define AXIS_COUNT " + AXIS_COUNT + "");
-  gestureFile.println("#define GESTURE_SIGNATURE_SIZE " + GESTURE_SIGNATURE_SIZE + "");
+  gestureFile.println("#define GESTURE_SIGNATURE_MAXIMUM_SIZE " + GESTURE_SIGNATURE_MAXIMUM_SIZE + "");
 //  gestureFile.println("#define DEFAULT_GESTURE_SIGNATURE_SIZE " + DEFAULT_GESTURE_SIGNATURE_SIZE + "");
   gestureFile.println("#define GESTURE_CANDIDATE_SIZE " + GESTURE_CANDIDATE_SIZE + " // The number of most recent live data points to store");
   gestureFile.println();
-
-  gestureFile.println("int gestureIndex = 0;");
+  
+  gestureFile.println("int classifiedGestureIndex = 0;");
+  gestureFile.println("int previousClassifiedGestureIndex = -1;");
+  gestureFile.println("unsigned long lastGestureClassificationTime = 0L; // Time of last gesture classification");
   gestureFile.println();
 
   gestureFile.println("char* gestureName[GESTURE_COUNT] = {");
@@ -944,20 +1041,19 @@ void saveGestureModelFile() {
   gestureFile.println();
 
 //  gestureFile.println("int gestureSignatureOffset[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };");
-  gestureFile.println();
+//  gestureFile.println();
 
-  gestureFile.println("int gestureSignatureSize[] = {");
+  gestureFile.print("int gestureSignatureSize[] = { ");
   for (int i = 0; i < getGestureCount(); i++) {
     if (i < getGestureCount() - 1) {
       // gestureFile.println("\tDEFAULT_GESTURE_SIGNATURE_SIZE,");
-      gestureFile.println("\t" + gestureSignatureSize[i] + ",");
-    } 
-    else {
+      gestureFile.print("" + gestureSignatureSize[i] + ", ");
+    } else {
       // gestureFile.println("\tDEFAULT_GESTURE_SIGNATURE_SIZE");
-      gestureFile.println("\t" + gestureSignatureSize[i] + "");
+      gestureFile.println("" + gestureSignatureSize[i] + " };");
     }
   }
-  gestureFile.println("};");
+//  gestureFile.println("};");
   gestureFile.println();
 
   gestureFile.println("int gestureSustainDuration[GESTURE_COUNT] = {");
@@ -1005,9 +1101,9 @@ void saveGestureModelFile() {
   gestureFile.println("int gestureCandidate[AXIS_COUNT][GESTURE_CANDIDATE_SIZE] = {");
   for (int axis = 0; axis < 3; axis++) {
     gestureFile.print("\t{");
-    for (int i = 0; i < liveGestureSize; i++) {
+    for (int i = 0; i < GESTURE_CANDIDATE_SIZE; i++) {
       gestureFile.print(" 0");
-      if (i < liveGestureSize - 1) {
+      if (i < GESTURE_CANDIDATE_SIZE - 1) {
         gestureFile.print(",");
       } 
       else {
@@ -1028,7 +1124,7 @@ void saveGestureModelFile() {
   gestureFile.println("int gestureSampleCount = 0;");
   gestureFile.println("int gestureSensorSampleCount = 0;");
 
-  gestureFile.println("int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {");
+  gestureFile.println("int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_MAXIMUM_SIZE] = {");
 
   for (int gestureSignatureIndex = 0; gestureSignatureIndex < getGestureCount(); gestureSignatureIndex++) {
 
@@ -1072,10 +1168,6 @@ void saveGestureModelFile() {
     }
   }
   gestureFile.println("};");
-
-  gestureFile.println("int classifiedGestureIndex = 0;");
-  gestureFile.println("int previousClassifiedGestureIndex = -1;");
-  gestureFile.println("unsigned long lastGestureClassificationTime = 0L; // Time of last gesture classification");
 
   gestureFile.flush(); // Write remaining data to file
   gestureFile.close(); // Finish writing to the file and close it

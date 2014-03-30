@@ -17,7 +17,8 @@ int getGestureAxisDeviation(int gestureSignatureIndex, int axis) { // (int gestu
 //  }
 
   // Compare the first 50 points of the gesture signature to the most recent 50 accelerometer data points
-  for (int point = 0; point < GESTURE_SIGNATURE_SIZE; point++) {
+  //for (int point = 0; point < GESTURE_SIGNATURE_SIZE; point++) {
+  for (int point = 0; point < gestureSignatureSize[gestureSignatureIndex]; point++) {
       int difference = abs(gestureSignature[gestureSignatureIndex][axis][point] - gestureCandidate[axis][point]);
       delta = delta + difference;
   }
@@ -54,7 +55,8 @@ int getGestureAxisInstability(int gestureSignatureIndex, int axis) { // (int ges
 //    }
 //  }
 
-  for (int point = 0; point < GESTURE_SIGNATURE_SIZE - 1; point++) {
+  //for (int point = 0; point < GESTURE_SIGNATURE_SIZE - 1; point++) {
+  for (int point = 0; point < gestureSignatureSize[gestureSignatureIndex] - 1; point++) {
       int signatureDifference = abs(gestureSignature[gestureSignatureIndex][axis][point + 1] - gestureCandidate[axis][point]);
       int liveDifference = abs(gestureCandidate[axis][point + 1] - gestureCandidate[axis][point]);
       int instabilityDifference = abs(signatureDifference - liveDifference);

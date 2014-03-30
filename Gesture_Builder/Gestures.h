@@ -1,9 +1,12 @@
 #define GESTURE_COUNT 9
 #define AXIS_COUNT 3
-#define GESTURE_SIGNATURE_SIZE 50
-#define GESTURE_CANDIDATE_SIZE 50 // The number of most recent live data points to store
+#define GESTURE_SIGNATURE_MAXIMUM_SIZE 40
+#define GESTURE_CANDIDATE_SIZE 40 // The number of most recent live data points to store
 
 int gestureIndex = 0;
+int classifiedGestureIndex = 0;
+int previousClassifiedGestureIndex = -1;
+unsigned long lastGestureClassificationTime = 0L; // Time of last gesture classification
 
 char* gestureName[GESTURE_COUNT] = {
 	"at rest, on table",
@@ -17,18 +20,7 @@ char* gestureName[GESTURE_COUNT] = {
 	"tap to another, as right"
 };
 
-
-int gestureSignatureSize[] = {
-	40,
-	40,
-	40,
-	40,
-	40,
-	40,
-	40,
-	40,
-	40
-};
+int gestureSignatureSize[] = { 40, 40, 40, 40, 40, 40, 40, 40, 40 };
 
 int gestureSustainDuration[GESTURE_COUNT] = {
 	0, // "at rest, on table"
@@ -45,7 +37,7 @@ int gestureSustainDuration[GESTURE_COUNT] = {
 int gestureTransitions[GESTURE_COUNT][GESTURE_COUNT] = {
 	{ 0, 2, -1, -1, -1, -1, -1, -1, -1 },
 	{ 1, 3, 6, 4, 5, 7, 8, -1, -1 },
-	{ 2, 1, -1, -1, -1, -1, -1, -1, -1 },
+	{ 1, -1, -1, -1, -1, -1, -1, -1, -1 },
 	{ 0, -1, -1, -1, -1, -1, -1, -1, -1 },
 	{ 4, 1, -1, -1, -1, -1, -1, -1, -1 },
 	{ 5, 1, -1, -1, -1, -1, -1, -1, -1 },
@@ -55,15 +47,15 @@ int gestureTransitions[GESTURE_COUNT][GESTURE_COUNT] = {
 };
 int gestureCandidateSize = 0; // Current size of the live gesture data
 int gestureCandidate[AXIS_COUNT][GESTURE_CANDIDATE_SIZE] = {
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 
 int gestureSampleCount = 0;
 int gestureSensorSampleCount = 0;
-int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
+int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_MAXIMUM_SIZE] = {
 	{
 		{ 5, 5, 5, 5, 5, 4, 5, 4, 4, 4, 4, 4, 4, 5, 4, 5, 5, 5, 5, 5, 5, 4, 5, 4, 5, 4, 4, 5, 4, 3, 4, 3, 4, 5, 5, 5, 5, 4, 4, 4 },
 		{ 10, 10, 10, 11, 11, 11, 11, 11, 10, 11, 11, 11, 10, 10, 10, 11, 11, 11, 11, 10, 11, 11, 11, 12, 11, 11, 11, 10, 11, 11, 12, 13, 12, 12, 12, 11, 11, 11, 11, 11 },
@@ -110,6 +102,3 @@ int gestureSignature[GESTURE_COUNT][AXIS_COUNT][GESTURE_SIGNATURE_SIZE] = {
 		{ 349, 333, 297, 280, 268, 248, 232, 224, 220, 221, 221, 221, 219, 218, 217, 213, 206, 206, 203, 189, 204, 197, 221, 230, 233, 256, 242, 244, 236, 234, 230, 220, 216, 211, 209, 209, 209, 208, 203, 200 }
 	}
 };
-int classifiedGestureIndex = 0;
-int previousClassifiedGestureIndex = -1;
-unsigned long lastGestureClassificationTime = 0L; // Time of last gesture classification

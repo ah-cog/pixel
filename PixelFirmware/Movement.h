@@ -19,7 +19,7 @@
 // Positive roll : right wing down
 // Positive yaw : counterclockwise
 //int SENSOR_SIGN[9] = {1,-1,-1,-1,1,1,1,-1,-1}; //Correct directions x,y,z - gyro, accelerometer, magnetometer
-int SENSOR_SIGN[9] = { 1, -1, -1, 1, -1, 1, 1, -1, -1 }; // Correct directions x,y,z - gyro, accelerometer, magnetometer
+//int SENSOR_SIGN[9] = { 1, -1, -1, 1, -1, 1, 1, -1, -1 }; // Correct directions x,y,z - gyro, accelerometer, magnetometer
 
 // LSM303 accelerometer (8g sensitivity)
 // 3.8 mg/digit; 1 g = 256
@@ -153,9 +153,9 @@ void printData (void) {
 void storeData() {
   
   // Shift points left by one
-  if (gestureCandidateSize >= (50 - 1)) {
+  if (gestureCandidateSize >= (GESTURE_CANDIDATE_SIZE - 1)) {
     for (int axis = 0; axis < AXIS_COUNT; axis++) {
-      for (int point = 0; point < GESTURE_SIGNATURE_SIZE - 1; point++) {
+      for (int point = 0; point < GESTURE_CANDIDATE_SIZE - 1; point++) {
         gestureCandidate[axis][point] = gestureCandidate[axis][point + 1]; // Shift point left by one
       }
     }
@@ -166,8 +166,8 @@ void storeData() {
   gestureCandidate[1][gestureCandidateSize] = AN[4]; // accelerometer y
   gestureCandidate[2][gestureCandidateSize] = AN[5]; // accelerometer z
   
-  // Increment gesture candidate size (if less than 50)
-  if (gestureCandidateSize < (50 - 1)) {
+  // Increment gesture candidate size (if less than the maximum possible size)
+  if (gestureCandidateSize < (GESTURE_CANDIDATE_SIZE - 1)) {
     // Increment gesture candidate size
     gestureCandidateSize = gestureCandidateSize + 1;
   }
