@@ -126,7 +126,7 @@ void draw () {
   strokeWeight(4);
   stroke(255, 0, 0); line(-200, 0, 0, 200, 0, 0); // X axis
   stroke(255, 0, 0); line(0, -200, 0, 0, 200, 0); // Y axis 
-  stroke(255, 0, 0); line(0, 0, -200, 0, 0, 200); // Z axis
+  stroke(255, 0, 0); line(0, 0, -200, 0, 0, 200); // Z axi
   
   scale(90);
   
@@ -295,7 +295,7 @@ void keyPressed() {
 /**
  * Store sensor data sample set (multiple samples)
  */
-void storeSensorData() {
+void gestureDataSample() {
   
   //
   // Print data to file

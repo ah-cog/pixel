@@ -17,12 +17,14 @@ float pressure, altitude, temperature;
 PFont gestureFont, classifiedGestureFont;
 PFont boundaryLabelFont;
 
-JSONArray gestureSampleSet;
-JSONArray gestureDataSample;
-
 boolean showGesturePrompt = true;
+
+// Used for building data sets
+JSONArray gestureDataSample;
+JSONArray gestureSampleSet;
 boolean isRecordingGesture = false;
 int gestureSelectionTime = 0;
+int gestureSensorSampleCount = 0;
 
 int gestureIndex = 0;
 String gestureName[] = { 
@@ -37,7 +39,6 @@ String gestureName[] = {
   "tap to another, as right"
 };
 int gestureSampleCount = 0;
-int gestureSensorSampleCount = 0;
 
 int liveGestureSize = 50;
 
@@ -157,6 +158,11 @@ void setup () {
 }
 
 void draw() {
+  
+  // Check if we're recording data (store it, if so)
+  if (isRecordingGesture) {
+    storeGestureData();
+  }
 
   // Check if classified gesture is correct
   if (gestureIndex == classifiedGestureIndex) {
@@ -193,6 +199,38 @@ void draw() {
   drawGestureTitle();
   //drawGesturePlot();
   //drawExampleGestureTitle();
+}
+
+/**
+ * Store gesture data sample, consisting of a sequence of data points 
+ * collected over time, during a specific duration, specified manually 
+ * by a human.
+ */
+void storeGestureData() {
+  
+  JSONObject gestureDataPoint = new JSONObject();
+  
+  gestureDataPoint.setString("timestamp", str(dataTimestamp));
+  gestureDataPoint.setString("roll", str(roll));
+  gestureDataPoint.setString("pitch", str(pitch));
+  gestureDataPoint.setString("yaw", str(yaw));
+  gestureDataPoint.setString("gyroX", str(gyroX));
+  gestureDataPoint.setString("gyroY", str(gyroY));
+  gestureDataPoint.setString("gyroZ", str(gyroZ));
+  gestureDataPoint.setString("accelerometerX", str(accelerometerX));
+  gestureDataPoint.setString("accelerometerY", str(accelerometerY));
+  gestureDataPoint.setString("accelerometerZ", str(accelerometerZ));
+  gestureDataPoint.setString("magnetometerX", str(magnetometerX));
+  gestureDataPoint.setString("magnetometerY", str(magnetometerY));
+  gestureDataPoint.setString("magnetometerZ", str(magnetometerZ));
+  gestureDataPoint.setString("pressure", str(pressure));
+  gestureDataPoint.setString("altitude", str(altitude));
+  gestureDataPoint.setString("temperature", str(temperature));
+
+  // gestureDataSample.setJSONObject(gestureSensorSampleCount, gestureData);
+  gestureDataSample.append(gestureDataPoint);
+  
+  gestureSensorSampleCount++;
 }
 
 void drawValidationStatistics() {
@@ -692,7 +730,43 @@ void keyPressed() {
     }
   }
 
-  if (key == ESC) {
+  if (key == ' ') {
+    
+   // TODO: Start gesture
+   if (isRecordingGesture == false) {
+//     backgroundColor[0] = 232; backgroundColor[1] = 94; backgroundColor[2] = 83;
+     backgroundColor = #cc0000;
+     isRecordingGesture = true;
+     gestureSensorSampleCount = 0;
+     //gestureDataFile = createWriter("gestureData.txt");
+     gestureDataSample = new JSONArray();
+   } else {
+//     backgroundColor[0] = 255; backgroundColor[1] = 255; backgroundColor[2] = 255;
+     backgroundColor = #F0F1F0;
+     isRecordingGesture = false;
+     // gestureDataFile.flush(); // Writes the remaining data to the file
+     // gestureDataFile.close(); // Finishes the file
+     
+     JSONObject gestureSample = new JSONObject();
+     gestureSample.setString("gesture", gestureName[gestureIndex]);
+     gestureSample.setJSONArray("sample", gestureDataSample);
+     
+     //JSONArray gestureSampleSet;
+     gestureSampleSet = loadJSONArray("data/gestureSampleSet.json"); // Load existing file
+     // TODO: Add "tried gesture" to gesture sample
+     //gestureSampleSet.append(gestureDataSample);
+     gestureSampleSet.append(gestureSample);
+     //gestureSampleSet.setJSONArray(gestureSampleCount, gestureDataSample);
+     
+     saveJSONArray(gestureSampleSet, "data/gestureSampleSet.json");
+     
+     gestureSampleCount++;
+     
+     // Update currently displayed gesture with new data
+     updateCurrentGesture();
+   } 
+   
+  } else if (key == ESC) {
     exit(); // Stops the program
   } else if (key == 'x') {
     showAxisX = !showAxisX;
