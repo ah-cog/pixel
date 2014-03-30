@@ -38,12 +38,22 @@ projects is shown below.
 #include <RadioBlock.h>
 #include <SPI.h>
 
+struct Message {
+  int source;
+  int message;
+};
+
+#define MESH_INCOMING_QUEUE_CAPACITY 20
+//unsigned short int meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY] = { 0 };
+Message meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY];
+int meshIncomingMessageQueueSize = 0;
+
 #include "Light.h"
 #include "Gesture.h"
 #include "Movement.h"
 
-#define DEVICE_ADDRESS   0x0001
-#define NEIGHBOR_ADDRESS 0x0000
+#define DEVICE_ADDRESS   0x0000
+#define NEIGHBOR_ADDRESS 0x0001
 
 // These #define's are copied from the RadioBlock.cpp file
 #define TYPE_UINT8 	1
@@ -65,16 +75,6 @@ projects is shown below.
 #define MESH_QUEUE_CAPACITY 20
 unsigned short int meshMessageQueue[MESH_QUEUE_CAPACITY] = { 0 };
 int meshMessageQueueSize = 0;
-
-typedef struct {
-  int source;
-  int message;
-} Message;
-
-#define MESH_INCOMING_QUEUE_CAPACITY 20
-//unsigned short int meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY] = { 0 };
-Message meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY];
-int meshIncomingMessageQueueSize = 0;
 
 /**
  * RadioBlocks Setup
@@ -304,10 +304,12 @@ void loop() {
   
   
   if (meshIncomingMessageQueueSize > 0) {
-    int message = dequeueIncomingMeshMessage();
+    Message message = dequeueIncomingMeshMessage();
     
     Serial.print("received message: ");
-    Serial.print(message);
+    Serial.print(message.message);
+    Serial.print(" from ");
+    Serial.print(message.source);
     Serial.print(" (of ");
     Serial.print(meshIncomingMessageQueueSize);
     Serial.print(")\n");
@@ -602,27 +604,29 @@ boolean queueIncomingMeshMessage(int source, int message) {
 /**
  * Sends the top message on the mesh's message queue.
  */
-int dequeueIncomingMeshMessage() {
-  
-  if (meshIncomingMessageQueueSize > 0) {
-    
-    // Get the next message from the front of the queue
-    unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
-    meshIncomingMessageQueueSize--;
-    
-    // Shift the remaining messages forward one position in the queue
-    for (int i = 0; i < MESH_INCOMING_QUEUE_CAPACITY - 1; i++) {
-      meshIncomingMessages[i].source = meshIncomingMessages[i + 1].source;
-      meshIncomingMessages[i].message = meshIncomingMessages[i + 1].message;
-    }
-    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
-    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
-    
-    return message;
-  }
-  
-  return -1;
-}
+//int dequeueIncomingMeshMessage() {
+//Message dequeueIncomingMeshMessage() {
+//  
+//  if (meshIncomingMessageQueueSize > 0) {
+//    
+//    // Get the next message from the front of the queue
+//    //unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
+//    Message message = { meshIncomingMessages[0].source, meshIncomingMessages[0].message }; // Get message on front of queue
+//    meshIncomingMessageQueueSize--;
+//    
+//    // Shift the remaining messages forward one position in the queue
+//    for (int i = 0; i < MESH_INCOMING_QUEUE_CAPACITY - 1; i++) {
+//      meshIncomingMessages[i].source = meshIncomingMessages[i + 1].source;
+//      meshIncomingMessages[i].message = meshIncomingMessages[i + 1].message;
+//    }
+//    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
+//    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
+//    
+//    return message;
+//  }
+//  
+//  return null;
+//}
 
 /**
  * Read received (and buffered) data from the RadioBlock.

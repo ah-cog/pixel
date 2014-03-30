@@ -116,6 +116,31 @@ float Temporary_Matrix[3][3] = {
 
 
 
+/**
+ * Sends the top message on the mesh's message queue.
+ */
+//int dequeueIncomingMeshMessage() {
+Message dequeueIncomingMeshMessage() {
+  
+  if (meshIncomingMessageQueueSize > 0) {
+    
+    // Get the next message from the front of the queue
+    //unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
+    Message message = { meshIncomingMessages[0].source, meshIncomingMessages[0].message }; // Get message on front of queue
+    meshIncomingMessageQueueSize--;
+    
+    // Shift the remaining messages forward one position in the queue
+    for (int i = 0; i < MESH_INCOMING_QUEUE_CAPACITY - 1; i++) {
+      meshIncomingMessages[i].source = meshIncomingMessages[i + 1].source;
+      meshIncomingMessages[i].message = meshIncomingMessages[i + 1].message;
+    }
+    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
+    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
+    
+    return message;
+  }
+}
+
 char serialDataString[512];
 
 void printData (void) {
