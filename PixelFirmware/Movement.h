@@ -18,8 +18,8 @@
 // Positive pitch : nose down
 // Positive roll : right wing down
 // Positive yaw : counterclockwise
-//int SENSOR_SIGN[9] = {1,-1,-1,-1,1,1,1,-1,-1}; //Correct directions x,y,z - gyro, accelerometer, magnetometer
-int SENSOR_SIGN[9] = { 1, -1, -1, 1, -1, 1, 1, -1, -1 }; // Correct directions x,y,z - gyro, accelerometer, magnetometer
+int SENSOR_SIGN[9] = {1,-1,-1,-1,1,1,1,-1,-1}; //Correct directions x,y,z - gyro, accelerometer, magnetometer
+//int SENSOR_SIGN[9] = { 1, -1, -1, 1, -1, 1, 1, -1, -1 }; // Correct directions x,y,z - gyro, accelerometer, magnetometer
 
 // LSM303 accelerometer (8g sensitivity)
 // 3.8 mg/digit; 1 g = 256
@@ -166,7 +166,7 @@ void storeData() {
   gestureCandidate[1][gestureCandidateSize] = AN[4]; // accelerometer y
   gestureCandidate[2][gestureCandidateSize] = AN[5]; // accelerometer z
   
-  // Increment gesture candidate size (if less than the maximum possible )
+  // Increment gesture candidate size (if less than the maximum possible)
   if (gestureCandidateSize < (GESTURE_CANDIDATE_SIZE - 1)) {
     // Increment gesture candidate size
     gestureCandidateSize = gestureCandidateSize + 1;

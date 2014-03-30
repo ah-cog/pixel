@@ -69,7 +69,7 @@ int gestureSignatureOffset[] = {
 };
 
 // The number of data points that make of each gesture signature (starting at the offset) 
-int defaultLiveGestureSize = 40;
+int defaultLiveGestureSize = 35;
 int gestureSignatureSize[] = {
   defaultLiveGestureSize, 
   defaultLiveGestureSize, 
