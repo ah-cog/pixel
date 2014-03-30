@@ -3,7 +3,6 @@
 #define GESTURE_SIGNATURE_MAXIMUM_SIZE 40
 #define GESTURE_CANDIDATE_SIZE 40 // The number of most recent live data points to store
 
-int gestureIndex = 0;
 int classifiedGestureIndex = 0;
 int previousClassifiedGestureIndex = -1;
 unsigned long lastGestureClassificationTime = 0L; // Time of last gesture classification
@@ -20,7 +19,7 @@ char* gestureName[GESTURE_COUNT] = {
 	"tap to another, as right"
 };
 
-int gestureSignatureSize[] = { 40, 40, 40, 40, 40, 40, 40, 40, 40 };
+int gestureSignatureSize[] = { 40, 40, 26, 18, 27, 24, 18, 40, 21 };
 
 int gestureSustainDuration[GESTURE_COUNT] = {
 	0, // "at rest, on table"

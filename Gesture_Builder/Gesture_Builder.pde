@@ -98,6 +98,7 @@ ArrayList<ArrayList<Integer>> liveGestureSample; // The latest accelerometer dat
 boolean showAxisX = true, showAxisY = true, showAxisZ = true;
 boolean showGestureCandidate = true;
 boolean showOrientationVisualization = true;
+boolean showValidationStatistics = false;
 
 int classifiedGestureIndex = -1;
 color backgroundColor = #F0F1F0;
@@ -171,6 +172,7 @@ void draw() {
   // Draw data plots
   drawGesturePlotBoundaries();
   drawSignatureData();
+  
   if (showGestureCandidate) {
     drawLiveGesturePlot();
     
@@ -178,26 +180,47 @@ void draw() {
     if (showOrientationVisualization) {
       drawOrientationVisualization();
     }
+    
+    // Show validation statistics
+    if (showValidationStatistics) {
+      drawValidationStatistics();
+    }
   }
 
   //  drawGestureSignatureBoundaries();
 
+  // Draw gesture label and classified gesture lable
+  drawGestureTitle();
+  //drawGesturePlot();
+  //drawExampleGestureTitle();
+}
+
+void drawValidationStatistics() {
+  
   // Compute averages
   ArrayList<Float> gestureClassificationScore = new ArrayList<Float>();
   
   // Get most-recent live gesture data
   getGestureSamples();
   for (int i = 0; i < getGestureCount(); i++) {
+    if (i != gestureIndex) {
+      gestureClassificationScore.add(0.0);
+      continue; // Only compute accuracy for current gesture (for now)
+    }
+    
     ArrayList<ArrayList<ArrayList<Integer>>> gestureExamples = getGestureSamples(i);
     
     // Add counter to compute classification score
     int correctClassificationCount = 0;
     
     for (int j = 0; j < gestureExamples.size(); j++) {
-      ArrayList<ArrayList<Integer>> liveSample = gestureExamples.get(j);
+      ArrayList<ArrayList<Integer>> gestureExample = gestureExamples.get(j);
+      
+      int classifiedIndex = classifyGesture(gestureExample);
+      // int classifiedIndex = classifyGestureFromTransitions(gestureExample);
       
       // Compute classification score
-      if (classifiedGestureIndex == i) {
+      if (classifiedIndex == i) {
         correctClassificationCount = correctClassificationCount + 1;
       }
     }
@@ -205,13 +228,17 @@ void draw() {
     // Add gesture classification percentage correct
     gestureClassificationScore.add(((float) correctClassificationCount) / (float) gestureExamples.size());
     
-    println("accuracy: " + gestureClassificationScore.get(gestureClassificationScore.size() - 1));
+    //println("Accuracy " + i + ": " + gestureClassificationScore.get(gestureClassificationScore.size() - 1));
   }
-
-  // Draw gesture label and classified gesture lable
-  drawGestureTitle();
-  //drawGesturePlot();
-  //drawExampleGestureTitle();
+  
+  int scaledBoundLeft = int((float(gestureSignatureOffset[gestureIndex]) / float(maximumSampleSize[gestureIndex])) * width);
+  int scaledBoundRight = int((float(gestureSignatureOffset[gestureIndex] + gestureSignatureSize[gestureIndex]) / float(maximumSampleSize[gestureIndex])) * width);
+  
+  // Draw beginning bound of gesture signature
+  fill(0); 
+  textFont(boundaryLabelFont); 
+  textAlign(LEFT);
+  text("\n\n\naccuracy " + gestureClassificationScore.get(gestureIndex), scaledBoundLeft + 8, 30);
 }
 
 void drawOrientationVisualization() {
@@ -430,14 +457,15 @@ int getGestureIndex(String findGestureName) {
  * Classify the gesture. Choose the gesture that has a "signature" time series that best  
  * matches the recent window of live data.
  */
-int classifyGesture(ArrayList<ArrayList<Integer>> liveSample, int comparisonFrequency) {
+int classifyGesture(ArrayList<ArrayList<Integer>> liveSample) {
   int minimumDeviationIndex = -1;
   int minimumDeviation = Integer.MAX_VALUE;
 
   for (int gestureSignatureIndex = 0; gestureSignatureIndex < getGestureCount(); gestureSignatureIndex++) {
 
     ArrayList<ArrayList<ArrayList<Integer>>> gestureSamples = getGestureSamples(gestureSignatureIndex);
-    ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+    //ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage(gestureSamples);
+    ArrayList<ArrayList<Integer>> gestureSignatureSample = getGestureSampleAverage2(gestureSamples, gestureSignatureOffset[gestureSignatureIndex], gestureSignatureSize[gestureSignatureIndex]);
 
     // Calculate the gesture's deviation from the gesture signature
     int gestureDeviation = getGestureDeviation(gestureSignatureSample, liveSample);
@@ -666,34 +694,29 @@ void keyPressed() {
 
   if (key == ESC) {
     exit(); // Stops the program
-  } 
-  else if (key == 'x') {
+  } else if (key == 'x') {
     showAxisX = !showAxisX;
-  } 
-  else if (key == 'y') {
+  } else if (key == 'y') {
     showAxisY = !showAxisY;
-  } 
-  else if (key == 'z') {
+  } else if (key == 'z') {
     showAxisZ = !showAxisZ;
   } else if (key == 'o') {
     showOrientationVisualization = !showOrientationVisualization;
   } else if (key == 'c') {
     showGestureCandidate = !showGestureCandidate;
-  }
-  else if (key == 's') {
+  } else if (key == 'v') {
+    showValidationStatistics = !showValidationStatistics;
+  } else if (key == 's') {
     saveGestureModelFile();
-  } 
-  else if (key == TAB) {
+  } else if (key == TAB) {
 
     if (shiftPressed) {
       if (gestureIndex == 0) {
         gestureIndex = (gestureName.length - 1);
-      } 
-      else {
+      } else {
         gestureIndex = (gestureIndex - 1) % gestureName.length;
       }
-    } 
-    else {
+    } else {
       gestureIndex = (gestureIndex + 1) % gestureName.length;
     }
 
