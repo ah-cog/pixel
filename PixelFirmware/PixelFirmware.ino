@@ -211,6 +211,9 @@ boolean setupIMU() {
 //                | |    
 //                |_|    
 
+boolean awaitingNextModule = false;
+boolean awaitingPreviousModule = false;
+
 boolean hasGestureProcessed = false;
 
 void loop() {
@@ -300,8 +303,9 @@ void loop() {
     // TODO: Process newly classified gesture
   }
   
-  // TODO: Handle "ongoing" gesture (i.e., do the stuff that should be done more than once, or as long as the gesture is active)
-  
+  //
+  // Receive and process incoming messages
+  //
   
   if (meshIncomingMessageQueueSize > 0) {
     Message message = dequeueIncomingMeshMessage();
@@ -314,21 +318,44 @@ void loop() {
     Serial.print(meshIncomingMessageQueueSize);
     Serial.print(")\n");
     
-//        ledToggle();
-        // TODO: Add a "blink" or "flash burst"
-        ledOn();
-        delay(60);
-        ledOff();
-        delay(60);
-        ledOn();
-        delay(60);
-        ledOff();
-        delay(60);
+//  ledToggle();
+    // TODO: Add a "blink" or "flash burst"
+    ledOn();
+    delay(60);
+    ledOff();
+    delay(60);
+    ledOn();
+    delay(60);
+    ledOff();
+    delay(60);
+    
+    //
+    // Process incoming message
+    //
+    
+    if (message.message == 8) {
+      // If receive "tap to another, as left", then check if this module performed "tap to another, as right" recently. If so, link the modules in a sequence, starting with the other module first.
+      
+      if (awaitingPreviousModule) {
+        // TODO: previous += [ message.source ]
+      }
+      
+    } else if (message.message == 9) {
+      // If receive "tap to another, as right", then check if this module performed "tap to another, as left" recently. If so, link the modules in a sequence, starting with this module first.
+      
+      if (awaitingNextModule) {
+        // TODO: next += [ message.source ]
+        // Send "linked" to module (handshake)
+        // TODO: In other module (and this one), when awaitingNextModule is true, look through the received messages for message "9"
+      }
+    }
   }
   
   //
   // Send message with updated gesture
   //
+  
+  // TODO: Handle "ongoing" gesture (i.e., do the stuff that should be done more than once, or as long as the gesture is active)
   
   // Process mesh message queue  
   if (meshMessageQueueSize > 0) {
