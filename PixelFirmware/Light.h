@@ -2,6 +2,7 @@
 #define GREEN_LED_PIN 4
 #define BLUE_LED_PIN 5
 
+int color[3] = { 255, 255, 255 };
 int ledColor[3] = { 255, 255, 255 };
 
 void setColor(int red, int green, int blue) {
@@ -52,6 +53,12 @@ void fadeOff() {
     analogWrite(BLUE_LED_PIN, ledColor[2]);
     delay(100);
   }
+  ledColor[0] = 255;
+  ledColor[1] = 255;
+  ledColor[2] = 255;
+  analogWrite(RED_LED_PIN, ledColor[0]);
+  analogWrite(GREEN_LED_PIN, ledColor[1]);
+  analogWrite(BLUE_LED_PIN, ledColor[2]);
 }
 
 /**
@@ -84,9 +91,9 @@ void crossfadeColor(int red, int green, int blue) {
     if (i >= blue - ledColor[2] && ledColor[2] > blue) {
       analogWrite(BLUE_LED_PIN, ledColor[2] - i);
     }
-    delay(10);
+    delay(5); // delay(10);
   }
-  delay(10);
+    delay(5); // delay(10);
   analogWrite(RED_LED_PIN, red);
   analogWrite(GREEN_LED_PIN, green);
   analogWrite(BLUE_LED_PIN, blue);

@@ -69,7 +69,7 @@ int gestureSignatureOffset[] = {
 };
 
 // The number of data points that make of each gesture signature (starting at the offset) 
-int defaultLiveGestureSize = 50;
+int defaultLiveGestureSize = 40;
 int gestureSignatureSize[] = {
   defaultLiveGestureSize, 
   defaultLiveGestureSize, 
@@ -916,12 +916,17 @@ void saveGestureModelFile() {
   // GESTURE_COUNT 9
   // AXIS_COUNT 3
   // GESTURE_SIGNATURE_SIZE 50
+  int GESTURE_COUNT = getGestureCount();
+  int AXIS_COUNT = 3;
+  int GESTURE_SIGNATURE_SIZE = 50;
+//  int DEFAULT_GESTURE_SIGNATURE_SIZE = 50;
+  int GESTURE_CANDIDATE_SIZE = liveGestureSize;
 
-  gestureFile.println("#define GESTURE_COUNT 9");
-  gestureFile.println("#define AXIS_COUNT 3");
-  gestureFile.println("#define GESTURE_SIGNATURE_SIZE 50");
-  gestureFile.println("#define DEFAULT_GESTURE_SIGNATURE_SIZE 50");
-  gestureFile.println("#define GESTURE_CANDIDATE_SIZE 50 // The number of most recent live data points to store");
+  gestureFile.println("#define GESTURE_COUNT " + GESTURE_COUNT + "");
+  gestureFile.println("#define AXIS_COUNT " + AXIS_COUNT + "");
+  gestureFile.println("#define GESTURE_SIGNATURE_SIZE " + GESTURE_SIGNATURE_SIZE + "");
+//  gestureFile.println("#define DEFAULT_GESTURE_SIGNATURE_SIZE " + DEFAULT_GESTURE_SIGNATURE_SIZE + "");
+  gestureFile.println("#define GESTURE_CANDIDATE_SIZE " + GESTURE_CANDIDATE_SIZE + " // The number of most recent live data points to store");
   gestureFile.println();
 
   gestureFile.println("int gestureIndex = 0;");
@@ -930,25 +935,26 @@ void saveGestureModelFile() {
   gestureFile.println("char* gestureName[GESTURE_COUNT] = {");
   for (int i = 0; i < getGestureCount(); i++) {
     if (i < getGestureCount() - 1) {
-      gestureFile.println("\t" + gestureName[i] + "\",");
-    } 
-    else {
+      gestureFile.println("\t\"" + gestureName[i] + "\",");
+    } else {
       gestureFile.println("\t\"" + gestureName[i] + "\"");
     }
   }
   gestureFile.println("};");
   gestureFile.println();
 
-  gestureFile.println("int gestureSignatureOffset[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };");
+//  gestureFile.println("int gestureSignatureOffset[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };");
   gestureFile.println();
 
   gestureFile.println("int gestureSignatureSize[] = {");
   for (int i = 0; i < getGestureCount(); i++) {
     if (i < getGestureCount() - 1) {
-      gestureFile.println("\tDEFAULT_GESTURE_SIGNATURE_SIZE,");
+      // gestureFile.println("\tDEFAULT_GESTURE_SIGNATURE_SIZE,");
+      gestureFile.println("\t" + gestureSignatureSize[i] + ",");
     } 
     else {
-      gestureFile.println("\tDEFAULT_GESTURE_SIGNATURE_SIZE");
+      // gestureFile.println("\tDEFAULT_GESTURE_SIGNATURE_SIZE");
+      gestureFile.println("\t" + gestureSignatureSize[i] + "");
     }
   }
   gestureFile.println("};");

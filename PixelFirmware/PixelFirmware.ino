@@ -52,8 +52,8 @@ int meshIncomingMessageQueueSize = 0;
 #include "Gesture.h"
 #include "Movement.h"
 
-#define DEVICE_ADDRESS   0x0000
-#define NEIGHBOR_ADDRESS 0x0001
+#define DEVICE_ADDRESS   0x0001
+#define NEIGHBOR_ADDRESS 0x0000
 
 // These #define's are copied from the RadioBlock.cpp file
 #define TYPE_UINT8 	1
@@ -108,6 +108,8 @@ unsigned short int next[1];
 
 void setup() {
   
+  randomSeed(analogRead(0));
+  
   // Setup mesh networking peripherals (i.e., RadioBlocks)
   setupMesh();
   
@@ -121,8 +123,14 @@ void setup() {
   // Setup IMU peripherals
   setupIMU();
   
+  // Assign the module a unique color
+  color[0] = random(256);
+  color[1] = random(256);
+  color[2] = random(256);
+  setColor(color[0], color[1], color[2]);
+  
   // Flash RGB LEDs
-  setColor(255, 255, 255);
+  // setColor(255, 255, 255);
   ledOn();
   delay(100);
   ledOff();
@@ -213,6 +221,7 @@ boolean setupIMU() {
 
 boolean awaitingNextModule = false;
 boolean awaitingPreviousModule = false;
+unsigned long awaitingModuleStartTime = 0;
 
 boolean hasGestureProcessed = false;
 
@@ -320,14 +329,14 @@ void loop() {
     
 //  ledToggle();
     // TODO: Add a "blink" or "flash burst"
-    ledOn();
-    delay(60);
-    ledOff();
-    delay(60);
-    ledOn();
-    delay(60);
-    ledOff();
-    delay(60);
+//    ledOn();
+//    delay(60);
+//    ledOff();
+//    delay(60);
+//    ledOn();
+//    delay(60);
+//    ledOff();
+//    delay(60);
     
     //
     // Process incoming message
@@ -338,6 +347,16 @@ void loop() {
       
       if (awaitingPreviousModule) {
         // TODO: previous += [ message.source ]
+        
+        setColor(0, 0, 255);
+        ledOn();
+        delay(60);
+        ledOff();
+        delay(60);
+        ledOn();
+        delay(60);
+        ledOff();
+        delay(60);
       }
       
     } else if (message.message == 9) {
@@ -347,6 +366,16 @@ void loop() {
         // TODO: next += [ message.source ]
         // Send "linked" to module (handshake)
         // TODO: In other module (and this one), when awaitingNextModule is true, look through the received messages for message "9"
+        
+        setColor(0, 255, 0);
+        ledOn();
+        delay(60);
+        ledOff();
+        delay(60);
+        ledOn();
+        delay(60);
+        ledOff();
+        delay(60);
       }
     }
   }
@@ -466,7 +495,7 @@ boolean handleGestureAtRestOnTable() {
 boolean handleGestureAtRestInHand() {
   queueMeshMessage(2);
   
-  crossfadeColor(255, 255, 255);
+  crossfadeColor(color[0], color[1], color[2]);
   
 //  crossfadeColor(255, 0, 0);
 //  crossfadeColor(0, 255, 0);
@@ -525,6 +554,8 @@ boolean handleGestureShake() {
  */
 boolean handleGestureTapToAnotherAsLeft() {
   queueMeshMessage(8);
+  awaitingNextModule = true;
+  awaitingModuleStartTime = millis();
   // TODO:
 }
 
@@ -533,6 +564,8 @@ boolean handleGestureTapToAnotherAsLeft() {
  */
 boolean handleGestureTapToAnotherAsRight() {
   queueMeshMessage(9);
+  awaitingPreviousModule = true;
+  awaitingModuleStartTime = millis();
   
   // Send to all linked devices
 //      for (int i = 0; i < 1; i++) {
@@ -688,7 +721,7 @@ boolean receiveMeshData() {
     // NOTE: I believe this constitutes a "frame".
   
     if (interface.getResponse().getErrorCode() == APP_STATUS_SUCESS) {
-      Serial.println("\n\n\n\nReceived packet.");
+      // Serial.println("\n\n\n\nReceived packet.");
       
       int commandId = interface.getResponse().getCommandId();
       
@@ -700,10 +733,9 @@ boolean receiveMeshData() {
   
         // Acknowledgment command format: Page 5 of SimpleMesh Serial Protocol document.
   
-        Serial.println("Received Ack");
-  
-        Serial.print("  Status: ");
-        Serial.println(interface.getResponse().getFrameData()[0], HEX); // Source address
+        // Serial.println("Received Ack");
+        // Serial.print("  Status: ");
+        // Serial.println(interface.getResponse().getFrameData()[0], HEX); // Source address
 
       } else if (commandId == APP_COMMAND_DATA_IND) { // (i.e., 0x22) [Page 15]
       
