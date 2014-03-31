@@ -51,6 +51,7 @@ int meshIncomingMessageQueueSize = 0;
 #include "Light.h"
 #include "Gesture.h"
 #include "Movement.h"
+#include "Communication.h"
 
 #define DEVICE_ADDRESS   0x0001
 #define NEIGHBOR_ADDRESS 0x0000
@@ -226,6 +227,49 @@ unsigned long awaitingModuleStartTime = 0;
 boolean hasGestureProcessed = false;
 
 void loop() {
+  
+//  // List size
+//  Serial.print("previousModuleCount = ");
+//  Serial.print(previousModuleCount);
+//  Serial.print("\n");
+//  
+//  // Print list
+//  Serial.print("List: ");
+//  for (int i = 0; i < previousModuleCount; i++) {
+//    Serial.print(previousModules[i]);
+//    Serial.print(" ");
+//  }
+//  Serial.print("\n");
+//  
+//  addPreviousModule(3);
+//  addPreviousModule(3);
+//  addPreviousModule(4);
+//  // List size
+//  Serial.print("previousModuleCount = ");
+//  Serial.print(previousModuleCount);
+//  Serial.print("\n");
+//  
+//  // Print list
+//  Serial.print("List: ");
+//  for (int i = 0; i < previousModuleCount; i++) {
+//    Serial.print(previousModules[i]);
+//    Serial.print(" ");
+//  }
+//  Serial.print("\n");
+//  
+//  removePreviousModule(3);
+//  // List size
+//  Serial.print("previousModuleCount = ");
+//  Serial.print(previousModuleCount);
+//  Serial.print("\n");
+//  
+//  Serial.println(removePreviousModule(5));
+//  
+//  Serial.println(hasPreviousModule(5));
+//  Serial.println(hasPreviousModule(4));
+//  Serial.println(hasPreviousModule(3));
+//  
+//  return;
   
   // Get data from mesh network
   boolean hasReceivedMeshData = false;
