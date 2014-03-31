@@ -74,8 +74,8 @@ int meshIncomingMessageQueueSize = 0;
 
 // Mesh outgoing message queue
 #define MESH_QUEUE_CAPACITY 20
-unsigned short int meshMessageQueue[MESH_QUEUE_CAPACITY] = { 0 };
-int meshMessageQueueSize = 0;
+unsigned short int messageQueue[MESH_QUEUE_CAPACITY] = { 0 };
+int messageQueueSize = 0;
 
 /**
  * RadioBlocks Setup
@@ -431,8 +431,8 @@ void loop() {
   // TODO: Handle "ongoing" gesture (i.e., do the stuff that should be done more than once, or as long as the gesture is active)
   
   // Process mesh message queue  
-  if (meshMessageQueueSize > 0) {
-    sendMeshMessage();
+  if (messageQueueSize > 0) {
+    sendMessage();
   }
     
   unsigned long currentTime = millis();
@@ -440,8 +440,8 @@ void loop() {
   if (currentTime - lastCount > RADIOBLOCK_PACKET_WRITE_TIMEOUT) {
   
     // Process mesh message queue  
-//    if (meshMessageQueueSize > 0) {
-//      sendMeshMessage();
+//    if (messageQueueSize > 0) {
+//      sendMessage();
 //    }
     
     // Process outgoing mesh network messages
@@ -530,14 +530,14 @@ boolean sensePhysicalData() {
 boolean handleGestureAtRestOnTable() {
   fadeOff();
   
-  queueMeshMessage(1);
+  addMessage(1);
 }
 
 /**
  * Handle "at rest, in hand" gesture.
  */
 boolean handleGestureAtRestInHand() {
-  queueMeshMessage(2);
+  addMessage(2);
   
   crossfadeColor(color[0], color[1], color[2]);
   
@@ -553,7 +553,7 @@ boolean handleGestureAtRestInHand() {
  * Handle "pick up" gesture.
  */
 boolean handleGesturePickUp() {
-  queueMeshMessage(3);
+  addMessage(3);
   // TODO:
 }
 
@@ -561,7 +561,7 @@ boolean handleGesturePickUp() {
  * Handle "place down" gesture.
  */
 boolean handleGesturePlaceDown() {
-  queueMeshMessage(4);
+  addMessage(4);
   // TODO:
 }
 
@@ -569,7 +569,7 @@ boolean handleGesturePlaceDown() {
  * Handle "tilt left" gesture.
  */
 boolean handleGestureTiltLeft() {
-  queueMeshMessage(5);
+  addMessage(5);
   
   crossfadeColor(0, 0, 255);
 }
@@ -578,7 +578,7 @@ boolean handleGestureTiltLeft() {
  * Handle "tilt right" gesture.
  */
 boolean handleGestureTiltRight() {
-  queueMeshMessage(6);
+  addMessage(6);
   
   crossfadeColor(0, 255, 0);
 }
@@ -587,7 +587,7 @@ boolean handleGestureTiltRight() {
  * Handle "shake" gesture.
  */
 boolean handleGestureShake() {
-  queueMeshMessage(7);
+  addMessage(7);
   
   setColor(255, 0, 0);
   ledOn();
@@ -597,7 +597,7 @@ boolean handleGestureShake() {
  * Handle "tap to another, as left" gesture.
  */
 boolean handleGestureTapToAnotherAsLeft() {
-  queueMeshMessage(8);
+  addMessage(8);
   awaitingNextModule = true;
   awaitingModuleStartTime = millis();
   // TODO:
@@ -607,7 +607,7 @@ boolean handleGestureTapToAnotherAsLeft() {
  * Handle "tap to another, as right" gesture.
  */
 boolean handleGestureTapToAnotherAsRight() {
-  queueMeshMessage(9);
+  addMessage(9);
   awaitingPreviousModule = true;
   awaitingModuleStartTime = millis();
   
@@ -628,35 +628,35 @@ boolean handleGestureTapToAnotherAsRight() {
 /**
  * Push a message onto the queue of messages to be processed and sent via the mesh network.
  */
-boolean queueMeshMessage(int message) {
-  // TODO: Add message to queue... and use sendMeshMessage to send the messages...
+boolean addMessage(int message) {
+  // TODO: Add message to queue... and use sendMessage to send the messages...
   
-  if (meshMessageQueueSize < MESH_QUEUE_CAPACITY) {
+  if (messageQueueSize < MESH_QUEUE_CAPACITY) {
     // Add message to queue
-    meshMessageQueue[meshMessageQueueSize] = message; // Add message to the back of the queue
-    meshMessageQueueSize++; // Increment the message count
+    messageQueue[messageQueueSize] = message; // Add message to the back of the queue
+    messageQueueSize++; // Increment the message count
   }
   
 //  Serial.print("queueing message (size: ");
-//  Serial.print(meshMessageQueueSize);
+//  Serial.print(messageQueueSize);
 //  Serial.print(")\n");
 }
 
 /**
  * Sends the top message on the mesh's message queue.
  */
-boolean sendMeshMessage() {
-  if (meshMessageQueueSize > 0) {
+boolean sendMessage() {
+  if (messageQueueSize > 0) {
     
     // Get the next message from the front of the queue
-    unsigned short int message = meshMessageQueue[0]; // Get message on front of queue
-    meshMessageQueueSize--;
+    unsigned short int message = messageQueue[0]; // Get message on front of queue
+    messageQueueSize--;
     
     // Shift the remaining messages forward one position in the queue
     for (int i = 0; i < MESH_QUEUE_CAPACITY - 1; i++) {
-      meshMessageQueue[i] = meshMessageQueue[i + 1];
+      messageQueue[i] = messageQueue[i + 1];
     }
-    meshMessageQueue[MESH_QUEUE_CAPACITY - 1] = 0; // Set last message to "noop"
+    messageQueue[MESH_QUEUE_CAPACITY - 1] = 0; // Set last message to "noop"
     
     // Actually send the message
     interface.setupMessage(NEIGHBOR_ADDRESS);
@@ -691,7 +691,7 @@ boolean sendMeshMessage() {
  * Push a message onto the queue of messages to be processed and sent via the mesh network.
  */
 boolean queueIncomingMeshMessage(int source, int message) {
-  // TODO: Add message to queue... and use sendMeshMessage to send the messages...
+  // TODO: Add message to queue... and use sendMessage to send the messages...
   
   if (meshIncomingMessageQueueSize < MESH_INCOMING_QUEUE_CAPACITY) {
     // Add message to queue
@@ -701,7 +701,7 @@ boolean queueIncomingMeshMessage(int source, int message) {
   }
   
 //  Serial.print("queueing message (size: ");
-//  Serial.print(meshMessageQueueSize);
+//  Serial.print(messageQueueSize);
 //  Serial.print(")\n");
 }
 

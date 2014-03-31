@@ -135,7 +135,7 @@ boolean hasNextModule(int module) {
     
     // Check if the module has been added to the set
     for (int i = 0; i < nextModuleCount; i++) {
-      if (module == nextModuleCount[i]) {
+      if (module == nextModules[i]) {
         // The module has been found, so return true
         return true;
       }
