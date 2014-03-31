@@ -61,6 +61,10 @@ unsigned short int next[1];
 
 void setup() {
   
+  color[0] = 205;
+  color[1] = 205;
+  color[2] = 205;
+  
   for (int i = 0; i < 20; i++) {
     color[0] = random(256);
     color[1] = random(256);
@@ -84,8 +88,6 @@ void setup() {
   ledOff();
 //  fadeOn();
 //  fadeOff();
-  
-  
   
   randomSeed(analogRead(0));
   
