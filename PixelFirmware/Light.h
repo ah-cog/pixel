@@ -53,12 +53,12 @@ void fadeOff() {
     analogWrite(BLUE_LED_PIN, ledColor[2]);
     delay(100);
   }
-  ledColor[0] = 255;
-  ledColor[1] = 255;
-  ledColor[2] = 255;
-  analogWrite(RED_LED_PIN, ledColor[0]);
-  analogWrite(GREEN_LED_PIN, ledColor[1]);
-  analogWrite(BLUE_LED_PIN, ledColor[2]);
+//  ledColor[0] = 255;
+//  ledColor[1] = 255;
+//  ledColor[2] = 255;
+//  analogWrite(RED_LED_PIN, ledColor[0]);
+//  analogWrite(GREEN_LED_PIN, ledColor[1]);
+//  analogWrite(BLUE_LED_PIN, ledColor[2]);
 }
 
 /**
