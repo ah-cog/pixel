@@ -53,8 +53,8 @@ int meshIncomingMessageQueueSize = 0;
 #include "Movement.h"
 #include "Communication.h"
 
-#define DEVICE_ADDRESS   0x0001
-#define NEIGHBOR_ADDRESS 0x0000
+#define DEVICE_ADDRESS   0x0002
+#define NEIGHBOR_ADDRESS 0x0001
 
 // These #define's are copied from the RadioBlock.cpp file
 #define TYPE_UINT8 	1
@@ -125,9 +125,12 @@ void setup() {
   setupIMU();
   
   // Assign the module a unique color
-  color[0] = random(256);
-  color[1] = random(256);
-  color[2] = random(256);
+//  color[0] = random(256);
+//  color[1] = random(256);
+//  color[2] = random(256);
+  color[0] = 0;
+  color[1] = 255;
+  color[2] = 0;
   setColor(color[0], color[1], color[2]);
   
   // Flash RGB LEDs
@@ -222,7 +225,8 @@ boolean setupIMU() {
 
 boolean awaitingNextModule = false;
 boolean awaitingPreviousModule = false;
-unsigned long awaitingModuleStartTime = 0;
+unsigned long awaitingNextModuleStartTime = 0;
+unsigned long awaitingPreviousModuleStartTime = 0;
 
 boolean hasGestureProcessed = false;
 
@@ -392,7 +396,7 @@ void loop() {
       if (awaitingPreviousModule) {
         // TODO: previous += [ message.source ]
         
-        setColor(0, 0, 255);
+        setColor(255, 255, 255);
         ledOn();
         delay(60);
         ledOff();
@@ -401,6 +405,17 @@ void loop() {
         delay(60);
         ledOff();
         delay(60);
+        ledOn();
+        delay(1500);
+        
+        awaitingPreviousModule = false;
+        
+        // Send ACK message to message.source to confirm linking operation
+        addMessage(message.source, 13);
+        
+        // TODO: Wait for ACK response before the following... move it in another ACK message event handler.
+        
+        addPreviousModule(message.source);
       }
       
     } else if (message.message == 9) {
@@ -411,7 +426,7 @@ void loop() {
         // Send "linked" to module (handshake)
         // TODO: In other module (and this one), when awaitingNextModule is true, look through the received messages for message "9"
         
-        setColor(0, 255, 0);
+        setColor(255, 255, 255);
         ledOn();
         delay(60);
         ledOff();
@@ -420,7 +435,47 @@ void loop() {
         delay(60);
         ledOff();
         delay(60);
+        ledOn();
+        delay(1500);
+        
+        awaitingNextModule = false;
+        // awaitingNextModuleConfirm = true;
+        
+        // Send ACK message to message.source to confirm linking operation
+        addMessage(message.source, 13);
+        
+        // TODO: Wait for ACK response before the following... move it in another ACK message event handler.
+        
+        addNextModule(message.source);
       }
+      
+    } else if (message.message == 13) { // Sequence confirmation
+      
+//      if (awaitingNextModule) {
+        
+        setColor(255, 255, 255);
+        ledOn();
+        delay(60);
+        ledOff();
+        delay(60);
+        ledOn();
+        delay(60);
+        ledOff();
+        delay(60);
+        ledOn();
+        delay(1500);
+        
+        awaitingNextModule = false;
+        // awaitingNextModuleConfirm = true;
+        
+        // Send ACK message to message.source to confirm linking operation (if not yet done)
+        addMessage(message.source, 13);
+        addMessage(message.source, 14);
+        
+        // TODO: Wait for ACK response before the following... move it in another ACK message event handler.
+        
+        addNextModule(message.source);
+//      }
     }
   }
   
@@ -530,14 +585,14 @@ boolean sensePhysicalData() {
 boolean handleGestureAtRestOnTable() {
   fadeOff();
   
-  addMessage(1);
+  addBroadcast(1);
 }
 
 /**
  * Handle "at rest, in hand" gesture.
  */
 boolean handleGestureAtRestInHand() {
-  addMessage(2);
+  addBroadcast(2);
   
   crossfadeColor(color[0], color[1], color[2]);
   
@@ -553,7 +608,7 @@ boolean handleGestureAtRestInHand() {
  * Handle "pick up" gesture.
  */
 boolean handleGesturePickUp() {
-  addMessage(3);
+  addBroadcast(3);
   // TODO:
 }
 
@@ -561,7 +616,7 @@ boolean handleGesturePickUp() {
  * Handle "place down" gesture.
  */
 boolean handleGesturePlaceDown() {
-  addMessage(4);
+  addBroadcast(4);
   // TODO:
 }
 
@@ -569,7 +624,7 @@ boolean handleGesturePlaceDown() {
  * Handle "tilt left" gesture.
  */
 boolean handleGestureTiltLeft() {
-  addMessage(5);
+  addBroadcast(5);
   
   crossfadeColor(0, 0, 255);
 }
@@ -578,7 +633,7 @@ boolean handleGestureTiltLeft() {
  * Handle "tilt right" gesture.
  */
 boolean handleGestureTiltRight() {
-  addMessage(6);
+  addBroadcast(6);
   
   crossfadeColor(0, 255, 0);
 }
@@ -587,7 +642,7 @@ boolean handleGestureTiltRight() {
  * Handle "shake" gesture.
  */
 boolean handleGestureShake() {
-  addMessage(7);
+  addBroadcast(7);
   
   setColor(255, 0, 0);
   ledOn();
@@ -597,9 +652,13 @@ boolean handleGestureShake() {
  * Handle "tap to another, as left" gesture.
  */
 boolean handleGestureTapToAnotherAsLeft() {
-  addMessage(8);
+  addBroadcast(8);
   awaitingNextModule = true;
-  awaitingModuleStartTime = millis();
+  awaitingNextModuleStartTime = millis();
+  
+        color[0] = 255;
+        color[1] = 0;
+        color[2] = 0;
   // TODO:
 }
 
@@ -607,9 +666,13 @@ boolean handleGestureTapToAnotherAsLeft() {
  * Handle "tap to another, as right" gesture.
  */
 boolean handleGestureTapToAnotherAsRight() {
-  addMessage(9);
+  addBroadcast(9);
   awaitingPreviousModule = true;
-  awaitingModuleStartTime = millis();
+  awaitingPreviousModuleStartTime = millis();
+  
+        color[0] = 0;
+        color[1] = 0;
+        color[2] = 255;
   
   // Send to all linked devices
 //      for (int i = 0; i < 1; i++) {
@@ -628,7 +691,24 @@ boolean handleGestureTapToAnotherAsRight() {
 /**
  * Push a message onto the queue of messages to be processed and sent via the mesh network.
  */
-boolean addMessage(int message) {
+boolean addBroadcast(int message) {
+  // TODO: Add message to queue... and use sendMessage to send the messages...
+  
+  if (messageQueueSize < MESH_QUEUE_CAPACITY) {
+    // Add message to queue
+    messageQueue[messageQueueSize] = message; // Add message to the back of the queue
+    messageQueueSize++; // Increment the message count
+  }
+  
+//  Serial.print("queueing message (size: ");
+//  Serial.print(messageQueueSize);
+//  Serial.print(")\n");
+}
+
+/**
+ * Push a message onto the queue of messages to be processed and sent via the mesh network.
+ */
+boolean addMessage(int source, int message) {
   // TODO: Add message to queue... and use sendMessage to send the messages...
   
   if (messageQueueSize < MESH_QUEUE_CAPACITY) {
