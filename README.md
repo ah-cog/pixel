@@ -3,9 +3,9 @@ Pixel
 
 # Overview #
 
-Pixel is a platform for making.
+Pixel is a modular tangible user interface for physical computing.
 
-## Hardare ##
+## Physical Design ##
 
 TinkerCad
 https://tinkercad.com/dashboard/projects/bFf1tuIbj8z-pixel
