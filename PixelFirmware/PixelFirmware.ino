@@ -24,11 +24,6 @@ Michael Gubbels
 
 #define BROADCAST_ADDRESS NEIGHBOR_ADDRESS // 0xFFFF
 
-// Mesh outgoing message queue
-#define MESSAGE_QUEUE_CAPACITY 20
-Message messageQueue[MESSAGE_QUEUE_CAPACITY];
-int messageQueueSize = 0;
-
 /**
  * RadioBlocks Setup
  */
@@ -61,35 +56,15 @@ unsigned short int next[1];
 
 void setup() {
   
-  color[0] = 205;
-  color[1] = 205;
-  color[2] = 205;
-  
-  for (int i = 0; i < 20; i++) {
-    color[0] = random(256);
-    color[1] = random(256);
-    color[2] = random(256);
-    setColor(color[0], color[1], color[2]);
-    ledOn();
-    delay(50);
-  }
-  ledOff();
-  
-  ledOn();
-  delay(100);
-  ledOff();
-  delay(100);
-  ledOn();
-  delay(100);
-  ledOff();
-  delay(100);
-  ledOn();
-  delay(100);
-  ledOff();
-//  fadeOn();
-//  fadeOff();
-  
   randomSeed(analogRead(0));
+
+  // Initialize module's color
+  // setModuleColor(random(256), random(256), random(256)); // Set the module's default color
+  setModuleColor(205, 205, 205); // Set the module's default color
+
+  // Fade on the module to let people know it's alive!
+  fadeOn();
+  fadeOff();
   
   // Setup mesh networking peripherals (i.e., RadioBlocks)
   setupMesh();
@@ -101,17 +76,17 @@ void setup() {
   Serial.begin(9600);
   Serial.println(F("Pixel 2014.03.29.17.38.01"));
   
-  // Setup IMU peripherals
-  setupIMU();
+  // Setup physical orientation sensing peripherals (i.e., IMU)
+  setupOrientationSensor();
   
   // Assign the module a unique color
 //  color[0] = random(256);
 //  color[1] = random(256);
 //  color[2] = random(256);
-  color[0] = 255;
-  color[1] = 255;
-  color[2] = 0;
-  setColor(color[0], color[1], color[2]);
+  moduleColor[0] = 255;
+  moduleColor[1] = 255;
+  moduleColor[2] = 0;
+  setColor(moduleColor[0], moduleColor[1], moduleColor[2]);
   
   // Flash RGB LEDs
   // setColor(255, 255, 255);
@@ -161,23 +136,23 @@ boolean setupMesh() {
 /**
  * Initialize the IMU peripheral (inertial measurement unit).
  */
-boolean setupIMU() {
+boolean setupOrientationSensor() {
 
-  Serial.println("Initializing IMU...");
-  I2C_Init();
+  Serial.println("Initializing orientation sensor...");
+  setupInertialMeasurementUnit();
 
-  delay(1500);
+  // delay(1500);
 
-  Accel_Init();
-  Compass_Init();
-  Gyro_Init();
-  Alt_Init();
+  setupAccelerometer();
+  setupCompass();
+  setupGyroscope();
+  setupAltimeter();
 
   delay(20); // Wait for a small duration for the IMU sensors to initialize (?)
 
-  for (int i = 0;i < 32; i++) { // We take some initial readings... (to warm the IMU up?)
-    Read_Gyro();
-    Read_Accel();
+  for (int i = 0; i < 32; i++) { // We take some initial readings... (to warm the IMU up?)
+    getGyroscopeData();
+    getAccelerometerData();
     for (int y = 0; y < 6; y++) { // Cumulate values
         AN_OFFSET[y] += AN[y];
     }
@@ -185,17 +160,17 @@ boolean setupIMU() {
   }
 
   for (int y = 0; y < 6; y++) {
-    AN_OFFSET[y] = AN_OFFSET[y]/32;
+    AN_OFFSET[y] = AN_OFFSET[y] / 32;
   }
 
   AN_OFFSET[5] -= GRAVITY * SENSOR_SIGN[5];
 
-  Serial.println("Offset:");
+  Serial.println("Offset: ");
   for (int y = 0; y < 6; y++) {
     Serial.println(AN_OFFSET[y]);
   }
 
-  delay(1000);
+  // delay(1000); // TODO: Why is this here? Try to get rid of it! Wake up quickly!
 
   timer = millis();
   delay(20);
@@ -284,7 +259,7 @@ void loop() {
   
   // Sense phsyical orientation data
   boolean hasGestureChanged = false;
-  if (sensePhysicalData()) {
+  if (senseOrientation()) {
     storeData();
     
     // Classify live gesture sample
@@ -492,7 +467,7 @@ void loop() {
  * Read the IMU sensor data and estimate the module's orientation. Orientation is 
  * estimated using the DCM (Direction Cosine Matrix).
  */
-boolean sensePhysicalData() {
+boolean senseOrientation() {
   
   if ((millis() - timer) >= 20) { // Main loop runs at 50Hz
     counter++;
@@ -507,17 +482,17 @@ boolean sensePhysicalData() {
     // DCM algorithm:
 
     // Data adquisition
-    Read_Gyro(); // This read gyro data
-    Read_Accel(); // Read I2C accelerometer
+    getGyroscopeData(); // This read gyro data
+    getAccelerometerData(); // Read I2C accelerometer
 
     if (counter > 5) { // Read compass data at 10 Hz... (5 loop runs)
       counter = 0;
-      Read_Compass(); // Read I2C magnetometer
-      Compass_Heading(); // Calculate magnetic heading
+      getCompassData(); // Read I2C magnetometer
+      calculateCompassHeading(); // Calculate magnetic heading
     }
 
     // Read pressure/altimeter
-    Read_Altimeter();
+    getAltimeterData();
 
     // Calculations...
     Matrix_update(); 
@@ -548,7 +523,7 @@ boolean handleGestureAtRestInHand() {
   addBroadcast(2);
   
 //  crossfadeColor(color[0], color[1], color[2]);
-  setColor(color[0], color[1], color[2]);
+  setColor(moduleColor[0], moduleColor[1], moduleColor[2]);
   ledOn();
   
 //  crossfadeColor(255, 0, 0);
@@ -609,9 +584,9 @@ boolean handleGestureTapToAnotherAsLeft() {
   awaitingNextModule = true;
   awaitingNextModuleStartTime = millis();
   
-  color[0] = 255;
-  color[1] = 0;
-  color[2] = 0;
+  moduleColor[0] = 255;
+  moduleColor[1] = 0;
+  moduleColor[2] = 0;
 }
 
 /**
@@ -622,9 +597,9 @@ boolean handleGestureTapToAnotherAsRight() {
   awaitingPreviousModule = true;
   awaitingPreviousModuleStartTime = millis();
 
-  color[0] = 0;
-  color[1] = 0;
-  color[2] = 255;
+  moduleColor[0] = 0;
+  moduleColor[1] = 0;
+  moduleColor[2] = 255;
   
   // Send to all linked devices
 //      for (int i = 0; i < 1; i++) {

@@ -28,7 +28,7 @@ with MinIMU-9-Arduino-AHRS. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-void Compass_Heading() {
+void calculateCompassHeading() {
   
   float MAG_X;
   float MAG_Y;

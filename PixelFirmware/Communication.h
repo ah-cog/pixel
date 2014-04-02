@@ -19,10 +19,16 @@ struct Message {
   int message;
 };
 
+// Mesh incoming message queue
 #define MESH_INCOMING_QUEUE_CAPACITY 20
 //unsigned short int meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY] = { 0 };
 Message meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY];
 int meshIncomingMessageQueueSize = 0;
+
+// Mesh outgoing message queue
+#define MESSAGE_QUEUE_CAPACITY 20
+Message messageQueue[MESSAGE_QUEUE_CAPACITY];
+int messageQueueSize = 0;
 
 // Previous modules in sequence
 #define PREVIOUS_MODULE_CAPACITY 20
