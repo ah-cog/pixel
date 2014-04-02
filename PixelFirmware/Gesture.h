@@ -1,3 +1,6 @@
+#ifndef GESTURE_H
+#define GESTURE_H
+
 #include "Gestures.h"
 
 #define MAX_INTEGER_VALUE 32767
@@ -110,3 +113,4 @@ int classifyGestureFromTransitions() {
   return minimumDeviationIndex;
 }
 
+#endif

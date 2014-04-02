@@ -40,6 +40,52 @@ void setupInertialMeasurementUnit() {
   Wire.begin();
 }
 
+/**
+ * Initialize the IMU peripheral (inertial measurement unit).
+ */
+boolean setupOrientationSensor() {
+
+  Serial.println("Turning on orientation sensor...");
+  setupInertialMeasurementUnit();
+
+  // delay(1500);
+
+  setupAccelerometer();
+  setupCompass();
+  setupGyroscope();
+  setupAltimeter();
+
+  delay(20); // Wait for a small duration for the IMU sensors to initialize (?)
+
+  for (int i = 0; i < 32; i++) { // We take some initial readings... (to warm the IMU up?)
+    getGyroscopeData();
+    getAccelerometerData();
+    for (int y = 0; y < 6; y++) { // Cumulate values
+        AN_OFFSET[y] += AN[y];
+    }
+    delay(20);
+  }
+
+  for (int y = 0; y < 6; y++) {
+    AN_OFFSET[y] = AN_OFFSET[y] / 32;
+  }
+
+  AN_OFFSET[5] -= GRAVITY * SENSOR_SIGN[5];
+
+  Serial.print("Offset: ");
+  for (int y = 0; y < 6; y++) {
+    Serial.print(AN_OFFSET[y]);
+    Serial.print(" ");
+  }
+  Serial.print("\n");
+
+  // delay(1000); // TODO: Why is this here? Try to get rid of it! Wake up quickly!
+
+  timer = millis();
+  delay(20);
+  counter = 0;
+}
+
 void setupGyroscope() {
   gyro.init();
   gyro.writeReg(L3G_CTRL_REG1, 0x0F); // normal power mode, all axes enabled, 100 Hz

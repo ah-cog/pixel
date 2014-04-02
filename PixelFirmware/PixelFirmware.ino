@@ -13,28 +13,6 @@ Michael Gubbels
 #include "Movement.h"
 #include "Communication.h"
 
-#define DEVICE_ADDRESS   0x0001
-
-//#if defined(DEVICE_ADDRESS)
-#if DEVICE_ADDRESS == 0x0001
-  #define NEIGHBOR_ADDRESS 0x0002
-#elif DEVICE_ADDRESS == 0x0002
-  #define NEIGHBOR_ADDRESS 0x0001
-#endif
-
-#define BROADCAST_ADDRESS NEIGHBOR_ADDRESS // 0xFFFF
-
-/**
- * RadioBlocks Setup
- */
-
-#define RADIOBLOCK_PACKET_READ_TIMEOUT 40 // 100
-#define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload
-#define RADIOBLOCK_PACKET_WRITE_TIMEOUT 120 // 200
-
-// The module's pins 1, 2, 3, and 4 are connected to pins 5V, GND, 8, and 7.
-RadioBlockSerialInterface interface = RadioBlockSerialInterface(-1, -1, 8, 7);
-
 /**
  * Device Setup
  */
@@ -43,7 +21,7 @@ boolean hasCounter = false;
 unsigned long lastCount = 0;
 #define NEIGHBOR_COUNT 2
 unsigned short int neighbors[NEIGHBOR_COUNT];
-unsigned short int next[1];
+unsigned short int next[1]; // TODO: Remove this! Use the "nextModules" and "previousModules" data structures and methods.
 
 //            _               
 //           | |              
@@ -56,125 +34,44 @@ unsigned short int next[1];
 
 void setup() {
   
+  // Initialize pseudorandom number generator
   randomSeed(analogRead(0));
 
   // Initialize module's color
   // setModuleColor(random(256), random(256), random(256)); // Set the module's default color
   setModuleColor(205, 205, 205); // Set the module's default color
+  
+  // Assign the module a unique color
+//  setModuleColor(255, 255, 0);
+//  moduleColor[0] = 255;
+//  moduleColor[1] = 255;
+//  moduleColor[2] = 0;
+  setColor(moduleColor[0], moduleColor[1], moduleColor[2]);
 
   // Fade on the module to let people know it's alive!
   fadeOn();
   fadeOff();
   
   // Setup mesh networking peripherals (i.e., RadioBlocks)
-  setupMesh();
+  setupCommunication();
   
   //
   // Setup serial communication (for debugging)
   //
   
   Serial.begin(9600);
-  Serial.println(F("Pixel 2014.03.29.17.38.01"));
+  Serial.println(F("Pixel 2014.04.01.23.54.14"));
   
   // Setup physical orientation sensing peripherals (i.e., IMU)
   setupOrientationSensor();
   
-  // Assign the module a unique color
-//  color[0] = random(256);
-//  color[1] = random(256);
-//  color[2] = random(256);
-  moduleColor[0] = 255;
-  moduleColor[1] = 255;
-  moduleColor[2] = 0;
-  setColor(moduleColor[0], moduleColor[1], moduleColor[2]);
-  
   // Flash RGB LEDs
-  // setColor(255, 255, 255);
-  ledOn();
-  delay(100);
+  ledOn();  delay(100);
+  ledOff(); delay(100);
+  ledOn();  delay(100);
+  ledOff(); delay(100);
+  ledOn();  delay(100);
   ledOff();
-  delay(100);
-  ledOn();
-  delay(100);
-  ledOff();
-  delay(100);
-  ledOn();
-  delay(100);
-  ledOff();
-}
-
-/**
- * Initialize mesh networking peripheral.
- */
-boolean setupMesh() {
-  
-//  delay(1000);
-  
-  interface.begin();
-  
-  // Give RadioBlock time to init
-  delay(500);
-  
-  // Flash the LED a few times to tell that the module is live
-  interface.setLED(true);
-  delay(200);
-  interface.setLED(false);
-  delay(200);
-  interface.setLED(true);
-  delay(200);
-  interface.setLED(false);
-  delay(200);
-  interface.setLED(true);
-  delay(200);
-  interface.setLED(false);
-  
-  interface.setChannel(15);
-  interface.setPanID(0xBAAD);
-  interface.setAddress(DEVICE_ADDRESS);
-}
-
-/**
- * Initialize the IMU peripheral (inertial measurement unit).
- */
-boolean setupOrientationSensor() {
-
-  Serial.println("Initializing orientation sensor...");
-  setupInertialMeasurementUnit();
-
-  // delay(1500);
-
-  setupAccelerometer();
-  setupCompass();
-  setupGyroscope();
-  setupAltimeter();
-
-  delay(20); // Wait for a small duration for the IMU sensors to initialize (?)
-
-  for (int i = 0; i < 32; i++) { // We take some initial readings... (to warm the IMU up?)
-    getGyroscopeData();
-    getAccelerometerData();
-    for (int y = 0; y < 6; y++) { // Cumulate values
-        AN_OFFSET[y] += AN[y];
-    }
-    delay(20);
-  }
-
-  for (int y = 0; y < 6; y++) {
-    AN_OFFSET[y] = AN_OFFSET[y] / 32;
-  }
-
-  AN_OFFSET[5] -= GRAVITY * SENSOR_SIGN[5];
-
-  Serial.println("Offset: ");
-  for (int y = 0; y < 6; y++) {
-    Serial.println(AN_OFFSET[y]);
-  }
-
-  // delay(1000); // TODO: Why is this here? Try to get rid of it! Wake up quickly!
-
-  timer = millis();
-  delay(20);
-  counter = 0;
 }
 
 //   _                   
@@ -195,49 +92,6 @@ unsigned long awaitingPreviousModuleStartTime = 0;
 boolean hasGestureProcessed = false;
 
 void loop() {
-  
-//  // List size
-//  Serial.print("previousModuleCount = ");
-//  Serial.print(previousModuleCount);
-//  Serial.print("\n");
-//  
-//  // Print list
-//  Serial.print("List: ");
-//  for (int i = 0; i < previousModuleCount; i++) {
-//    Serial.print(previousModules[i]);
-//    Serial.print(" ");
-//  }
-//  Serial.print("\n");
-//  
-//  addPreviousModule(3);
-//  addPreviousModule(3);
-//  addPreviousModule(4);
-//  // List size
-//  Serial.print("previousModuleCount = ");
-//  Serial.print(previousModuleCount);
-//  Serial.print("\n");
-//  
-//  // Print list
-//  Serial.print("List: ");
-//  for (int i = 0; i < previousModuleCount; i++) {
-//    Serial.print(previousModules[i]);
-//    Serial.print(" ");
-//  }
-//  Serial.print("\n");
-//  
-//  removePreviousModule(3);
-//  // List size
-//  Serial.print("previousModuleCount = ");
-//  Serial.print(previousModuleCount);
-//  Serial.print("\n");
-//  
-//  Serial.println(removePreviousModule(5));
-//  
-//  Serial.println(hasPreviousModule(5));
-//  Serial.println(hasPreviousModule(4));
-//  Serial.println(hasPreviousModule(3));
-//  
-//  return;
   
   // Get data from mesh network
   boolean hasReceivedMeshData = false;
@@ -325,7 +179,7 @@ void loop() {
   // Receive and process incoming messages
   //
   
-  if (meshIncomingMessageQueueSize > 0) {
+  if (incomingMessageQueueSize > 0) {
     Message message = dequeueIncomingMeshMessage();
     
     Serial.print("Received ");
@@ -334,11 +188,11 @@ void loop() {
     Serial.print(" from module ");
     Serial.print(message.source);
     Serial.print(" (of ");
-    Serial.print(meshIncomingMessageQueueSize);
+    Serial.print(incomingMessageQueueSize);
     Serial.print(")\n");
     
     //
-    // Process incoming message
+    // Process received messages
     //
     
     if (message.message == 8) {
@@ -613,51 +467,6 @@ boolean handleGestureTapToAnotherAsRight() {
 //          // Wait for confirmation
 //          // delayUntilConfirmation();
 //      }
-}
-
-/**
- * Push a message onto the queue of messages to be processed and sent via the mesh network.
- */
-boolean addBroadcast(int message) {
-  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)
-    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
-    messageQueue[messageQueueSize].source = BROADCAST_ADDRESS; // Set "broadcast address"
-    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
-    messageQueueSize++; // Increment the message count
-  }
-}
-
-/**
- * Push a message onto the queue of messages to be processed and sent via the mesh network.
- */
-boolean addMessage(int source, int message) {
-  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)  
-    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
-    messageQueue[messageQueueSize].source = source;
-    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
-    messageQueueSize++; // Increment the message count
-  }
-}
-
-Message dequeueOutgoingMessage() {
-  
-  if (messageQueueSize > 0) {
-    
-    // Get the next message from the front of the queue
-    //unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
-    Message message = { messageQueue[0].source, messageQueue[0].message }; // Get message on front of queue
-    messageQueueSize--;
-    
-    // Shift the remaining messages forward one position in the queue
-    for (int i = 0; i < MESSAGE_QUEUE_CAPACITY - 1; i++) {
-      messageQueue[i].source = messageQueue[i + 1].source;
-      messageQueue[i].message = messageQueue[i + 1].message;
-    }
-    messageQueue[MESSAGE_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
-    messageQueue[MESSAGE_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
-    
-    return message;
-  }
 }
 
 /**

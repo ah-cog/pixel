@@ -1,3 +1,54 @@
+#ifndef COMMUNICATION_H
+#define COMMUNICATION_H
+
+#define DEVICE_ADDRESS   0x0001
+
+#if defined(DEVICE_ADDRESS)
+  #if DEVICE_ADDRESS == 0x0001
+    #define NEIGHBOR_ADDRESS 0x0002
+  #elif DEVICE_ADDRESS == 0x0002
+    #define NEIGHBOR_ADDRESS 0x0001
+  #endif
+#endif
+
+#define BROADCAST_ADDRESS NEIGHBOR_ADDRESS // 0xFFFF
+
+/**
+ * RadioBlocks Setup
+ */
+
+#define RADIOBLOCK_PACKET_READ_TIMEOUT 40 // 100
+#define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload
+#define RADIOBLOCK_PACKET_WRITE_TIMEOUT 120 // 200
+
+// The module's pins 1, 2, 3, and 4 are connected to pins 5V, GND, 8, and 7.
+RadioBlockSerialInterface interface = RadioBlockSerialInterface(-1, -1, 8, 7);
+
+/**
+ * Initialize mesh networking peripheral.
+ */
+boolean setupCommunication() {
+  
+//  delay(1000);
+  
+  interface.begin();
+  
+  // Give RadioBlock time to init
+  delay(500);
+  
+  // Flash the LED a few times to tell that the module is live
+  interface.setLED(true);  delay(200);
+  interface.setLED(false); delay(200);
+  interface.setLED(true);  delay(200);
+  interface.setLED(false); delay(200);
+  interface.setLED(true);  delay(200);
+  interface.setLED(false);
+  
+  interface.setChannel(15);
+  interface.setPanID(0xBAAD);
+  interface.setAddress(DEVICE_ADDRESS);
+}
+
 // These #define's are copied from the RadioBlock.cpp file
 #define TYPE_UINT8 	1
 #define TYPE_INT8	2
@@ -23,7 +74,7 @@ struct Message {
 #define MESH_INCOMING_QUEUE_CAPACITY 20
 //unsigned short int meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY] = { 0 };
 Message meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY];
-int meshIncomingMessageQueueSize = 0;
+int incomingMessageQueueSize = 0;
 
 // Mesh outgoing message queue
 #define MESSAGE_QUEUE_CAPACITY 20
@@ -191,11 +242,11 @@ boolean hasNextModule(int module) {
 boolean queueIncomingMeshMessage(int source, int message) {
   // TODO: Add message to queue... and use sendMessage to send the messages...
   
-  if (meshIncomingMessageQueueSize < MESH_INCOMING_QUEUE_CAPACITY) {
+  if (incomingMessageQueueSize < MESH_INCOMING_QUEUE_CAPACITY) {
     // Add message to queue
-    meshIncomingMessages[meshIncomingMessageQueueSize].source = source;
-    meshIncomingMessages[meshIncomingMessageQueueSize].message = message; // Add message to the back of the queue
-    meshIncomingMessageQueueSize++; // Increment the message count
+    meshIncomingMessages[incomingMessageQueueSize].source = source;
+    meshIncomingMessages[incomingMessageQueueSize].message = message; // Add message to the back of the queue
+    incomingMessageQueueSize++; // Increment the message count
   }
   
 //  Serial.print("queueing message (size: ");
@@ -208,12 +259,12 @@ boolean queueIncomingMeshMessage(int source, int message) {
  */
 Message dequeueIncomingMeshMessage() {
   
-  if (meshIncomingMessageQueueSize > 0) {
+  if (incomingMessageQueueSize > 0) {
     
     // Get the next message from the front of the queue
     //unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
     Message message = { meshIncomingMessages[0].source, meshIncomingMessages[0].message }; // Get message on front of queue
-    meshIncomingMessageQueueSize--;
+    incomingMessageQueueSize--;
     
     // Shift the remaining messages forward one position in the queue
     for (int i = 0; i < MESH_INCOMING_QUEUE_CAPACITY - 1; i++) {
@@ -226,3 +277,50 @@ Message dequeueIncomingMeshMessage() {
     return message;
   }
 }
+
+/**
+ * Push a message onto the queue of messages to be processed and sent via the mesh network.
+ */
+boolean addBroadcast(int message) {
+  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)
+    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
+    messageQueue[messageQueueSize].source = BROADCAST_ADDRESS; // Set "broadcast address"
+    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
+    messageQueueSize++; // Increment the message count
+  }
+}
+
+/**
+ * Push a message onto the queue of messages to be processed and sent via the mesh network.
+ */
+boolean addMessage(int source, int message) {
+  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)  
+    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
+    messageQueue[messageQueueSize].source = source;
+    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
+    messageQueueSize++; // Increment the message count
+  }
+}
+
+Message dequeueOutgoingMessage() {
+  
+  if (messageQueueSize > 0) {
+    
+    // Get the next message from the front of the queue
+    //unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
+    Message message = { messageQueue[0].source, messageQueue[0].message }; // Get message on front of queue
+    messageQueueSize--;
+    
+    // Shift the remaining messages forward one position in the queue
+    for (int i = 0; i < MESSAGE_QUEUE_CAPACITY - 1; i++) {
+      messageQueue[i].source = messageQueue[i + 1].source;
+      messageQueue[i].message = messageQueue[i + 1].message;
+    }
+    messageQueue[MESSAGE_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
+    messageQueue[MESSAGE_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
+    
+    return message;
+  }
+}
+
+#endif
