@@ -20,7 +20,7 @@ Authors: Michael Gubbels
 boolean hasCounter = false;
 unsigned long lastCount = 0;
 #define NEIGHBOR_COUNT 2
-unsigned short int neighbors[NEIGHBOR_COUNT];
+unsigned short int neighbors[NEIGHBOR_COUNT]; // TODO: Remove this! Use the "nextModules" and "previousModules" data structures and methods.
 //unsigned short int next[1]; // TODO: Remove this! Use the "nextModules" and "previousModules" data structures and methods.
 
 //            _               
@@ -42,10 +42,6 @@ void setup() {
   setModuleColor(205, 205, 205); // Set the module's default color
   
   // Assign the module a unique color
-//  setModuleColor(255, 255, 0);
-//  moduleColor[0] = 255;
-//  moduleColor[1] = 255;
-//  moduleColor[2] = 0;
   setColor(moduleColor[0], moduleColor[1], moduleColor[2]);
 
   // Fade on the module to let people know it's alive!
@@ -63,7 +59,7 @@ void setup() {
   Serial.println(F("Pixel 2014.04.01.23.54.14"));
   
   // Setup physical orientation sensing peripherals (i.e., IMU)
-  setupOrientationSensor();
+  setupOrientationSensing();
   
   // Flash RGB LEDs
   ledOn();  delay(100);
@@ -171,7 +167,7 @@ void loop() {
   }
   
   //
-  // Process incoming messages (if any)
+  // Process incoming messages in queue (if any)
   //
   
   if (incomingMessageQueueSize > 0) {

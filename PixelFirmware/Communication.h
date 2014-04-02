@@ -37,12 +37,12 @@ boolean setupCommunication() {
   delay(500);
   
   // Flash the LED a few times to tell that the module is live
-  interface.setLED(true);  delay(200);
-  interface.setLED(false); delay(200);
-  interface.setLED(true);  delay(200);
-  interface.setLED(false); delay(200);
-  interface.setLED(true);  delay(200);
-  interface.setLED(false);
+//  interface.setLED(true);  delay(200);
+//  interface.setLED(false); delay(200);
+//  interface.setLED(true);  delay(200);
+//  interface.setLED(false); delay(200);
+//  interface.setLED(true);  delay(200);
+//  interface.setLED(false);
   
   interface.setChannel(15);
   interface.setPanID(0xBAAD);
