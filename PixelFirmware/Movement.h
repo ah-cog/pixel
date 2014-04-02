@@ -1,24 +1,16 @@
+#ifndef MOVEMENT_H
+#define MOVEMENT_H
+
 /**
  * Accelerometer Setup
  */
 
 // Uncomment the below line to use this axis definition: 
-// X axis pointing forward
-// Y axis pointing to the right 
-// and Z axis pointing down.
-// Positive pitch : nose up
-// Positive roll : right wing down
-// Positive yaw : clockwise
-//int SENSOR_SIGN[9] = { 1, 1, 1, -1, -1, -1, 1, 1, 1 }; //Correct directions x,y,z - gyro, accelerometer, magnetometer
-
-// Uncomment the below line to use this axis definition: 
-// X axis pointing forward
-// Y axis pointing to the left 
-// and Z axis pointing up.
-// Positive pitch : nose down
-// Positive roll : right wing down
-// Positive yaw : counterclockwise
-int SENSOR_SIGN[9] = {1,-1,-1,-1,1,1,1,-1,-1}; //Correct directions x,y,z - gyro, accelerometer, magnetometer
+// X axis pointing forward, Y axis pointing to the left, and Z axis pointing up.
+// Positive pitch: nose down
+// Positive roll: right wing down
+// Positive yaw: counterclockwise
+int SENSOR_SIGN[9] = {1, -1, -1, -1, 1, 1, 1, -1, -1}; //Correct directions x,y,z - gyro, accelerometer, magnetometer
 //int SENSOR_SIGN[9] = { 1, -1, -1, 1, -1, 1, 1, -1, -1 }; // Correct directions x,y,z - gyro, accelerometer, magnetometer
 
 // LSM303 accelerometer (8g sensitivity)
@@ -99,19 +91,19 @@ float temperature = 0;
 
 // The "Direction Cosine Matrix" (DCM), also known as the "Rotation Matrix"
 float DCM_Matrix[3][3] = {
-    { 1, 0, 0 },
-    { 0, 1, 0 },
-    { 0, 0, 1 }
+  { 1, 0, 0 },
+  { 0, 1, 0 },
+  { 0, 0, 1 }
 };
 float Update_Matrix[3][3] = { // Gyros here
-    { 0, 1, 2 },
-    { 3, 4, 5 },
-    { 6, 7, 8 }
+  { 0, 1, 2 },
+  { 3, 4, 5 },
+  { 6, 7, 8 }
 };
 float Temporary_Matrix[3][3] = {
-    { 0, 0, 0 },
-    { 0, 0, 0 },
-    { 0, 0, 0 }
+  { 0, 0, 0 },
+  { 0, 0, 0 },
+  { 0, 0, 0 }
 };
 
 char serialDataString[512];
@@ -145,3 +137,5 @@ void storeData() {
     gestureCandidateSize = gestureCandidateSize + 1;
   }
 }
+
+#endif

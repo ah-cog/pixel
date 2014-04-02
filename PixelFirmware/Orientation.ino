@@ -86,6 +86,41 @@ boolean setupOrientationSensing() {
   counter = 0;
 }
 
+void setupGyroscope() {
+  gyro.init();
+  gyro.writeReg(L3G_CTRL_REG1, 0x0F); // normal power mode, all axes enabled, 100 Hz
+  gyro.writeReg(L3G_CTRL_REG4, 0x20); // 2000 dps full scale
+}
+
+void setupAccelerometer() {
+  compass.init();
+  if (compass.getDeviceType() == LSM303DLHC_DEVICE)
+  {
+    compass.writeAccReg(LSM303_CTRL_REG1_A, 0x47); // normal power mode, all axes enabled, 50 Hz
+    compass.writeAccReg(LSM303_CTRL_REG4_A, 0x28); // 8 g full scale: FS = 10 on DLHC; high resolution output mode
+  }
+  else 
+  {
+    compass.writeAccReg(LSM303_CTRL_REG1_A, 0x27); // normal power mode, all axes enabled, 50 Hz
+    compass.writeAccReg(LSM303_CTRL_REG4_A, 0x30); // 8 g full scale: FS = 11 on DLH, DLM
+  }
+}
+
+// Initialize compass sensor
+void setupCompass() {
+  compass.writeMagReg(LSM303_MR_REG_M, 0x00); // continuous conversion mode
+  // 15 Hz default
+}
+
+// Initialize altimeter sensor
+void setupAltimeter() {
+  if (!ps.init()) {
+    Serial.println("Failed to autodetect pressure sensor!");
+    while (1);
+  }
+  ps.enableDefault();
+}
+
 /**
  * Read the IMU sensor data and estimate the module's orientation. Orientation is 
  * estimated using the DCM (Direction Cosine Matrix).
@@ -118,21 +153,15 @@ boolean senseOrientation() {
     getAltimeterData();
 
     // Calculations...
-    Matrix_update(); 
+    DCM_Matrix_update(); 
     Normalize();
     Drift_correction();
-    Euler_angles();
+    Euler_Angles();
     
     return true;
   } else {
     return false;
   }
-}
-
-void setupGyroscope() {
-  gyro.init();
-  gyro.writeReg(L3G_CTRL_REG1, 0x0F); // normal power mode, all axes enabled, 100 Hz
-  gyro.writeReg(L3G_CTRL_REG4, 0x20); // 2000 dps full scale
 }
 
 void getGyroscopeData() {
@@ -146,21 +175,9 @@ void getGyroscopeData() {
   gyro_z = SENSOR_SIGN[2] * (AN[2] - AN_OFFSET[2]);
 }
 
-void setupAccelerometer() {
-  compass.init();
-  if (compass.getDeviceType() == LSM303DLHC_DEVICE)
-  {
-    compass.writeAccReg(LSM303_CTRL_REG1_A, 0x47); // normal power mode, all axes enabled, 50 Hz
-    compass.writeAccReg(LSM303_CTRL_REG4_A, 0x28); // 8 g full scale: FS = 10 on DLHC; high resolution output mode
-  }
-  else 
-  {
-    compass.writeAccReg(LSM303_CTRL_REG1_A, 0x27); // normal power mode, all axes enabled, 50 Hz
-    compass.writeAccReg(LSM303_CTRL_REG4_A, 0x30); // 8 g full scale: FS = 11 on DLH, DLM
-  }
-}
-
-// Reads x,y and z accelerometer registers
+/**
+ * Reads x, y and z accelerometer registers.
+ */
 void getAccelerometerData() {
   compass.readAcc();
 
@@ -172,12 +189,6 @@ void getAccelerometerData() {
   accel_z = SENSOR_SIGN[5] * (AN[5] - AN_OFFSET[5]);
 }
 
-// Initialize compass sensor
-void setupCompass() {
-  compass.writeMagReg(LSM303_MR_REG_M, 0x00); // continuous conversion mode
-  // 15 Hz default
-}
-
 // Read compass sensor data
 void getCompassData() {
   compass.readMag();
@@ -185,15 +196,6 @@ void getCompassData() {
   magnetom_x = SENSOR_SIGN[6] * compass.m.x;
   magnetom_y = SENSOR_SIGN[7] * compass.m.y;
   magnetom_z = SENSOR_SIGN[8] * compass.m.z;
-}
-
-// Initialize altimeter sensor
-void setupAltimeter() {
-  if (!ps.init()) {
-    Serial.println("Failed to autodetect pressure sensor!");
-    while (1);
-  }
-  ps.enableDefault();
 }
 
 // Read altimeter sensor data
@@ -246,7 +248,7 @@ void calculateCompassHeading() {
 // from "Vector"
 
 // Computes the dot product of two vectors
-float Vector_Dot_Product(float vector1[3],float vector2[3]) {
+float Vector_Dot_Product(float vector1[3], float vector2[3]) {
   float op = 0;
   
   for(int c=0; c<3; c++) {
@@ -256,22 +258,22 @@ float Vector_Dot_Product(float vector1[3],float vector2[3]) {
   return op; 
 }
 
-//Computes the cross product of two vectors
-void Vector_Cross_Product(float vectorOut[3], float v1[3],float v2[3]) {
+// Computes the cross product of two vectors
+void Vector_Cross_Product(float vectorOut[3], float v1[3], float v2[3]) {
   vectorOut[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
   vectorOut[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
   vectorOut[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
 }
 
-//Multiply the vector by a scalar. 
+// Multiply the vector by a scalar. 
 void Vector_Scale(float vectorOut[3],float vectorIn[3], float scale2) {
-  for(int c = 0; c < 3; c++) {
+  for (int c = 0; c < 3; c++) {
     vectorOut[c] = vectorIn[c] * scale2;
   }
 }
 
-void Vector_Add(float vectorOut[3],float vectorIn1[3], float vectorIn2[3]) {
-  for(int c = 0; c < 3; c++) {
+void Vector_Add(float vectorOut[3], float vectorIn1[3], float vectorIn2[3]) {
+  for (int c = 0; c < 3; c++) {
     vectorOut[c] = vectorIn1[c] + vectorIn2[c];
   }
 }
@@ -356,7 +358,7 @@ void Accel_adjust(void) {
 */
 /**************************************************/
 
-void Matrix_update(void) {
+void DCM_Matrix_update(void) {
   Gyro_Vector[0] = Gyro_Scaled_X(gyro_x); // gyro x roll
   Gyro_Vector[1] = Gyro_Scaled_Y(gyro_y); // gyro y pitch
   Gyro_Vector[2] = Gyro_Scaled_Z(gyro_z); // gyro Z yaw
@@ -401,7 +403,10 @@ void Matrix_update(void) {
   }
 }
 
-void Euler_angles (void) {
+/**
+ * Computes the "Euler angles" (i.e., roll, pitch, and yaw).
+ */
+void Euler_Angles (void) {
   pitch = -asin(DCM_Matrix[2][0]);
   roll  = atan2(DCM_Matrix[2][1], DCM_Matrix[2][2]);
   yaw   = atan2(DCM_Matrix[1][0], DCM_Matrix[0][0]);
@@ -503,8 +508,8 @@ void Matrix_Multiply(float a[3][3], float b[3][3], float mat[3][3]) {
 */
 //  Serial.println();
 //}
-
-long convert_to_dec(float x) {
-  return x * 10000000;
-}
+//
+//long convert_to_dec(float x) {
+//  return x * 10000000;
+//}
 

@@ -13,6 +13,11 @@
 
 #define BROADCAST_ADDRESS NEIGHBOR_ADDRESS // 0xFFFF
 
+#define RADIOBLOCK_POWER_PIN -1
+#define RADIOBLOCK_GROUND_PIN -1
+#define RADIOBLOCK_RX_PIN 8
+#define RADIOBLOCK_TX_PIN 7
+
 /**
  * RadioBlocks Setup
  */
@@ -22,7 +27,7 @@
 #define RADIOBLOCK_PACKET_WRITE_TIMEOUT 120 // 200
 
 // The module's pins 1, 2, 3, and 4 are connected to pins 5V, GND, 8, and 7.
-RadioBlockSerialInterface interface = RadioBlockSerialInterface(-1, -1, 8, 7);
+RadioBlockSerialInterface interface = RadioBlockSerialInterface(RADIOBLOCK_POWER_PIN, RADIOBLOCK_GROUND_PIN, RADIOBLOCK_RX_PIN, RADIOBLOCK_TX_PIN);
 
 /**
  * Initialize mesh networking peripheral.

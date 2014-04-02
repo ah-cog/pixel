@@ -14,7 +14,7 @@ Authors: Michael Gubbels
 #include "Communication.h"
 
 /**
- * Device Setup
+ * Module configuration
  */
 
 boolean hasCounter = false;
@@ -89,6 +89,7 @@ boolean hasGestureProcessed = false;
 
 void loop() {
   
+  // TODO: Add "getPins" function to read the state of pins, store the state of the pins, and handle interfacing with the pins (reading, writing), based on the program running (in both Looper and Mover).
   // TODO: Write code to allow Processing sketch (or other software) to automatically connect to this serial port. Send a "waiting for connection" signal one per second (or thereabout).
   
   //
@@ -248,7 +249,7 @@ void loop() {
         delay(1500);
       }
       
-    } else if (message.message == 13) { // Sequence confirmation
+    } else if (message.message == 13) { // Sequencing (i.e., linking) confirmation
     
       Serial.println(">>>> PROCESSING MESSAGE 13");
       
@@ -281,6 +282,7 @@ void loop() {
         
         //addNextModule(message.source);
 //      }
+    } else if (message.message == 14) { // The ACK message from message.source confirming linking operation (if not yet done)
     }
   }
   
@@ -291,6 +293,7 @@ void loop() {
   // TODO: Handle "ongoing" gesture (i.e., do the stuff that should be done more than once, or as long as the gesture is active)
   
   // Process mesh message queue  
+  // TODO: Put this in the following bit of logic (with RADIOBLOCK_PACKET_WRITE_TIMEOUT)
   if (messageQueueSize > 0) {
     sendMessage();
   }
@@ -322,11 +325,11 @@ boolean handleGestureAtRestOnTable() {
  * Handle "at rest, in hand" gesture.
  */
 boolean handleGestureAtRestInHand() {
-  addBroadcast(2);
-  
 //  crossfadeColor(color[0], color[1], color[2]);
   setColor(moduleColor[0], moduleColor[1], moduleColor[2]);
   ledOn();
+  
+  addBroadcast(2);
   
 //  crossfadeColor(255, 0, 0);
 //  crossfadeColor(0, 255, 0);
@@ -354,51 +357,47 @@ boolean handleGesturePlaceDown() {
  * Handle "tilt left" gesture.
  */
 boolean handleGestureTiltLeft() {
-  addBroadcast(5);
-  
   crossfadeColor(0, 0, 255);
+  
+  addBroadcast(5);
 }
 
 /**
  * Handle "tilt right" gesture.
  */
 boolean handleGestureTiltRight() {
-  addBroadcast(6);
-  
   crossfadeColor(0, 255, 0);
+  
+  addBroadcast(6);
 }
 
 /**
  * Handle "shake" gesture.
  */
 boolean handleGestureShake() {
-  addBroadcast(7);
-  
   setColor(255, 0, 0);
   ledOn();
+  
+  addBroadcast(7);
 }
 
 /**
  * Handle "tap to another, as left" gesture.
  */
 boolean handleGestureTapToAnotherAsLeft() {
-  addBroadcast(8);
-  awaitingNextModule = true;
-  awaitingNextModuleStartTime = millis();
-  
   moduleColor[0] = 255;
   moduleColor[1] = 0;
   moduleColor[2] = 0;
+  
+  addBroadcast(8);
+  awaitingNextModule = true;
+  awaitingNextModuleStartTime = millis();
 }
 
 /**
  * Handle "tap to another, as right" gesture.
  */
 boolean handleGestureTapToAnotherAsRight() {
-  addBroadcast(9);
-  awaitingPreviousModule = true;
-  awaitingPreviousModuleStartTime = millis();
-
   moduleColor[0] = 0;
   moduleColor[1] = 0;
   moduleColor[2] = 255;
@@ -415,4 +414,8 @@ boolean handleGestureTapToAnotherAsRight() {
 //          // Wait for confirmation
 //          // delayUntilConfirmation();
 //      }
+
+  addBroadcast(9);
+  awaitingPreviousModule = true;
+  awaitingPreviousModuleStartTime = millis();
 }
