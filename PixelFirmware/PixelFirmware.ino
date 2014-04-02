@@ -1,6 +1,6 @@
 /*
 "Pixel" Firmware, Rendition 2
-Michael Gubbels
+Authors: Michael Gubbels
 */
 
 #include <Wire.h>
@@ -21,7 +21,7 @@ boolean hasCounter = false;
 unsigned long lastCount = 0;
 #define NEIGHBOR_COUNT 2
 unsigned short int neighbors[NEIGHBOR_COUNT];
-unsigned short int next[1]; // TODO: Remove this! Use the "nextModules" and "previousModules" data structures and methods.
+//unsigned short int next[1]; // TODO: Remove this! Use the "nextModules" and "previousModules" data structures and methods.
 
 //            _               
 //           | |              
@@ -93,25 +93,19 @@ boolean hasGestureProcessed = false;
 
 void loop() {
   
+  // TODO: Write code to allow Processing sketch (or other software) to automatically connect to this serial port. Send a "waiting for connection" signal one per second (or thereabout).
+  
+  //
   // Get data from mesh network
+  //
+  
   boolean hasReceivedMeshData = false;
   hasReceivedMeshData = receiveMeshData();
   
-//  for(int gesture = 0; gesture < GESTURE_COUNT; gesture++) {  
-//    for(int axis = 0; axis < AXIS_COUNT; axis++) {
-//      for(int point = 0; point < GESTURE_SIGNATURE_SIZE; point++) {
-//        Serial.print(gestureSignature[gesture][axis][point]);
-//        Serial.print(" ");
-//      }
-//      Serial.println();
-//    }
-//    Serial.println();
-//  }
-//  Serial.println();
+  //
+  // Sense gesture (and phsyical orientation, generally)
+  //
   
-  // TODO: Write code to allow Processing sketch (or other software) to automatically connect to this serial port. Send a "waiting for connection" signal.
-  
-  // Sense phsyical orientation data
   boolean hasGestureChanged = false;
   if (senseOrientation()) {
     storeData();
@@ -123,6 +117,8 @@ void loop() {
       
       lastGestureClassificationTime = millis(); // Update time of most recent gesture classification
     }
+    
+    responsive, interactive, programmable materials for artists, makers, creatives, etc.
     
     // Update current gesture (if it has changed)
     if (classifiedGestureIndex != previousClassifiedGestureIndex) {
@@ -144,6 +140,7 @@ void loop() {
   
   //
   // Gesture Interpreter
+  // Perform the action associated with the gesture.
   //
   
   // Process current gesture (if it hasn't been processed yet)
@@ -176,7 +173,7 @@ void loop() {
   }
   
   //
-  // Receive and process incoming messages
+  // Process incoming messages (if any)
   //
   
   if (incomingMessageQueueSize > 0) {
@@ -294,7 +291,7 @@ void loop() {
   }
   
   //
-  // Send message with updated gesture
+  // Send outgoing messages (e.g., this module's updated gesture)
   //
   
   // TODO: Handle "ongoing" gesture (i.e., do the stuff that should be done more than once, or as long as the gesture is active)
@@ -314,49 +311,6 @@ void loop() {
     
     // Update the time that a message was most-recently dispatched
     lastCount = millis();
-  }
-}
-
-/**
- * Read the IMU sensor data and estimate the module's orientation. Orientation is 
- * estimated using the DCM (Direction Cosine Matrix).
- */
-boolean senseOrientation() {
-  
-  if ((millis() - timer) >= 20) { // Main loop runs at 50Hz
-    counter++;
-    timer_old = timer;
-    timer = millis();
-    if (timer > timer_old) {
-      G_Dt = (timer-timer_old) / 1000.0; // Real time of loop run. We use this on the DCM algorithm (gyro integration time)
-    } else {
-      G_Dt = 0;
-    }
-
-    // DCM algorithm:
-
-    // Data adquisition
-    getGyroscopeData(); // This read gyro data
-    getAccelerometerData(); // Read I2C accelerometer
-
-    if (counter > 5) { // Read compass data at 10 Hz... (5 loop runs)
-      counter = 0;
-      getCompassData(); // Read I2C magnetometer
-      calculateCompassHeading(); // Calculate magnetic heading
-    }
-
-    // Read pressure/altimeter
-    getAltimeterData();
-
-    // Calculations...
-    Matrix_update(); 
-    Normalize();
-    Drift_correction();
-    Euler_angles();
-    
-    return true;
-  } else {
-    return false;
   }
 }
 

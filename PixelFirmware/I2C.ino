@@ -86,6 +86,49 @@ boolean setupOrientationSensor() {
   counter = 0;
 }
 
+/**
+ * Read the IMU sensor data and estimate the module's orientation. Orientation is 
+ * estimated using the DCM (Direction Cosine Matrix).
+ */
+boolean senseOrientation() {
+  
+  if ((millis() - timer) >= 20) { // Main loop runs at 50Hz
+    counter++;
+    timer_old = timer;
+    timer = millis();
+    if (timer > timer_old) {
+      G_Dt = (timer-timer_old) / 1000.0; // Real time of loop run. We use this on the DCM algorithm (gyro integration time)
+    } else {
+      G_Dt = 0;
+    }
+
+    // DCM algorithm:
+
+    // Data adquisition
+    getGyroscopeData(); // This read gyro data
+    getAccelerometerData(); // Read I2C accelerometer
+
+    if (counter > 5) { // Read compass data at 10 Hz... (5 loop runs)
+      counter = 0;
+      getCompassData(); // Read I2C magnetometer
+      calculateCompassHeading(); // Calculate magnetic heading
+    }
+
+    // Read pressure/altimeter
+    getAltimeterData();
+
+    // Calculations...
+    Matrix_update(); 
+    Normalize();
+    Drift_correction();
+    Euler_angles();
+    
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void setupGyroscope() {
   gyro.init();
   gyro.writeReg(L3G_CTRL_REG1, 0x0F); // normal power mode, all axes enabled, 100 Hz
