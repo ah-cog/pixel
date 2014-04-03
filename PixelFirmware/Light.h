@@ -7,9 +7,12 @@
 // - cut (to specified color, immediately)
 // - crossfade (to specified color, from current color)
 
-int moduleColor[3] = { 255, 255, 255 };
-int ledColor[3] = { 255, 255, 255 }; // The current color of the LED
-//int targetLedColor[3] = { 255, 255, 255 }; // The desired color of the LED
+// TODO:
+// - int colorTransitionMode = CUT, CROSSFADE
+
+int moduleColor[3] = { 255, 255, 255 }; // The color associated with the module
+int targetColor[3] = { 255, 255, 255 }; // The desired color of the LED
+int ledColor[3] = { 255, 255, 255 }; // The current actual color of the LED
 
 void setModuleColor(int red, int green, int blue) {
   moduleColor[0] = abs(red - 255);
@@ -97,18 +100,18 @@ void fadeLow() {
   applyColor();
 }
 
-int crossfadeIndex = 0;
+int crossfadeStep = 0;
 void crossfadeColorStep(int red, int green, int blue) {
   //for (int i = 0; i <= 255; i++) {
-  if (crossfadeIndex <= 255) {
-    if (crossfadeIndex >= red - ledColor[0] && ledColor[0] > red) {
-      analogWrite(RED_LED_PIN, ledColor[0] - crossfadeIndex);
+  if (crossfadeStep <= 255) {
+    if (crossfadeStep >= red - ledColor[0] && ledColor[0] > red) {
+      analogWrite(RED_LED_PIN, ledColor[0] - crossfadeStep);
     }
-    if (crossfadeIndex >= green - ledColor[1] && ledColor[1] > green) {
-      analogWrite(GREEN_LED_PIN, ledColor[1] - crossfadeIndex);
+    if (crossfadeStep >= green - ledColor[1] && ledColor[1] > green) {
+      analogWrite(GREEN_LED_PIN, ledColor[1] - crossfadeStep);
     }
-    if (crossfadeIndex >= blue - ledColor[2] && ledColor[2] > blue) {
-      analogWrite(BLUE_LED_PIN, ledColor[2] - crossfadeIndex);
+    if (crossfadeStep >= blue - ledColor[2] && ledColor[2] > blue) {
+      analogWrite(BLUE_LED_PIN, ledColor[2] - crossfadeStep);
     }
     
     //delay(10);
@@ -116,23 +119,23 @@ void crossfadeColorStep(int red, int green, int blue) {
     //for (int i = 0; i <= 255; i++)
     //{
       
-    if (crossfadeIndex >= ledColor[0] - red && ledColor[0] < red) {
-      analogWrite(RED_LED_PIN, ledColor[0] + crossfadeIndex);
+    if (crossfadeStep >= ledColor[0] - red && ledColor[0] < red) {
+      analogWrite(RED_LED_PIN, ledColor[0] + crossfadeStep);
     }
-    if (crossfadeIndex >= ledColor[1] - green && ledColor[1] < green) {
-      analogWrite(GREEN_LED_PIN, ledColor[1] + crossfadeIndex);
+    if (crossfadeStep >= ledColor[1] - green && ledColor[1] < green) {
+      analogWrite(GREEN_LED_PIN, ledColor[1] + crossfadeStep);
     }
-    if (crossfadeIndex >= ledColor[2] - blue && ledColor[2] < blue) {
-      analogWrite(BLUE_LED_PIN, ledColor[2] + crossfadeIndex);
+    if (crossfadeStep >= ledColor[2] - blue && ledColor[2] < blue) {
+      analogWrite(BLUE_LED_PIN, ledColor[2] + crossfadeStep);
     }
     delay(5); // delay(10);
     
-    crossfadeIndex++;
-    crossfadeColorStep(red, green, blue);
+    crossfadeStep++;
+    // crossfadeColorStep(red, green, blue);
     
   }
   
-  if (crossfadeIndex == 255) {
+  if (crossfadeStep == 255) {
     delay(5); // delay(10);
     analogWrite(RED_LED_PIN, red);
     analogWrite(GREEN_LED_PIN, green);
@@ -140,6 +143,59 @@ void crossfadeColorStep(int red, int green, int blue) {
     ledColor[0] = red;
     ledColor[1] = green;
     ledColor[2] = blue;
+    
+    crossfadeStep++;
+  }
+}
+
+void crossfadeColorStep() {
+  crossfadeColorStep(targetColor[0], targetColor[1], targetColor[2]);
+}
+
+void crossfadeColorStepComplete(int red, int green, int blue) {
+  //for (int i = 0; i <= 255; i++) {
+  if (crossfadeStep <= 255) {
+    if (crossfadeStep >= red - ledColor[0] && ledColor[0] > red) {
+      analogWrite(RED_LED_PIN, ledColor[0] - crossfadeStep);
+    }
+    if (crossfadeStep >= green - ledColor[1] && ledColor[1] > green) {
+      analogWrite(GREEN_LED_PIN, ledColor[1] - crossfadeStep);
+    }
+    if (crossfadeStep >= blue - ledColor[2] && ledColor[2] > blue) {
+      analogWrite(BLUE_LED_PIN, ledColor[2] - crossfadeStep);
+    }
+    
+    //delay(10);
+    //}
+    //for (int i = 0; i <= 255; i++)
+    //{
+      
+    if (crossfadeStep >= ledColor[0] - red && ledColor[0] < red) {
+      analogWrite(RED_LED_PIN, ledColor[0] + crossfadeStep);
+    }
+    if (crossfadeStep >= ledColor[1] - green && ledColor[1] < green) {
+      analogWrite(GREEN_LED_PIN, ledColor[1] + crossfadeStep);
+    }
+    if (crossfadeStep >= ledColor[2] - blue && ledColor[2] < blue) {
+      analogWrite(BLUE_LED_PIN, ledColor[2] + crossfadeStep);
+    }
+    delay(5); // delay(10);
+    
+    crossfadeStep++;
+    crossfadeColorStep(red, green, blue);
+    
+  }
+  
+  if (crossfadeStep == 255) {
+    delay(5); // delay(10);
+    analogWrite(RED_LED_PIN, red);
+    analogWrite(GREEN_LED_PIN, green);
+    analogWrite(BLUE_LED_PIN, blue);
+    ledColor[0] = red;
+    ledColor[1] = green;
+    ledColor[2] = blue;
+    
+    crossfadeStep++;
   }
 }
 
@@ -148,11 +204,25 @@ void crossfadeColorStep(int red, int green, int blue) {
  */
 void crossfadeColor(int red, int green, int blue) {
   
-  red = abs(red - 255);
-  green = abs(green - 255);
-  blue = abs(blue - 255);
+  targetColor[0] = abs(red - 255);
+  targetColor[1] = abs(green - 255);
+  targetColor[2] = abs(blue - 255);
   
-  crossfadeIndex = 0;
+  crossfadeStep = 0;
   
-  crossfadeColorStep(red, green, blue); // TODO: Move this to the main loop, but generalized, so animation happens "simultaneously" with gesture recognition, so it's very responsive to gesture and movement.
+  // crossfadeColorStep(targetColor[0], targetColor[1], targetColor[2]); // TODO: Move this to the main loop, but generalized, so animation happens "simultaneously" with gesture recognition, so it's very responsive to gesture and movement.
+}
+
+/**
+ * Gradually transition from the current color to the specified color.
+ */
+void crossfadeColorComplete(int red, int green, int blue) {
+  
+  targetColor[0] = abs(red - 255);
+  targetColor[1] = abs(green - 255);
+  targetColor[2] = abs(blue - 255);
+  
+  crossfadeStep = 0;
+  
+  crossfadeColorStepComplete(targetColor[0], targetColor[1], targetColor[2]); // TODO: Move this to the main loop, but generalized, so animation happens "simultaneously" with gesture recognition, so it's very responsive to gesture and movement.
 }

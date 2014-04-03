@@ -92,6 +92,23 @@ void loop() {
   // TODO: Add "getPins" function to read the state of pins, store the state of the pins, and handle interfacing with the pins (reading, writing), based on the program running (in both Looper and Mover).
   // TODO: Write code to allow Processing sketch (or other software) to automatically connect to this serial port. Send a "waiting for connection" signal one per second (or thereabout).
   
+//  if (getPreviousModuleCount()) {
+//    Serial.print("Previous modules: ");
+//    Serial.print(getPreviousModuleCount());
+//    Serial.println();
+//  }
+//  
+//  if (getNextModuleCount()) {
+//    Serial.print("Next modules: ");
+//    Serial.print(getNextModuleCount());
+//    Serial.println();
+//  }
+
+  // Change color/light if needed
+  if (crossfadeStep < 256) {
+    crossfadeColorStep();
+  }
+  
   //
   // Get data from mesh network
   //

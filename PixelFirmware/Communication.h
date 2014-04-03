@@ -165,6 +165,10 @@ boolean hasPreviousModule(int module) {
   return false;
 }
 
+int getPreviousModuleCount() {
+  return previousModuleCount;
+}
+
 /**
  * Adds the specified module as a next module if it hasn't already been added.
  */
@@ -232,6 +236,10 @@ boolean hasNextModule(int module) {
 
   // The module was not found, so return false
   return false;
+}
+
+int getNextModuleCount() {
+  return nextModuleCount;
 }
 
 
