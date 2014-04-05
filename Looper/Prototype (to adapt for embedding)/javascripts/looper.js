@@ -96,8 +96,8 @@ function EventLoop(options) {
     this.go = go;
 
     function stop() {
-        this.updateLoopOrdering();
         this.going = false;
+        this.updateLoopOrdering();
 
         // Stop all events in the event loop
         for (var i = 0; i < this.events.length; i++) {
@@ -564,7 +564,7 @@ function setupGestures(device) {
         //
 
         if ((ev.gesture.center.pageX - 50 < (device.processingInstance.screenWidth / 2) && (device.processingInstance.screenWidth / 2) < ev.gesture.center.pageX + 50)
-            && (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight / 2) && (device.processingInstance.screenHeight / 2) < ev.gesture.center.pageY + 50)) {
+            && (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight - 100) && (device.processingInstance.screenHeight - 100) < ev.gesture.center.pageY + 50)) {
 
             var sequence = device.processingInstance.getEventSequence();
 
@@ -756,7 +756,7 @@ function Device(options) {
 
     this.canvas = options.canvas;
 
-    this.scriptName = "script";
+    this.scriptName = "pixel";
     // this.disableEventCreate = false;
     this.showPalette = false;
     this.font = null;
@@ -792,7 +792,7 @@ function Device(options) {
         // var backgroundColor = processing.color(color.red, color.green, color.blue);
         var backgroundColor = processing.color(240, 241, 240);
 
-        var scriptName = "script";
+        var scriptName = "pixel";
 
         processing.eventLoop = new EventLoop();
 
@@ -1157,22 +1157,22 @@ function Device(options) {
 
             // draw "go" button
             primaryFont = processing.createFont("DidactGothic.ttf", 32);
-            processing.textFont(primaryFont, 100);
+            processing.textFont(primaryFont, 26);
             processing.textAlign(processing.CENTER);
             processing.fill(65, 65, 65);
             if (processing.eventLoop.going) {
-                processing.text("stop", processing.screenWidth / 2, processing.screenHeight / 2 + 20);
+                processing.text("stop", processing.screenWidth / 2, processing.screenHeight - 100);
             } else {
-                processing.text("go", processing.screenWidth / 2, processing.screenHeight / 2 + 20);
+                processing.text("go", processing.screenWidth / 2, processing.screenHeight - 100);
             }
 
             // draw script name
             primaryFont = processing.createFont("DidactGothic.ttf", 16);
-            processing.textFont(primaryFont, 40);
+            processing.textFont(primaryFont, 50);
             processing.textAlign(processing.CENTER);
             processing.fill(65, 65, 65);
             //processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 7 + 20);
-            processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 2 - 90);
+            processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 2 + 10);
 
             // step to next node in loop
             processing.currentTime = (new Date()).getTime();
