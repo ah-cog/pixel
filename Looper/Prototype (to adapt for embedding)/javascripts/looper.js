@@ -647,9 +647,8 @@ function setupGestures(device) {
                     }
                 }
 
-                // TODO: Only show JS editor by default for new nodes
-                console.log("open editor!");
-                // $('#overlay').show(); // TODO: Append argument
+                // Deploy code to Pixel module (i.e., the Espruino)
+                device.deploy();
 
                 disableEventCreate = false;
 
@@ -760,6 +759,15 @@ function Device(options) {
     // this.disableEventCreate = false;
     this.showPalette = false;
     this.font = null;
+
+    /**
+     * Deploy the current state of the program to the module
+     */
+    function deploy() {
+        console.log("Download code to the Espruino");
+        // TODO: Push the current Looper state to the Espruino with an HTTP POST
+    }
+    this.deploy = deploy;
 
     /**
      * Processing sketch code
