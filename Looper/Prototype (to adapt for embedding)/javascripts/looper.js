@@ -46,7 +46,7 @@ function Looper(options) {
         //     $('#overlay').hide();
         // </script>
 
-        
+
         $('#panes').append('<li class="pane' + deviceCount + '">' + overlay + '<canvas id="canvas' + deviceCount + '" style="width: 100%; height: 100%;"></canvas></li>');
         canvas = "canvas" + deviceCount;
 
@@ -405,14 +405,17 @@ function setupGestures(device) {
 
     var currentCanvas = '#' + device.canvas;
 
+    /**
+     * Handle "tap" events.
+     */
     $(currentCanvas).hammer({ drag_max_touches: 0 }).on("tap", function(ev) {
         console.log("'tap' event!");
 
         var touches = ev.gesture.touches;
-
+        
         //
         // Get the touched event node, if one exists
-        // 
+        //
         var eventCount = device.processingInstance.eventLoop.events.length;
 
         for (var i = 0; i < eventCount; i++) {
@@ -473,9 +476,7 @@ function setupGestures(device) {
     });
 
     /**
-     * Touch event handler
-     * @param  {[type]} ev [description]
-     * @return {[type]}    [description]
+     * Handle "touch" events.
      */
     $(currentCanvas).hammer({ drag_max_touches: 0 }).on("touch", function(ev) {
         console.log("'touch' event!");
@@ -514,7 +515,7 @@ function setupGestures(device) {
                     // Update for selected behavior
                     loopEvent.label = behavior.label;
                     loopEvent.behavior = behavior.script;
-                    // loopEvent.behavior = function() { 
+                    // loopEvent.behavior = function() {
                     //     // var command = loopEvent.go;
                     //     var index = Math.random() * 2;
                     //     // command = this.looper.commands[parseInt(index)];
@@ -534,11 +535,11 @@ function setupGestures(device) {
 
 
 
-                
+
 
         //
         // Get the touched event node, if one exists
-        // 
+        //
         var eventCount = device.processingInstance.eventLoop.events.length;
 
         for (var i = 0; i < eventCount; i++) {
@@ -561,19 +562,23 @@ function setupGestures(device) {
         //
         // Check of "go" button touched
         //
-        
+
         if ((ev.gesture.center.pageX - 50 < (device.processingInstance.screenWidth / 2) && (device.processingInstance.screenWidth / 2) < ev.gesture.center.pageX + 50)
             && (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight / 2) && (device.processingInstance.screenHeight / 2) < ev.gesture.center.pageY + 50)) {
 
-            //console.log("go");
-            device.processingInstance.getEventSequence();
-            device.processingInstance.eventLoop.toggle(); // toggle "go" and "stop"
+            var sequence = device.processingInstance.getEventSequence();
+
+            // Start the event loop if any events exist
+            if (sequence.length > 0) {
+                //console.log("go");
+                device.processingInstance.eventLoop.toggle(); // toggle "go" and "stop"
+            }
         }
 
         //
         // Check if "script" button touched
         //
-        
+
         if ((ev.gesture.center.pageX - 50 < (device.processingInstance.screenWidth / 2) && (device.processingInstance.screenWidth / 2) < ev.gesture.center.pageX + 50)
             && (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight / 2 - 90) && (device.processingInstance.screenHeight / 2 - 90) < ev.gesture.center.pageY + 50)) {
             //&& (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight / 7 + 20) && (device.processingInstance.screenHeight / 7 + 20) < ev.gesture.center.pageY + 50)) {
@@ -591,6 +596,9 @@ function setupGestures(device) {
         return;
     });
 
+    /**
+     * Detect "release" event.
+     */
     $(currentCanvas).hammer({ drag_max_touches: 0 }).on("release", function(ev) {
         console.log("'release' event!");
 
@@ -614,12 +622,29 @@ function setupGestures(device) {
                 var distance = device.processingInstance.getDistanceFromEventLoop(loopEvent);
 
                 if (distance < 110) {
+
+                    // Update position of the event node and set as "sequenced"
                     var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
                     loopEvent.x = nearestPosition.x;
                     loopEvent.y = nearestPosition.y;
                     loopEvent.state = 'SEQUENCED';
+
+                    // Start the event loop if any events exist
+                    var sequence = device.processingInstance.getEventSequence();
+                    if (sequence.length > 0) {
+                        //console.log("go");
+                        device.processingInstance.eventLoop.go(); // toggle "go" and "stop"
+                    }
                 } else {
+
+                    // Update position of the event node and set as "floating"
                     loopEvent.state = 'FLOATING';
+
+                    // Stop the event loop if no nodes are placed on it
+                    var sequence = device.processingInstance.getEventSequence();
+                    if (sequence.length == 0) {
+                        device.processingInstance.eventLoop.stop(); 
+                    }
                 }
 
                 // TODO: Only show JS editor by default for new nodes
@@ -640,14 +665,15 @@ function setupGestures(device) {
         // return;
     });
 
-
-
+    /**
+     * Handle "hold" touch event.
+     */
     $(currentCanvas).hammer({ drag_max_touches: 0, hold_timeout: 200 }).on("hold", function(ev) {
         console.log("'hold' event!");
 
         //
         // Get the touched event node, if one exists
-        // 
+        //
         // var eventCount = device.processingInstance.eventLoop.events.length;
 
         // for (var i = 0; i < eventCount; i++) {
@@ -762,8 +788,9 @@ function Device(options) {
             var color = { red: randomRed, green: randomGreen, blue: randomBlue };
             return color;
         }
-        var color = generateRandomColor(255, 255, 255);
-        var backgroundColor = processing.color(color.red, color.green, color.blue);
+        // var color = generateRandomColor(255, 255, 255);
+        // var backgroundColor = processing.color(color.red, color.green, color.blue);
+        var backgroundColor = processing.color(240, 241, 240);
 
         var scriptName = "script";
 
@@ -778,21 +805,21 @@ function Device(options) {
             visible: false
         });
 
-        // 
-
         // Add "default" behaviors to palette
-        // processing.behaviorPalette.addBehavior(0, 0, 'get');
-        // processing.behaviorPalette.addBehavior(100, 0, 'on');
-        // processing.behaviorPalette.addBehavior(-100, 0, 'off');  
-        processing.behaviorPalette.addBehavior(0, 0, 'get', function() {
-            //console.log("DOING " + this.label);
-            console.log('I just set up a <div> to render a chart from JavaScript.')
+        processing.behaviorPalette.addBehavior(0, 0, 'light', function() {
+            console.log('light top level')
         });
-        processing.behaviorPalette.addBehavior(100, 0, 'button', function() {
-            console.log('I just retreived a data set via HTTP requests in JavaScript.')
+        processing.behaviorPalette.addBehavior(100, 0, 'motion', function() {
+            console.log('motion top level')
         });
-        processing.behaviorPalette.addBehavior(-100, 0, 'on', function() {
-            console.log('I just plotted the data using D3 on an overlay.')
+        processing.behaviorPalette.addBehavior(-100, 0, 'button', function() {
+            console.log('button top level')
+        });
+        processing.behaviorPalette.addBehavior(-200, 0, 'pin', function() {
+            console.log('pin top level')
+        });
+        processing.behaviorPalette.addBehavior(200, 0, 'message', function() {
+            console.log('message top level')
         });
 
         // Override setup function
@@ -819,7 +846,7 @@ function Device(options) {
                 // Draw arrow
                 processing.translate(processing.screenWidth / 2, processing.screenHeight / 2);
                 processing.translate(-29, -198);
-                processing.rotate(-0.05*processing.PI);
+                processing.rotate(-0.05 * processing.PI);
                 processing.line(0, 0, -16, 16);
                 processing.line(0, 0, -16, -16);
 
@@ -839,9 +866,22 @@ function Device(options) {
                     // Draw the event node
                     processing.fill(66, 214, 146);
                     if (loopEvent.going) {
-                        processing.ellipse(loopEvent.x, loopEvent.y, 80, 80);
+                        processing.ellipse(loopEvent.x, loopEvent.y, 70, 70);
+
+                        // Show the program counter
+                        if (loopEvent.state == 'SEQUENCED') {
+                            var angle = getAngle(loopEvent.x, loopEvent.y);
+                            var nearestX = processing.screenWidth / 2 + (500 / 2) * Math.cos(angle - Math.PI  / 2);
+                            var nearestY = processing.screenHeight / 2 + (500 / 2) * Math.sin(angle - Math.PI  / 2);
+                            processing.ellipse(nearestX, nearestY, 20, 20);
+                        }
                     } else {
-                        processing.ellipse(loopEvent.x, loopEvent.y, 60, 60);
+                        processing.ellipse(loopEvent.x, loopEvent.y, 70, 70);
+
+                        // // Draw options for the sequenced node
+                        // if (loopEvent.state == 'SEQUENCED') {
+                        //     processing.ellipse(loopEvent.x + 40, loopEvent.y - 40, 30, 30);
+                        // }
                     }
 
                     primaryFont = processing.createFont("DidactGothic.ttf", 32);
@@ -864,7 +904,7 @@ function Device(options) {
                 if (processing.behaviorPalette.visible) {
 
                     drawBehaviors();
-                    
+
                 }
 
                 function drawBehaviors() {
@@ -931,13 +971,6 @@ function Device(options) {
                 if (loopEvent.x !== loopEvent.xTarget || loopEvent.y !== loopEvent.yTarget) { // FREE
                     //console.log("Rendering ghost");
                 }
-                
-                // Check if event node is near to the event loop
-                // if (distance < 110) { // ENTANGLED
-                //     loopEvent.state = 'ENTANGLED';
-                // } else {
-                //     loopEvent.state = 'FLOATING';
-                // }
 
                 if (loopEvent.state === 'MOVING') {
 
@@ -957,7 +990,6 @@ function Device(options) {
                     var distance = processing.lineDistance(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
 
                     if (distance < 110) { // ENTANGLED
-                    //if (loopEvent.state === 'ENTANGLED') {
                         processing.line(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
 
                         // Draw the "would be" position that the event node would occupy
@@ -997,8 +1029,8 @@ function Device(options) {
                     var loopEvent = processing.eventLoop.events[i];
                     if (loopEvent.state === 'SEQUENCED') {
                         // loopEvent.go = function() { console.log("action " + i); }
-                        // loopEvent.behavior = function() { 
-                        // loopEvent.go = function() { 
+                        // loopEvent.behavior = function() {
+                        // loopEvent.go = function() {
                         //     // var command = loopEvent.go;
                         //     var index = Math.random() * 2;
                         //     // command = this.looper.commands[parseInt(index)];

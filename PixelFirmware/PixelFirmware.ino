@@ -38,11 +38,11 @@ void setup() {
   randomSeed(analogRead(0));
 
   // Initialize module's color
-  // setModuleColor(random(256), random(256), random(256)); // Set the module's default color
-  setModuleColor(205, 205, 205); // Set the module's default color
+  setModuleColor(random(256), random(256), random(256)); // Set the module's default color
+  // setModuleColor(205, 205, 205); // Set the module's default color
   
   // Assign the module a unique color
-  setColor(moduleColor[0], moduleColor[1], moduleColor[2]);
+  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
 
   // Fade on the module to let people know it's alive!
   fadeOn();
@@ -106,7 +106,8 @@ void loop() {
 
   // Change color/light if needed
   if (crossfadeStep < 256) {
-    crossfadeColorStep();
+    // crossfadeColorStep();
+    applyColor();
   }
   
   //
@@ -221,7 +222,8 @@ void loop() {
         
         addPreviousModule(message.source);
         
-        setColor(255, 255, 255);
+//        setColor(255, 255, 255);
+        setModuleColor(205, 205, 205);
         ledOn();
         delay(60);
         ledOff();
@@ -253,7 +255,9 @@ void loop() {
         
         addNextModule(message.source);
         
-        setColor(255, 255, 255);
+//        setColor(255, 255, 255);
+        setModuleColor(205, 205, 205);
+        
         ledOn();
         delay(60);
         ledOff();
@@ -332,8 +336,9 @@ void loop() {
  * Handle "at rest, on table" gesture.
  */
 boolean handleGestureAtRestOnTable() {
-  //crossfadeColor(0, 0, 0);
-  ledOff();
+//  crossfadeColor(100, 100, 100);
+  setColor(0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
+  //ledOff();
   
   addBroadcast(1);
 }
@@ -343,8 +348,8 @@ boolean handleGestureAtRestOnTable() {
  */
 boolean handleGestureAtRestInHand() {
 //  crossfadeColor(color[0], color[1], color[2]);
-  setColor(moduleColor[0], moduleColor[1], moduleColor[2]);
-  ledOn();
+  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+//  ledOn();
   
   addBroadcast(2);
   
@@ -374,7 +379,7 @@ boolean handleGesturePlaceDown() {
  * Handle "tilt left" gesture.
  */
 boolean handleGestureTiltLeft() {
-  crossfadeColor(0, 0, 255);
+  setColor(0, 0, 255);
   
   addBroadcast(5);
 }
@@ -383,7 +388,7 @@ boolean handleGestureTiltLeft() {
  * Handle "tilt right" gesture.
  */
 boolean handleGestureTiltRight() {
-  crossfadeColor(0, 255, 0);
+  setColor(0, 255, 0);
   
   addBroadcast(6);
 }
@@ -395,16 +400,18 @@ boolean handleGestureShake() {
   setColor(255, 0, 0);
   ledOn();
   
-  addBroadcast(7);
+  addBroadcast(7);.
 }
 
 /**
  * Handle "tap to another, as left" gesture.
  */
 boolean handleGestureTapToAnotherAsLeft() {
-  moduleColor[0] = 255;
-  moduleColor[1] = 0;
-  moduleColor[2] = 0;
+  
+//  moduleColor[0] = 255;
+//  moduleColor[1] = 0;
+//  moduleColor[2] = 0;
+  setColor(255, 0, 0);
   
   addBroadcast(8);
   awaitingNextModule = true;
@@ -415,9 +422,10 @@ boolean handleGestureTapToAnotherAsLeft() {
  * Handle "tap to another, as right" gesture.
  */
 boolean handleGestureTapToAnotherAsRight() {
-  moduleColor[0] = 0;
-  moduleColor[1] = 0;
-  moduleColor[2] = 255;
+//  moduleColor[0] = 0;
+//  moduleColor[1] = 0;
+//  moduleColor[2] = 255;
+  setColor(255, 0, 0);
   
   // Send to all linked devices
 //      for (int i = 0; i < 1; i++) {
