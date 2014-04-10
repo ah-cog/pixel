@@ -115,7 +115,7 @@ void setupCompass() {
 // Initialize altimeter sensor
 void setupAltimeter() {
   if (!ps.init()) {
-    Serial.println("Failed to autodetect pressure sensor!");
+    Serial.println("Error: Failed to autodetect pressure sensor!");
     while (1);
   }
   ps.enableDefault();
@@ -164,6 +164,9 @@ boolean senseOrientation() {
   }
 }
 
+/**
+ * Read gyroscope sensor data
+ */
 void getGyroscopeData() {
   gyro.read();
 
@@ -189,7 +192,9 @@ void getAccelerometerData() {
   accel_z = SENSOR_SIGN[5] * (AN[5] - AN_OFFSET[5]);
 }
 
-// Read compass sensor data
+/**
+ * Read compass sensor data
+ */
 void getCompassData() {
   compass.readMag();
 
@@ -198,7 +203,9 @@ void getCompassData() {
   magnetom_z = SENSOR_SIGN[8] * compass.m.z;
 }
 
-// Read altimeter sensor data
+/**
+ * Read altimeter sensor data
+ */
 void getAltimeterData() {
 
   pressure = ps.readPressureInchesHg();
@@ -217,6 +224,9 @@ void getAltimeterData() {
 /**************************************************/
 // from "Compass"
 
+/**
+ * Calculate compass heading from sensor data.
+ */
 void calculateCompassHeading() {
   
   float MAG_X;
@@ -231,23 +241,23 @@ void calculateCompassHeading() {
   cos_pitch = cos(pitch);
   sin_pitch = sin(pitch);
   
-  // adjust for LSM303 compass axis offsets/sensitivity differences by scaling to +/-0.5 range
-  c_magnetom_x = (float)(magnetom_x - SENSOR_SIGN[6]*M_X_MIN) / (M_X_MAX - M_X_MIN) - SENSOR_SIGN[6]*0.5;
-  c_magnetom_y = (float)(magnetom_y - SENSOR_SIGN[7]*M_Y_MIN) / (M_Y_MAX - M_Y_MIN) - SENSOR_SIGN[7]*0.5;
-  c_magnetom_z = (float)(magnetom_z - SENSOR_SIGN[8]*M_Z_MIN) / (M_Z_MAX - M_Z_MIN) - SENSOR_SIGN[8]*0.5;
+  // Adjust for LSM303 compass axis offsets/sensitivity differences by scaling to +/-0.5 range
+  c_magnetom_x = (float) (magnetom_x - SENSOR_SIGN[6]*M_X_MIN) / (M_X_MAX - M_X_MIN) - (SENSOR_SIGN[6] * 0.5);
+  c_magnetom_y = (float) (magnetom_y - SENSOR_SIGN[7]*M_Y_MIN) / (M_Y_MAX - M_Y_MIN) - (SENSOR_SIGN[7] * 0.5);
+  c_magnetom_z = (float) (magnetom_z - SENSOR_SIGN[8]*M_Z_MIN) / (M_Z_MAX - M_Z_MIN) - (SENSOR_SIGN[8] * 0.5);
   
-  // Tilt compensated Magnetic filed X:
-  MAG_X = c_magnetom_x*cos_pitch+c_magnetom_y*sin_roll*sin_pitch+c_magnetom_z*cos_roll*sin_pitch;
-  // Tilt compensated Magnetic filed Y:
-  MAG_Y = c_magnetom_y*cos_roll-c_magnetom_z*sin_roll;
-  // Magnetic Heading
-  MAG_Heading = atan2(-MAG_Y,MAG_X);
+  // Calculate heading
+  MAG_X = (c_magnetom_x * cos_pitch) + (c_magnetom_y * sin_roll * sin_pitch) + (c_magnetom_z * cos_roll * sin_pitch); // Tilt compensated Magnetic filed X
+  MAG_Y = (c_magnetom_y * cos_roll) - (c_magnetom_z * sin_roll); // Tilt compensated Magnetic filed Y
+  MAG_Heading = atan2(-MAG_Y, MAG_X); // Magnetic Heading
 }
 
 /**************************************************/
 // from "Vector"
 
-// Computes the dot product of two vectors
+/**
+ * Computes the dot product of two vectors
+ */
 float Vector_Dot_Product(float vector1[3], float vector2[3]) {
   float op = 0;
   
@@ -258,20 +268,27 @@ float Vector_Dot_Product(float vector1[3], float vector2[3]) {
   return op; 
 }
 
-// Computes the cross product of two vectors
+/**
+ * Computes the cross product of two vectors
+ */
 void Vector_Cross_Product(float vectorOut[3], float v1[3], float v2[3]) {
   vectorOut[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
   vectorOut[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
   vectorOut[2] = (v1[0] * v2[1]) - (v1[1] * v2[0]);
 }
 
-// Multiply the vector by a scalar. 
-void Vector_Scale(float vectorOut[3],float vectorIn[3], float scale2) {
+/**
+ * Multiply the vector by a scalar. 
+ */
+void Vector_Scale(float vectorOut[3], float vectorIn[3], float scale2) {
   for (int c = 0; c < 3; c++) {
     vectorOut[c] = vectorIn[c] * scale2;
   }
 }
 
+/**
+ * Add the vectors. 
+ */
 void Vector_Add(float vectorOut[3], float vectorIn1[3], float vectorIn2[3]) {
   for (int c = 0; c < 3; c++) {
     vectorOut[c] = vectorIn1[c] + vectorIn2[c];
@@ -281,7 +298,7 @@ void Vector_Add(float vectorOut[3], float vectorIn1[3], float vectorIn2[3]) {
 /**************************************************/
 // from "DCM"
 
-void Normalize(void) {
+void Normalize (void) {
   float error = 0;
   float temporary[3][3];
   float renorm = 0;
@@ -415,7 +432,7 @@ void Euler_Angles (void) {
 /**************************************************/
 // from "Matrix"
 
-// Multiply two 3x3 matrixs. This function developed by Jordi can be easily adapted to multiple n*n matrix's. (Pero me da flojera!). 
+// Multiply two 3x3 matrices. This function developed by Jordi can be easily adapted to multiple n*n matrix's. (Pero me da flojera!). 
 void Matrix_Multiply(float a[3][3], float b[3][3], float mat[3][3]) {
   float op[3]; 
   for(int x = 0; x < 3; x++) {

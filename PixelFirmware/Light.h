@@ -23,9 +23,12 @@ int ledColor[3] = { 255, 255, 255 }; // The current actual color of the LED
  * Sets the module's default, unique color
  */
 void setModuleColor(int red, int green, int blue) {
-  defaultModuleColor[0] = abs(red - 255);
-  defaultModuleColor[1] = abs(green - 255);
-  defaultModuleColor[2] = abs(blue - 255);
+  defaultModuleColor[0] = red;
+  defaultModuleColor[1] = green;
+  defaultModuleColor[2] = blue;
+//  defaultModuleColor[0] = abs(red - 255);
+//  defaultModuleColor[1] = abs(green - 255);
+//  defaultModuleColor[2] = abs(blue - 255);
 }
 
 /**
@@ -39,6 +42,13 @@ void setColor(int red, int green, int blue) {
   if (colorApplicationMethod == COLOR_APPLICATION_MODE_CROSSFADE) {
     crossfadeStep = 0;
   }
+}
+
+/**
+ * Sets the color of the module to it's default color
+ */
+void setModuleColor() {
+  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
 }
 
 /**

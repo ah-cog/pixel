@@ -45,8 +45,8 @@ void setup() {
   setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
 
   // Fade on the module to let people know it's alive!
-  fadeOn();
-  fadeOff();
+//  fadeOn();
+//  fadeOff();
   
   // Setup mesh networking peripherals (i.e., RadioBlocks)
   setupCommunication();
@@ -82,6 +82,7 @@ void setup() {
 boolean awaitingNextModule = false;
 boolean awaitingPreviousModule = false;
 boolean awaitingNextModuleConfirm = false;
+boolean awaitingPreviousModuleConfirm = false;
 unsigned long awaitingNextModuleStartTime = 0;
 unsigned long awaitingPreviousModuleStartTime = 0;
 
@@ -106,7 +107,6 @@ void loop() {
 
   // Change color/light if needed
   if (crossfadeStep < 256) {
-    // crossfadeColorStep();
     applyColor();
   }
   
@@ -193,7 +193,6 @@ void loop() {
     Message message = dequeueIncomingMeshMessage();
     
     Serial.print("Received ");
-//    Serial.print(gestureName[message.message]);
     Serial.print(message.message);
     Serial.print(" from module ");
     Serial.print(message.source);
@@ -209,123 +208,136 @@ void loop() {
       // If receive "tap to another, as left", then check if this module performed "tap to another, as right" recently. If so, link the modules in a sequence, starting with the other module first.
       
       if (awaitingPreviousModule) {
-        // TODO: previous += [ message.source ]
         
+        // Update message state
         awaitingPreviousModule = false;
-        awaitingNextModuleConfirm = true;
+        awaitingPreviousModuleConfirm = true;
         
         // Send ACK message to message.source to confirm linking operation
-        //addMessage(message.source, 13);
         addBroadcast(13);
-        
-        // TODO: Wait for ACK response before the following... move it in another ACK message event handler.
-        
-        addPreviousModule(message.source);
-        
-//        setColor(255, 255, 255);
-        setModuleColor(205, 205, 205);
-        ledOn();
-        delay(60);
-        ledOff();
-        delay(60);
-        ledOn();
-        delay(60);
-        ledOff();
-        delay(60);
-        ledOn();
-        delay(1500);
+        // addMessage(message.source, 13);
       }
       
     } else if (message.message == 9) {
       // If receive "tap to another, as right", then check if this module performed "tap to another, as left" recently. If so, link the modules in a sequence, starting with this module first.
       
       if (awaitingNextModule) {
-        // TODO: next += [ message.source ]
-        // Send "linked" to module (handshake)
-        // TODO: In other module (and this one), when awaitingNextModule is true, look through the received messages for message "9"
         
+        // Update message state
         awaitingNextModule = false;
         awaitingNextModuleConfirm = true;
         
         // Send ACK message to message.source to confirm linking operation
 //        addMessage(message.source, 13);
-        addBroadcast(13);
-        
-        // TODO: Wait for ACK response before the following... move it in another ACK message event handler.
-        
-        addNextModule(message.source);
-        
-//        setColor(255, 255, 255);
-        setModuleColor(205, 205, 205);
-        
-        ledOn();
-        delay(60);
-        ledOff();
-        delay(60);
-        ledOn();
-        delay(60);
-        ledOff();
-        delay(60);
-        ledOn();
-        delay(1500);
+        addBroadcast(14);
       }
       
-    } else if (message.message == 13) { // Sequencing (i.e., linking) confirmation
-    
+    } else if (message.message == 13) { // The ACK message from message.source confirming linking operation (if not yet done)
+      
       Serial.println(">>>> PROCESSING MESSAGE 13");
       
-//      if (awaitingNextModule) {
-        
-        // awaitingNextModule = false;
-        // awaitingNextModuleConfirm = true;
-        
-        // Send ACK message to message.source to confirm linking operation (if not yet done)
-        if (awaitingNextModuleConfirm) {
-//          addMessage(message.source, 13);
-          addBroadcast(13);
-//        addMessage(message.source, 14);
-
-          awaitingNextModuleConfirm = false;
-        }
-        
-        setColor(255, 255, 255);
-        ledOn();
-        delay(200);
-        ledOff();
-        delay(200);
-        ledOn();
-        delay(200);
-        ledOff();
-        delay(200);
-        ledOn();
-        
-        // TODO: Wait for ACK response before the following... move it in another ACK message event handler.
-        
-        //addNextModule(message.source);
+//      unsigned long currentTime = millis();
+//      if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
+//        awaitingNextModuleConfirm = false;
 //      }
-    } else if (message.message == 14) { // The ACK message from message.source confirming linking operation (if not yet done)
+        
+      // Send ACK message to message.source to confirm linking operation (if not yet done)
+      if (awaitingPreviousModuleConfirm) {
+        addBroadcast(13);
+//      addMessage(message.source, 14);
+
+        awaitingPreviousModule = false;
+        awaitingPreviousModuleConfirm = false;
+        
+        addPreviousModule(message.source);
+      
+        setModuleColor(255, 255, 255);
+        setColor(255, 255, 255);
+      }
+
+    } else if (message.message == 14) { // Sequencing (i.e., linking) confirmation
+    
+      Serial.println(">>>> PROCESSING MESSAGE 14");
+        
+//        unsigned long currentTime = millis();
+//        if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
+//          awaitingNextModuleConfirm = false;
+//        }
+        
+      // Send ACK message to message.source to confirm linking operation (if not yet done)
+      if (awaitingNextModuleConfirm) {
+        addBroadcast(13);
+//      addMessage(message.source, 14);
+
+        awaitingNextModule = false;
+        awaitingNextModuleConfirm = false;
+        
+        addNextModule(message.source);
+      
+        setModuleColor(255, 255, 255);
+        setColor(255, 255, 255);
+      }
+      
+    } else if (message.message == 20) { // (Received) Sequence: Activate!
+    
+      Serial.println(">>>> PROCESSING MESSAGE 20");
+        
+//        unsigned long currentTime = millis();
+//        if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
+//          awaitingNextModuleConfirm = false;
+//        }
+        
+      // Send ACK message to message.source to confirm linking operation (if not yet done)
+      if (awaitingNextModuleConfirm) {
+        addBroadcast(13);
+//      addMessage(message.source, 14);
+
+        awaitingNextModule = false;
+        awaitingNextModuleConfirm = false;
+        
+        addNextModule(message.source);
+      
+        setModuleColor(255, 255, 255);
+        setColor(255, 255, 255);
+      }
     }
+    
+    // TODO: Module announces removal from sequence (previous and next)
   }
+  
+  //
+  // Update state of current module
+  //
+  
+//  //if (awaitingNextModuleConfirm) {
+//  if (awaitingNextModule) {
+//    unsigned long currentTime = millis();
+//    if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
+//      awaitingNextModule = false;
+//      awaitingNextModuleConfirm = false;
+//    }
+//  }
+//  
+//  //if (awaitingPreviousModuleConfirm) {
+//  if (awaitingPreviousModule) {
+//    unsigned long currentTime = millis();
+//    if (currentTime - awaitingPreviousModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
+//      awaitingPreviousModule = false;
+////      awaitingPreviousModuleConfirm = false;
+//    }
+//  }
   
   //
   // Send outgoing messages (e.g., this module's updated gesture)
   //
-  
-  // TODO: Handle "ongoing" gesture (i.e., do the stuff that should be done more than once, or as long as the gesture is active)
-  
-  // Process mesh message queue  
-  // TODO: Put this in the following bit of logic (with RADIOBLOCK_PACKET_WRITE_TIMEOUT)
-  if (messageQueueSize > 0) {
-    sendMessage();
-  }
     
   unsigned long currentTime = millis();
   if (currentTime - lastCount > RADIOBLOCK_PACKET_WRITE_TIMEOUT) {
   
     // Process mesh message queue  
-//    if (messageQueueSize > 0) {
-//      sendMessage();
-//    }
+    if (messageQueueSize > 0) {
+      sendMessage();
+    }
     
     // Update the time that a message was most-recently dispatched
     lastCount = millis();
@@ -336,9 +348,7 @@ void loop() {
  * Handle "at rest, on table" gesture.
  */
 boolean handleGestureAtRestOnTable() {
-//  crossfadeColor(100, 100, 100);
   setColor(0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
-  //ledOff();
   
   addBroadcast(1);
 }
@@ -347,18 +357,9 @@ boolean handleGestureAtRestOnTable() {
  * Handle "at rest, in hand" gesture.
  */
 boolean handleGestureAtRestInHand() {
-//  crossfadeColor(color[0], color[1], color[2]);
   setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-//  ledOn();
   
   addBroadcast(2);
-  
-//  crossfadeColor(255, 0, 0);
-//  crossfadeColor(0, 255, 0);
-//  crossfadeColor(0, 0, 255);
-//  crossfadeColor(255, 255, 0);
-//  crossfadeColor(0, 255, 255);
-//  crossfadeColor(255, 255, 255);
 }
 
 /**
@@ -398,19 +399,20 @@ boolean handleGestureTiltRight() {
  */
 boolean handleGestureShake() {
   setColor(255, 0, 0);
-  ledOn();
   
-  addBroadcast(7);.
+  // TODO: Message next modules, say this module is leaving the sequence
+  // TODO: Message previous module, say this module is leaving the sequence
+  
+  addBroadcast(7);
+  
+  removePreviousModules();
+  removeNextModules();
 }
 
 /**
  * Handle "tap to another, as left" gesture.
  */
 boolean handleGestureTapToAnotherAsLeft() {
-  
-//  moduleColor[0] = 255;
-//  moduleColor[1] = 0;
-//  moduleColor[2] = 0;
   setColor(255, 0, 0);
   
   addBroadcast(8);
@@ -422,9 +424,6 @@ boolean handleGestureTapToAnotherAsLeft() {
  * Handle "tap to another, as right" gesture.
  */
 boolean handleGestureTapToAnotherAsRight() {
-//  moduleColor[0] = 0;
-//  moduleColor[1] = 0;
-//  moduleColor[2] = 255;
   setColor(255, 0, 0);
   
   // Send to all linked devices

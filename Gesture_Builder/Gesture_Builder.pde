@@ -133,6 +133,10 @@ void setup () {
   liveGestureSample.add(new ArrayList<Integer>()); // X axis data
   liveGestureSample.add(new ArrayList<Integer>()); // Y
   liveGestureSample.add(new ArrayList<Integer>()); // Z
+  
+  liveGestureSample.add(new ArrayList<Integer>()); // X gyro data
+  liveGestureSample.add(new ArrayList<Integer>()); // Y
+  liveGestureSample.add(new ArrayList<Integer>()); // Z
 
   print("Opening gesture data... ");
   openGestureData();
@@ -151,7 +155,7 @@ void setup () {
   //printGestureSignatures();
 
   // Connect to the corresponding serial port
-  serialPort = new Serial(this, Serial.list()[7], 9600);
+  serialPort = new Serial(this, Serial.list()[9], 9600);
 
   // Defer callback until new line
   serialPort.bufferUntil('\n');
@@ -403,14 +407,21 @@ void serialEvent (Serial serialPort) {
           liveGestureSample.get(0).add(accelerometerX);
           liveGestureSample.get(1).add(accelerometerY);
           liveGestureSample.get(2).add(accelerometerZ);
+          
+          liveGestureSample.get(3).add(gyroX);
+          liveGestureSample.get(4).add(gyroY);
+          liveGestureSample.get(5).add(gyroZ);
 
           // Remove oldest element from live gesture queue if greater than threshold
-          if (liveGestureSample.get(0).size() > liveGestureSize) { // TODO: In classifier function, compare only the "latest" values... 
+          if (liveGestureSample.get(0).size() > liveGestureSize) { // TODO: In classifier function, compare only the "latest" values...
             liveGestureSample.get(0).remove(0);
             liveGestureSample.get(1).remove(0);
             liveGestureSample.get(2).remove(0);
+            
+            liveGestureSample.get(3).remove(0);
+            liveGestureSample.get(4).remove(0);
+            liveGestureSample.get(5).remove(0);
           }
-          //          println(liveGestureSample.get(0).size());
 
           // Classify live gesture sample
           if (liveGestureSample.get(0).size() >= liveGestureSize) {
@@ -432,13 +443,13 @@ void setupGestureTransitions() {
     ArrayList<Integer> currentTransitions = new ArrayList<Integer>(); // Create list for current gesture's transitions
 
     if (gestureName[i] == "at rest, on table") {
-      currentTransitions.add(getGestureIndex("at rest, on table")); // note, becasue it's a continous gesture
-      currentTransitions.add(getGestureIndex("pick up"));
-      //      currentTransitions.add(getGestureIndex("at rest, in hand"));
+//      currentTransitions.add(getGestureIndex("at rest, on table")); // note, becasue it's a continous gesture
+//      currentTransitions.add(getGestureIndex("pick up"));
+      currentTransitions.add(getGestureIndex("at rest, in hand"));
     } 
     else if (gestureName[i] == "at rest, in hand") {
       currentTransitions.add(getGestureIndex("at rest, in hand")); // note, becasue it's a continous gesture
-      currentTransitions.add(getGestureIndex("place down"));
+//      currentTransitions.add(getGestureIndex("place down"));
       //      currentTransitions.add(getGestureIndex("at rest, on table"));
 
       currentTransitions.add(getGestureIndex("shake"));

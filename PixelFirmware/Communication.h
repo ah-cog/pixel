@@ -24,7 +24,9 @@
 
 #define RADIOBLOCK_PACKET_READ_TIMEOUT 40 // 100
 #define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload
-#define RADIOBLOCK_PACKET_WRITE_TIMEOUT 120 // 200
+#define RADIOBLOCK_PACKET_WRITE_TIMEOUT 0 // 120 // 200
+
+#define SEQUENCE_REQUEST_TIMEOUT 2000
 
 // The module's pins 1, 2, 3, and 4 are connected to pins 5V, GND, 8, and 7.
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(RADIOBLOCK_POWER_PIN, RADIOBLOCK_GROUND_PIN, RADIOBLOCK_RX_PIN, RADIOBLOCK_TX_PIN);
@@ -146,6 +148,13 @@ boolean removePreviousModule(int module) {
 }
 
 /**
+ * Removes all previous modules
+ */
+boolean removePreviousModules() {
+  previousModuleCount = 0;
+}
+
+/**
  * Checks if the specified module is in the set of previous modules.
  */
 boolean hasPreviousModule(int module) {
@@ -216,6 +225,13 @@ boolean removeNextModule(int module) {
   }
 
   return false;
+}
+
+/**
+ * Removes all next modules
+ */
+boolean removeNextModules() {
+  nextModuleCount = 0;
 }
 
 /**

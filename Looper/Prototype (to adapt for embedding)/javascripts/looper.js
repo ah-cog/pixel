@@ -122,7 +122,7 @@ function EventLoop(options) {
             previousEvent.stop();
 
             this.position = (this.position + 1) % this.events.length;
-            console.log('new position = ' + this.position);
+            // console.log('new position = ' + this.position);
 
             var currentEvent = this.events[this.position];
             currentEvent.go();
@@ -365,16 +365,25 @@ function BehaviorPalette(options) {
     }
     this.updatePosition = updatePosition;
 
+    /**
+     * Shows the behavior palette
+     */
     function show() {
         this.visible = true;
     }
     this.show = show;
 
+    /**
+     * Hides the behavior palette
+     */
     function hide() {
         this.visible = false;
     }
     this.hide = hide;
 
+    /**
+     * Toggles the visibility of the behavior palette
+     */
     function toggle() {
         if (this.visible) {
             this.visible = false;
@@ -384,13 +393,18 @@ function BehaviorPalette(options) {
     }
     this.toggle = toggle;
 
+    /**
+     * Adds a behavior node to the behavior palette
+     */
     function addBehavior(x, y, label, script) {
         var behavior = new Behavior({
-            x: x, //ev.gesture.center.pageX,
-            y: y, // ev.gesture.center.pageY,
+            x: x, // was ev.gesture.center.pageX,
+            y: y, // was ev.gesture.center.pageY,
             xTarget: x,
             yTarget: y,
             label: label,
+
+            // e.g.,
             // script: function() {
             //     console.log("DOING " + this.label);
             // }
@@ -412,7 +426,7 @@ function setupGestures(device) {
         console.log("'tap' event!");
 
         var touches = ev.gesture.touches;
-        
+
         //
         // Get the touched event node, if one exists
         //
@@ -423,6 +437,7 @@ function setupGestures(device) {
             if ((ev.gesture.center.pageX - 50 < loopEvent.x && loopEvent.x < ev.gesture.center.pageX + 50)
                 && (ev.gesture.center.pageY - 50 < loopEvent.y && loopEvent.y < ev.gesture.center.pageY + 50)) {
 
+                /*
                 firepadDevice = device;
                 firepadEvent = loopEvent;
                 $('#overlay' + device.index).show();
@@ -438,39 +453,7 @@ function setupGestures(device) {
                 //device.firepad.setText("" + loopEvent.behavior);
                 device.firepad.setText(beautifulScript);
                 // device.firepad.setText(jsString);
-
-
-
-                // firepadDevice = device;
-                // firepadEvent = loopEvent;
-                // if (device.firepad === undefined) {
-                //     device.firepad = setupFirepad("firepad-container-" + device.index, device.index, loopEvent.label); // Set up Firebase storage for behavior with specified name on specified device
-                // }
-                // $('#overlay' + device.index).show();
-                // // var jsString = "" + loopEvent.behavior;
-                // // var jsb = beautify(jsString, {
-                // //     'indent_size': 1,
-                // //     'indent_char': '\t'
-                // // });
-                // var beautifulScript = js_beautify("" + loopEvent.behavior, {
-                //     'indent_size': 1,
-                //     'indent_char': '\t'
-                // });
-                // // device.firepad.setText('');
-                // device.firepad.setText('');
-                // device.firepad.setText(beautifulScript);
-
-
-
-
-                // loopEvent.state = 'MOVING';
-                // disableEventCreate = true;
-
-                // var index = Math.random() * 2;
-                // loopEvent.go = device.looper.commands[parseInt(index)];
-
-                // console.log("\tevent " + i);
-                // break;
+                */
             }
         }
     });
@@ -499,15 +482,15 @@ function setupGestures(device) {
                 if ((ev.gesture.center.pageX - 50 < behaviorPalette.x + behavior.x && behaviorPalette.x + behavior.x < ev.gesture.center.pageX + 50)
                     && (ev.gesture.center.pageY - 50 < behaviorPalette.y + behavior.y && behaviorPalette.y + behavior.y < ev.gesture.center.pageY + 50)) {
 
-                    // behaviorPalette.hide();
+                    // Hide the behavior palette
                     device.processingInstance.behaviorPalette.visible = false;
 
-                    // Create behavior
+                    // Create behavior node
                     var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
 
                     var loopEvent = new Event({
-                        x: device.processingInstance.behaviorPalette.x + behavior.x, //ev.gesture.center.pageX,
-                        y: device.processingInstance.behaviorPalette.y + behavior.y, // ev.gesture.center.pageY,
+                        x: device.processingInstance.behaviorPalette.x + behavior.x,
+                        y: device.processingInstance.behaviorPalette.y + behavior.y,
                         xTarget: nearestPosition.x,
                         yTarget: nearestPosition.y
                     });
@@ -515,16 +498,10 @@ function setupGestures(device) {
                     // Update for selected behavior
                     loopEvent.label = behavior.label;
                     loopEvent.behavior = behavior.script;
-                    // loopEvent.behavior = function() {
-                    //     // var command = loopEvent.go;
-                    //     var index = Math.random() * 2;
-                    //     // command = this.looper.commands[parseInt(index)];
-                    //     command = this.label;
-                    //     console.log("instr: " + command);
-                    // }
 
                     console.log(loopEvent);
 
+                    // Update the state of the event node
                     loopEvent.state = 'MOVING';
                     device.processingInstance.eventLoop.events.push(loopEvent);
                 }
@@ -643,7 +620,7 @@ function setupGestures(device) {
                     // Stop the event loop if no nodes are placed on it
                     var sequence = device.processingInstance.getEventSequence();
                     if (sequence.length == 0) {
-                        device.processingInstance.eventLoop.stop(); 
+                        device.processingInstance.eventLoop.stop();
                     }
                 }
 
@@ -759,6 +736,27 @@ function Device(options) {
     // this.disableEventCreate = false;
     this.showPalette = false;
     this.font = null;
+    // this.looper;
+
+    function getLooper() {
+      return this.looper;
+    }
+    this.getLooper = getLooper;
+
+    function getDevice(index) {
+      return this.looper.devices[index];
+    }
+    this.getDevice = getDevice;
+
+    function getEventLoop(index) {
+      return this.looper.devices[index].processingInstance.eventLoop;
+    }
+    this.getEventLoop = getEventLoop;
+
+    function getEventSequence(index) {
+      return this.looper.devices[index].processingInstance.eventLoop.events;
+    }
+    this.getEventSequence = getEventSequence;
 
     /**
      * Deploy the current state of the program to the module
@@ -766,8 +764,21 @@ function Device(options) {
     function deploy() {
         console.log("Download code to the Espruino");
         // TODO: Push the current Looper state to the Espruino with an HTTP POST
+
+        // device.looper.devices[0].processingInstance.eventLoop.events
+        // var events = this.looper.devices[0].processingInstance.eventLoop.events;
+        var events = this.getEventSequence(0);
+        var program = '';
+        for (var i = 0; i < events.length; i++) {
+          program = program + getEventSequence(0)[i].behavior + '\n';
+          //alert(this.looper.devices[0].processingInstance.eventLoop.events[i].behavior);
+        }
+        console.log(program);
+        //loopEvent.behavior = behavior.script;
     }
     this.deploy = deploy;
+
+    // TODO: Implement function to get current state of Looper's state on the Espruino
 
     /**
      * Processing sketch code
