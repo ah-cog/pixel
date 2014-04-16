@@ -16,6 +16,7 @@ int colorApplicationMethod = COLOR_APPLICATION_MODE_CROSSFADE;
 int crossfadeStep = 0;
 
 int defaultModuleColor[3] = { 255, 255, 255 }; // The color associated with the module
+int sequenceColor[3] = { 255, 255, 255 }; // The desired color of the LED
 int targetColor[3] = { 255, 255, 255 }; // The desired color of the LED
 int ledColor[3] = { 255, 255, 255 }; // The current actual color of the LED
 
@@ -29,6 +30,18 @@ void setModuleColor(int red, int green, int blue) {
 //  defaultModuleColor[0] = abs(red - 255);
 //  defaultModuleColor[1] = abs(green - 255);
 //  defaultModuleColor[2] = abs(blue - 255);
+}
+
+/**
+ * Sets the module's sequence color
+ */
+void setSequenceColor(int red, int green, int blue) {
+  sequenceColor[0] = red;
+  sequenceColor[1] = green;
+  sequenceColor[2] = blue;
+//  sequenceColor[0] = abs(red - 255);
+//  sequenceColor[1] = abs(green - 255);
+//  sequenceColor[2] = abs(blue - 255);
 }
 
 /**

@@ -84,6 +84,10 @@ unsigned long awaitingPreviousModuleStartTime = 0;
 
 boolean hasGestureProcessed = false;
 
+// Sequence:
+boolean isSequenced = false; // Does the module belong to a sequence?
+boolean isActive = false; // Is the module the currently active module in the sequence
+
 void loop() {
   
   // TODO: Add "getPins" function to read the state of pins, store the state of the pins, and handle interfacing with the pins (reading, writing), based on the program running (in both Looper and Mover).
@@ -199,24 +203,27 @@ void loop() {
     //
     // Process received messages
     //
-    
+
     if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) { // Sequence: Sequencing request (i.e., linking) confirmation, from "right" module
       // If receive "tap to another, as right", then check if this module performed "tap to another, as left" recently. If so, link the modules in a sequence, starting with this module first.
       
-      if (awaitingNextModule) {
+//      if (awaitingNextModule) {
+      if (awaitingPreviousModule) {
+        
+//        Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_LEFT");
         
         // Update message state
-        awaitingNextModule = false;
-        awaitingNextModuleConfirm = true;
+        awaitingPreviousModule = false;
+        awaitingPreviousModuleConfirm = true;
         
         // Send ACK message to message.source to confirm linking operation
-//        addMessage(message.source, 13);
+//        addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
         addBroadcast(REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
+        
+//        Serial.println("<< Sending REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
       }
       
     } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT) { // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
-    
-      Serial.println(">>>> PROCESSING MESSAGE 14");
         
 //        unsigned long currentTime = millis();
 //        if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
@@ -225,39 +232,64 @@ void loop() {
         
       // Send ACK message to message.source to confirm linking operation (if not yet done)
       if (awaitingNextModuleConfirm) {
-        addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
-//      addMessage(message.source, 14);
-
         awaitingNextModule = false;
-        awaitingNextModuleConfirm = false;
+        awaitingNextModuleConfirm = true;
+        
+        Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
+
+//        addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
+        addMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
+        
+        
+
+//        Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_LEFT");
         
         addNextModule(message.source);
-      
-        setModuleColor(255, 255, 255);
-        setColor(255, 255, 255);
+        // TODO: addNextModule(message.source, SEQUENCE_ID);
+        
+        // Add module to sequence
+        isSequenced = true;
+        setSequenceColor(255, 255, 255); // Set the color of the sequence
+        
+        // Update the module's color
+        if (isSequenced) {
+          setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+        } else {
+          setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+        }
+        //setModuleColor(255, 255, 255);
+        //setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
       }
       
     } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) { // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
     
       // TODO:
+      
+      Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
     
     } else if (message.message == ANNOUNCE_GESTURE_TAP_AS_RIGHT) { // Sequence: Sequencing request (i.e., linking) confirmation, from "left" module
+      // NOTE: Received by the "left" module from the "right" module
+      
       // If receive "tap to another, as left", then check if this module performed "tap to another, as right" recently. If so, link the modules in a sequence, starting with the other module first.
       
-      if (awaitingPreviousModule) {
+//      if (awaitingPreviousModule) {
+      if (awaitingNextModule) {
+        
+//        Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_RIGHT");
         
         // Update message state
-        awaitingPreviousModule = false;
-        awaitingPreviousModuleConfirm = true;
+        awaitingNextModule = false;
+        awaitingNextModuleConfirm = true;
         
         // Send ACK message to message.source to confirm linking operation
         addBroadcast(REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
-        // addMessage(message.source, 13);
+//        addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
+        
+//        Serial.println("<< Sending REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
       }
       
     } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) { // Sequence: Sequencing (i.e., linking) confirmation, from "left" module
-      
-      Serial.println(">>>> PROCESSING MESSAGE 13");
+      // NOTE: Received by the "right" module from the "left" module
       
 //      unsigned long currentTime = millis();
 //      if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
@@ -266,40 +298,40 @@ void loop() {
         
       // Send ACK message to message.source to confirm linking operation (if not yet done)
       if (awaitingPreviousModuleConfirm) {
-        addBroadcast(CONFIRM_GESTURE_TAP_AS_RIGHT);
-//      addMessage(message.source, 14);
+      
+        Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
 
         awaitingPreviousModule = false;
         awaitingPreviousModuleConfirm = false;
         
         addPreviousModule(message.source);
-      
-        setModuleColor(255, 255, 255);
-        setColor(255, 255, 255);
+        // TODO: addPreviousModule(message.source, SEQUENCE_ID);
+        
+        // Add module to sequence
+        isSequenced = true;
+        setSequenceColor(255, 255, 255); // Set the color of the sequence
+        
+        // Update the module's color
+        if (isSequenced) {
+          setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+        } else {
+          setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+        }
+        //setModuleColor(255, 255, 255);
+        //setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+        
+        
+//        addBroadcast(CONFIRM_GESTURE_TAP_AS_RIGHT);
+        addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
+
+//        Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_RIGHT");
       }
 
-    } else if (message.message == 20) { // (Received) Sequence: Activate Module (because receiving a sequence iterator)
+    } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) { // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
     
-//      Serial.println(">>>> PROCESSING MESSAGE 20");
-//        
-////        unsigned long currentTime = millis();
-////        if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
-////          awaitingNextModuleConfirm = false;
-////        }
-//        
-//      // Send ACK message to message.source to confirm linking operation (if not yet done)
-//      if (awaitingNextModuleConfirm) {
-//        addBroadcast(13);
-////      addMessage(message.source, 14);
-//
-//        awaitingNextModule = false;
-//        awaitingNextModuleConfirm = false;
-//        
-//        addNextModule(message.source);
-//      
-//        setModuleColor(255, 255, 255);
-//        setColor(255, 255, 255);
-//      }
+      // TODO:
+      
+      Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
     }
     
     // TODO: Deactivate module (because it's passing a sequence iterator forward)
@@ -351,30 +383,37 @@ void loop() {
 boolean handleGestureAtRestOnTable() {
   setColor(0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
   
-  addBroadcast(1);
+  addBroadcast(ANNOUNCE_GESTURE_AT_REST_ON_TABLE);
 }
 
 /**
  * Handle "at rest, in hand" gesture.
  */
 boolean handleGestureAtRestInHand() {
-  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+//  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+
+  // Update the module's color
+  if (isSequenced) {
+    setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+  } else {
+    setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+  }
   
-  addBroadcast(2);
+  addBroadcast(ANNOUNCE_GESTURE_AT_REST_IN_HAND);
 }
 
 /**
  * Handle "pick up" gesture.
  */
 boolean handleGesturePickUp() {
-  addBroadcast(3);
+  addBroadcast(ANNOUNCE_GESTURE_PICK_UP);
 }
 
 /**
  * Handle "place down" gesture.
  */
 boolean handleGesturePlaceDown() {
-  addBroadcast(4);
+  addBroadcast(ANNOUNCE_GESTURE_PLACE_DOWN);
 }
 
 /**
@@ -399,10 +438,17 @@ boolean handleGestureTiltRight() {
  * Handle "shake" gesture.
  */
 boolean handleGestureShake() {
-  setColor(255, 0, 0);
+//  setColor(255, 0, 0);
   
   // TODO: Message next modules, say this module is leaving the sequence
   // TODO: Message previous module, say this module is leaving the sequence
+  
+  isSequenced = false;
+  if (isSequenced) {
+    setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+  } else {
+    setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+  }
   
   addBroadcast(ANNOUNCE_GESTURE_SHAKE);
   
@@ -416,11 +462,14 @@ boolean handleGestureShake() {
 boolean handleGestureTapToAnotherAsLeft() {
   setColor(255, 0, 0);
   
-  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_LEFT);
+  if (!awaitingPreviousModule) {
+    awaitingNextModule = true;
+    awaitingNextModuleConfirm = true;
+    awaitingNextModuleStartTime = millis();
+  }
   
-  awaitingNextModule = true;
-  awaitingNextModuleConfirm = false;
-  awaitingNextModuleStartTime = millis();
+  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_LEFT);
+  Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_LEFT");
 }
 
 /**
@@ -441,10 +490,13 @@ boolean handleGestureTapToAnotherAsRight() {
 //          // Wait for confirmation
 //          // delayUntilConfirmation();
 //      }
+  
+  if (!awaitingNextModule) {
+    awaitingPreviousModule = true;
+    awaitingPreviousModuleConfirm = true;
+    awaitingPreviousModuleStartTime = millis();
+  }
 
   addBroadcast(ANNOUNCE_GESTURE_TAP_AS_RIGHT);
-  
-  awaitingPreviousModule = true;
-  awaitingPreviousModuleConfirm = false;
-  awaitingPreviousModuleStartTime = millis();
+  Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_RIGHT");
 }
