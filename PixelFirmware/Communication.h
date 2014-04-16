@@ -87,6 +87,7 @@ int incomingMessageQueueSize = 0;
 #define MESSAGE_QUEUE_CAPACITY 20
 Message messageQueue[MESSAGE_QUEUE_CAPACITY];
 int messageQueueSize = 0;
+unsigned long lastMessageSendTime = 0;
 
 // Previous modules in sequence
 #define PREVIOUS_MODULE_CAPACITY 20
@@ -359,18 +360,7 @@ boolean sendMessage() {
   if (messageQueueSize > 0) {
     
     // Get the next message from the front of the queue
-//    unsigned short int message = messageQueue[0]; // Get message on front of queue
-//    messageQueueSize--;
     Message message = dequeueOutgoingMessage();
-    
-//    // Shift the remaining messages forward one position in the queue
-//    for (int i = 0; i < MESSAGE_QUEUE_CAPACITY - 1; i++) {
-//      messageQueue[i] = messageQueue[i + 1];
-//    }
-//    messageQueue[MESSAGE_QUEUE_CAPACITY - 1] = 0; // Set last message to "noop"
-    
-    
-    
     
     //
     // Actually send the message

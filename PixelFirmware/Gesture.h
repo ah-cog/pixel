@@ -5,6 +5,18 @@
 
 #define MAX_INTEGER_VALUE 32767
 
+#define ANNOUNCE_GESTURE_TILT_LEFT 5
+#define ANNOUNCE_GESTURE_TILT_RIGHT 6
+#define ANNOUNCE_GESTURE_SHAKE 7
+#define ANNOUNCE_GESTURE_TAP_AS_LEFT 8
+#define ANNOUNCE_GESTURE_TAP_AS_RIGHT 9
+
+#define REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT 13
+#define REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT 14
+
+#define CONFIRM_GESTURE_TAP_AS_LEFT 15
+#define CONFIRM_GESTURE_TAP_AS_RIGHT 16
+
 /**
  * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
  */

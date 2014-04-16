@@ -17,11 +17,7 @@ Authors: Michael Gubbels
  * Module configuration
  */
 
-boolean hasCounter = false;
-unsigned long lastCount = 0;
-#define NEIGHBOR_COUNT 2
-unsigned short int neighbors[NEIGHBOR_COUNT]; // TODO: Remove this! Use the "nextModules" and "previousModules" data structures and methods.
-//unsigned short int next[1]; // TODO: Remove this! Use the "nextModules" and "previousModules" data structures and methods.
+//boolean hasCounter = false;
 
 //            _               
 //           | |              
@@ -204,21 +200,7 @@ void loop() {
     // Process received messages
     //
     
-    if (message.message == 8) {
-      // If receive "tap to another, as left", then check if this module performed "tap to another, as right" recently. If so, link the modules in a sequence, starting with the other module first.
-      
-      if (awaitingPreviousModule) {
-        
-        // Update message state
-        awaitingPreviousModule = false;
-        awaitingPreviousModuleConfirm = true;
-        
-        // Send ACK message to message.source to confirm linking operation
-        addBroadcast(13);
-        // addMessage(message.source, 13);
-      }
-      
-    } else if (message.message == 9) {
+    if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) { // Sequence: Sequencing request (i.e., linking) confirmation, from "right" module
       // If receive "tap to another, as right", then check if this module performed "tap to another, as left" recently. If so, link the modules in a sequence, starting with this module first.
       
       if (awaitingNextModule) {
@@ -229,10 +211,51 @@ void loop() {
         
         // Send ACK message to message.source to confirm linking operation
 //        addMessage(message.source, 13);
-        addBroadcast(14);
+        addBroadcast(REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
       }
       
-    } else if (message.message == 13) { // The ACK message from message.source confirming linking operation (if not yet done)
+    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT) { // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
+    
+      Serial.println(">>>> PROCESSING MESSAGE 14");
+        
+//        unsigned long currentTime = millis();
+//        if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
+//          awaitingNextModuleConfirm = false;
+//        }
+        
+      // Send ACK message to message.source to confirm linking operation (if not yet done)
+      if (awaitingNextModuleConfirm) {
+        addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
+//      addMessage(message.source, 14);
+
+        awaitingNextModule = false;
+        awaitingNextModuleConfirm = false;
+        
+        addNextModule(message.source);
+      
+        setModuleColor(255, 255, 255);
+        setColor(255, 255, 255);
+      }
+      
+    } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) { // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
+    
+      // TODO:
+    
+    } else if (message.message == ANNOUNCE_GESTURE_TAP_AS_RIGHT) { // Sequence: Sequencing request (i.e., linking) confirmation, from "left" module
+      // If receive "tap to another, as left", then check if this module performed "tap to another, as right" recently. If so, link the modules in a sequence, starting with the other module first.
+      
+      if (awaitingPreviousModule) {
+        
+        // Update message state
+        awaitingPreviousModule = false;
+        awaitingPreviousModuleConfirm = true;
+        
+        // Send ACK message to message.source to confirm linking operation
+        addBroadcast(REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
+        // addMessage(message.source, 13);
+      }
+      
+    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) { // Sequence: Sequencing (i.e., linking) confirmation, from "left" module
       
       Serial.println(">>>> PROCESSING MESSAGE 13");
       
@@ -243,7 +266,7 @@ void loop() {
         
       // Send ACK message to message.source to confirm linking operation (if not yet done)
       if (awaitingPreviousModuleConfirm) {
-        addBroadcast(13);
+        addBroadcast(CONFIRM_GESTURE_TAP_AS_RIGHT);
 //      addMessage(message.source, 14);
 
         awaitingPreviousModule = false;
@@ -255,53 +278,31 @@ void loop() {
         setColor(255, 255, 255);
       }
 
-    } else if (message.message == 14) { // Sequencing (i.e., linking) confirmation
+    } else if (message.message == 20) { // (Received) Sequence: Activate Module (because receiving a sequence iterator)
     
-      Serial.println(">>>> PROCESSING MESSAGE 14");
-        
-//        unsigned long currentTime = millis();
-//        if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
-//          awaitingNextModuleConfirm = false;
-//        }
-        
-      // Send ACK message to message.source to confirm linking operation (if not yet done)
-      if (awaitingNextModuleConfirm) {
-        addBroadcast(13);
-//      addMessage(message.source, 14);
-
-        awaitingNextModule = false;
-        awaitingNextModuleConfirm = false;
-        
-        addNextModule(message.source);
-      
-        setModuleColor(255, 255, 255);
-        setColor(255, 255, 255);
-      }
-      
-    } else if (message.message == 20) { // (Received) Sequence: Activate!
-    
-      Serial.println(">>>> PROCESSING MESSAGE 20");
-        
-//        unsigned long currentTime = millis();
-//        if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
-//          awaitingNextModuleConfirm = false;
-//        }
-        
-      // Send ACK message to message.source to confirm linking operation (if not yet done)
-      if (awaitingNextModuleConfirm) {
-        addBroadcast(13);
-//      addMessage(message.source, 14);
-
-        awaitingNextModule = false;
-        awaitingNextModuleConfirm = false;
-        
-        addNextModule(message.source);
-      
-        setModuleColor(255, 255, 255);
-        setColor(255, 255, 255);
-      }
+//      Serial.println(">>>> PROCESSING MESSAGE 20");
+//        
+////        unsigned long currentTime = millis();
+////        if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
+////          awaitingNextModuleConfirm = false;
+////        }
+//        
+//      // Send ACK message to message.source to confirm linking operation (if not yet done)
+//      if (awaitingNextModuleConfirm) {
+//        addBroadcast(13);
+////      addMessage(message.source, 14);
+//
+//        awaitingNextModule = false;
+//        awaitingNextModuleConfirm = false;
+//        
+//        addNextModule(message.source);
+//      
+//        setModuleColor(255, 255, 255);
+//        setColor(255, 255, 255);
+//      }
     }
     
+    // TODO: Deactivate module (because it's passing a sequence iterator forward)
     // TODO: Module announces removal from sequence (previous and next)
   }
   
@@ -332,7 +333,7 @@ void loop() {
   //
     
   unsigned long currentTime = millis();
-  if (currentTime - lastCount > RADIOBLOCK_PACKET_WRITE_TIMEOUT) {
+  if (currentTime - lastMessageSendTime > RADIOBLOCK_PACKET_WRITE_TIMEOUT) {
   
     // Process mesh message queue  
     if (messageQueueSize > 0) {
@@ -340,7 +341,7 @@ void loop() {
     }
     
     // Update the time that a message was most-recently dispatched
-    lastCount = millis();
+    lastMessageSendTime = millis();
   }
 }
 
@@ -382,7 +383,7 @@ boolean handleGesturePlaceDown() {
 boolean handleGestureTiltLeft() {
   setColor(0, 0, 255);
   
-  addBroadcast(5);
+  addBroadcast(ANNOUNCE_GESTURE_TILT_LEFT);
 }
 
 /**
@@ -391,7 +392,7 @@ boolean handleGestureTiltLeft() {
 boolean handleGestureTiltRight() {
   setColor(0, 255, 0);
   
-  addBroadcast(6);
+  addBroadcast(ANNOUNCE_GESTURE_TILT_RIGHT);
 }
 
 /**
@@ -403,7 +404,7 @@ boolean handleGestureShake() {
   // TODO: Message next modules, say this module is leaving the sequence
   // TODO: Message previous module, say this module is leaving the sequence
   
-  addBroadcast(7);
+  addBroadcast(ANNOUNCE_GESTURE_SHAKE);
   
   removePreviousModules();
   removeNextModules();
@@ -415,8 +416,10 @@ boolean handleGestureShake() {
 boolean handleGestureTapToAnotherAsLeft() {
   setColor(255, 0, 0);
   
-  addBroadcast(8);
+  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_LEFT);
+  
   awaitingNextModule = true;
+  awaitingNextModuleConfirm = false;
   awaitingNextModuleStartTime = millis();
 }
 
@@ -439,7 +442,9 @@ boolean handleGestureTapToAnotherAsRight() {
 //          // delayUntilConfirmation();
 //      }
 
-  addBroadcast(9);
+  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_RIGHT);
+  
   awaitingPreviousModule = true;
+  awaitingPreviousModuleConfirm = false;
   awaitingPreviousModuleStartTime = millis();
 }
