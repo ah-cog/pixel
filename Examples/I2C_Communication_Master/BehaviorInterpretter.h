@@ -1,4 +1,5 @@
 struct BehaviorNode {
+  // TODO: add "instruction" so can add "delay" etc.
   int pin; // The pin number
   int operation; // i.e., read, write, PWM, "remember"
   int type; // i.e., digital or analog

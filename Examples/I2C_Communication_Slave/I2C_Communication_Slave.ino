@@ -20,7 +20,7 @@
 #define ADAFRUIT_CC3000_CS    10
 // Use hardware SPI for the remaining pins
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
-Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV2); // you can change this clock speed
+Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV4); // you can change this clock speed
 
 #define WLAN_SSID "Hackerspace" // Cannot be longer than 32 characters!
 #define WLAN_PASS "MakingIsFun!"
@@ -113,11 +113,11 @@ void setup () {
   
   // Add testing operations to queue (these would usually come from the web UI)
   insertBehaviorNode(0, 3, 4, 0, 1, 1);
-  insertBehaviorNode(1, 4, 5, 0, 1, 1);
+  insertBehaviorNode(1, 4, 5, 0, 1, 0);
   insertBehaviorNode(2, 5, 6, 0, 1, 1);
-  insertBehaviorNode(3, 6, 7, 0, 1, 1);
+  insertBehaviorNode(3, 6, 7, 0, 1, 0);
   insertBehaviorNode(4, 7, 8, 0, 1, 1);
-  insertBehaviorNode(5, 8, 9, 0, 1, 1);
+  insertBehaviorNode(5, 8, 9, 0, 1, 0);
   insertBehaviorNode(6, 20, 10, 0, 1, 1);
 }
 
@@ -362,6 +362,41 @@ void loop () {
               
               //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
               insertBehaviorNode(6, 20, 10, 0, 1, 1);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              
+              // TODO: flush
+              // TODO: close
+              
+              break;
+              
+            } else if (strcmp (httpRequestAddress, "/lighton") == 0) {
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehaviorNode(0, 13, 1, 0, 1, 1);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              
+              // TODO: flush
+              // TODO: close
+              
+              break;
+              
+            } else if (strcmp (httpRequestAddress, "/lightoff") == 0) {
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehaviorNode(0, 13, 1, 0, 1, 0);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
               
               // TODO: flush
               // TODO: close
@@ -629,7 +664,7 @@ bool displayConnectionDetails (void) {
   }
 }
 
-boolean handleDefaultHttpRequest(WiFiClient& client) {
+boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   
   // Send a standard HTTP response header
   client.println("HTTP/1.1 200 OK");
@@ -639,6 +674,82 @@ boolean handleDefaultHttpRequest(WiFiClient& client) {
   client.println();
   client.println("<!DOCTYPE HTML>");
   client.println("<html>");
+  client.println("<head>");
+  
+  
+  
+  client.println("<script type=\"text/javascript\">");
+  client.println("function addNode(pin, operation, type, mode, value) {");
+  client.println("  var http = new XMLHttpRequest();");
+  client.println("  var url = \"/addnode\";");
+  client.println("  var params = \"pin=\" + pin + \"&operation=\" + operation + \"&type=\" + type + \"&mode=\" + mode + \"&value=\" + value + \"\";");
+  // client.println("  var params = \"\";");
+  client.println("  http.open(\"POST\", url, true);");
+  // Send the proper header information along with the request
+  client.println("  http.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");");
+  // client.println("http.setRequestHeader(\"Content-length\", params.length);");
+  // client.println("http.setRequestHeader(\"Connection\", \"close\");");
+  client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
+  client.println("    if(http.readyState == 4 && http.status == 200) {");
+  client.println("      alert(http.responseText);");
+  client.println("    }");
+  client.println("  }");
+  client.println("  http.send(params);");
+  client.println("};");
+  
+  
+  client.println("function lightOn() {");
+  client.println("  var http = new XMLHttpRequest();");
+  client.println("  var url = \"/lighton\";");
+  client.println("  var params = \"\";");
+  client.println("  http.open(\"POST\", url, true);");
+  // Send the proper header information along with the request
+  client.println("  http.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");");
+  // client.println("http.setRequestHeader(\"Content-length\", params.length);");
+  // client.println("http.setRequestHeader(\"Connection\", \"close\");");
+  client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
+  client.println("    if(http.readyState == 4 && http.status == 200) {");
+  client.println("      alert(http.responseText);");
+  client.println("    }");
+  client.println("  }");
+  client.println("  http.send(params);");
+  client.println("};");
+  
+  
+  client.println("function lightOff() {");
+  client.println("  var http = new XMLHttpRequest();");
+  client.println("  var url = \"/lightoff\";");
+  client.println("  var params = \"\";");
+  // client.println("  var params = \"\";");
+  client.println("  http.open(\"POST\", url, true);");
+  // Send the proper header information along with the request
+  client.println("  http.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");");
+  // client.println("http.setRequestHeader(\"Content-length\", params.length);");
+  // client.println("http.setRequestHeader(\"Connection\", \"close\");");
+  client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
+  client.println("    if(http.readyState == 4 && http.status == 200) {");
+  client.println("      alert(http.responseText);");
+  client.println("    }");
+  client.println("  }");
+  client.println("  http.send(params);");
+  client.println("};");
+  
+  
+  client.println("</script>");
+  
+
+  
+  client.println("</head>");
+
+  client.println("<h1>Looper</h1>");
+  
+  client.println("<h2>Operations</h2>");
+  client.println("<input type=\"button\" value=\"add node\" onclick=\"javascript:addNode(20, 10, 0, 1, 1);\" /><br />");
+  
+  client.println("<input type=\"button\" value=\"on 13\" onclick=\"javascript:lightOn();\" /><br />");
+  client.println("<input type=\"button\" value=\"off 13\" onclick=\"javascript:lightOff();\" /><br />");
+
+  client.println("<h2>Pins</h2>");
   // output the value of each analog input pin
   for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
     int sensorReading = analogRead(analogChannel);
@@ -648,8 +759,7 @@ boolean handleDefaultHttpRequest(WiFiClient& client) {
     client.print(sensorReading);
     client.println("<br />");
   }
-  client.println("<strong>Hello</strong>");
   client.println("</html>");
   
-  client.flush();
+//  client.flush();
 }

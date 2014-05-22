@@ -63,7 +63,37 @@ void loop() {
 
   i2cMessageBufferSize = 0; // Reset I2C message buffer size
   
-  Serial.println(i2cMessageBuffer);
+  // TODO: Parse data
+  if (strlen(i2cMessageBuffer) > 0) {
+//  if (i2cMessageBufferSize > 0) {
+    Serial.println(i2cMessageBuffer);
+    
+    String split = String(i2cMessageBuffer); // "hi this is a split test";
+    String pin = getValue(split, ' ', 0);
+    String value2 = getValue(split, ' ', 4);
+    Serial.println(value2.length());
+    Serial.print("value2: ");
+    Serial.print(value2);
+    Serial.print("\n");
+    if (pin.compareTo("13") == 0) {
+      Serial.println("PIN 13");
+      
+//      if (value2.compareTo("1") == 0) {
+      if (value2.toInt() == 1) {
+        Serial.println("ON");
+        digitalWrite(13, HIGH);
+      } else {
+        Serial.println("OFF");
+        digitalWrite(13, LOW);
+      }
+    }
+    //Serial.println(pin);
+  }
+  
+  
+  // TODO: Create node object from parsed data
+  // TODO: Add node object to queue (i.e., the program)
+  // TODO: Add print it! (or run it...)
   
   // TODO: Parse incoming I2C message, then create a corresponding behavior node and insert it into the behavior program!
   
@@ -71,6 +101,23 @@ void loop() {
   // Interpretter:
   updateBehavior();
   behaviorLoopStep();
+}
+
+String getValue(String data, char separator, int index)
+{
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length()-1;
+
+  for(int i=0; i<=maxIndex && found<=index; i++){
+    if(data.charAt(i)==separator || i==maxIndex){
+        found++;
+        strIndex[0] = strIndex[1]+1;
+        strIndex[1] = (i == maxIndex) ? i+1 : i;
+    }
+  }
+
+  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
 /**
