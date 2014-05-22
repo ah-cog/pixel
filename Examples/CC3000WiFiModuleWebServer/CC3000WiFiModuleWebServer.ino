@@ -78,16 +78,16 @@
 #include "utility/socket.h"
 
 // These are the interrupt and control pins
-#define ADAFRUIT_CC3000_IRQ   3  // MUST be an interrupt pin!
+#define ADAFRUIT_CC3000_IRQ   1  // MUST be an interrupt pin!
 // These can be any two pins
-#define ADAFRUIT_CC3000_VBAT  5
+#define ADAFRUIT_CC3000_VBAT  3
 #define ADAFRUIT_CC3000_CS    10
 // Use hardware SPI for the remaining pins
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV2); // you can change this clock speed
 
-#define WLAN_SSID "Particle" // Cannot be longer than 32 characters!
-#define WLAN_PASS "particle"
+#define WLAN_SSID "Hackerspace" // Cannot be longer than 32 characters!
+#define WLAN_PASS "MakingIsFun!"
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
 #define WLAN_SECURITY WLAN_SEC_WPA2
 
@@ -98,7 +98,7 @@ Adafruit_CC3000_Server httpServer(LISTEN_PORT);
 void setup(void) {
   
   Serial.begin(115200);
-  while (!Serial); // Hack
+//  while (!Serial); // Hack
   Serial.println(F("Hello, CC3000!\n")); 
 
   Serial.print("Free RAM: ");
@@ -151,6 +151,7 @@ void loop (void) {
   // Try to get a client which is connected.
   Adafruit_CC3000_ClientRef client = httpServer.available();
   if (client) {
+    Serial.println("Client connected.");
     boolean currentLineIsBlank = true;
     while(client.connected()) {
       // Check if there is data available to read.
@@ -159,7 +160,14 @@ void loop (void) {
         uint8_t c = client.read();
         //client.write(c);
         
+//        Serial.write(c);
+        
         if (c == '\n' && currentLineIsBlank) {
+          
+          // Process URL
+          // TODO:
+          
+          
           // send a standard http response header
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
