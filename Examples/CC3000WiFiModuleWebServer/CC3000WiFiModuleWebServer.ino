@@ -1,76 +1,7 @@
-
-/***************************************************
-  Adafruit CC3000 Breakout/Shield TCP Echo Server
-    
-  This is a simple implementation of the echo 
-  protocol, RFC 862 http://tools.ietf.org/html/rfc862 , 
-  for the Arduino platform and Adafruit CC3000 breakout
-  or shield.  This sketch will create a TCP server that 
-  listens by default on port 7 and echos back any data
-  received.  Up to 3 clients can be connected concurrently
-  to the server.  This sketch is meant as an example of how 
-  to write a simple server with the Arduino and CC3000.
-
-  See the CC3000 tutorial on Adafruit's learning system
-  for more information on setting up and using the
-  CC3000:
-    http://learn.adafruit.com/adafruit-cc3000-wifi  
-    
-  Requirements:
-  
-  This sketch requires the Adafruit CC3000 library.  You can
-  download the library from:
-    https://github.com/adafruit/Adafruit_CC3000_Library
-  
-  For information on installing libraries in the Arduino IDE
-  see this page:
-    http://arduino.cc/en/Guide/Libraries
-  
-  Usage:
-    
-  Update the SSID and, if necessary, the CC3000 hardware pin 
-  information below, then run the sketch and check the 
-  output of the serial port.  After connecting to the 
-  wireless network successfully the sketch will output 
-  the IP address of the server and start listening for 
-  connections.  Once listening for connections, connect
-  to the server from your computer  using a telnet client
-  on port 7.  
-           
-  For example on Linux or Mac OSX, if your CC3000 has an
-  IP address 192.168.1.100 you would execute in a command
-  window:
-  
-    telnet 192.168.1.100 7
-           
-  After connecting, notice that as you type input and 
-  press enter to send it the CC3000 will echo back exactly
-  what you typed.  Press ctrl-] and type quit at the prompt 
-  to close the telnet session.
-           
-  On Windows you'll need to download a telnet client.  PuTTY 
-  is a good, free GUI client: 
-    http://www.chiark.greenend.org.uk/~sgtatham/putty/
-  
-  License:
  
-  This example is copyright (c) 2013 Tony DiCola (tony@tonydicola.com)
-  and is released under an open source MIT license.  See details at:
-    http://opensource.org/licenses/MIT
-  
-  This code was adapted from Adafruit CC3000 library example 
-  code which has the following license:
-  
-  Designed specifically to work with the Adafruit WiFi products:
-  ----> https://www.adafruit.com/products/1469
-
-  Adafruit invests time and resources providing this open source code, 
-  please support Adafruit and open-source hardware by purchasing 
-  products from Adafruit!
-
-  Written by Limor Fried & Kevin Townsend for Adafruit Industries.  
-  BSD license, all text above must be included in any redistribution      
- ****************************************************/
+// Notes for Teensy 3.1 (i.e., heuristics to get the CC3000 module working, based on experience):
+// - Set to 48 MHz
+// - Set clock to SPI_CLOCK_DIV8 (SPI_CLOCK_DIV2 also worked, but not too reliably)
 
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
@@ -84,7 +15,7 @@
 #define ADAFRUIT_CC3000_CS    10
 // Use hardware SPI for the remaining pins
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
-Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV2); // you can change this clock speed
+Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV8); // you can change this clock speed
 
 #define WLAN_SSID "Hackerspace" // Cannot be longer than 32 characters!
 #define WLAN_PASS "MakingIsFun!"

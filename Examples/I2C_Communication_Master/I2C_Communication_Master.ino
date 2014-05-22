@@ -1,6 +1,6 @@
 #include <Wire.h>
 
-#define I2C_MESSAGE_BYTE_SIZE 10
+#define I2C_MESSAGE_BYTE_SIZE 20
 
 char i2cMessageBuffer[128] = { 0 };
 int i2cMessageBufferSize = 0;
@@ -15,17 +15,29 @@ int i2cMessageBufferSize = 0;
 // - Remove top message (but don't send it, send removal status)
 
 void setup() {
-  Wire.begin(1); // join i2c bus (address optional for master)
-  Serial.begin(9600); // start serial for output
+  
+  pinMode(13, OUTPUT);   
+  digitalWrite(13, HIGH);
+  delay(200);
+  digitalWrite(13, LOW);
+  delay(200);
+  digitalWrite(13, HIGH);
+  delay(200);
+  digitalWrite(13, LOW);
+  delay(200);
+  
+  
+  Wire.begin(1); // Join I2C bus (address optional for master)
+  Serial.begin(115200); // Start serial for output
   Serial.println("Master started");
 }
 
 byte x = 0;
 
-int slaveDevice = 4;
+int slaveDevice = 4; // Slave device address
 
-void loop()
-{
+void loop() {
+  
   // Send to slave
   Wire.beginTransmission(slaveDevice); // transmit to device #4
   Wire.write("x is ");        // sends five bytes
@@ -38,10 +50,10 @@ void loop()
   // Request messages from slave
   Wire.requestFrom(slaveDevice, I2C_MESSAGE_BYTE_SIZE);    // request 6 bytes from slave device #2
 
-  while(Wire.available())    // slave may send less than requested
-  {
-    char c = Wire.read(); // receive a byte as character
-//    Serial.print(c);         // print the character
+  while(Wire.available ()) { // slave may send less than requested
+  
+    char c = Wire.read (); // receive a byte as character
+//    Serial.print(c); // print the character
     
     // Copy byte into message buffer
     i2cMessageBuffer[i2cMessageBufferSize] = c;
