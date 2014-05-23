@@ -112,13 +112,13 @@ void setup () {
   
   
   // Add testing operations to queue (these would usually come from the web UI)
-  insertBehaviorNode(0, 3, 4, 0, 1, 1);
-  insertBehaviorNode(1, 4, 5, 0, 1, 0);
-  insertBehaviorNode(2, 5, 6, 0, 1, 1);
-  insertBehaviorNode(3, 6, 7, 0, 1, 0);
-  insertBehaviorNode(4, 7, 8, 0, 1, 1);
-  insertBehaviorNode(5, 8, 9, 0, 1, 0);
-  insertBehaviorNode(6, 20, 10, 0, 1, 1);
+//  insertBehaviorNode(0, 3, 4, 0, 1, 1);
+//  insertBehaviorNode(1, 4, 5, 0, 1, 0);
+//  insertBehaviorNode(2, 5, 6, 0, 1, 1);
+//  insertBehaviorNode(3, 6, 7, 0, 1, 0);
+//  insertBehaviorNode(4, 7, 8, 0, 1, 1);
+//  insertBehaviorNode(5, 8, 9, 0, 1, 0);
+//  insertBehaviorNode(6, 20, 10, 0, 1, 1);
 }
 
 uint16_t checkFirmwareVersion(void)
@@ -392,6 +392,21 @@ void loop () {
               
               //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
               insertBehaviorNode(0, 13, 1, 0, 1, 0);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              
+              // TODO: flush
+              // TODO: close
+              
+              break;
+              
+            } else if (strcmp (httpRequestAddress, "/delay") == 0) {
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehaviorNode(0, 0, 1, 0, 1, 0);
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
@@ -691,7 +706,7 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   // client.println("http.setRequestHeader(\"Connection\", \"close\");");
   client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
   client.println("    if(http.readyState == 4 && http.status == 200) {");
-  client.println("      alert(http.responseText);");
+  client.println("      console.log(http.responseText);");
   client.println("    }");
   client.println("  }");
   client.println("  http.send(params);");
@@ -709,7 +724,7 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   // client.println("http.setRequestHeader(\"Connection\", \"close\");");
   client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
   client.println("    if(http.readyState == 4 && http.status == 200) {");
-  client.println("      alert(http.responseText);");
+  client.println("      console.log(http.responseText);");
   client.println("    }");
   client.println("  }");
   client.println("  http.send(params);");
@@ -728,7 +743,25 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   // client.println("http.setRequestHeader(\"Connection\", \"close\");");
   client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
   client.println("    if(http.readyState == 4 && http.status == 200) {");
-  client.println("      alert(http.responseText);");
+  client.println("      console.log(http.responseText);");
+  client.println("    }");
+  client.println("  }");
+  client.println("  http.send(params);");
+  client.println("};");
+  
+  
+  client.println("function delay(milliseconds) {");
+  client.println("  var http = new XMLHttpRequest();");
+  client.println("  var url = \"/delay\";");
+  client.println("  var params = \"milliseconds=\" + milliseconds + \"\";");
+  client.println("  http.open(\"POST\", url, true);");
+  // Send the proper header information along with the request
+  client.println("  http.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");");
+  // client.println("http.setRequestHeader(\"Content-length\", params.length);");
+  // client.println("http.setRequestHeader(\"Connection\", \"close\");");
+  client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
+  client.println("    if(http.readyState == 4 && http.status == 200) {");
+  client.println("      console.log(http.responseText);"); // TODO: Make this actually "activate" the "ghost" node that has been added... once confirmed in the program!
   client.println("    }");
   client.println("  }");
   client.println("  http.send(params);");
@@ -748,6 +781,8 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   
   client.println("<input type=\"button\" value=\"on 13\" onclick=\"javascript:lightOn();\" /><br />");
   client.println("<input type=\"button\" value=\"off 13\" onclick=\"javascript:lightOff();\" /><br />");
+  
+  client.println("<input type=\"button\" value=\"delay 1000 ms\" onclick=\"javascript:delay(1000);\" /><br />");
 
   client.println("<h2>Pins</h2>");
   // output the value of each analog input pin

@@ -1,3 +1,11 @@
+#ifndef BEHAVIOR_NODE_H
+#define BEHAVIOR_NODE_H
+
+// turn digital pin on
+// turn digital pin off
+// get state of digital pin
+// delay
+
 struct BehaviorNode {
   // TODO: add "instruction" so can add "delay" etc.
   int pin; // The pin number
@@ -53,3 +61,5 @@ boolean removeBehaviorNode(int index) {
 
   return false;
 }
+
+#endif

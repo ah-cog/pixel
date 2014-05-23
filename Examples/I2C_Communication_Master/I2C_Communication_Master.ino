@@ -1,5 +1,7 @@
 #include <Wire.h>
 
+#include "Loop.h"
+
 #define I2C_MESSAGE_BYTE_SIZE 20
 
 char i2cMessageBuffer[128] = { 0 };
@@ -36,6 +38,15 @@ byte x = 0;
 
 int slaveDevice = 4; // Slave device address
 
+void sendToSlave(char* text) {
+  // Send to slave
+  Wire.beginTransmission(slaveDevice); // transmit to device #4
+//  Wire.write("x is ");        // sends five bytes
+//  Wire.write(x);              // sends one byte  
+  Wire.write(text);
+  Wire.endTransmission();    // stop transmitting
+}
+
 void loop() {
   
   // Send to slave
@@ -68,39 +79,93 @@ void loop() {
 //  if (i2cMessageBufferSize > 0) {
     Serial.println(i2cMessageBuffer);
     
+    // Split message by space
     String split = String(i2cMessageBuffer); // "hi this is a split test";
-    String pin = getValue(split, ' ', 0);
-    String value2 = getValue(split, ' ', 4);
-    Serial.println(value2.length());
-    Serial.print("value2: ");
-    Serial.print(value2);
-    Serial.print("\n");
-    if (pin.compareTo("13") == 0) {
-      Serial.println("PIN 13");
-      
-//      if (value2.compareTo("1") == 0) {
-      if (value2.toInt() == 1) {
-        Serial.println("ON");
-        digitalWrite(13, HIGH);
-      } else {
-        Serial.println("OFF");
-        digitalWrite(13, LOW);
-      }
-    }
-    //Serial.println(pin);
+    
+    // Parse instruction message relayed by the "slave" device from "Looper"
+//    String pin       = getValue(split, ' ', 0).toInt();
+//    String operation = getValue(split, ' ', 1).toInt();
+//    String type      = getValue(split, ' ', 2).toInt();
+//    String mode      = getValue(split, ' ', 3).toInt();
+//    String value     = getValue(split, ' ', 4).toInt();
+    int pin       = getValue(split, ' ', 0).toInt();
+    int operation = getValue(split, ' ', 1).toInt();
+    int type      = getValue(split, ' ', 2).toInt();
+    int mode      = getValue(split, ' ', 3).toInt();
+    int value     = getValue(split, ' ', 4).toInt();
+    
+    // TODO: Create node object from parsed data (i.e., "Behavior behavior = deserializeBehavior();").
+    // TODO: Add node object to queue (i.e., the program) (i.e., "appendBehavior(behavior);")
+    appendLoopNode(pin, operation, type, mode, value);
+    
+//    // TODO: Add print it! (or run it...)
+//    Serial.println(value.length());
+//    Serial.print("value: ");
+//    Serial.print(value);
+//    Serial.print("\n");
+//    if (pin.compareTo("13") == 0) {
+//      Serial.println("PIN 13");
+//      
+////      if (value2.compareTo("1") == 0) {
+//      if (value.toInt() == 1) {
+//        Serial.println("ON");
+//        digitalWrite(13, HIGH);
+//      } else {
+//        Serial.println("OFF");
+//        digitalWrite(13, LOW);
+//        
+//        sendToSlave("pin state from master!");
+//      }
+//    }
+//    //Serial.println(pin);
   }
-  
-  
-  // TODO: Create node object from parsed data
-  // TODO: Add node object to queue (i.e., the program)
-  // TODO: Add print it! (or run it...)
   
   // TODO: Parse incoming I2C message, then create a corresponding behavior node and insert it into the behavior program!
   
   
   // Interpretter:
   updateBehavior();
-  behaviorLoopStep();
+  
+  behaviorLoopStep(); //:
+  if (loopSize > 0) {
+    BehaviorNode* currentBehavior = &behaviorLoop[loopCounter]; // Get current behavior
+    
+    // Interpret the behavior
+    
+    // NOTE: right now, assuming the instruction type... pin I/O
+    
+    Serial.println((*currentBehavior).pin);
+    Serial.println((*currentBehavior).value);
+    
+    if (true) { // if ((*currentBehavior).instructionType [equals] "pin I/O") 
+      
+      if ((*currentBehavior).pin == 0) {
+        
+        Serial.println("DELAY 1000 MS");
+          
+        int milliseconds = 1000;
+        delay(milliseconds);
+        
+      } else if ((*currentBehavior).pin == 13) {
+        Serial.println("PIN 13");
+        
+        if ((*currentBehavior).value == 1) {
+          Serial.println("ON");
+          digitalWrite(13, HIGH);
+        } else {
+          Serial.println("OFF");
+          digitalWrite(13, LOW);
+          
+//          sendToSlave("pin state from master!");
+        }
+      }
+    }
+    loopCounter = (loopCounter + 1) % loopSize; // Increment loop counter
+    
+//    delay(500);
+    Serial.print(".");
+  }
+  
 }
 
 String getValue(String data, char separator, int index)
