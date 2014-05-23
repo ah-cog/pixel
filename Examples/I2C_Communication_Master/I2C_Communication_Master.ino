@@ -89,6 +89,13 @@ void loop() {
 //    String mode      = getValue(split, ' ', 3).toInt();
 //    String value     = getValue(split, ' ', 4).toInt();
     int pin       = getValue(split, ' ', 0).toInt();
+    
+    // Check operation and take handle it accordingly
+    if (pin == 2) {
+      eraseLoop();
+    }
+    
+    // Parse behavior node's string form
     int operation = getValue(split, ' ', 1).toInt();
     int type      = getValue(split, ' ', 2).toInt();
     int mode      = getValue(split, ' ', 3).toInt();

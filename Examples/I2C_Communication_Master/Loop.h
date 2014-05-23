@@ -86,6 +86,16 @@ boolean removeLoopNode(int index) {
 }
 
 /**
+ * Removes all behaviors from the loop (if any exist).
+ */
+boolean eraseLoop() {
+  
+  loopSize = 0;
+  return true;
+}
+
+
+/**
  * Returns a copy of the behavior node at the specified index.
  */
 BehaviorNode getBehaviorNodeCopy(int index) {

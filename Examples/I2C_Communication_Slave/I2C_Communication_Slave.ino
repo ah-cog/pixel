@@ -418,6 +418,21 @@ void loop () {
               
               break;
               
+            } else if (strcmp (httpRequestAddress, "/erase") == 0) {
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehaviorNode(0, 2, 1, 0, 1, 0);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              
+              // TODO: flush
+              // TODO: close
+              
+              break;
+              
             } else {
               
               // TODO: Default, catch-all GET handler
@@ -768,6 +783,25 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   client.println("};");
   
   
+  client.println("function erase() {");
+  client.println("  var http = new XMLHttpRequest();");
+  client.println("  var url = \"/erase\";");
+  // client.println("  var params = \"milliseconds=\" + milliseconds + \"\";");
+  client.println("  var params = \"\";");
+  client.println("  http.open(\"POST\", url, true);");
+  // Send the proper header information along with the request
+  client.println("  http.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");");
+  // client.println("http.setRequestHeader(\"Content-length\", params.length);");
+  // client.println("http.setRequestHeader(\"Connection\", \"close\");");
+  client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
+  client.println("    if(http.readyState == 4 && http.status == 200) {");
+  client.println("      console.log(http.responseText);"); // TODO: Make this actually "activate" the "ghost" node that has been added... once confirmed in the program!
+  client.println("    }");
+  client.println("  }");
+  client.println("  http.send(params);");
+  client.println("};");
+  
+  
   client.println("</script>");
   
 
@@ -776,24 +810,30 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
 
   client.println("<h1>Looper</h1>");
   
-  client.println("<h2>Operations</h2>");
-  client.println("<input type=\"button\" value=\"add node\" onclick=\"javascript:addNode(20, 10, 0, 1, 1);\" /><br />");
+  client.println("<h2>Behavior</h2>");
+  client.println("TODO: Show program behavior sequence here (just a list).");
+  
+  client.println("<h2>Beahvior Nodes (i.e., the language)</h2>");
+  // client.println("<input type=\"button\" value=\"add node\" onclick=\"javascript:addNode(20, 10, 0, 1, 1);\" /><br />");
   
   client.println("<input type=\"button\" value=\"on 13\" onclick=\"javascript:lightOn();\" /><br />");
   client.println("<input type=\"button\" value=\"off 13\" onclick=\"javascript:lightOff();\" /><br />");
   
   client.println("<input type=\"button\" value=\"delay 1000 ms\" onclick=\"javascript:delay(1000);\" /><br />");
+  
+  client.println("<input type=\"button\" value=\"erase\" onclick=\"javascript:erase();\" /><br />");
 
-  client.println("<h2>Pins</h2>");
-  // output the value of each analog input pin
-  for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
-    int sensorReading = analogRead(analogChannel);
-    client.print("analog input ");
-    client.print(analogChannel);
-    client.print(" is ");
-    client.print(sensorReading);
-    client.println("<br />");
-  }
+//  client.println("<h2>Pins</h2>");
+//  // output the value of each analog input pin
+//  for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
+//    int sensorReading = analogRead(analogChannel);
+//    client.print("analog input ");
+//    client.print(analogChannel);
+//    client.print(" is ");
+//    client.print(sensorReading);
+//    client.println("<br />");
+//  }
+
   client.println("</html>");
   
 //  client.flush();
