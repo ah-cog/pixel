@@ -135,7 +135,7 @@ void loop() {
   
   behaviorLoopStep(); //:
   if (loopSize > 0) {
-    BehaviorNode* currentBehavior = &behaviorLoop[loopCounter]; // Get current behavior
+    Behavior* currentBehavior = &behaviorLoop[loopCounter]; // Get current behavior
     
     // Interpret the behavior
     

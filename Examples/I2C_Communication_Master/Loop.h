@@ -1,10 +1,10 @@
 #ifndef LOOP_H
 #define LOOP_H
 
-#include "BehaviorNode.h"
+#include "Behavior.h"
 
 //struct Loop {
-//  BehaviorNode* nodes; // Behavior nodes
+//  Behavior* nodes; // Behavior nodes
 //  int nodeCount;
 //  int counter; // i.e., the "program counter"
 //};
@@ -13,7 +13,7 @@
 #define DEFAULT_LOOP_CAPACITY 20
 //Loop behaviorLoop[DEFAULT_LOOP_CAPACITY]; // TODO: FIx this!
 //int loopSize = 0;
-BehaviorNode behaviorLoop[DEFAULT_LOOP_CAPACITY]; // Behavior nodes
+Behavior behaviorLoop[DEFAULT_LOOP_CAPACITY]; // Behavior nodes
 int loopSize = 0;
 int loopCounter = -1; // i.e., the "program counter"
 
@@ -98,12 +98,12 @@ boolean eraseLoop() {
 /**
  * Returns a copy of the behavior node at the specified index.
  */
-BehaviorNode getBehaviorNodeCopy(int index) {
+Behavior getBehaviorCopy(int index) {
   
   if (index >= 0 && index < loopSize) {
     
     // Copy the behavior node at the specified index
-    BehaviorNode behaviorNode = {
+    Behavior behaviorNode = {
       behaviorLoop[index].pin,
       behaviorLoop[index].operation,
       behaviorLoop[index].type,
@@ -118,12 +118,12 @@ BehaviorNode getBehaviorNodeCopy(int index) {
 /**
  * Returns a pointer to behavior node at specified index.
  */
-BehaviorNode* getBehaviorNode(int index) {
+Behavior* getBehavior(int index) {
   
   if (index >= 0 && index < loopSize) {
     
     // Get pointer to behavior node at specified index
-    BehaviorNode* behaviorNode = NULL;
+    Behavior* behaviorNode = NULL;
     behaviorNode = &behaviorLoop[index]; // Get behavior node at specified index
     
     return behaviorNode;

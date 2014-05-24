@@ -146,7 +146,7 @@ boolean hasRoombaSensorData = false;
 uint8_t buf[52];                                        // iRobot sensor data buffer. Packet 6 returns 52 bytes.
 char httpRequestUriBuffer[50]; // HTTP request buffer
 int bi = 0; // HTTP request buffer index
-char* httpRequestParameters[4]; // HTTP request parameters (i.e., key/value pairs encoded in the URI like "?key1=value1&key2=value2")
+char* httpRequestParameters[10]; // HTTP request parameters (i.e., key/value pairs encoded in the URI like "?key1=value1&key2=value2")
 int httpRequestParameterCount = 0;
 //char* httpRequestParameterDictionary[10][2]; // HTTP request parameters (i.e., key/value pairs encoded in the URI like "?key1=value1&key2=value2")
 // httpRequestParameterDictionary[paramIndex][key] // key = 0 (returns char*)
@@ -373,6 +373,52 @@ void loop () {
               
               break;
               
+            } else if (strcmp (httpRequestAddress, "/pin") == 0) {
+              
+              Serial.println("PARAMETERS:");
+              Serial.println(httpRequestParameters[0]);
+              Serial.println(httpRequestParameters[4]);
+              
+              // Split parameters by '='
+//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
+//              String key = getValue(split, '=', 0);
+//              String value = getValue(split, '=', 1);
+
+              String pinParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int pin = getValue(pinParameter, '=', 1).toInt();
+              
+              String valueParameter = String(httpRequestParameters[4]); // "hi this is a split test";
+              int value = getValue(valueParameter, '=', 1).toInt();
+              
+              Serial.println("PIN/VALUE:");
+              Serial.println(pin);
+              Serial.println(value);
+              
+//              // TODO: Parse parameters from HTTP request
+//              int pin = String(httpRequestParameters[0]).toInt();
+//              int value = String(httpRequestParameters[4]).toInt();
+//              
+//              Serial.print("pin = ");
+//              Serial.print(pin);
+//              Serial.print("\n");
+//              
+//              Serial.print("value = ");
+//              Serial.print(value);
+//              Serial.print("\n");
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehaviorNode(0, pin, 1, 0, 1, value);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              
+              // TODO: flush
+              // TODO: close
+              
+              break;
+              
             } else if (strcmp (httpRequestAddress, "/lighton") == 0) {
               
               //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
@@ -504,10 +550,13 @@ void loop () {
             /**
              * Parse HTTP request header
              */
+             
+            char* questionChar = NULL; // Pointer to '?' character in URI
+            int questionCharIndex = 0;
             
             // Get HTTP request method (i.e., GET or POST)
             httpRequestMethod = &httpRequestUriBuffer[0];
-            spaceChar = strchr(httpRequestMethod, ' ');
+            spaceChar = strchr(httpRequestMethod, ' '); // Get position of ' '
             spaceCharIndex = (int) (spaceChar - httpRequestUriBuffer);
             httpRequestUriBuffer[spaceCharIndex] = NULL; // Terminate the request method string
             Serial.println(httpRequestMethod);
@@ -516,7 +565,19 @@ void loop () {
             httpRequestAddress = &httpRequestUriBuffer[spaceCharIndex + 1];
             spaceChar = strchr(httpRequestAddress, ' ');
             spaceCharIndex = (int) (spaceChar - httpRequestUriBuffer);
-            httpRequestUriBuffer[spaceCharIndex] = NULL; // Terminate the request method string
+            questionChar = strchr(httpRequestAddress, '?'); // Get position of '?' (if any)
+            questionCharIndex = (int) (questionChar - httpRequestUriBuffer);
+            if (questionChar != NULL) {
+              httpRequestUriBuffer[questionCharIndex] = NULL; // Terminate the request method string
+//              if (questionCharIndex < spaceCharIndex) {
+//                httpRequestUriBuffer[questionCharIndex] = NULL; // Terminate the request method string
+//              } else {
+//                httpRequestUriBuffer[spaceCharIndex] = NULL; // Terminate the request method string
+//              }
+            } else {
+              httpRequestUriBuffer[spaceCharIndex] = NULL; // Terminate the request method string
+            }
+            //httpRequestUriBuffer[spaceCharIndex] = NULL; // Terminate the request method string
             Serial.println(httpRequestAddress);
             
             hasReceivedRequestFirstLine = true; // Flag the first line of the HTTP request as received. This line contains the URI, used to decide how to handle the request.
@@ -525,12 +586,18 @@ void loop () {
              * Extract and decode URI parameters (i.e., after ?, between &)
              */
             
-            char* questionChar = NULL; // Pointer to '?' character in URI
-            int questionCharIndex = 0;
+//            char* questionChar = NULL; // Pointer to '?' character in URI
+//            int questionCharIndex = 0;
             
             // httpRequestParameterString = &httpRequestUriBuffer[spaceCharIndex + 1];
-            httpRequestParameterString = httpRequestAddress; // Start searching for '?' at the beginning of the URI.
-            questionChar = strchr(httpRequestParameterString, '?'); // Search for the '?' character
+            if (questionChar != NULL) {
+              // httpRequestParameterString = &httpRequestUriBuffer[questionCharIndex + 1];
+              // questionChar = strchr(httpRequestParameterString, '?'); // Search for the '?' character
+            } else {
+              httpRequestParameterString = httpRequestAddress; // Start searching for '?' at the beginning of the URI.
+              questionChar = strchr(httpRequestParameterString, '?'); // Search for the '?' character
+            }
+//            questionChar = strchr(httpRequestParameterString, '?'); // Search for the '?' character
             httpRequestParameterCount = 0; // Reset parameter count
             
             Serial.print("Looking for '?'... ");
@@ -728,28 +795,11 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   client.println("};");
   
   
-  client.println("function lightOn() {");
+  client.println("function pin(pin, operation, type, mode, value) {");
   client.println("  var http = new XMLHttpRequest();");
-  client.println("  var url = \"/lighton\";");
-  client.println("  var params = \"\";");
-  client.println("  http.open(\"POST\", url, true);");
-  // Send the proper header information along with the request
-  client.println("  http.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");");
-  // client.println("http.setRequestHeader(\"Content-length\", params.length);");
-  // client.println("http.setRequestHeader(\"Connection\", \"close\");");
-  client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
-  client.println("    if(http.readyState == 4 && http.status == 200) {");
-  client.println("      console.log(http.responseText);");
-  client.println("    }");
-  client.println("  }");
-  client.println("  http.send(params);");
-  client.println("};");
-  
-  
-  client.println("function lightOff() {");
-  client.println("  var http = new XMLHttpRequest();");
-  client.println("  var url = \"/lightoff\";");
-  client.println("  var params = \"\";");
+  client.println("  var url = \"/pin\";");
+  client.println("  var params = \"pin=\" + pin + \"&operation=\" + operation + \"&type=\" + type + \"&mode=\" + mode + \"&value=\" + value + \"\";");
+  client.println("  url = url.concat('?', params);");
   // client.println("  var params = \"\";");
   client.println("  http.open(\"POST\", url, true);");
   // Send the proper header information along with the request
@@ -763,6 +813,43 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   client.println("  }");
   client.println("  http.send(params);");
   client.println("};");
+  
+  
+//  client.println("function lightOn() {");
+//  client.println("  var http = new XMLHttpRequest();");
+//  client.println("  var url = \"/lighton\";");
+//  client.println("  var params = \"\";");
+//  client.println("  http.open(\"POST\", url, true);");
+//  // Send the proper header information along with the request
+//  client.println("  http.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");");
+//  // client.println("http.setRequestHeader(\"Content-length\", params.length);");
+//  // client.println("http.setRequestHeader(\"Connection\", \"close\");");
+//  client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
+//  client.println("    if(http.readyState == 4 && http.status == 200) {");
+//  client.println("      console.log(http.responseText);");
+//  client.println("    }");
+//  client.println("  }");
+//  client.println("  http.send(params);");
+//  client.println("};");
+//  
+//  
+//  client.println("function lightOff() {");
+//  client.println("  var http = new XMLHttpRequest();");
+//  client.println("  var url = \"/lightoff\";");
+//  client.println("  var params = \"\";");
+//  // client.println("  var params = \"\";");
+//  client.println("  http.open(\"POST\", url, true);");
+//  // Send the proper header information along with the request
+//  client.println("  http.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");");
+//  // client.println("http.setRequestHeader(\"Content-length\", params.length);");
+//  // client.println("http.setRequestHeader(\"Connection\", \"close\");");
+//  client.println("  http.onreadystatechange = function() { //Call a function when the state changes.");
+//  client.println("    if(http.readyState == 4 && http.status == 200) {");
+//  client.println("      console.log(http.responseText);");
+//  client.println("    }");
+//  client.println("  }");
+//  client.println("  http.send(params);");
+//  client.println("};");
   
   
   client.println("function delay(milliseconds) {");
@@ -816,8 +903,10 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   client.println("<h2>Beahvior Nodes (i.e., the language)</h2>");
   // client.println("<input type=\"button\" value=\"add node\" onclick=\"javascript:addNode(20, 10, 0, 1, 1);\" /><br />");
   
-  client.println("<input type=\"button\" value=\"on 13\" onclick=\"javascript:lightOn();\" /><br />");
-  client.println("<input type=\"button\" value=\"off 13\" onclick=\"javascript:lightOff();\" /><br />");
+  client.println("<input type=\"button\" value=\"on 13\" onclick=\"javascript:pin(13, 1, 0, 1, 1);\" /><br />");
+  // client.println("<input type=\"button\" value=\"on 13\" onclick=\"javascript:lightOn();\" /><br />");
+  client.println("<input type=\"button\" value=\"on 13\" onclick=\"javascript:pin(13, 1, 0, 1, 0);\" /><br />");
+  // client.println("<input type=\"button\" value=\"off 13\" onclick=\"javascript:lightOff();\" /><br />");
   
   client.println("<input type=\"button\" value=\"delay 1000 ms\" onclick=\"javascript:delay(1000);\" /><br />");
   
@@ -837,4 +926,21 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   client.println("</html>");
   
 //  client.flush();
+}
+
+String getValue(String data, char separator, int index)
+{
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length()-1;
+
+  for(int i=0; i<=maxIndex && found<=index; i++){
+    if(data.charAt(i)==separator || i==maxIndex){
+        found++;
+        strIndex[0] = strIndex[1]+1;
+        strIndex[1] = (i == maxIndex) ? i+1 : i;
+    }
+  }
+
+  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
