@@ -50,10 +50,10 @@ void sendToSlave(char* text) {
 void loop() {
   
   // Send to slave
-  Wire.beginTransmission(slaveDevice); // transmit to device #4
-  Wire.write("x is ");        // sends five bytes
-  Wire.write(x);              // sends one byte  
-  Wire.endTransmission();    // stop transmitting
+//  Wire.beginTransmission(slaveDevice); // transmit to device #4
+//  Wire.write("x is ");        // sends five bytes
+//  Wire.write(x);              // sends one byte  
+//  Wire.endTransmission();    // stop transmitting
 
   x++;
   delay(500);
@@ -141,29 +141,52 @@ void loop() {
     
     // NOTE: right now, assuming the instruction type... pin I/O
     
-    Serial.println((*currentBehavior).pin);
-    Serial.println((*currentBehavior).value);
+//    Serial.println((*currentBehavior).pin);
+//    Serial.println((*currentBehavior).value);
     
     if (true) { // if ((*currentBehavior).instructionType [equals] "pin I/O") 
+    
+      if ((*currentBehavior).operation == 0) { // Write to pin
       
-      if ((*currentBehavior).pin == 0) {
-        
-        Serial.println("DELAY 1000 MS");
-          
-        int milliseconds = 1000;
-        delay(milliseconds);
-        
-      } else if ((*currentBehavior).pin == 13) {
-        Serial.println("PIN 13");
-        
-        if ((*currentBehavior).value == 1) {
-          Serial.println("ON");
-          digitalWrite(13, HIGH);
+        int pinValue = digitalRead((*currentBehavior).pin);
+         Wire.beginTransmission(slaveDevice); // transmit to device #4
+//  Wire.write("x is ");        // sends five bytes
+//  Wire.write(x);              // sends one byte  
+  Wire.write("pin");
+          if (pinValue == 1) {
+          Wire.write("HIGH");
         } else {
-          Serial.println("OFF");
-          digitalWrite(13, LOW);
+          Wire.write("LOW");
+        }
+  Wire.endTransmission();    // stop transmitting
+//        sendToSlave("pin");
+//        if (pinValue == 1) {
+//          sendToSlave("HIGH");
+//        } else {
+//          sendToSlave("LOW");
+//        }
+      
+      } else if ((*currentBehavior).operation == 1) { // Write to pin
+      
+        if ((*currentBehavior).pin == 0) {
           
-//          sendToSlave("pin state from master!");
+          Serial.println("DELAY 1000 MS");
+            
+          int milliseconds = 1000;
+          delay(milliseconds);
+          
+        } else if ((*currentBehavior).pin == 13) {
+          Serial.println("PIN 13");
+          
+          if ((*currentBehavior).value == 1) {
+            Serial.println("ON");
+            digitalWrite(13, HIGH);
+          } else {
+            Serial.println("OFF");
+            digitalWrite(13, LOW);
+            
+  //          sendToSlave("pin state from master!");
+          }
         }
       }
     }
