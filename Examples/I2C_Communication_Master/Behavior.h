@@ -8,8 +8,8 @@
 
 struct Behavior {
   // TODO: add "instruction" so can add "delay" etc.
-  int pin; // The pin number
   int operation; // i.e., write, read, PWM, "remember value at this time"
+  int pin; // The pin number
   int type; // i.e., digital or analog
   int mode; // i.e., input or output
   int value; // i.e., high or low

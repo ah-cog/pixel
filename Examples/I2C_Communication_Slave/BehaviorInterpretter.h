@@ -14,13 +14,13 @@ int behaviorNodeCount = 0;
 /**
  * Insert a behavior node into the sequence of behavior nodes at the specified index.
  */
-boolean insertBehaviorNode(int index, int pin, int operation, int type, int mode, int value) {
+boolean insertBehaviorNode(int index, int operation, int pin, int type, int mode, int value) {
   // TODO: Add message to queue... and use sendMessage to send the messages...
   
   if (behaviorNodeCount < BEHAVIOR_NODE_CAPACITY) {
     // Add behavior to queue
-    behaviorNodes[behaviorNodeCount].pin = pin;
     behaviorNodes[behaviorNodeCount].operation = operation;
+    behaviorNodes[behaviorNodeCount].pin = pin;
     behaviorNodes[behaviorNodeCount].type = type;
     behaviorNodes[behaviorNodeCount].mode = mode;
     behaviorNodes[behaviorNodeCount].value = value;
