@@ -37,7 +37,7 @@ LSM303 compass; // Compass
 LPS331 ps; // Pressure sensor (measures the atmospheric pressure)
 
 void setupInertialMeasurementUnit() {
-  Wire.begin();
+  Wire.begin(); // Join I2C bus (address optional for master)
 }
 
 /**
