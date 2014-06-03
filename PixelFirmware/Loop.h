@@ -35,6 +35,16 @@ boolean appendLoopNode(int pin, int operation, int type, int mode, int value) {
     behaviorLoop[loopSize].type = type;
     behaviorLoop[loopSize].mode = mode;
     behaviorLoop[loopSize].value = value;
+    
+    // Set up support for the behavior
+    if (operation == DELAY) { // if (operation == DELAY) {
+      // Set up timer
+      delays[delayCount].startTime = 0; // Initialize/Reset the timer
+      delays[delayCount].duration = 1000;
+      delays[delayCount].behavior = &behaviorLoop[loopSize];
+      delayCount++;
+    }
+    
     loopSize++; // Increment the loop size
     
     return true;

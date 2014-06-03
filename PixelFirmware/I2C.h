@@ -1,6 +1,8 @@
 #ifndef I2C_H
 #define I2C_H
 
+#include "Behavior.h"
+
 #define I2C_MESSAGE_BYTE_SIZE 20
 
 char i2cMessageBuffer[128] = { 0 };
@@ -71,10 +73,7 @@ int digitalReadPin(int pin) {
 
 
 
-#define PIN_READ_DIGITAL 0
-#define PIN_WRITE_DIGITAL 1
-#define DELAY 2
-#define ERASE 3
+
 
 #define I2C_CONFIRM_UPDATE_STATE 1
 
@@ -148,6 +147,8 @@ void behaviorLoopStep() {
   if (loopSize > 0) {
     Behavior* currentBehavior = &behaviorLoop[loopCounter]; // Get current behavior
     
+    boolean sustainCounter = false; // Should the counter stay the same this iteration?
+    
     // Interpret the behavior
     
     // NOTE: right now, assuming the instruction type... pin I/O
@@ -196,12 +197,48 @@ void behaviorLoopStep() {
         
         Serial.println("DELAY 1000 MS");
           
-        int milliseconds = 1000;
-        delay(milliseconds);
+//        int milliseconds = 1000;
+//        delay(milliseconds);
+        
+//        // Set up timer
+        Delay* currentDelay = NULL;
+        for (int i = 0; i < delayCount; i++) {
+          if (delays[i].behavior == currentBehavior) {
+            Serial.println("Found");
+            Serial.print("\t");
+            Serial.print(i);
+            Serial.print("\n");
+            currentDelay = &delays[i];
+          }
+        }
+        if (currentDelay != NULL) {
+          unsigned long currentTime = millis();
+          Serial.println(currentTime);
+          Serial.println((*currentDelay).startTime);
+          Serial.println((*currentDelay).duration);
+          Serial.println(currentTime - (*currentDelay).startTime);
+          // Set up start time if it's been reset (i.e., if it is zero)
+          if ((*currentDelay).startTime == 0) {
+            (*currentDelay).startTime = currentTime;
+          }
+          
+          // Check if delay has passed
+          if (currentTime - (*currentDelay).startTime < (*currentDelay).duration) {
+            sustainCounter = true;
+          } else {
+            (*currentDelay).startTime = currentTime; // Update the start time of the delay
+            (*currentDelay).startTime = 0; // Reset timer (because it expired)
+//            sustainCounter = false;
+          }
+        }
+//        delays[delayCount].startTime = millis();
+//        delays[delayCount].duration = 1000;
+//        delays[delayCount].behavior = currentBehavior;
+//        delayCount++;
         
       } else if ((*currentBehavior).operation == ERASE) {
         
-        Serial.println("DELAY 1000 MS");
+        Serial.println("ERASE");
           
         int milliseconds = 1000;
         delay(milliseconds);
@@ -209,11 +246,13 @@ void behaviorLoopStep() {
       }
     }
     
-    // Advance the loop behavior counter
-    if (loopSize == 0) {
-      loopCounter = 0;
+    if (!sustainCounter) {
+      // Advance the loop behavior counter
+      if (loopSize == 0) {
+        loopCounter = 0;
+      }
+      loopCounter = (loopCounter + 1) % loopSize; // Increment loop counter
     }
-    loopCounter = (loopCounter + 1) % loopSize; // Increment loop counter
     
     
     // Serial.print(".");

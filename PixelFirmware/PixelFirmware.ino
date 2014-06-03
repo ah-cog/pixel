@@ -58,7 +58,7 @@ void setup() {
   //
   
   Serial.begin(115200);
-  Serial.println(F("Pixel 2014.04.01.23.54.14"));
+  Serial.println(F("Pixel Firmware"));
   
   // Setup physical orientation sensing peripherals (i.e., IMU)
   setupOrientationSensing();
