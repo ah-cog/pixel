@@ -96,6 +96,21 @@ boolean isActive = false; // Is the module the currently active module in the se
 
 void loop() {
   
+  getInputPort();
+  
+  Serial.print(touchInputMean);
+  
+  // Send output if input surpasses "touch" or "connected" thresholds
+  if (touchInputMean > 3000) {
+    digitalWrite(MODULE_OUTPUT_PORT, HIGH);
+  } else {
+    digitalWrite(MODULE_OUTPUT_PORT, LOW);
+  }
+  
+  
+  
+  ////// LOOPER/VPL STUFF (SLAVE)
+  
   //  for (int i = 0; i < 24; i++) {
 //    char buf[4]; // "-2147483648\0"
 //    Wire.beginTransmission(slaveDevice); // transmit to device #4
@@ -116,6 +131,8 @@ void loop() {
   behaviorLoopStep();
   
   
+  
+  ////// GESTURE/MODULE STUFF (MASTER)
   
   // TODO: Add "getPins" function to read the state of pins, store the state of the pins, and handle interfacing with the pins (reading, writing), based on the program running (in both Looper and Mover).
   // TODO: Write code to allow Processing sketch (or other software) to automatically connect to this serial port. Send a "waiting for connection" signal one per second (or thereabout).
