@@ -618,18 +618,18 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   client.println("<h2>Beahvior Nodes (i.e., the language)</h2>");
   // client.println("<input type=\"button\" value=\"add node\" onclick=\"javascript:addNode(20, 10, 0, 1, 1);\" /><br />");
   
-  client.println("<input type=\"button\" value=\"on 13\" onclick=\"javascript:pin(13, 1, 0, 1, 1);\" /><br />");
+  client.println("<input type=\"button\" value=\"on 6\" onclick=\"javascript:pin(6, 1, 0, 1, 1);\" /><br />");
   // client.println("<input type=\"button\" value=\"on 13\" onclick=\"javascript:lightOn();\" /><br />");
-  client.println("<input type=\"button\" value=\"off 13\" onclick=\"javascript:pin(13, 1, 0, 1, 0);\" /><br />");
+  client.println("<input type=\"button\" value=\"off 6\" onclick=\"javascript:pin(6, 1, 0, 1, 0);\" /><br />");
   // client.println("<input type=\"button\" value=\"off 13\" onclick=\"javascript:lightOff();\" /><br />");
   
   client.println("<input type=\"button\" value=\"delay 1000 ms\" onclick=\"javascript:delay(1000);\" /><br />");
   
   client.println("<input type=\"button\" value=\"erase\" onclick=\"javascript:erase();\" /><br />");
   
-  client.println("<input type=\"button\" value=\"read 13\" onclick=\"javascript:pin(13, 0, 0, 1, 1);\" /><br />");
+  client.println("<input type=\"button\" value=\"read 6\" onclick=\"javascript:pin(6, 0, 0, 1, 1);\" /><br />");
   
-  client.println("<input type=\"button\" value=\"get 13\" onclick=\"javascript:readPin(13, 0, 0, 1, 1);\" /><br />");
+  client.println("<input type=\"button\" value=\"get 6\" onclick=\"javascript:readPin(6, 0, 0, 1, 1);\" /><br />");
 
 //  client.println("<h2>Pins</h2>");
 //  // output the value of each analog input pin

@@ -42,7 +42,7 @@ PinModel deviceReportedModel[24];
 //       over I2C upon request.
 
 void setup () {
-  Serial.begin(115200); // Start serial for output
+  Serial.begin(9600); // Start serial for output
   Serial.println("Slave device initializing...");
   
   // Setup Wi-Fi and web server

@@ -98,7 +98,7 @@ void updateBehavior() {
 
   i2cMessageBufferSize = 0; // Reset I2C message buffer size
   
-  // TODO: Parse data
+  // Parse data
   if (strlen(i2cMessageBuffer) > 0) {
 //  if (i2cMessageBufferSize > 0) {
     Serial.println(i2cMessageBuffer);
@@ -107,11 +107,6 @@ void updateBehavior() {
     String split = String(i2cMessageBuffer); // "hi this is a split test";
     
     // Parse instruction message relayed by the "slave" device from "Looper"
-//    String pin       = getValue(split, ' ', 0).toInt();
-//    String operation = getValue(split, ' ', 1).toInt();
-//    String type      = getValue(split, ' ', 2).toInt();
-//    String mode      = getValue(split, ' ', 3).toInt();
-//    String value     = getValue(split, ' ', 4).toInt();
     int operation = getValue(split, ' ', 0).toInt();
     
     // Check operation and take handle it accordingly

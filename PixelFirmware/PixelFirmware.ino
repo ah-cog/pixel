@@ -57,7 +57,7 @@ void setup() {
   // Setup serial communication (for debugging)
   //
   
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println(F("Pixel Firmware"));
   
   // Setup physical orientation sensing peripherals (i.e., IMU)

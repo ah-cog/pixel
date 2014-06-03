@@ -1,7 +1,7 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#define DEVICE_ADDRESS   0x0001
+#define DEVICE_ADDRESS   0x0002
 
 #if defined(DEVICE_ADDRESS)
   #if DEVICE_ADDRESS == 0x0001
@@ -22,7 +22,7 @@
  * RadioBlocks Setup
  */
 
-#define RADIOBLOCK_PACKET_READ_TIMEOUT 40 // 100
+#define RADIOBLOCK_PACKET_READ_TIMEOUT 100 // 40 // 100
 #define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload
 #define RADIOBLOCK_PACKET_WRITE_TIMEOUT 0 // 120 // 200
 
