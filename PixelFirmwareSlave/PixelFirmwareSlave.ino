@@ -1,9 +1,15 @@
-// Notes for Teensy 3.1 (i.e., heuristics to get the CC3000 module working, based on experience):
-// - Set to 48 MHz
-// - Set clock to SPI_CLOCK_DIV8 (SPI_CLOCK_DIV2 also worked, but not too reliably)
+/*
+"Pixel" Firmware (for the Visual Language, i.e., Looper), Rendition 2
+Authors: Michael Gubbels
+*/
 
-// Adafruit Breakout Board:
-// - Firmware V. : 1.24
+// Notes for Teensy 3.1 (i.e., heuristics to get the CC3000 module working, based on experience):
+// - Set "Board" to Teensy 3.1
+// - Set "CPU Speed" to 24 MHz
+// - Set clock to SPI_CLOCK_DIV8 (SPI_CLOCK_DIV2 also worked, but not too reliably)
+//
+// Notes about Adafruit CC3000 Breakout Board:
+// - Firmware V. 1.24
 
 #include <Wire.h>
 

@@ -30,8 +30,8 @@ boolean appendLoopNode(int pin, int operation, int type, int mode, int value) {
   
   if (loopSize < DEFAULT_LOOP_CAPACITY) {
     // Add behavior to queue
-    behaviorLoop[loopSize].pin = pin;
     behaviorLoop[loopSize].operation = operation;
+    behaviorLoop[loopSize].pin = pin;
     behaviorLoop[loopSize].type = type;
     behaviorLoop[loopSize].mode = mode;
     behaviorLoop[loopSize].value = value;
