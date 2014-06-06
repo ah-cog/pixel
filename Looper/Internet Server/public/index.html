@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Looper</title>
+
+    <!-- Include beautify.js -->
+    <script src="javascripts/beautify.js"></script>
+
+    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
+    <script src="javascripts/acorn.js"></script>
+    <script src="javascripts/interpreter.js"></script>
+    <script src="javascripts/processing.js"></script> 
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Didact+Gothic' rel='stylesheet' type='text/css'>
+
+    <link rel="stylesheet" href="stylesheets/style.css" />
+
+    <!-- Include Firebase -->
+    <script src="https://cdn.firebase.com/v0/firebase.js"></script>
+
+    <!-- Include ACE and its JavaScript mode and theme files -->
+    <script src="javascripts/ace/ace.js"></script>
+    <script src="javascripts/ace/mode-javascript.js"></script>
+    <script src="javascripts/ace/theme-textmate.js"></script>
+
+    <!-- Include Firepad -->
+    <script src="javascripts/firepad.js"></script>
+    <link rel="stylesheet" href="stylesheets/firepad.css" />
+
+    <style>
+        /*html { height: 100%; }*/
+        /*body { margin: 0; height: 100%; position: relative; }*/
+            /* Height / width / positioning can be customized for your use case.
+            For demo purposes, we make firepad fill the entire browser. */
+        .firepad-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            right: 0;
+        }
+
+        .firepad {
+            /*width: 700px;*/
+            /*height: 450px;*/
+            height: 100%;
+            /*background-color: #f62;*/
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- jQuery is just for the demo! Hammer.js works without jQuery :-) -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="javascripts/modernizr.js"></script>
+
+    <script>
+       //$("body").append("<div id='overlay'><input type=\"button\" value=\"close\" onclick=\"$('#overlay').hide();\" /><div id=\"firepad-container\"></div></div>");
+
+       // $(".overlay")
+       //    .height(docHeight)
+       //    .css({
+       //       'opacity' : 0.3,
+       //       'position': 'absolute',
+       //       'top': 0,
+       //       'left': 0,
+       //       'background-color': '#333333',
+       //       'width': '100%',
+       //       'z-index': 5000
+       //    });
+
+        // $("#overlay").hide();
+
+
+        // $.ajax({
+        //   url: "http://api.foodessentials.com/createsession?uid=demoUID_01&devid=demoDev_01&appid=demoApp_01&f=json&api_key=4ztjtgqwyuastptk9pxwsmgr",
+        //   beforeSend: function(xhr) {
+        //     xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+        //     xhr.setRequestHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        //     xhr.setRequestHeader("Access-Control-Allow-Headers", "*");
+        //   },
+        //   success: function(data) {
+        //     alert("yeah!");
+        //   }
+        // });
+
+        /**
+         * Helper for generating URLs / Firebase references for example purposes.
+         * Not necessary in production apps.
+         */
+        function getFirebaseBehaviorScriptRef(device, behavior) {
+            // Get hash from end of URL or generate a random one.
+
+            var ref = new Firebase('https://looper.firebaseio.com/firepad');
+            // var hash = window.location.hash.replace(/#/g, '');
+            // if (hash) {
+            //   ref = ref.child(hash);
+            // } else {
+            //   ref = ref.push(); // generate unique location.
+            //   window.location = window.location + '#' + ref.name(); // add it as a hash to the URL.
+            // }
+
+            //ref = ref.push(); // generate unique location.
+            var hash = '' + device + '/' + behavior;
+            ref = ref.child(hash);
+            // window.location = window.location + '#' + ref.name(); // add it as a hash to the URL.
+
+            if (typeof console !== 'undefined') {
+                console.log('Firebase data: ', ref.toString());
+            }
+
+            return ref;
+        }
+
+        // function getExampleRef() {
+        //     // Get hash from end of URL or generate a random one.
+
+        //     var ref = new Firebase('https://pixel-coder.firebaseio.com');
+        //     var hash = window.location.hash.replace(/#/g, '');
+        //     if (hash) {
+        //     ref = ref.child(hash);
+        //     } else {
+        //     ref = ref.push(); // generate unique location.
+        //     window.location = window.location + '#' + ref.name(); // add it as a hash to the URL.
+        //     }
+
+        //     if (typeof console !== 'undefined')
+        //     console.log('Firebase data: ', ref.toString());
+
+        //     return ref;
+        // }
+
+        function saveBehaviorScript(name, script) {
+            var ref = new Firebase('https://looper.firebaseio.com/behaviors/');
+            var behaviorRef = ref.child(name);
+
+            behaviorRef.child('name').set(name);
+            behaviorRef.child('script').set(script);
+        }
+
+        function loadBehaviorScript(name) {
+            var ref = new Firebase('https://looper.firebaseio.com/behaviors/' + name);
+            ref.on('value', function(snapshot) {
+                console.log(snapshot.val());
+                var val = snapshot.val();
+                return val;
+            });
+        }
+
+        function loadBehaviors(name) {
+            var ref = new Firebase('https://looper.firebaseio.com/behaviors/');
+            ref.on('value', function(snapshot) {
+                console.log(snapshot.val());
+            });
+        }
+
+    </script>
+
+
+    <script>
+    //window.onload = function() {
+    firepadDevice = null;
+    firepadEvent = null;
+    function setupFirepad(container, device, behavior) {
+        //// Initialize Firebase.x
+        //var firepadRef = getExampleRef();
+        var firepadRef = getFirebaseBehaviorScriptRef(device, behavior);
+        // TODO: Replace above line with:
+        // var ref = new Firebase('<YOUR FIREBASE URL>');
+
+        //// Create ACE
+        var editor = ace.edit(container);
+        editor.setTheme("javascripts/ace/theme/textmate");
+        var session = editor.getSession();
+        session.setUseWrapMode(true);
+        session.setUseWorker(false);
+        session.setMode("javascripts/ace/mode/javascript");
+
+        //// Create Firepad.
+        var firepad = Firepad.fromACE(firepadRef, editor);
+
+        //// Initialize contents.
+        firepad.on('ready', function() {
+            if (firepad.isHistoryEmpty()) {
+                firepad.setText('// JavaScript Editing with Firepad!\nfunction go() {\n  var message = "Hello, world.";\n  alert(message);\n}\ngo();');
+            }
+        });
+
+        return firepad;
+    };
+    </script>
+
+    <!--<div id="debug">Log</div>-->
+
+    <div id="carousel">
+        <ul id="panes">
+
+            <li class="pane1">
+                <canvas id="looperCanvas" style="width: 100%; height: 100%;"></canvas>
+            </li>
+
+        </ul>
+    </div>
+
+
+
+    <script src="javascripts/jquery.hammer.min.js"></script>
+
+    <script>
+
+    var debug_el = $("#debug");
+    function debug(text) {
+        debug_el.text(text);
+    }
+
+
+    /**
+     * requestAnimationFrame and cancel polyfill
+     */
+    (function() {
+        var lastTime = 0;
+        var vendors = ['ms', 'moz', 'webkit', 'o'];
+        for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+            window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+            window.cancelAnimationFrame =
+                    window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
+        }
+
+        if (!window.requestAnimationFrame)
+            window.requestAnimationFrame = function(callback, element) {
+                var currTime = new Date().getTime();
+                var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+                var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+                        timeToCall);
+                lastTime = currTime + timeToCall;
+                return id;
+            };
+
+        if (!window.cancelAnimationFrame)
+            window.cancelAnimationFrame = function(id) {
+                clearTimeout(id);
+            };
+    }());
+
+
+    /**
+    * super simple carousel
+    * animation between panes happens with css transitions
+    */
+    function Carousel(element) {
+        var self = this;
+        element = $(element);
+
+        var container = $(">ul", element);
+        var panes = $(">ul>li", element);
+
+        var pane_width = 0;
+        var pane_count = panes.length;
+
+        var current_pane = 0;
+
+
+        /**
+         * initial
+         */
+        this.init = function() {
+            setPaneDimensions();
+
+            $(window).on("load resize orientationchange", function() {
+                setPaneDimensions();
+                //updateOffset();
+            })
+        };
+
+
+        /**
+         * set the pane dimensions and scale the container
+         */
+        function setPaneDimensions() {
+            pane_width = element.width();
+            panes.each(function() {
+                $(this).width(pane_width);
+            });
+            container.width(pane_width*pane_count);
+        };
+
+
+        /**
+         * show pane by index
+         * @param   {Number}    index
+         */
+        this.showPane = function( index ) {
+            // between the bounds
+            index = Math.max(0, Math.min(index, pane_count-1));
+            current_pane = index;
+
+            var offset = -((100/pane_count)*current_pane);
+            setContainerOffset(offset, true);
+        };
+
+
+        function setContainerOffset(percent, animate) {
+            container.removeClass("animate");
+
+            if(animate) {
+                container.addClass("animate");
+            }
+
+            if(Modernizr.csstransforms3d) {
+                container.css("transform", "translate3d("+ percent +"%,0,0) scale3d(1,1,1)");
+            }
+            else if(Modernizr.csstransforms) {
+                container.css("transform", "translate("+ percent +"%,0)");
+            }
+            else {
+                var px = ((pane_width*pane_count) / 100) * percent;
+                container.css("left", px+"px");
+            }
+        }
+
+        this.next = function() { return this.showPane(current_pane+1, true); };
+        this.prev = function() { return this.showPane(current_pane-1, true); };
+
+
+
+        function handleHammer(ev) {
+            // console.log(ev);
+            // disable browser scrolling
+            ev.gesture.preventDefault();
+
+            if (!disableEventCreate) {
+
+                switch(ev.type) {
+                    case 'dragright':
+                    case 'dragleft':
+                        // stick to the finger
+                        var pane_offset = -(100/pane_count)*current_pane;
+                        var drag_offset = ((100/pane_width)*ev.gesture.deltaX) / pane_count;
+
+                        // slow down at the first and last pane
+                        if((current_pane == 0 && ev.gesture.direction == Hammer.DIRECTION_RIGHT) ||
+                            (current_pane == pane_count-1 && ev.gesture.direction == Hammer.DIRECTION_LEFT)) {
+                            drag_offset *= .4;
+                        }
+
+                        setContainerOffset(drag_offset + pane_offset);
+                        break;
+
+                    case 'swipeleft':
+                        self.next();
+                        ev.gesture.stopDetect();
+                        break;
+
+                    case 'swiperight':
+                        self.prev();
+                        ev.gesture.stopDetect();
+                        break;
+
+                    case 'release':
+                        // more then 50% moved, navigate
+                        if(Math.abs(ev.gesture.deltaX) > pane_width/2) {
+                            if(ev.gesture.direction == 'right') {
+                                self.prev();
+                            } else {
+                                self.next();
+                            }
+                        }
+                        else {
+                            self.showPane(current_pane, true);
+                        }
+                        break;
+                }
+
+            }
+        }
+
+        element.hammer({ drag_lock_to_axis: true })
+            .on("release dragleft dragright swipeleft swiperight", handleHammer);
+    }
+
+
+    var carousel = new Carousel("#carousel");
+    carousel.init();
+
+    // $(".drag")
+    //   .hammer({ drag_max_touches: 0 })
+    //   .on("touch drag dragright dragleft", function(ev) {
+    //     console.log("DRAG CIRCLE");
+
+    //     var touches = ev.gesture.touches;
+
+    //     for(var t=0,len=touches.length; t<len; t++) {
+    //         var target = $(touches[t].target);
+    //         target.css({
+    //             zIndex: 1337,
+    //             left: touches[t].pageX-50,
+    //             top: touches[t].pageY-50
+    //         });
+    //     }
+
+    //     ev.gesture.preventDefault();
+    //     ev.stopPropagation();
+    //     ev.gesture.stopPropagation();
+    //     return;
+    //   });
+
+    </script>
+
+    <script src="javascripts/ga.js"></script>
+
+    <script type="application/processing" data-processing-target="looperCanvas">
+        /*
+        @pjs
+        crisp=true;
+        font=DidactGothic.ttf;
+        */
+        PFont primaryFont;
+
+        void setup() {
+            size(screenWidth, screenHeight);
+
+            primaryFont = loadFont("DidactGothic.ttf");
+        }   
+        
+        void draw() {
+            background(#F0F1F0);
+            primaryFont = createFont("DidactGothic.ttf", 32);
+            textFont(primaryFont, 100);
+            textAlign(CENTER);
+            fill(65, 65, 65);
+            text("looper", screenWidth / 2, screenHeight / 2 + 20);
+        }     
+    </script>
+
+    <script src="javascripts/looper.js"></script>
+    <script>
+        looper = new Looper();
+        looper.addDevice();
+        looper.addDevice();
+        looper.addDevice();
+        looper.showDeviceByIndex(0);
+    </script>
+
+</body>
+</html>

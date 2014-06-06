@@ -103,6 +103,7 @@ void loop() {
   // Send output if input surpasses "touch" or "connected" thresholds
   if (touchInputMean > 3000) {
     digitalWrite(MODULE_OUTPUT_PORT, HIGH);
+    // TODO: Send message to "output" module(s).
   } else {
     digitalWrite(MODULE_OUTPUT_PORT, LOW);
   }
