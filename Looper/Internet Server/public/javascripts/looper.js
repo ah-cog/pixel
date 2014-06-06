@@ -1,11 +1,175 @@
 disableEventCreate = false;
 showPalette = false;
 
-// TODO: Define a domain-specific language for the microcontroller.
+
+
 
 /**
- * Saves the script currently in the Firepad editor for the current node.
- */
+    * super simple carousel
+    * animation between panes happens with css transitions
+    */
+    function Carousel(element) {
+        var self = this;
+        element = $(element);
+
+        var container = $(">ul", element);
+        var panes = $(">ul>li", element);
+
+        var pane_width = 0;
+        var pane_count = panes.length;
+
+        var current_pane = 0;
+
+
+        /**
+         * initial
+         */
+        this.init = function() {
+            setPaneDimensions();
+
+            $(window).on("load resize orientationchange", function() {
+                setPaneDimensions();
+                //updateOffset();
+            })
+        };
+
+
+        /**
+         * set the pane dimensions and scale the container
+         */
+        function setPaneDimensions() {
+            pane_width = element.width();
+            panes.each(function() {
+                $(this).width(pane_width);
+            });
+            container.width(pane_width*pane_count);
+        };
+
+
+        /**
+         * show pane by index
+         * @param   {Number}    index
+         */
+        this.showPane = function( index ) {
+            // between the bounds
+            index = Math.max(0, Math.min(index, pane_count-1));
+            current_pane = index;
+
+            var offset = -((100/pane_count)*current_pane);
+            setContainerOffset(offset, true);
+        };
+
+
+        function setContainerOffset(percent, animate) {
+            container.removeClass("animate");
+
+            if(animate) {
+                container.addClass("animate");
+            }
+
+            if(Modernizr.csstransforms3d) {
+                container.css("transform", "translate3d("+ percent +"%,0,0) scale3d(1,1,1)");
+            }
+            else if(Modernizr.csstransforms) {
+                container.css("transform", "translate("+ percent +"%,0)");
+            }
+            else {
+                var px = ((pane_width*pane_count) / 100) * percent;
+                container.css("left", px+"px");
+            }
+        }
+
+        this.next = function() { return this.showPane(current_pane+1, true); };
+        this.prev = function() { return this.showPane(current_pane-1, true); };
+
+
+
+        function handleHammer(ev) {
+            // console.log(ev);
+            // disable browser scrolling
+            ev.gesture.preventDefault();
+
+            if (!disableEventCreate) {
+
+                switch(ev.type) {
+                    case 'dragright':
+                    case 'dragleft':
+                        // stick to the finger
+                        var pane_offset = -(100/pane_count)*current_pane;
+                        var drag_offset = ((100/pane_width)*ev.gesture.deltaX) / pane_count;
+
+                        // slow down at the first and last pane
+                        if((current_pane == 0 && ev.gesture.direction == Hammer.DIRECTION_RIGHT) ||
+                            (current_pane == pane_count-1 && ev.gesture.direction == Hammer.DIRECTION_LEFT)) {
+                            drag_offset *= .4;
+                        }
+
+                        setContainerOffset(drag_offset + pane_offset);
+                        break;
+
+                    case 'swipeleft':
+                        self.next();
+                        ev.gesture.stopDetect();
+                        break;
+
+                    case 'swiperight':
+                        self.prev();
+                        ev.gesture.stopDetect();
+                        break;
+
+                    case 'release':
+                        // more then 50% moved, navigate
+                        if(Math.abs(ev.gesture.deltaX) > pane_width/2) {
+                            if(ev.gesture.direction == 'right') {
+                                self.prev();
+                            } else {
+                                self.next();
+                            }
+                        }
+                        else {
+                            self.showPane(current_pane, true);
+                        }
+                        break;
+                }
+
+            }
+        }
+
+        element.hammer({ drag_lock_to_axis: true })
+            .on("release dragleft dragright swipeleft swiperight", handleHammer);
+    }
+
+
+    var carousel = new Carousel("#carousel");
+    carousel.init();
+
+    // $(".drag")
+    //   .hammer({ drag_max_touches: 0 })
+    //   .on("touch drag dragright dragleft", function(ev) {
+    //     console.log("DRAG CIRCLE");
+
+    //     var touches = ev.gesture.touches;
+
+    //     for(var t=0,len=touches.length; t<len; t++) {
+    //         var target = $(touches[t].target);
+    //         target.css({
+    //             zIndex: 1337,
+    //             left: touches[t].pageX-50,
+    //             top: touches[t].pageY-50
+    //         });
+    //     }
+
+    //     ev.gesture.preventDefault();
+    //     ev.stopPropagation();
+    //     ev.gesture.stopPropagation();
+    //     return;
+    //   });
+
+//------------
+// looper.js
+//------------
+
+// TODO: Define a domain-specific language for the microcontroller.
 function saveScript() {
     var script = "" + firepadDevice.firepad.getText();
     firepadEvent.behavior = eval('(' + script + ')');
@@ -44,7 +208,6 @@ function Looper(options) {
         var overlay = '';
         overlay += '<div id="overlay' + deviceCount + '" style="width: 100%; height: 100%; position: relative; z-index: 5000;">';
         overlay += '<input type="button" value="close" onclick="saveScript();$(\'#overlay' + deviceCount + '\').hide();" />';
-        overlay += '<div id="firepad-container-' + deviceCount + '" class="firepad-container"></div>';
         overlay += '</div>';
         // <script>
         //     $('#overlay').hide();
@@ -66,8 +229,6 @@ function Looper(options) {
         this.carousel = new Carousel("#carousel");
         this.carousel.init();
         // this.carousel.showPane(deviceCount);
-
-        device.firepad = setupFirepad("firepad-container-" + deviceCount);
 
         $('#overlay' + deviceCount).hide();
     }
@@ -100,8 +261,8 @@ function EventLoop(options) {
     this.go = go;
 
     function stop() {
-        this.updateLoopOrdering();
         this.going = false;
+        this.updateLoopOrdering();
 
         // Stop all events in the event loop
         for (var i = 0; i < this.events.length; i++) {
@@ -126,7 +287,7 @@ function EventLoop(options) {
             previousEvent.stop();
 
             this.position = (this.position + 1) % this.events.length;
-            console.log('new position = ' + this.position);
+            // console.log('new position = ' + this.position);
 
             var currentEvent = this.events[this.position];
             currentEvent.go();
@@ -369,16 +530,25 @@ function BehaviorPalette(options) {
     }
     this.updatePosition = updatePosition;
 
+    /**
+     * Shows the behavior palette
+     */
     function show() {
         this.visible = true;
     }
     this.show = show;
 
+    /**
+     * Hides the behavior palette
+     */
     function hide() {
         this.visible = false;
     }
     this.hide = hide;
 
+    /**
+     * Toggles the visibility of the behavior palette
+     */
     function toggle() {
         if (this.visible) {
             this.visible = false;
@@ -388,13 +558,18 @@ function BehaviorPalette(options) {
     }
     this.toggle = toggle;
 
+    /**
+     * Adds a behavior node to the behavior palette
+     */
     function addBehavior(x, y, label, script) {
         var behavior = new Behavior({
-            x: x, //ev.gesture.center.pageX,
-            y: y, // ev.gesture.center.pageY,
+            x: x, // was ev.gesture.center.pageX,
+            y: y, // was ev.gesture.center.pageY,
             xTarget: x,
             yTarget: y,
             label: label,
+
+            // e.g.,
             // script: function() {
             //     console.log("DOING " + this.label);
             // }
@@ -409,6 +584,9 @@ function setupGestures(device) {
 
     var currentCanvas = '#' + device.canvas;
 
+    /**
+     * Handle "tap" events.
+     */
     $(currentCanvas).hammer({ drag_max_touches: 0 }).on("tap", function(ev) {
         console.log("'tap' event!");
 
@@ -424,29 +602,13 @@ function setupGestures(device) {
             if ((ev.gesture.center.pageX - 50 < loopEvent.x && loopEvent.x < ev.gesture.center.pageX + 50)
                 && (ev.gesture.center.pageY - 50 < loopEvent.y && loopEvent.y < ev.gesture.center.pageY + 50)) {
 
-                firepadDevice = device;
-                firepadEvent = loopEvent;
-                $('#overlay' + device.index).show();
-                // var jsString = "" + loopEvent.behavior;
-                // var jsb = beautify(jsString, {
-                //     'indent_size': 1,
-                //     'indent_char': '\t'
-                // });
-                var beautifulScript = js_beautify("" + loopEvent.behavior, {
-                    'indent_size': 1,
-                    'indent_char': '\t'
-                });
-                //device.firepad.setText("" + loopEvent.behavior);
-                device.firepad.setText(beautifulScript);
-                // device.firepad.setText(jsString);
+                // TODO: Handle "tap" event.
             }
         }
     });
 
     /**
-     * Touch event handler
-     * @param  {[type]} ev [description]
-     * @return {[type]}    [description]
+     * Handle "touch" events.
      */
     $(currentCanvas).hammer({ drag_max_touches: 0 }).on("touch", function(ev) {
         console.log("'touch' event!");
@@ -469,15 +631,15 @@ function setupGestures(device) {
                 if ((ev.gesture.center.pageX - 50 < behaviorPalette.x + behavior.x && behaviorPalette.x + behavior.x < ev.gesture.center.pageX + 50)
                     && (ev.gesture.center.pageY - 50 < behaviorPalette.y + behavior.y && behaviorPalette.y + behavior.y < ev.gesture.center.pageY + 50)) {
 
-                    // behaviorPalette.hide();
+                    // Hide the behavior palette
                     device.processingInstance.behaviorPalette.visible = false;
 
-                    // Create behavior
+                    // Create behavior node
                     var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
 
                     var loopEvent = new Event({
-                        x: device.processingInstance.behaviorPalette.x + behavior.x, //ev.gesture.center.pageX,
-                        y: device.processingInstance.behaviorPalette.y + behavior.y, // ev.gesture.center.pageY,
+                        x: device.processingInstance.behaviorPalette.x + behavior.x,
+                        y: device.processingInstance.behaviorPalette.y + behavior.y,
                         xTarget: nearestPosition.x,
                         yTarget: nearestPosition.y
                     });
@@ -485,16 +647,10 @@ function setupGestures(device) {
                     // Update for selected behavior
                     loopEvent.label = behavior.label;
                     loopEvent.behavior = behavior.script;
-                    // loopEvent.behavior = function() {
-                    //     // var command = loopEvent.go;
-                    //     var index = Math.random() * 2;
-                    //     // command = this.looper.commands[parseInt(index)];
-                    //     command = this.label;
-                    //     console.log("instr: " + command);
-                    // }
 
                     console.log(loopEvent);
 
+                    // Update the state of the event node
                     loopEvent.state = 'MOVING';
                     device.processingInstance.eventLoop.events.push(loopEvent);
                 }
@@ -534,11 +690,15 @@ function setupGestures(device) {
         //
 
         if ((ev.gesture.center.pageX - 50 < (device.processingInstance.screenWidth / 2) && (device.processingInstance.screenWidth / 2) < ev.gesture.center.pageX + 50)
-            && (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight / 2) && (device.processingInstance.screenHeight / 2) < ev.gesture.center.pageY + 50)) {
+            && (ev.gesture.center.pageY - 50 < (device.processingInstance.screenHeight - 100) && (device.processingInstance.screenHeight - 100) < ev.gesture.center.pageY + 50)) {
 
-            //console.log("go");
-            device.processingInstance.getEventSequence();
-            device.processingInstance.eventLoop.toggle(); // toggle "go" and "stop"
+            var sequence = device.processingInstance.getEventSequence();
+
+            // Start the event loop if any events exist
+            if (sequence.length > 0) {
+                //console.log("go");
+                device.processingInstance.eventLoop.toggle(); // toggle "go" and "stop"
+            }
         }
 
         //
@@ -562,6 +722,9 @@ function setupGestures(device) {
         return;
     });
 
+    /**
+     * Detect "release" event.
+     */
     $(currentCanvas).hammer({ drag_max_touches: 0 }).on("release", function(ev) {
         console.log("'release' event!");
 
@@ -585,17 +748,33 @@ function setupGestures(device) {
                 var distance = device.processingInstance.getDistanceFromEventLoop(loopEvent);
 
                 if (distance < 110) {
+
+                    // Update position of the event node and set as "sequenced"
                     var nearestPosition = device.processingInstance.getNearestPositionOnEventLoop(ev.gesture.center.pageX, ev.gesture.center.pageY);
                     loopEvent.x = nearestPosition.x;
                     loopEvent.y = nearestPosition.y;
                     loopEvent.state = 'SEQUENCED';
+
+                    // Start the event loop if any events exist
+                    var sequence = device.processingInstance.getEventSequence();
+                    if (sequence.length > 0) {
+                        //console.log("go");
+                        device.processingInstance.eventLoop.go(); // toggle "go" and "stop"
+                    }
                 } else {
+
+                    // Update position of the event node and set as "floating"
                     loopEvent.state = 'FLOATING';
+
+                    // Stop the event loop if no nodes are placed on it
+                    var sequence = device.processingInstance.getEventSequence();
+                    if (sequence.length == 0) {
+                        device.processingInstance.eventLoop.stop();
+                    }
                 }
 
-                // TODO: Only show JS editor by default for new nodes
-                console.log("open editor!");
-                // $('#overlay').show(); // TODO: Append argument
+                // Deploy code to Pixel module (i.e., the Espruino)
+                device.deploy();
 
                 disableEventCreate = false;
 
@@ -611,8 +790,9 @@ function setupGestures(device) {
         // return;
     });
 
-
-
+    /**
+     * Handle "hold" touch event.
+     */
     $(currentCanvas).hammer({ drag_max_touches: 0, hold_timeout: 200 }).on("hold", function(ev) {
         console.log("'hold' event!");
 
@@ -701,10 +881,53 @@ function Device(options) {
 
     this.canvas = options.canvas;
 
-    this.scriptName = "script";
+    this.scriptName = "pixel";
     // this.disableEventCreate = false;
     this.showPalette = false;
     this.font = null;
+    // this.looper;
+
+    function getLooper() {
+      return this.looper;
+    }
+    this.getLooper = getLooper;
+
+    function getDevice(index) {
+      return this.looper.devices[index];
+    }
+    this.getDevice = getDevice;
+
+    function getEventLoop(index) {
+      return this.looper.devices[index].processingInstance.eventLoop;
+    }
+    this.getEventLoop = getEventLoop;
+
+    function getEventSequence(index) {
+      return this.looper.devices[index].processingInstance.eventLoop.events;
+    }
+    this.getEventSequence = getEventSequence;
+
+    /**
+     * Deploy the current state of the program to the module
+     */
+    function deploy() {
+        console.log("Download code to the Espruino");
+        // TODO: Push the current Looper state to the Espruino with an HTTP POST
+
+        // device.looper.devices[0].processingInstance.eventLoop.events
+        // var events = this.looper.devices[0].processingInstance.eventLoop.events;
+        var events = this.getEventSequence(0);
+        var program = '';
+        for (var i = 0; i < events.length; i++) {
+          program = program + getEventSequence(0)[i].behavior + '\n';
+          //alert(this.looper.devices[0].processingInstance.eventLoop.events[i].behavior);
+        }
+        console.log(program);
+        //loopEvent.behavior = behavior.script;
+    }
+    this.deploy = deploy;
+
+    // TODO: Implement function to get current state of Looper's state on the Espruino
 
     /**
      * Processing sketch code
@@ -733,10 +956,11 @@ function Device(options) {
             var color = { red: randomRed, green: randomGreen, blue: randomBlue };
             return color;
         }
-        var color = generateRandomColor(255, 255, 255);
-        var backgroundColor = processing.color(color.red, color.green, color.blue);
+        // var color = generateRandomColor(255, 255, 255);
+        // var backgroundColor = processing.color(color.red, color.green, color.blue);
+        var backgroundColor = processing.color(240, 241, 240);
 
-        var scriptName = "script";
+        var scriptName = "pixel";
 
         processing.eventLoop = new EventLoop();
 
@@ -749,28 +973,28 @@ function Device(options) {
             visible: false
         });
 
-        //
-
         // Add "default" behaviors to palette
-        // processing.behaviorPalette.addBehavior(0, 0, 'get');
-        // processing.behaviorPalette.addBehavior(100, 0, 'on');
-        // processing.behaviorPalette.addBehavior(-100, 0, 'off');
-        processing.behaviorPalette.addBehavior(0, 0, 'get', function() {
-            //console.log("DOING " + this.label);
-            console.log('I just set up a <div> to render a chart from JavaScript.')
+        processing.behaviorPalette.addBehavior(0, 0, 'light', function() {
+            console.log('light top level')
         });
-        processing.behaviorPalette.addBehavior(100, 0, 'button', function() {
-            console.log('I just retreived a data set via HTTP requests in JavaScript.')
+        processing.behaviorPalette.addBehavior(100, 0, 'motion', function() {
+            console.log('motion top level')
         });
-        processing.behaviorPalette.addBehavior(-100, 0, 'on', function() {
-            console.log('I just plotted the data using D3 on an overlay.')
+        processing.behaviorPalette.addBehavior(-100, 0, 'button', function() {
+            console.log('button top level')
+        });
+        processing.behaviorPalette.addBehavior(-200, 0, 'pin', function() {
+            console.log('pin top level')
+        });
+        processing.behaviorPalette.addBehavior(200, 0, 'message', function() {
+            console.log('message top level')
         });
 
         // Override setup function
         processing.setup = function() {
             processing.size(processing.screenWidth, processing.screenHeight);
 
-            this.font = processing.loadFont("DidactGothic.ttf");
+            this.font = processing.loadFont("http://192.168.43.127:3000/DidactGothic.ttf");
         }
 
         // Override draw function, by default it will be called 60 times per second
@@ -790,7 +1014,7 @@ function Device(options) {
                 // Draw arrow
                 processing.translate(processing.screenWidth / 2, processing.screenHeight / 2);
                 processing.translate(-29, -198);
-                processing.rotate(-0.05*processing.PI);
+                processing.rotate(-0.05 * processing.PI);
                 processing.line(0, 0, -16, 16);
                 processing.line(0, 0, -16, -16);
 
@@ -810,12 +1034,25 @@ function Device(options) {
                     // Draw the event node
                     processing.fill(66, 214, 146);
                     if (loopEvent.going) {
-                        processing.ellipse(loopEvent.x, loopEvent.y, 80, 80);
+                        processing.ellipse(loopEvent.x, loopEvent.y, 70, 70);
+
+                        // Show the program counter
+                        if (loopEvent.state == 'SEQUENCED') {
+                            var angle = getAngle(loopEvent.x, loopEvent.y);
+                            var nearestX = processing.screenWidth / 2 + (500 / 2) * Math.cos(angle - Math.PI  / 2);
+                            var nearestY = processing.screenHeight / 2 + (500 / 2) * Math.sin(angle - Math.PI  / 2);
+                            processing.ellipse(nearestX, nearestY, 20, 20);
+                        }
                     } else {
-                        processing.ellipse(loopEvent.x, loopEvent.y, 60, 60);
+                        processing.ellipse(loopEvent.x, loopEvent.y, 70, 70);
+
+                        // // Draw options for the sequenced node
+                        // if (loopEvent.state == 'SEQUENCED') {
+                        //     processing.ellipse(loopEvent.x + 40, loopEvent.y - 40, 30, 30);
+                        // }
                     }
 
-                    primaryFont = processing.createFont("DidactGothic.ttf", 32);
+                    primaryFont = processing.createFont("http://192.168.43.127:3000/DidactGothic.ttf", 32);
                     processing.textFont(primaryFont, 16);
                     processing.textAlign(processing.CENTER);
                     processing.fill(65, 65, 65);
@@ -850,7 +1087,7 @@ function Device(options) {
                         processing.fill(66, 214, 146);
                         processing.ellipse(processing.behaviorPalette.x + behavior.x, processing.behaviorPalette.y + behavior.y, 80, 80);
 
-                        primaryFont = processing.createFont("DidactGothic.ttf", 32);
+                        primaryFont = processing.createFont("http://192.168.43.127:3000/DidactGothic.ttf", 32);
                         processing.textFont(primaryFont, 16);
                         processing.textAlign(processing.CENTER);
                         processing.fill(65, 65, 65);
@@ -903,13 +1140,6 @@ function Device(options) {
                     //console.log("Rendering ghost");
                 }
 
-                // Check if event node is near to the event loop
-                // if (distance < 110) { // ENTANGLED
-                //     loopEvent.state = 'ENTANGLED';
-                // } else {
-                //     loopEvent.state = 'FLOATING';
-                // }
-
                 if (loopEvent.state === 'MOVING') {
 
                     // Standard update for a moving event
@@ -928,7 +1158,6 @@ function Device(options) {
                     var distance = processing.lineDistance(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
 
                     if (distance < 110) { // ENTANGLED
-                    //if (loopEvent.state === 'ENTANGLED') {
                         processing.line(loopEvent.x, loopEvent.y, loopEvent.xTarget, loopEvent.yTarget);
 
                         // Draw the "would be" position that the event node would occupy
@@ -1095,23 +1324,23 @@ function Device(options) {
             processing.background(backgroundColor);
 
             // draw "go" button
-            primaryFont = processing.createFont("DidactGothic.ttf", 32);
-            processing.textFont(primaryFont, 100);
+            primaryFont = processing.createFont("http://192.168.43.127:3000/DidactGothic.ttf", 32);
+            processing.textFont(primaryFont, 26);
             processing.textAlign(processing.CENTER);
             processing.fill(65, 65, 65);
             if (processing.eventLoop.going) {
-                processing.text("stop", processing.screenWidth / 2, processing.screenHeight / 2 + 20);
+                processing.text("stop", processing.screenWidth / 2, processing.screenHeight - 100);
             } else {
-                processing.text("go", processing.screenWidth / 2, processing.screenHeight / 2 + 20);
+                processing.text("go", processing.screenWidth / 2, processing.screenHeight - 100);
             }
 
             // draw script name
-            primaryFont = processing.createFont("DidactGothic.ttf", 16);
-            processing.textFont(primaryFont, 40);
+            primaryFont = processing.createFont("http://192.168.43.127:3000/DidactGothic.ttf", 16);
+            processing.textFont(primaryFont, 50);
             processing.textAlign(processing.CENTER);
             processing.fill(65, 65, 65);
             //processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 7 + 20);
-            processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 2 - 90);
+            processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 2 + 10);
 
             // step to next node in loop
             processing.currentTime = (new Date()).getTime();
