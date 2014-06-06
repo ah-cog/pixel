@@ -835,6 +835,10 @@ function setupGestures(device) {
                     loopEvent.y = nearestPosition.y;
                     loopEvent.state = 'SEQUENCED';
 
+                    // TODO: Send the update to MCU.
+                    alert("on it!");
+                    pin(6, 1, 0, 1, 1);
+
                     // Start the event loop if any events exist
                     var sequence = device.processingInstance.getEventSequence();
                     if (sequence.length > 0) {
@@ -1063,12 +1067,12 @@ function Device(options) {
         processing.behaviorPalette.addBehavior(-100, 0, 'button', function() {
             console.log('button top level')
         });
-        processing.behaviorPalette.addBehavior(-200, 0, 'pin', function() {
-            console.log('pin top level')
-        });
-        processing.behaviorPalette.addBehavior(200, 0, 'message', function() {
-            console.log('message top level')
-        });
+        // processing.behaviorPalette.addBehavior(-200, 0, 'pin', function() {
+        //     console.log('pin top level')
+        // });
+        // processing.behaviorPalette.addBehavior(200, 0, 'message', function() {
+        //     console.log('message top level')
+        // });
 
         // Override setup function
         processing.setup = function() {
