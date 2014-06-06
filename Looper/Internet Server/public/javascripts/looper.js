@@ -3,6 +3,86 @@ showPalette = false;
 
 
 
+function pin(pin, operation, type, mode, value) {
+    var http = new XMLHttpRequest();
+    var url = "/pin";
+    var params = "pin=" + pin + "&operation=" + operation + "&type=" + type + "&mode=" + mode + "&value=" + value + "";
+    url = url.concat('?', params);
+    
+    http.open("POST", url, true);
+
+    // Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    
+    http.onreadystatechange = function() { //Call a function when the state changes.
+        if(http.readyState == 4 && http.status == 200) {
+           console.log(http.responseText);
+        }
+    }
+    http.send(params);
+}
+
+function readPin(pin, operation, type, mode, value) {
+    var http = new XMLHttpRequest();
+    var url = "/pin";
+    var params = "pin=" + pin + "&operation=" + operation + "&type=" + type + "&mode=" + mode + "&value=" + value + "";
+    url = url.concat('?', params);
+
+    http.open("GET", url, true);
+
+    // Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+    http.onreadystatechange = function() { //Call a function when the state changes.
+        if(http.readyState == 4 && http.status == 200) {
+            console.log(http.responseText);
+        }
+    }
+    http.send(params);
+}
+
+function delay(milliseconds) {
+    var http = new XMLHttpRequest();
+    var url = "/delay";
+    var params = "milliseconds=" + milliseconds + "";
+
+    http.open("POST", url, true);
+
+    // Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+    http.onreadystatechange = function() { //Call a function when the state changes.
+        if(http.readyState == 4 && http.status == 200) {
+            console.log(http.responseText);
+        }
+    }
+    http.send(params);
+}
+
+function erase() {
+    var http = new XMLHttpRequest();
+    var url = "/erase";
+    var params = "";
+
+    http.open("POST", url, true);
+
+    // Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+    http.onreadystatechange = function() { //Call a function when the state changes.
+        if(http.readyState == 4 && http.status == 200) {
+            console.log(http.responseText);
+        }
+    }
+    http.send(params);
+}
+
+
+
+
+
+
+
 
 /**
     * super simple carousel
