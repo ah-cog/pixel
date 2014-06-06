@@ -96,17 +96,19 @@ boolean isActive = false; // Is the module the currently active module in the se
 
 void loop() {
   
-  getInputPort();
-  
-  Serial.print(touchInputMean);
-  
-  // Send output if input surpasses "touch" or "connected" thresholds
-  if (touchInputMean > 3000) {
-    digitalWrite(MODULE_OUTPUT_PORT, HIGH);
-    // TODO: Send message to "output" module(s).
-  } else {
-    digitalWrite(MODULE_OUTPUT_PORT, LOW);
-  }
+//  //if (output to local)
+//  getInputPort();
+//  //
+//  
+//  Serial.print(touchInputMean);
+//  
+//  // Send output if input surpasses "touch" or "connected" thresholds
+//  if (touchInputMean > 3000) {
+//    digitalWrite(MODULE_OUTPUT_PORT, HIGH);
+//    // TODO: Send message to "output" module(s).
+//  } else {
+//    digitalWrite(MODULE_OUTPUT_PORT, LOW);
+//  }
   
   
   

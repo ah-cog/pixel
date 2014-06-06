@@ -372,15 +372,7 @@ function EventLoop(options) {
             var currentEvent = this.events[this.position];
             currentEvent.go();
 
-            currentEvent.behavior();
-
-
-            // this.getEventSequence();
-            // for (var i = 0; i < eventSequence.length; i++) {
-            //     loopEvent = eventSequence[i];
-
-            //     loopEvent.event.go();
-            // }
+            // currentEvent.behavior(); // NOTE: Uncomment this to call the behavior every time it is "going"
         }
     }
     this.step = step;
@@ -835,9 +827,7 @@ function setupGestures(device) {
                     loopEvent.y = nearestPosition.y;
                     loopEvent.state = 'SEQUENCED';
 
-                    // TODO: Send the update to MCU.
-                    alert("on it!");
-                    pin(6, 1, 0, 1, 1);
+                    // TODO: Upload/Submit/Push/Send the update to MCU.
 
                     // Start the event loop if any events exist
                     var sequence = device.processingInstance.getEventSequence();
@@ -845,6 +835,9 @@ function setupGestures(device) {
                         //console.log("go");
                         device.processingInstance.eventLoop.go(); // toggle "go" and "stop"
                     }
+
+                    // Callback to server to update the program
+                    loopEvent.behavior();
                 } else {
 
                     // Update position of the event node and set as "floating"
@@ -855,6 +848,9 @@ function setupGestures(device) {
                     if (sequence.length == 0) {
                         device.processingInstance.eventLoop.stop();
                     }
+
+                    // Push the behavior change to the server
+                    // TODO: Remote the behavior from the program
                 }
 
                 // Deploy code to Pixel module (i.e., the Espruino)
@@ -1058,15 +1054,25 @@ function Device(options) {
         });
 
         // Add "default" behaviors to palette
-        processing.behaviorPalette.addBehavior(0, 0, 'light', function() {
-            console.log('light top level')
+        processing.behaviorPalette.addBehavior(-100, 0, 'light on', function() {
+            console.log('light on top level');
+            pin(6, 1, 0, 1, 1);
+            // TODO: Keep track of state... has this been sent yet?
         });
-        processing.behaviorPalette.addBehavior(100, 0, 'motion', function() {
-            console.log('motion top level')
+        processing.behaviorPalette.addBehavior(100, 0, 'light off', function() {
+            console.log('light off top level');
+            pin(6, 1, 0, 1, 0);
         });
-        processing.behaviorPalette.addBehavior(-100, 0, 'button', function() {
-            console.log('button top level')
+        processing.behaviorPalette.addBehavior(0, 0, 'delay', function() {
+            console.log('delay top level');
+            delay(1000);
         });
+        // processing.behaviorPalette.addBehavior(100, 0, 'motion', function() {
+        //     console.log('motion top level')
+        // });
+        // processing.behaviorPalette.addBehavior(-100, 0, 'button', function() {
+        //     console.log('button top level')
+        // });
         // processing.behaviorPalette.addBehavior(-200, 0, 'pin', function() {
         //     console.log('pin top level')
         // });
@@ -1419,12 +1425,14 @@ function Device(options) {
             }
 
             // draw script name
+            /*
             primaryFont = processing.createFont("http://192.168.43.127:3000/DidactGothic.ttf", 16);
             processing.textFont(primaryFont, 50);
             processing.textAlign(processing.CENTER);
             processing.fill(65, 65, 65);
             //processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 7 + 20);
             processing.text(scriptName, processing.screenWidth / 2, processing.screenHeight / 2 + 10);
+            */
 
             // step to next node in loop
             processing.currentTime = (new Date()).getTime();
