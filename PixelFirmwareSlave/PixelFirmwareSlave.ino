@@ -42,6 +42,7 @@ PinModel deviceReportedModel[24];
 //       over I2C upon request.
 
 void setup () {
+  delay(2000);
   Serial.begin(9600); // Start serial for output
   Serial.println("Slave device initializing...");
   
