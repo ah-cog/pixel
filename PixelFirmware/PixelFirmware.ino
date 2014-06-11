@@ -8,7 +8,9 @@ Authors: Michael Gubbels
 #include <RadioBlock.h>
 #include <SPI.h>
 
+#include <Adafruit_NeoPixel.h>
 #include "Light.h"
+
 #include "Gesture.h"
 #include "Movement.h"
 #include "Communication.h"
@@ -35,6 +37,8 @@ void setup() {
   
   // Set up pin mode for I/O
   setupPorts();
+  
+  setupLight();
   
   // Initialize pseudorandom number generator
   randomSeed(analogRead(0));

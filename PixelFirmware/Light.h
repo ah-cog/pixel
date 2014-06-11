@@ -1,9 +1,13 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
-#define RED_LED_PIN 3
-#define GREEN_LED_PIN 4
-#define BLUE_LED_PIN 5
+#define LED_OUTPUT_PIN 6
+#define LED_COUNT 1
+//#define RED_LED_PIN 3
+//#define GREEN_LED_PIN 4
+//#define BLUE_LED_PIN 5
+
+#define COLOR_MIX_DELAY 0
 
 // Types of lighting:
 // - switch (on or off)
@@ -19,6 +23,73 @@ int defaultModuleColor[3] = { 255, 255, 255 }; // The color associated with the 
 int sequenceColor[3] = { 255, 255, 255 }; // The desired color of the LED
 int targetColor[3] = { 255, 255, 255 }; // The desired color of the LED
 int ledColor[3] = { 255, 255, 255 }; // The current actual color of the LED
+
+
+
+
+// Parameter 1 = number of pixels in strip
+// Parameter 2 = pin number (most are valid)
+// Parameter 3 = pixel type flags, add together as needed:
+//   NEO_RGB     Pixels are wired for RGB bitstream
+//   NEO_GRB     Pixels are wired for GRB bitstream
+//   NEO_KHZ400  400 KHz bitstream (e.g. FLORA pixels)
+//   NEO_KHZ800  800 KHz bitstream (e.g. High Density LED strip)
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_OUTPUT_PIN, NEO_GRB + NEO_KHZ800);
+
+// Input a value 0 to 255 to get a color value.
+// The colours are a transition r - g - b - back to r.
+//uint32_t Wheel(byte WheelPos) {
+//  if(WheelPos < 85) {
+//   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+//  } else if(WheelPos < 170) {
+//   WheelPos -= 85;
+//   return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+//  } else {
+//   WheelPos -= 170;
+//   return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+//  }
+//}
+
+// Fill the dots one after the other with a color
+void colorWipe(uint32_t c, uint8_t wait) {
+  for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, c);
+      strip.show();
+      delay(wait);
+  }
+}
+
+//void rainbow(uint8_t wait) {
+//  uint16_t i, j;
+//
+//  for(j=0; j<256; j++) {
+//    for(i=0; i<strip.numPixels(); i++) {
+//      strip.setPixelColor(i, Wheel((i+j) & 255));
+//    }
+//    strip.show();
+//    delay(wait);
+//  }
+//}
+
+// Slightly different, this makes the rainbow equally distributed throughout
+//void rainbowCycle(uint8_t wait) {
+//  uint16_t i, j;
+//
+//  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
+//    for(i=0; i< strip.numPixels(); i++) {
+//      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
+//    }
+//    strip.show();
+//    delay(wait);
+//  }
+//}
+
+
+
+boolean setupLight() {
+  strip.begin();
+  strip.show(); // Initialize all pixels to 'off'
+}
 
 /**
  * Sets the module's default, unique color
@@ -70,15 +141,27 @@ void setModuleColor() {
 void crossfadeColorStep(int red, int green, int blue) {
   //for (int i = 0; i <= 255; i++) {
   if (crossfadeStep <= 255) {
+    
+    int newRed = red;
+    int newGreen = green;
+    int newBlue = blue;
+    
     if (crossfadeStep >= red - ledColor[0] && ledColor[0] > red) {
-      analogWrite(RED_LED_PIN, ledColor[0] - crossfadeStep);
+      //analogWrite(RED_LED_PIN, ledColor[0] - crossfadeStep);
+//      colorWipe(strip.Color(ledColor[0] - crossfadeStep, ledColor[1], ledColor[2]), COLOR_MIX_DELAY); // Red
+      newRed = ledColor[0] - crossfadeStep;
     }
     if (crossfadeStep >= green - ledColor[1] && ledColor[1] > green) {
-      analogWrite(GREEN_LED_PIN, ledColor[1] - crossfadeStep);
+//      analogWrite(GREEN_LED_PIN, ledColor[1] - crossfadeStep);
+//        colorWipe(strip.Color(ledColor[0], ledColor[1] - crossfadeStep, ledColor[2]), COLOR_MIX_DELAY); // Red
+      newGreen = ledColor[1] - crossfadeStep;
     }
     if (crossfadeStep >= blue - ledColor[2] && ledColor[2] > blue) {
-      analogWrite(BLUE_LED_PIN, ledColor[2] - crossfadeStep);
+//      analogWrite(BLUE_LED_PIN, ledColor[2] - crossfadeStep);
+//       colorWipe(strip.Color(ledColor[0], ledColor[1], ledColor[2] - crossfadeStep), COLOR_MIX_DELAY); // Red
+      newBlue = ledColor[2] - crossfadeStep;
     }
+    colorWipe(strip.Color(newRed, newGreen, newBlue), COLOR_MIX_DELAY); // Red
     
     //delay(10);
     //}
@@ -86,15 +169,22 @@ void crossfadeColorStep(int red, int green, int blue) {
     //{
       
     if (crossfadeStep >= ledColor[0] - red && ledColor[0] < red) {
-      analogWrite(RED_LED_PIN, ledColor[0] + crossfadeStep);
+//      analogWrite(RED_LED_PIN, ledColor[0] + crossfadeStep);
+//      colorWipe(strip.Color(ledColor[0] + crossfadeStep, ledColor[1], ledColor[2]), COLOR_MIX_DELAY); // Red
+      newRed = ledColor[0] + crossfadeStep;
     }
     if (crossfadeStep >= ledColor[1] - green && ledColor[1] < green) {
-      analogWrite(GREEN_LED_PIN, ledColor[1] + crossfadeStep);
+//      analogWrite(GREEN_LED_PIN, ledColor[1] + crossfadeStep);
+//      colorWipe(strip.Color(ledColor[0], ledColor[1] + crossfadeStep, ledColor[2]), COLOR_MIX_DELAY); // Red
+      newGreen = ledColor[1] - crossfadeStep;
     }
     if (crossfadeStep >= ledColor[2] - blue && ledColor[2] < blue) {
-      analogWrite(BLUE_LED_PIN, ledColor[2] + crossfadeStep);
+//      analogWrite(BLUE_LED_PIN, ledColor[2] + crossfadeStep);
+//      colorWipe(strip.Color(ledColor[0], ledColor[1], ledColor[2] + crossfadeStep), COLOR_MIX_DELAY); // Red
+      newBlue = ledColor[2] - crossfadeStep;
     }
-    delay(5); // delay(10);
+    colorWipe(strip.Color(newRed, newGreen, newBlue), COLOR_MIX_DELAY); // Red
+//    delay(5); // delay(10);
     
     crossfadeStep++;
     // crossfadeColorStep(red, green, blue);
@@ -102,10 +192,12 @@ void crossfadeColorStep(int red, int green, int blue) {
   }
   
   if (crossfadeStep == 255) {
-    delay(5); // delay(10);
-    analogWrite(RED_LED_PIN, red);
-    analogWrite(GREEN_LED_PIN, green);
-    analogWrite(BLUE_LED_PIN, blue);
+//    delay(5); // delay(10);
+//    analogWrite(RED_LED_PIN, red);
+//    analogWrite(GREEN_LED_PIN, green);
+//    analogWrite(BLUE_LED_PIN, blue);
+    colorWipe(strip.Color(red, green, blue), COLOR_MIX_DELAY); // Red
+    
     ledColor[0] = red;
     ledColor[1] = green;
     ledColor[2] = blue;
@@ -147,9 +239,10 @@ void applyColor(int applicationMethod) {
     ledColor[2] = targetColor[2];
     
     // Write values to pins
-    analogWrite(RED_LED_PIN,   ledColor[0]);
-    analogWrite(GREEN_LED_PIN, ledColor[1]);
-    analogWrite(BLUE_LED_PIN,  ledColor[2]);
+//    analogWrite(RED_LED_PIN,   ledColor[0]);
+//    analogWrite(GREEN_LED_PIN, ledColor[1]);
+//    analogWrite(BLUE_LED_PIN,  ledColor[2]);
+    colorWipe(strip.Color(ledColor[0], ledColor[1], ledColor[2]), COLOR_MIX_DELAY); // Red
     
   } else if (applicationMethod == COLOR_APPLICATION_MODE_CROSSFADE) {
     if (crossfadeStep < 256) {

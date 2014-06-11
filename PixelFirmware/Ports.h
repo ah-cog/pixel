@@ -1,7 +1,7 @@
 #ifndef PORTS_H
 #define PORTS_H
 
-#define MODULE_OUTPUT_PORT 6
+#define MODULE_OUTPUT_PORT 5
 
 #define TOUCH_SAMPLES (5000)   // maximum number of separate readings to take
 #define TOUCH_TIMEOUT (50) // (100) // (500)    // maximum sample integration time in milliseconds
