@@ -2,7 +2,7 @@
 #define LIGHT_H
 
 #define LED_OUTPUT_PIN 6
-#define LED_COUNT 1
+#define LED_COUNT 2
 //#define RED_LED_PIN 3
 //#define GREEN_LED_PIN 4
 //#define BLUE_LED_PIN 5

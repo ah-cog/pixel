@@ -37,7 +37,7 @@ boolean appendLoopNode(int pin, int operation, int type, int mode, int value) {
     behaviorLoop[loopSize].value = value;
     
     // Set up support structures for the behavior
-    if (operation == DELAY) {
+    if (operation == BEHAVIOR_DELAY) {
       // Set up timer
       delays[delayCount].startTime = 0; // Initialize/Reset the timer
       delays[delayCount].duration = 1000;

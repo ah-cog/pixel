@@ -35,6 +35,9 @@ Authors: Michael Gubbels
 
 void setup() {
   
+  // Setup Pixel's reflection (i.e., it's virtual machine)
+  setupPixel();
+  
   // Set up pin mode for I/O
   setupPorts();
   
@@ -100,19 +103,23 @@ boolean isActive = false; // Is the module the currently active module in the se
 
 void loop() {
   
-//  //if (output to local)
-//  getInputPort();
+  //if (output to local)
+  getInputPort();
 //  //
 //  
 //  Serial.print(touchInputMean);
 //  
-//  // Send output if input surpasses "touch" or "connected" thresholds
-//  if (touchInputMean > 3000) {
-//    digitalWrite(MODULE_OUTPUT_PORT, HIGH);
-//    // TODO: Send message to "output" module(s).
-//  } else {
-//    digitalWrite(MODULE_OUTPUT_PORT, LOW);
-//  }
+  // Send output if input surpasses "touch" or "connected" thresholds
+  if (pinReflection[MODULE_OUTPUT_PIN].value == LOW) {
+    if (touchInputMean > 3000) {
+      // digitalWrite(MODULE_OUTPUT_PIN, HIGH);
+      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+      // TODO: Send message to "output" module(s).
+    } else {
+      // digitalWrite(MODULE_OUTPUT_PIN, LOW);
+      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+    }
+  }
   
   
   

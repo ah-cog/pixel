@@ -1056,12 +1056,12 @@ function Device(options) {
         // Add "default" behaviors to palette
         processing.behaviorPalette.addBehavior(-100, 0, 'light on', function() {
             console.log('light on top level');
-            pin(6, 1, 0, 1, 1);
+            pin(5, 1, 0, 1, 1);
             // TODO: Keep track of state... has this been sent yet?
         });
         processing.behaviorPalette.addBehavior(100, 0, 'light off', function() {
             console.log('light off top level');
-            pin(6, 1, 0, 1, 0);
+            pin(5, 1, 0, 1, 0);
         });
         processing.behaviorPalette.addBehavior(0, 0, 'delay', function() {
             console.log('delay top level');
@@ -1084,7 +1084,7 @@ function Device(options) {
         processing.setup = function() {
             processing.size(processing.screenWidth, processing.screenHeight);
 
-            this.font = processing.loadFont("http://192.168.43.127:3000/DidactGothic.ttf");
+            this.font = processing.loadFont("http://physical.computer/DidactGothic.ttf");
         }
 
         // Override draw function, by default it will be called 60 times per second
@@ -1142,7 +1142,7 @@ function Device(options) {
                         // }
                     }
 
-                    primaryFont = processing.createFont("http://192.168.43.127:3000/DidactGothic.ttf", 32);
+                    primaryFont = processing.createFont("http://physical.computer/DidactGothic.ttf", 32);
                     processing.textFont(primaryFont, 16);
                     processing.textAlign(processing.CENTER);
                     processing.fill(65, 65, 65);
@@ -1177,7 +1177,7 @@ function Device(options) {
                         processing.fill(66, 214, 146);
                         processing.ellipse(processing.behaviorPalette.x + behavior.x, processing.behaviorPalette.y + behavior.y, 80, 80);
 
-                        primaryFont = processing.createFont("http://192.168.43.127:3000/DidactGothic.ttf", 32);
+                        primaryFont = processing.createFont("http://physical.computer/DidactGothic.ttf", 32);
                         processing.textFont(primaryFont, 16);
                         processing.textAlign(processing.CENTER);
                         processing.fill(65, 65, 65);
@@ -1414,7 +1414,7 @@ function Device(options) {
             processing.background(backgroundColor);
 
             // draw "go" button
-            primaryFont = processing.createFont("http://192.168.43.127:3000/DidactGothic.ttf", 32);
+            primaryFont = processing.createFont("http://physical.computer/DidactGothic.ttf", 32);
             processing.textFont(primaryFont, 26);
             processing.textAlign(processing.CENTER);
             processing.fill(65, 65, 65);
@@ -1426,7 +1426,7 @@ function Device(options) {
 
             // draw script name
             /*
-            primaryFont = processing.createFont("http://192.168.43.127:3000/DidactGothic.ttf", 16);
+            primaryFont = processing.createFont("http://physical.computer/DidactGothic.ttf", 16);
             processing.textFont(primaryFont, 50);
             processing.textAlign(processing.CENTER);
             processing.fill(65, 65, 65);

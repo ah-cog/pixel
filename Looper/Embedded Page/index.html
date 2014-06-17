@@ -6,12 +6,12 @@
 
     <!-- <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet"> -->
 
-    <script src="http://192.168.43.127:3000/javascripts/processing.js"></script>
+    <script src="http://physical.computer/javascripts/processing.js"></script>
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
 
     <link href='http://fonts.googleapis.com/css?family=Didact+Gothic' rel='stylesheet' type='text/css'>
 
-    <link rel="stylesheet" href="http://192.168.43.127:3000/stylesheets/style.css" />
+    <link rel="stylesheet" href="http://physical.computer/stylesheets/style.css" />
 
 </head>
 
@@ -19,7 +19,7 @@
 
     <!-- NOTE: Hammer.js works without jQuery! -->
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-    <script src="http://192.168.43.127:3000/javascripts/modernizr.js"></script>
+    <script src="http://physical.computer/javascripts/modernizr.js"></script>
 
     <!--<div id="debug">Log</div>-->
 
@@ -35,7 +35,7 @@
     </div>
 
     <!-- Include Hammer.js (for gesture recognition) -->
-    <script src="http://192.168.43.127:3000/javascripts/jquery.hammer.min.js"></script>
+    <script src="http://physical.computer/javascripts/jquery.hammer.min.js"></script>
     <script>
 
     /*
@@ -80,19 +80,19 @@
     /*
     @pjs
     crisp=true;
-    font="http://192.168.43.127:3000/DidactGothic.ttf";
+    font="http://physical.computer/DidactGothic.ttf";
     */
     PFont primaryFont;
 
     void setup() {
         size(screenWidth, screenHeight);
 
-        primaryFont = loadFont("http://192.168.43.127:3000/DidactGothic.ttf");
+        primaryFont = loadFont("http://physical.computer/DidactGothic.ttf");
     }
 
     void draw() {
         background(#F0F1F0);
-        primaryFont = createFont("http://192.168.43.127:3000/DidactGothic.ttf", 32);
+        primaryFont = createFont("http://physical.computer/DidactGothic.ttf", 32);
         textFont(primaryFont, 100);
         textAlign(CENTER);
         fill(65, 65, 65);
@@ -100,7 +100,7 @@
     }
     </script>
 
-    <script src="http://192.168.43.127:3000/javascripts/looper.js"></script>
+    <script src="http://physical.computer/javascripts/looper.js"></script>
     <script>
     looper = new Looper();
     looper.addDevice();

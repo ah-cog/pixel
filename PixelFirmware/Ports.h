@@ -1,7 +1,8 @@
 #ifndef PORTS_H
 #define PORTS_H
 
-#define MODULE_OUTPUT_PORT 5
+#define MODULE_INPUT_PIN A1
+#define MODULE_OUTPUT_PIN 5
 
 #define TOUCH_SAMPLES (5000)   // maximum number of separate readings to take
 #define TOUCH_TIMEOUT (50) // (100) // (500)    // maximum sample integration time in milliseconds
@@ -10,7 +11,7 @@ double touchInputMean = 0;
 
 boolean setupPorts() {
   // Set up pin mode for I/O
-  pinMode(MODULE_OUTPUT_PORT, OUTPUT); // pinMode(13, OUTPUT);
+  pinMode(MODULE_OUTPUT_PIN, OUTPUT); // pinMode(13, OUTPUT);
 }
 
 void getInputPort() {
@@ -32,7 +33,7 @@ void getInputPort() {
          
   tStart = millis();
   for (int i = 0; i < TOUCH_SAMPLES && ((millis() - tStart) < TOUCH_TIMEOUT); i++) {
-    x = touchRead(A1);
+    x = touchRead(MODULE_INPUT_PIN);
     datSum += x;
     if (x > sMax) sMax = x;
     if (x < sMin) sMin = x;
