@@ -110,11 +110,21 @@ void loop() {
   
   // Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
   
-  if (touchInputMean > 3000 && lastInputValue <= 3000) {
-    addMessage(NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
+  if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
+    if (outputPinRemote == false) {
+      // Output port is on this module!
+      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+    } else {
+      // Output port is on a different module than this one!
+      addMessage(NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
+    }
 //    delay(500);
-  } else if (touchInputMean <= 3000 && lastInputValue > 3000) {
-    addMessage(NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
+  } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
+    if (outputPinRemote == false) {
+      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+    } else {
+      addMessage(NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
+    }
 //    delay(500);
   }
   
@@ -395,6 +405,10 @@ boolean handleMessageRequestConfirmTapToAnotherAsLeft(Message message) {
 //    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
     addMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
     
+    // HACK: Move this! This should be more robust, likely!
+    // TODO: Make this map to the other module only when it is already sequenced!
+    outputPinRemote = true;
+    
     
   
 //    Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_LEFT");
@@ -560,17 +574,29 @@ boolean handleGestureShake() {
   // TODO: Message next modules, say this module is leaving the sequence
   // TODO: Message previous module, say this module is leaving the sequence
   
-  isSequenced = false;
-  if (isSequenced) {
-    setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+  // HACK: Move this! This should be more robust, likely!
+  // TODO: Make this map to the other module only when it is already sequenced!
+  if (outputPinRemote == true) {
+    
+    // Revert output port to local module
+    outputPinRemote = false;
+    
   } else {
-    setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+  
+    // Unsequence modules
+    isSequenced = false;
+    if (isSequenced) {
+      setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+    } else {
+      setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+    }
+    
+    addBroadcast(ANNOUNCE_GESTURE_SHAKE);
+    
+    removePreviousModules();
+    removeNextModules();
+    
   }
-  
-  addBroadcast(ANNOUNCE_GESTURE_SHAKE);
-  
-  removePreviousModules();
-  removeNextModules();
 }
 
 /**
