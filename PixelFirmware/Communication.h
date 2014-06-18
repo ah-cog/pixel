@@ -1,18 +1,24 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#define DEVICE_ADDRESS   0x0002
+#define MESH_DEVICE_ADDRESS 0x0002 // The device of the mesh networking radio
 
-#if defined(DEVICE_ADDRESS)
-  #if DEVICE_ADDRESS == 0x0001
-    #define NEIGHBOR_ADDRESS 0x0002
-  #elif DEVICE_ADDRESS == 0x0002
+#if defined(MESH_DEVICE_ADDRESS)
+  #if MESH_DEVICE_ADDRESS == 0x0000
     #define NEIGHBOR_ADDRESS 0x0001
+  #elif MESH_DEVICE_ADDRESS == 0x0001
+    #define NEIGHBOR_ADDRESS 0x0002
+  #elif MESH_DEVICE_ADDRESS == 0x0002
+    #define NEIGHBOR_ADDRESS 0x0001
+  #elif MESH_DEVICE_ADDRESS == 0x0003
+    #define NEIGHBOR_ADDRESS 0x0004
+  #elif MESH_DEVICE_ADDRESS == 0x0004
+    #define NEIGHBOR_ADDRESS 0x0000
   #endif
 #endif
 
 #define BROADCAST_ADDRESS NEIGHBOR_ADDRESS // 0xFFFF
-
+ 
 #define RADIOBLOCK_POWER_PIN -1
 #define RADIOBLOCK_GROUND_PIN -1
 #define RADIOBLOCK_RX_PIN 8
@@ -26,7 +32,7 @@
 #define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload
 #define RADIOBLOCK_PACKET_WRITE_TIMEOUT 0 // 120 // 200
 
-#define SEQUENCE_REQUEST_TIMEOUT 1000
+#define SEQUENCE_REQUEST_TIMEOUT 400
 
 // The module's pins 1, 2, 3, and 4 are connected to pins 5V, GND, 8, and 7.
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(RADIOBLOCK_POWER_PIN, RADIOBLOCK_GROUND_PIN, RADIOBLOCK_RX_PIN, RADIOBLOCK_TX_PIN);
@@ -53,7 +59,7 @@ boolean setupCommunication() {
   
   interface.setChannel(15);
   interface.setPanID(0xBAAD);
-  interface.setAddress(DEVICE_ADDRESS);
+  interface.setAddress(MESH_DEVICE_ADDRESS);
 }
 
 // These #define's are copied from the RadioBlock.cpp file
@@ -368,7 +374,7 @@ boolean sendMessage() {
     
     // Set up the destination address of the message
     if (message.source == BROADCAST_ADDRESS) {
-      // TODO: Broadcast here, not just send ot "neighbor"... might need to iterat through the addresses manually!
+      // TODO: Broadcast here, not just send to "neighbor"... might need to iterat through the addresses manually!
       interface.setupMessage(NEIGHBOR_ADDRESS);
     } else {
       interface.setupMessage(message.source); // Set the address of the recipient

@@ -12,8 +12,17 @@
 // get state of digital pin
 // delay
 
+int behaviorCount = 0;
+// Generates unique behavior ID
+int generateBehaviorIdentifier() {
+  int behaviorIdentifier = behaviorCount;
+  behaviorCount++;
+  return behaviorIdentifier;
+}
+
 struct Behavior {
   // TODO: add "instruction" so can add "delay" etc.
+//  int id; // The behavior's unique ID
   int operation; // i.e., write, read, PWM, "remember value at this time"
   int pin; // The pin number
   int type; // i.e., digital or analog
@@ -26,7 +35,7 @@ struct Delay {
   int duration;
   Behavior *behavior;
 };
-#define DELAY_LIMIT 4
+#define DELAY_LIMIT 20
 Delay delays[DELAY_LIMIT];
 int delayCount = 0;
 

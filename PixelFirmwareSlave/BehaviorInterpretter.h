@@ -27,9 +27,9 @@ boolean insertBehaviorNode(int index, int operation, int pin, int type, int mode
     behaviorNodeCount++; // Increment the behavior node count
   }
   
-//  Serial.print("queueing message (size: ");
-//  Serial.print(messageQueueSize);
-//  Serial.print(")\n");
+  Serial.print("queueing behavior (size: ");
+  Serial.print(behaviorNodeCount);
+  Serial.print(")\n");
 }
 
 /**

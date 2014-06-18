@@ -42,9 +42,9 @@ PinModel deviceReportedModel[24];
 //       over I2C upon request.
 
 void setup () {
-  delay(2000);
+//  delay(2000);
   Serial.begin(9600); // Start serial for output
-  Serial.println("Slave device initializing...");
+  Serial.println(F("Pixel, Firmware Denmark"));
   
   // Setup Wi-Fi and web server
   setupWebServer();
@@ -84,19 +84,20 @@ void receiveEvent (int howMany) {
   
   while (Wire.available () > 0) { // loop through all but the last
     char c = Wire.read (); // receive byte as a character
-    Serial.print (c); // print the character
+//    Serial.print (c); // print the character
     
     i2cBuffer[i2cBufferSize] = c; // Buffer the character
     i2cBufferSize++; // Increment the buffer size
   }
   i2cBuffer[i2cBufferSize] = NULL; // Terminate the string
-  Serial.println();
+//  Serial.println();
   
   String split = String(i2cBuffer); // "hi this is a split test";
   String operation = getValue(split, ' ', 0);
   int pin = getValue(split, ' ', 1).toInt();
   int value = getValue(split, ' ', 2).toInt();
   
+  /*
   Serial.print("PIN ");
   Serial.print(pin);
   Serial.print(" = ");
@@ -105,6 +106,7 @@ void receiveEvent (int howMany) {
   // TODO: Update other state info for pin (or other state)
 //  Serial.print(pin);
   Serial.println();
+  */
   
   i2cBufferSize = 0;
   
@@ -125,7 +127,7 @@ void requestEvent () {
 //  Serial.print("Count: ");
 //  Serial.println(behaviorNodeCount);
   
-  char buf[4]; // "-2147483648\0"
+  char buf[8]; // "-2147483648\0"
 //  Wire.write (itoa(behaviorNodeCount, buf, 10));
   
   if (behaviorNodeCount > 0) {

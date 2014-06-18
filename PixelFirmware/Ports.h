@@ -7,6 +7,8 @@
 #define TOUCH_SAMPLES (5000)   // maximum number of separate readings to take
 #define TOUCH_TIMEOUT (50) // (100) // (500)    // maximum sample integration time in milliseconds
 
+boolean outputPinRemote = false;
+
 double touchInputMean = 0;
 
 boolean setupPorts() {

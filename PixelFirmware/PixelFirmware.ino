@@ -65,7 +65,7 @@ void setup() {
   //
   
   Serial.begin(9600);
-  Serial.println(F("Pixel Firmware"));
+  Serial.println(F("Pixel, Firmware South Korea"));
   
   // Setup physical orientation sensing peripherals (i.e., IMU)
   setupOrientationSensing();
@@ -103,23 +103,32 @@ boolean isActive = false; // Is the module the currently active module in the se
 
 void loop() {
   
+  // Get module's input
+  // getInputPort(); // syncInputPort()
+  
+  // Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
+  
+  // Set state of module's output based on its input
   //if (output to local)
-  getInputPort();
-//  //
-//  
-//  Serial.print(touchInputMean);
-//  
-  // Send output if input surpasses "touch" or "connected" thresholds
-  if (pinReflection[MODULE_OUTPUT_PIN].value == LOW) {
-    if (touchInputMean > 3000) {
-      // digitalWrite(MODULE_OUTPUT_PIN, HIGH);
-      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
-      // TODO: Send message to "output" module(s).
-    } else {
-      // digitalWrite(MODULE_OUTPUT_PIN, LOW);
-      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
-    }
-  }
+//  if (outputPinRemote == false) {
+//    
+//    // Send output if input surpasses "touch" or "connected" thresholds
+////    if (pinReflection[MODULE_OUTPUT_PIN].value == 0) {
+//      if (touchInputMean > 3000) {
+//        // digitalWrite(MODULE_OUTPUT_PIN, HIGH);
+//        setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+//        // TODO: Send message to "output" module(s).
+//      } else {
+//        // digitalWrite(MODULE_OUTPUT_PIN, LOW);
+//        setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+//      }
+////    }
+//    
+//  } else {
+//    
+//    // TODO: Relay "turn on output" message to the pixel's output module
+//    
+//  }
   
   
   
@@ -187,6 +196,11 @@ void loop() {
     unsigned long currentTime = millis();
     if (currentTime - lastGestureClassificationTime >= gestureSustainDuration[classifiedGestureIndex]) { // Check if gesture duration has expired
       classifiedGestureIndex = classifyGestureFromTransitions(); // (gestureCandidate);
+      
+      // HACK: Doesn't allow tilt left and tilt right (reclassifies them as "at rest, in hand"
+      if (classifiedGestureIndex == 4 || classifiedGestureIndex == 5) {
+        classifiedGestureIndex = 1;
+      }
       
       lastGestureClassificationTime = millis(); // Update time of most recent gesture classification
     }
@@ -273,8 +287,11 @@ void loop() {
     } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) { // Sequence: Sequencing (i.e., linking) confirmation, from "left" module
       handleMessageRequestConfirmTapToAnotherAsRight(message);
     } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) { // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
-      Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
+      handleMessageRequestConfirmTapToAnotherAsLeft(message);
+      // Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
     }
+    
+    // TODO: ANNOUNCE_GESTURE_SHAKE
     
     // TODO: Deactivate module (because it's passing a sequence iterator forward)
     // TODO: Module announces removal from sequence (previous and next)
@@ -371,7 +388,7 @@ boolean handleMessageRequestConfirmTapToAnotherAsLeft(Message message) {
     
     // Add module to sequence
     isSequenced = true;
-    setSequenceColor(255, 255, 255); // Set the color of the sequence
+    setSequenceColor(255, 0, 255); // Set the color of the sequence
     
     // Update the module's color
     if (isSequenced) {
@@ -440,7 +457,7 @@ boolean handleMessageRequestConfirmTapToAnotherAsRight(Message message) {
     
     // Add module to sequence
     isSequenced = true;
-    setSequenceColor(255, 255, 255); // Set the color of the sequence
+    setSequenceColor(255, 0, 255); // Set the color of the sequence
     
     // Update the module's color
     if (isSequenced) {

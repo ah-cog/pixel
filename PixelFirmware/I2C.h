@@ -4,7 +4,7 @@
 #include "Behavior.h"
 #include "Pixel.h"
 
-#define I2C_MESSAGE_BYTE_SIZE 20
+#define I2C_MESSAGE_BYTE_SIZE 40
 
 char i2cMessageBuffer[128] = { 0 };
 int i2cMessageBufferSize = 0;
@@ -47,7 +47,7 @@ void setPinValue2(int pin, int value) {
   setPinValue (pin, value);
   
   // Update the state (on slave board for Looper)
-  char buf[4]; // "-2147483648\0"
+  char buf[8]; // "-2147483648\0"
   Wire.beginTransmission(SLAVE_DEVICE); // transmit to device #4
   Wire.write("pin ");
   Wire.write(itoa(pin, buf, 10)); // The pin number
@@ -74,7 +74,7 @@ int getPinValue2(int pin) {
   setPinValue (pin, (value == 1 ? PIN_VALUE_HIGH : PIN_VALUE_LOW));
   
   // Update the state
-  char buf[4]; // "-2147483648\0"
+  char buf[8]; // "-2147483648\0"
   Wire.beginTransmission(SLAVE_DEVICE); // transmit to device #4
   Wire.write("pin ");
   Wire.write(itoa(pin, buf, 10)); // The pin number
@@ -103,7 +103,7 @@ void updateBehavior() {
   while(Wire.available ()) { // slave may send less than requested
   
     char c = Wire.read (); // receive a byte as character
-//    Serial.print(c); // print the character
+    Serial.print(c); // print the character
     
     // Copy byte into message buffer
     i2cMessageBuffer[i2cMessageBufferSize] = c;
@@ -205,7 +205,7 @@ void behaviorLoopStep() {
         
       } else if ((*currentBehavior).operation == BEHAVIOR_DELAY) {
         
-        Serial.println("DELAY 1000 MS");
+        Serial.println("DELAY");
           
 //        int milliseconds = 1000;
 //        delay(milliseconds);
@@ -250,8 +250,8 @@ void behaviorLoopStep() {
         
         Serial.println("ERASE");
           
-        int milliseconds = 1000;
-        delay(milliseconds);
+//        int milliseconds = 1000;
+//        delay(milliseconds);
         
       }
     }

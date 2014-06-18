@@ -25,11 +25,14 @@
  */
  
 // Pixel's reflection (i.e., model) of self
-//struct Pixel {
-//};
+struct Pixel {
+  // neighbor's mesh address
+  // neighbor's web address (for Looper)
+};
 
 // TODO: Master board I/O state for (1) requested state and (2) reported state (by master).
 struct PinReflection {
+  int location; // Is it local or remote
   int pin; // The pin number
   int type; // i.e., digital, analog, pwm, touch
   int mode; // i.e., input or output
@@ -88,7 +91,7 @@ void setPinValue (int pin, int value) {
   // TODO: Include "pin mode" and "analog, digital, touch, pwm" in the output
   
   // Write to the pin
-  digitalWrite (pin, pinReflection[pin].value);
+  digitalWrite (pin, (pinReflection[pin].value == PIN_VALUE_HIGH ? HIGH : LOW));
 }
 
 int getPinValue (int pin) {

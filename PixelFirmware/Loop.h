@@ -30,6 +30,7 @@ boolean appendLoopNode(int pin, int operation, int type, int mode, int value) {
   
   if (loopSize < DEFAULT_LOOP_CAPACITY) {
     // Add behavior to queue
+//    behaviorLoop[loopSize].id = generateBehaviorIdentifier();
     behaviorLoop[loopSize].operation = operation;
     behaviorLoop[loopSize].pin = pin;
     behaviorLoop[loopSize].type = type;
@@ -40,8 +41,13 @@ boolean appendLoopNode(int pin, int operation, int type, int mode, int value) {
     if (operation == BEHAVIOR_DELAY) {
       // Set up timer
       delays[delayCount].startTime = 0; // Initialize/Reset the timer
-      delays[delayCount].duration = 1000;
+      delays[delayCount].duration = behaviorLoop[loopSize].value;
       delays[delayCount].behavior = &behaviorLoop[loopSize];
+      
+      Serial.print("Creating delay...");
+      Serial.print(delays[delayCount].duration);
+      Serial.println();
+      
       delayCount++;
     }
     
@@ -100,7 +106,8 @@ boolean removeLoopNode(int index) {
  */
 boolean eraseLoop() {
   
-  loopSize = 0;
+  loopSize = 0; // Reset behavior loop
+  delayCount = 0; // Reset delay structures
   return true;
 }
 

@@ -1,8 +1,6 @@
 disableEventCreate = false;
 showPalette = false;
 
-
-
 function pin(pin, operation, type, mode, value) {
     var http = new XMLHttpRequest();
     var url = "/pin";
@@ -45,6 +43,7 @@ function delay(milliseconds) {
     var http = new XMLHttpRequest();
     var url = "/delay";
     var params = "milliseconds=" + milliseconds + "";
+    url = url.concat('?', params);
 
     http.open("POST", url, true);
 
@@ -832,7 +831,6 @@ function setupGestures(device) {
                     // Start the event loop if any events exist
                     var sequence = device.processingInstance.getEventSequence();
                     if (sequence.length > 0) {
-                        //console.log("go");
                         device.processingInstance.eventLoop.go(); // toggle "go" and "stop"
                     }
 
