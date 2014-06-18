@@ -107,7 +107,7 @@ boolean removeLoopNode(int index) {
 boolean eraseLoop() {
   
   loopSize = 0; // Reset behavior loop
-  delayCount = 0; // Reset delay structures
+//  delayCount = 0; // Reset delay structures
   return true;
 }
 

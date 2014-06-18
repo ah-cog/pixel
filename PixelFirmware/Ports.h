@@ -9,6 +9,9 @@
 
 boolean outputPinRemote = false;
 
+int lastInputValue = 0;
+boolean inputStateChanged = false;
+
 double touchInputMean = 0;
 
 boolean setupPorts() {

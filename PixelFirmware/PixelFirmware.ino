@@ -103,10 +103,20 @@ boolean isActive = false; // Is the module the currently active module in the se
 
 void loop() {
   
+  lastInputValue = touchInputMean;
+  
   // Get module's input
-  // getInputPort(); // syncInputPort()
+  getInputPort(); // syncInputPort()
   
   // Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
+  
+  if (touchInputMean > 3000 && lastInputValue <= 3000) {
+    addMessage(NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
+//    delay(500);
+  } else if (touchInputMean <= 3000 && lastInputValue > 3000) {
+    addMessage(NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
+//    delay(500);
+  }
   
   // Set state of module's output based on its input
   //if (output to local)
@@ -289,6 +299,12 @@ void loop() {
     } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) { // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
       handleMessageRequestConfirmTapToAnotherAsLeft(message);
       // Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
+    
+    } else if (message.message == ACTIVATE_MODULE_OUTPUT) {
+      // ACTIVATE_MODULE_OUTPUT
+      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+    } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
+      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
     }
     
     // TODO: ANNOUNCE_GESTURE_SHAKE

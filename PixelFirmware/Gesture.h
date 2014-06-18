@@ -17,10 +17,13 @@
 #define ANNOUNCE_GESTURE_TAP_AS_RIGHT 9
 
 #define REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT 13
-#define  14
+#define REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT 14
 
 #define CONFIRM_GESTURE_TAP_AS_LEFT 15
 #define CONFIRM_GESTURE_TAP_AS_RIGHT 16
+
+#define ACTIVATE_MODULE_OUTPUT 20
+#define DEACTIVATE_MODULE_OUTPUT 21
 
 /**
  * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
