@@ -1,7 +1,7 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#define MESH_DEVICE_ADDRESS 0x0001 // The device of the mesh networking radio
+#define MESH_DEVICE_ADDRESS 0x0002 // The device of the mesh networking radio
 
 #if defined(MESH_DEVICE_ADDRESS)
   #if MESH_DEVICE_ADDRESS == 0x0000
@@ -32,7 +32,7 @@
 #define PAYLOAD_START_INDEX 5 // Index of the first byte in the payload
 #define RADIOBLOCK_PACKET_WRITE_TIMEOUT 0 // 120 // 200
 
-#define SEQUENCE_REQUEST_TIMEOUT 400
+#define SEQUENCE_REQUEST_TIMEOUT 1000
 
 // The module's pins 1, 2, 3, and 4 are connected to pins 5V, GND, 8, and 7.
 RadioBlockSerialInterface interface = RadioBlockSerialInterface(RADIOBLOCK_POWER_PIN, RADIOBLOCK_GROUND_PIN, RADIOBLOCK_RX_PIN, RADIOBLOCK_TX_PIN);

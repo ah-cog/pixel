@@ -16,7 +16,7 @@
 
 #define COLOR_APPLICATION_MODE_CUT 0
 #define COLOR_APPLICATION_MODE_CROSSFADE 1
-int colorApplicationMethod = COLOR_APPLICATION_MODE_CROSSFADE;
+int colorApplicationMethod = COLOR_APPLICATION_MODE_CUT; // COLOR_APPLICATION_MODE_CROSSFADE;
 int crossfadeStep = 0;
 
 int defaultModuleColor[3] = { 255, 255, 255 }; // The color associated with the module
@@ -119,9 +119,12 @@ void setSequenceColor(int red, int green, int blue) {
  * Sets the desired color of the module
  */
 void setColor(int red, int green, int blue) {
-  targetColor[0] = abs(red - 255);
-  targetColor[1] = abs(green - 255);
-  targetColor[2] = abs(blue - 255);
+//  targetColor[0] = abs(red - 255);
+//  targetColor[1] = abs(green - 255);
+//  targetColor[2] = abs(blue - 255);
+  targetColor[0] = red;
+  targetColor[1] = green;
+  targetColor[2] = blue;
   
   if (colorApplicationMethod == COLOR_APPLICATION_MODE_CROSSFADE) {
     crossfadeStep = 0;
@@ -218,9 +221,9 @@ void crossfadeColorStep() {
  */
 void crossfadeColor(int red, int green, int blue) {
   
-  targetColor[0] = abs(red - 255);
-  targetColor[1] = abs(green - 255);
-  targetColor[2] = abs(blue - 255);
+  targetColor[0] = red; // abs(red - 255);
+  targetColor[1] = green; // abs(green - 255);
+  targetColor[2] = blue; // abs(blue - 255);
   
   crossfadeStep = 0;
   

@@ -28,15 +28,16 @@ int gestureSensorSampleCount = 0;
 
 int gestureIndex = 0;
 String gestureName[] = { 
-  "at rest, on table", 
-  "at rest, in hand", 
-  "pick up", 
-  "place down", 
-  "tilt left", 
-  "tilt right", 
-  "shake", 
+  "at rest",
+ // "at rest, upside down", 
+  "swing", 
   "tap to another, as left", 
-  "tap to another, as right"
+  "tap to another, as right", 
+  "shake",
+  "tilt left", 
+  "tilt right",
+  "tilt forward",
+  "tilt backward"
 };
 int gestureSampleCount = 0;
 
@@ -155,7 +156,7 @@ void setup () {
   //printGestureSignatures();
 
   // Connect to the corresponding serial port
-  serialPort = new Serial(this, Serial.list()[9], 9600);
+  serialPort = new Serial(this, Serial.list()[8], 9600);
 
   // Defer callback until new line
   serialPort.bufferUntil('\n');
@@ -442,46 +443,52 @@ void setupGestureTransitions() {
   for (int i = 0; i < gestureName.length; i++) {
     ArrayList<Integer> currentTransitions = new ArrayList<Integer>(); // Create list for current gesture's transitions
 
-    if (gestureName[i] == "at rest, on table") {
-//      currentTransitions.add(getGestureIndex("at rest, on table")); // note, becasue it's a continous gesture
-//      currentTransitions.add(getGestureIndex("pick up"));
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
-    } 
-    else if (gestureName[i] == "at rest, in hand") {
-      currentTransitions.add(getGestureIndex("at rest, in hand")); // note, becasue it's a continous gesture
-//      currentTransitions.add(getGestureIndex("place down"));
-      //      currentTransitions.add(getGestureIndex("at rest, on table"));
-
-      currentTransitions.add(getGestureIndex("shake"));
+    if (gestureName[i] == "at rest") {
+      currentTransitions.add(getGestureIndex("at rest"));
+      currentTransitions.add(getGestureIndex("swing"));
       currentTransitions.add(getGestureIndex("tilt left"));
       currentTransitions.add(getGestureIndex("tilt right"));
+      currentTransitions.add(getGestureIndex("tilt forward"));
+      currentTransitions.add(getGestureIndex("tilt backward"));
       currentTransitions.add(getGestureIndex("tap to another, as left"));
       currentTransitions.add(getGestureIndex("tap to another, as right"));
     } 
-    else if (gestureName[i] == "pick up") {
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
+    else if (gestureName[i] == "swing") {
+      currentTransitions.add(getGestureIndex("at rest"));
+      currentTransitions.add(getGestureIndex("shake"));
+      currentTransitions.add(getGestureIndex("tilt left"));
+      currentTransitions.add(getGestureIndex("tilt right"));
+      currentTransitions.add(getGestureIndex("tilt forward"));
+      currentTransitions.add(getGestureIndex("tilt backward"));
+      currentTransitions.add(getGestureIndex("tap to another, as left"));
+      currentTransitions.add(getGestureIndex("tap to another, as right"));
+    }  
+    else if (gestureName[i] == "tap to another, as left") {
+      currentTransitions.add(getGestureIndex("at rest"));
     } 
-    else if (gestureName[i] == "place down") {
-      currentTransitions.add(getGestureIndex("at rest, on table"));
-    } 
+    else if (gestureName[i] == "tap to another, as right") {
+      currentTransitions.add(getGestureIndex("at rest"));
+    }
+    else if (gestureName[i] == "shake") {
+      currentTransitions.add(getGestureIndex("shake"));
+      currentTransitions.add(getGestureIndex("at rest"));
+    }
     else if (gestureName[i] == "tilt left") {
       currentTransitions.add(getGestureIndex("tilt left"));
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      currentTransitions.add(getGestureIndex("at rest"));
     } 
     else if (gestureName[i] == "tilt right") {
       currentTransitions.add(getGestureIndex("tilt right"));
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
+      currentTransitions.add(getGestureIndex("at rest"));
     } 
-    else if (gestureName[i] == "shake") {
-      currentTransitions.add(getGestureIndex("shake"));
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
+    else if (gestureName[i] == "tilt forward") {
+      currentTransitions.add(getGestureIndex("tilt forward"));
+      currentTransitions.add(getGestureIndex("at rest"));
     } 
-    else if (gestureName[i] == "tap to another, as left") {
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
-    } 
-    else if (gestureName[i] == "tap to another, as right") {
-      currentTransitions.add(getGestureIndex("at rest, in hand"));
-    } 
+    else if (gestureName[i] == "tilt backward") {
+      currentTransitions.add(getGestureIndex("tilt backward"));
+      currentTransitions.add(getGestureIndex("at rest"));
+    }
 
     gestureTransitions.add(currentTransitions);
   }
@@ -675,8 +682,18 @@ int getGestureAxisInstability(ArrayList<Integer> gestureSample, ArrayList<Intege
 
 void openGestureData() {
 
-  // Load existing gesture data file
-  gestureSampleSet = loadJSONArray("data/gestureSampleSet.json");
+  String gestureFilePath = "data/gestureSampleSet.json";
+//  File gestureFile = new File(gestureFilePath);
+//  if (!gestureFile.exists()) {
+//    PrintWriter emptyGestureFile = createWriter(gestureFilePath);
+//    emptyGestureFile.println("[]"); // Write empty JSON array for storing gestures
+//    emptyGestureFile.flush();
+//    emptyGestureFile.close();
+//  }
+//  if (gestureFile.exists()) {
+    // Load existing gesture data file
+    gestureSampleSet = loadJSONArray(gestureFilePath);
+//  }
 
   // updateCurrentGesture();
 }
@@ -1165,15 +1182,15 @@ void saveGestureModelFile() {
   gestureFile.println();
 
   gestureFile.println("int gestureSustainDuration[GESTURE_COUNT] = {");
-  gestureFile.println("\t0, // \"at rest, on table\"");
-  gestureFile.println("\t0, // \"at rest, in hand\"");
-  gestureFile.println("\t0, // \"pick up\"");
-  gestureFile.println("\t0, // \"place down\"");
-  gestureFile.println("\t0, // \"tilt left\"");
-  gestureFile.println("\t0, // \"tilt right\"");
-  gestureFile.println("\t0, // \"shake\"");
-  gestureFile.println("\t200, // \"tap to another, as left\"");
-  gestureFile.println("\t200  // \"tap to another, as right\"");
+  gestureFile.println("\t0, // \"at rest\"");
+  gestureFile.println("\t600, // \"swing\"");
+  gestureFile.println("\t800, // \"tap to another, as left\"");
+  gestureFile.println("\t800,  // \"tap to another, as right\"");
+  gestureFile.println("\t200, // \"shake\"");
+  gestureFile.println("\t100, // \"tilt left\"");
+  gestureFile.println("\t100, // \"tilt right\"");
+  gestureFile.println("\t100, // \"tilt forward\"");
+  gestureFile.println("\t100 // \"tilt backward\"");
   gestureFile.println("};");
   gestureFile.println();
 
