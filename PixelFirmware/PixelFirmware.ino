@@ -76,12 +76,13 @@ void setup() {
   setupOrientationSensing();
   
   // Flash RGB LEDs
-  ledOn();  delay(100);
-  ledOff(); delay(100);
-  ledOn();  delay(100);
-  ledOff(); delay(100);
-  ledOn();  delay(100);
-  ledOff();
+  blinkLight();
+//  ledOn();  delay(100);
+//  ledOff(); delay(100);
+//  ledOn();  delay(100);
+//  ledOff(); delay(100);
+//  ledOn();  delay(100);
+//  ledOff();
 }
 
 //   _                   
@@ -108,6 +109,8 @@ boolean isActive = false; // Is the module the currently active module in the se
 
 void loop() {
   
+  doLightBehavior();
+  
   lastInputValue = touchInputMean;
   
   // Get module's input
@@ -117,7 +120,7 @@ void loop() {
   
   if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
     if (outputPinRemote == false) {
-      // Output port is on this module!
+      // Output port is on this module!  
       setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
     } else {
       // Output port is on a different module than this one!

@@ -1,9 +1,63 @@
 disableEventCreate = false;
 showPalette = false;
 
+// Pixel addresses
+deviceAddresses = [];
+deviceAddresses[0] = "10.10.0.118"; // deviceAddresses[0] = "10.10.0.146";
+deviceAddresses[1] = "10.10.0.137";
+deviceAddresses[2] = "10.10.0.112";
+// - 10.10.0.118 (Blue, 1)
+// - 10.10.0.137 (Yellow, 2)
+// - 10.10.0.112 (Red, 3)
+
+/**
+ * Send a POST request to the specified address.
+ */
+function post(address, params, callback) {
+    var http = new XMLHttpRequest();
+    // var address = "http://physical.computer/pin";
+    // var params = "pin=" + pin + "&operation=" + operation + "&type=" + type + "&mode=" + mode + "&value=" + value + "";
+    var uri = address.concat('?', params);
+    
+    http.open("POST", uri, true);
+
+    // Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    
+    http.onreadystatechange = function() { // Call a function when the state changes.
+        if(http.readyState == 4 && http.status == 200) {
+           callback(); // The callback function
+        }
+    }
+    http.send(params);
+}
+
+/**
+ * Send a GET request to the specified address.
+ */
+function get(address, params, callback) {
+    var http = new XMLHttpRequest();
+    // var address = "http://physical.computer/pin";
+    // var params = "pin=" + pin + "&operation=" + operation + "&type=" + type + "&mode=" + mode + "&value=" + value + "";
+    var uri = address.concat('?', params);
+    
+    http.open("GET", uri, true);
+
+    // Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    
+    http.onreadystatechange = function() { // Call a function when the state changes.
+        if(http.readyState == 4 && http.status == 200) {
+           callback(); // The callback function
+        }
+    }
+    http.send(params);
+}
+
 function pin(pin, operation, type, mode, value) {
     var http = new XMLHttpRequest();
-    var url = "/pin";
+    var deviceUri = "http://" + deviceAddresses[looper.getCurrentPane()];
+    var url = deviceUri.concat("/pin");
     var params = "pin=" + pin + "&operation=" + operation + "&type=" + type + "&mode=" + mode + "&value=" + value + "";
     url = url.concat('?', params);
     
@@ -22,7 +76,8 @@ function pin(pin, operation, type, mode, value) {
 
 function readPin(pin, operation, type, mode, value) {
     var http = new XMLHttpRequest();
-    var url = "/pin";
+    var deviceUri = "http://" + deviceAddresses[looper.getCurrentPane()];
+    var url = deviceUri.concat("/pin");
     var params = "pin=" + pin + "&operation=" + operation + "&type=" + type + "&mode=" + mode + "&value=" + value + "";
     url = url.concat('?', params);
 
@@ -41,7 +96,8 @@ function readPin(pin, operation, type, mode, value) {
 
 function delay(milliseconds) {
     var http = new XMLHttpRequest();
-    var url = "/delay";
+    var deviceUri = "http://" + deviceAddresses[looper.getCurrentPane()];
+    var url = deviceUri.concat("/delay");
     var params = "milliseconds=" + milliseconds + "";
     url = url.concat('?', params);
 
@@ -60,7 +116,8 @@ function delay(milliseconds) {
 
 function erase() {
     var http = new XMLHttpRequest();
-    var url = "/erase";
+    var deviceUri = "http://" + deviceAddresses[looper.getCurrentPane()];
+    var url = deviceUri.concat("/erase");
     var params = "";
 
     http.open("POST", url, true);
@@ -75,6 +132,10 @@ function erase() {
     }
     http.send(params);
 }
+
+// store/push
+// load/pop
+// call/remember
 
 
 
@@ -136,6 +197,15 @@ function erase() {
 
             var offset = -((100/pane_count)*current_pane);
             setContainerOffset(offset, true);
+        };
+
+
+        /**
+         * show pane by index
+         * @param   {Number}    index
+         */
+        this.getCurrentPane = function() {
+            return current_pane;
         };
 
 
@@ -250,8 +320,8 @@ function erase() {
 
 // TODO: Define a domain-specific language for the microcontroller.
 function saveScript() {
-    var script = "" + firepadDevice.firepad.getText();
-    firepadEvent.behavior = eval('(' + script + ')');
+    // var script = "" + firepadDevice.firepad.getText();
+    // firepadEvent.behavior = eval('(' + script + ')');
 }
 
 /**
@@ -317,6 +387,11 @@ function Looper(options) {
         this.carousel.showPane(index + 1);
     }
     this.showDeviceByIndex = showDeviceByIndex;
+
+    function getCurrentPane() {
+        return this.carousel.getCurrentPane() - 1;
+    }
+    this.getCurrentPane = getCurrentPane;
 }
 
 function EventLoop(options) {
@@ -1099,7 +1174,18 @@ function Device(options) {
                 processing.smooth();
                 processing.arc(processing.screenWidth / 2, processing.screenHeight / 2, 400, 400, (-processing.PI/2) + 0.05*processing.PI, 1.45*processing.PI);
 
+                // Highlight a section of the arc
+                processing.strokeWeight(8.0);
+                processing.stroke(65, 65, 65);
+                processing.noFill();
+                processing.smooth();
+                var offset = 0.0;
+                var length = 0.15;
+                processing.arc(processing.screenWidth / 2, processing.screenHeight / 2, 400, 400, (-processing.PI/2) + ((offset + 0.05) * processing.PI), (-processing.PI/2) + ((offset + 0.05 + length) * processing.PI));
+
                 // Draw arrow
+                processing.strokeWeight(1.0);
+                processing.stroke(65, 65, 65);
                 processing.translate(processing.screenWidth / 2, processing.screenHeight / 2);
                 processing.translate(-29, -198);
                 processing.rotate(-0.05 * processing.PI);

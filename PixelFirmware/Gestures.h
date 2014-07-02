@@ -27,10 +27,10 @@ int gestureSustainDuration[GESTURE_COUNT] = {
 	800, // "tap to another, as left"
 	800,  // "tap to another, as right"
 	200, // "shake"
-	100, // "tilt left"
-	100, // "tilt right"
-	100, // "tilt forward"
-	100 // "tilt backward"
+	0, // "tilt left"
+	0, // "tilt right"
+	0, // "tilt forward"
+	0 // "tilt backward"
 };
 
 int gestureTransitions[GESTURE_COUNT][GESTURE_COUNT] = {

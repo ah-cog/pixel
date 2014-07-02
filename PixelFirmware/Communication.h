@@ -4,16 +4,10 @@
 #define MESH_DEVICE_ADDRESS 0x0002 // The device of the mesh networking radio
 
 #if defined(MESH_DEVICE_ADDRESS)
-  #if MESH_DEVICE_ADDRESS == 0x0000
-    #define NEIGHBOR_ADDRESS 0x0001
-  #elif MESH_DEVICE_ADDRESS == 0x0001
+  #if MESH_DEVICE_ADDRESS == 0x0001
     #define NEIGHBOR_ADDRESS 0x0002
   #elif MESH_DEVICE_ADDRESS == 0x0002
     #define NEIGHBOR_ADDRESS 0x0001
-  #elif MESH_DEVICE_ADDRESS == 0x0003
-    #define NEIGHBOR_ADDRESS 0x0004
-  #elif MESH_DEVICE_ADDRESS == 0x0004
-    #define NEIGHBOR_ADDRESS 0x0000
   #endif
 #endif
 

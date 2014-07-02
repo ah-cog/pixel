@@ -381,7 +381,7 @@ char serialDataString[512];
 
 void setup() {
 
-    Serial.begin(192000);
+    Serial.begin(9600);
 
     Serial.println(F("IMU Sensor Data Transducer (Version 2013.12.26.01.01.15)"));
 

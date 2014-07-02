@@ -24,9 +24,6 @@ int sequenceColor[3] = { 255, 255, 255 }; // The desired color of the LED
 int targetColor[3] = { 255, 255, 255 }; // The desired color of the LED
 int ledColor[3] = { 255, 255, 255 }; // The current actual color of the LED
 
-
-
-
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = pin number (most are valid)
 // Parameter 3 = pixel type flags, add together as needed:
@@ -36,19 +33,128 @@ int ledColor[3] = { 255, 255, 255 }; // The current actual color of the LED
 //   NEO_KHZ800  800 KHz bitstream (e.g. High Density LED strip)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_OUTPUT_PIN, NEO_GRB + NEO_KHZ800);
 
-// Input a value 0 to 255 to get a color value.
-// The colours are a transition r - g - b - back to r.
-//uint32_t Wheel(byte WheelPos) {
-//  if(WheelPos < 85) {
-//   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-//  } else if(WheelPos < 170) {
-//   WheelPos -= 85;
-//   return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-//  } else {
-//   WheelPos -= 170;
-//   return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-//  }
-//}
+// Mesh incoming message queue
+#define LIGHT_BEHAVIOR_QUEUE_CAPACITY 20
+//unsigned short int meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY] = { 0 };
+int lightBehaviorQueue[LIGHT_BEHAVIOR_QUEUE_CAPACITY]; // 0 = off, 1 = on, 2 = delay 50 ms, 3 = delay 100 ms, 4 = delay 150 ms, 5 = delay 200 ms
+int lightBehaviorQueueSize = 0;
+
+#define LIGHT_BEHAVIOR_OFF 0
+#define LIGHT_BEHAVIOR_ON 1
+#define LIGHT_BEHAVIOR_DELAY_50MS 2
+#define LIGHT_BEHAVIOR_DELAY_100MS 3
+#define LIGHT_BEHAVIOR_DELAY_150MS 4
+#define LIGHT_BEHAVIOR_DELAY_200MS 5
+
+int currentLightBehavior = -1;
+unsigned long currentLightBehaviorStartTime = 0;
+int currentLightBehaviorStep = 0;
+unsigned long currentLightBehaviorStepStartTime = 0;
+
+void setColor(int red, int green, int blue);
+void applyColor(int applicationMethod);
+
+int dequeueLightBehavior();
+
+void blinkLight();
+void ledOn();
+void ledOff();
+
+boolean doLightBehavior() {
+  if (currentLightBehavior != -1) { // If there is currently a light behavior
+    // TODO: Do behavior
+    
+    // Set the start time of the behavior step
+    if (currentLightBehaviorStep == 0) {
+      currentLightBehaviorStepStartTime = millis();
+    }
+    
+    // Do the behavior!
+    if (currentLightBehavior == LIGHT_BEHAVIOR_OFF) {
+      setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+      applyColor(COLOR_APPLICATION_MODE_CUT);
+      
+      currentLightBehavior = -1; // Reset the current behavior to indicate it's done
+    } else if (currentLightBehavior == LIGHT_BEHAVIOR_ON) {
+      setColor(0, 0, 0);
+      applyColor(COLOR_APPLICATION_MODE_CUT);
+  
+      currentLightBehavior = -1; // Reset the current behavior to indicate it's done
+    } else if (currentLightBehavior == LIGHT_BEHAVIOR_DELAY_50MS) {
+      unsigned long currentTime = millis();
+      if (currentTime > (currentLightBehaviorStepStartTime + 50)) {
+        currentLightBehavior = -1; // Reset the current behavior to indicate it's done
+      }
+    } else if (currentLightBehavior == LIGHT_BEHAVIOR_DELAY_100MS) {
+      unsigned long currentTime = millis();
+      if (currentTime > (currentLightBehaviorStepStartTime + 100)) {
+        currentLightBehavior = -1; // Reset the current behavior to indicate it's done
+      }
+    } else if (currentLightBehavior == LIGHT_BEHAVIOR_DELAY_150MS) {
+      unsigned long currentTime = millis();
+      if (currentTime > (currentLightBehaviorStepStartTime + 150)) {
+        currentLightBehavior = -1; // Reset the current behavior to indicate it's done
+      }
+    } else if (currentLightBehavior == LIGHT_BEHAVIOR_DELAY_200MS) {
+      unsigned long currentTime = millis();
+      if (currentTime > (currentLightBehaviorStepStartTime + 200)) {
+        currentLightBehavior = -1; // Reset the current behavior to indicate it's done
+      }
+    }
+    
+    // Continue to the next step
+    currentLightBehaviorStep++;
+    
+    // TODO: When finish behavior, set currentLightBehavior to -1
+    return true;
+  } else {
+    // There's no current light behavior, so check if there are any queued up.
+    if (lightBehaviorQueueSize > 0) {
+      currentLightBehavior = dequeueLightBehavior(); // Get the next behavior in the queue
+      currentLightBehaviorStep = 0; // Reset behavior step
+      currentLightBehaviorStartTime = millis(); // Set start time of behavior to present time
+      return true;
+    } else {
+      return false;
+    }
+  }
+}
+
+/**
+ * Push a message onto the queue of messages to be processed and sent via the mesh network.
+ */
+boolean queueLightBehavior(int behavior) {
+  // TODO: Add message to queue... and use sendMessage to send the messages...
+  
+  if (lightBehaviorQueueSize < LIGHT_BEHAVIOR_QUEUE_CAPACITY) {
+    // Add light behavior to queue
+    lightBehaviorQueue[lightBehaviorQueueSize] = behavior;
+    lightBehaviorQueueSize++; // Increment the queue size
+  }
+}
+
+/**
+ * Sends the top message on the mesh's message queue.
+ */
+int dequeueLightBehavior() {
+  
+  if (lightBehaviorQueueSize > 0) {
+    
+    // Get the next message from the front of the queue
+    int behavior = lightBehaviorQueue[0]; // Get message on front of queue
+    lightBehaviorQueueSize--;
+    
+    // Shift the remaining messages forward one position in the queue
+    for (int i = 0; i < LIGHT_BEHAVIOR_QUEUE_CAPACITY - 1; i++) {
+      lightBehaviorQueue[i] = lightBehaviorQueue[i + 1];
+    }
+    lightBehaviorQueue[LIGHT_BEHAVIOR_QUEUE_CAPACITY - 1] = -1; // Set last message to "noop"
+    
+    return behavior;
+  }
+  
+  return -1;
+}
 
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait) {
@@ -59,48 +165,21 @@ void colorWipe(uint32_t c, uint8_t wait) {
   }
 }
 
-//void rainbow(uint8_t wait) {
-//  uint16_t i, j;
-//
-//  for(j=0; j<256; j++) {
-//    for(i=0; i<strip.numPixels(); i++) {
-//      strip.setPixelColor(i, Wheel((i+j) & 255));
-//    }
-//    strip.show();
-//    delay(wait);
-//  }
-//}
-
-// Slightly different, this makes the rainbow equally distributed throughout
-//void rainbowCycle(uint8_t wait) {
-//  uint16_t i, j;
-//
-//  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-//    for(i=0; i< strip.numPixels(); i++) {
-//      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
-//    }
-//    strip.show();
-//    delay(wait);
-//  }
-//}
-
-
-
+/**
+ * Initializes the module's lights.
+ */
 boolean setupLight() {
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
 }
 
 /**
- * Sets the module's default, unique color
+ * Sets the module's default, unique color.
  */
 void setModuleColor(int red, int green, int blue) {
   defaultModuleColor[0] = red;
   defaultModuleColor[1] = green;
   defaultModuleColor[2] = blue;
-//  defaultModuleColor[0] = abs(red - 255);
-//  defaultModuleColor[1] = abs(green - 255);
-//  defaultModuleColor[2] = abs(blue - 255);
 }
 
 /**
@@ -110,18 +189,12 @@ void setSequenceColor(int red, int green, int blue) {
   sequenceColor[0] = red;
   sequenceColor[1] = green;
   sequenceColor[2] = blue;
-//  sequenceColor[0] = abs(red - 255);
-//  sequenceColor[1] = abs(green - 255);
-//  sequenceColor[2] = abs(blue - 255);
 }
 
 /**
  * Sets the desired color of the module
  */
 void setColor(int red, int green, int blue) {
-//  targetColor[0] = abs(red - 255);
-//  targetColor[1] = abs(green - 255);
-//  targetColor[2] = abs(blue - 255);
   targetColor[0] = red;
   targetColor[1] = green;
   targetColor[2] = blue;
@@ -150,18 +223,12 @@ void crossfadeColorStep(int red, int green, int blue) {
     int newBlue = blue;
     
     if (crossfadeStep >= red - ledColor[0] && ledColor[0] > red) {
-      //analogWrite(RED_LED_PIN, ledColor[0] - crossfadeStep);
-//      colorWipe(strip.Color(ledColor[0] - crossfadeStep, ledColor[1], ledColor[2]), COLOR_MIX_DELAY); // Red
       newRed = ledColor[0] - crossfadeStep;
     }
     if (crossfadeStep >= green - ledColor[1] && ledColor[1] > green) {
-//      analogWrite(GREEN_LED_PIN, ledColor[1] - crossfadeStep);
-//        colorWipe(strip.Color(ledColor[0], ledColor[1] - crossfadeStep, ledColor[2]), COLOR_MIX_DELAY); // Red
       newGreen = ledColor[1] - crossfadeStep;
     }
     if (crossfadeStep >= blue - ledColor[2] && ledColor[2] > blue) {
-//      analogWrite(BLUE_LED_PIN, ledColor[2] - crossfadeStep);
-//       colorWipe(strip.Color(ledColor[0], ledColor[1], ledColor[2] - crossfadeStep), COLOR_MIX_DELAY); // Red
       newBlue = ledColor[2] - crossfadeStep;
     }
     colorWipe(strip.Color(newRed, newGreen, newBlue), COLOR_MIX_DELAY); // Red
@@ -172,18 +239,12 @@ void crossfadeColorStep(int red, int green, int blue) {
     //{
       
     if (crossfadeStep >= ledColor[0] - red && ledColor[0] < red) {
-//      analogWrite(RED_LED_PIN, ledColor[0] + crossfadeStep);
-//      colorWipe(strip.Color(ledColor[0] + crossfadeStep, ledColor[1], ledColor[2]), COLOR_MIX_DELAY); // Red
       newRed = ledColor[0] + crossfadeStep;
     }
     if (crossfadeStep >= ledColor[1] - green && ledColor[1] < green) {
-//      analogWrite(GREEN_LED_PIN, ledColor[1] + crossfadeStep);
-//      colorWipe(strip.Color(ledColor[0], ledColor[1] + crossfadeStep, ledColor[2]), COLOR_MIX_DELAY); // Red
       newGreen = ledColor[1] - crossfadeStep;
     }
     if (crossfadeStep >= ledColor[2] - blue && ledColor[2] < blue) {
-//      analogWrite(BLUE_LED_PIN, ledColor[2] + crossfadeStep);
-//      colorWipe(strip.Color(ledColor[0], ledColor[1], ledColor[2] + crossfadeStep), COLOR_MIX_DELAY); // Red
       newBlue = ledColor[2] - crossfadeStep;
     }
     colorWipe(strip.Color(newRed, newGreen, newBlue), COLOR_MIX_DELAY); // Red
@@ -195,10 +256,6 @@ void crossfadeColorStep(int red, int green, int blue) {
   }
   
   if (crossfadeStep == 255) {
-//    delay(5); // delay(10);
-//    analogWrite(RED_LED_PIN, red);
-//    analogWrite(GREEN_LED_PIN, green);
-//    analogWrite(BLUE_LED_PIN, blue);
     colorWipe(strip.Color(red, green, blue), COLOR_MIX_DELAY); // Red
     
     ledColor[0] = red;
@@ -242,9 +299,6 @@ void applyColor(int applicationMethod) {
     ledColor[2] = targetColor[2];
     
     // Write values to pins
-//    analogWrite(RED_LED_PIN,   ledColor[0]);
-//    analogWrite(GREEN_LED_PIN, ledColor[1]);
-//    analogWrite(BLUE_LED_PIN,  ledColor[2]);
     colorWipe(strip.Color(ledColor[0], ledColor[1], ledColor[2]), COLOR_MIX_DELAY); // Red
     
   } else if (applicationMethod == COLOR_APPLICATION_MODE_CROSSFADE) {
@@ -252,6 +306,15 @@ void applyColor(int applicationMethod) {
       crossfadeColorStep();
     }
   }
+}
+
+void blinkLight() {
+  queueLightBehavior(LIGHT_BEHAVIOR_ON); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
+  queueLightBehavior(LIGHT_BEHAVIOR_OFF); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
+  queueLightBehavior(LIGHT_BEHAVIOR_ON); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
+  queueLightBehavior(LIGHT_BEHAVIOR_OFF); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
+  queueLightBehavior(LIGHT_BEHAVIOR_ON); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
+  queueLightBehavior(LIGHT_BEHAVIOR_OFF);
 }
 
 /**
@@ -262,17 +325,13 @@ void applyColor() {
 }
 
 void ledOn() {
-//  ledColor[0] = 0;
-//  ledColor[1] = 0;
-//  ledColor[2] = 0;
-  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-  applyColor(COLOR_APPLICATION_MODE_CUT);
+  queueLightBehavior(LIGHT_BEHAVIOR_ON);
 }
 
 void ledOff() {
-  setColor(0, 0, 0);
-  applyColor(COLOR_APPLICATION_MODE_CUT);
+  queueLightBehavior(LIGHT_BEHAVIOR_OFF);
 }
+
 
 //void ledToggle() {
 //  if (ledColor[0] == 255 && ledColor[1] == 255 && ledColor[2] == 255) {
@@ -304,21 +363,6 @@ void fadeOff() {
   ledColor[0] = 255;
   ledColor[1] = 255;
   ledColor[2] = 255;
-  applyColor();
-}
-
-void fadeLow() {
-  int threshold = 200;
-  while (ledColor[0] < threshold && ledColor[1] < threshold && ledColor[2] < threshold) {
-    if (ledColor[0] < 255) ledColor[0] += 10;
-    if (ledColor[1] < 255) ledColor[1] += 10;
-    if (ledColor[2] < 255) ledColor[2] += 10;
-    applyColor();
-    delay(45);
-  }
-  ledColor[0] = threshold;
-  ledColor[1] = threshold;
-  ledColor[2] = threshold;
   applyColor();
 }
 

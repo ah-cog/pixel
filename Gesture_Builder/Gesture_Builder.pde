@@ -1,5 +1,7 @@
 import processing.serial.*;
 
+int serialPortIndex = 7; 
+
 Serial serialPort;
 String serialInputString;
 
@@ -156,7 +158,7 @@ void setup () {
   //printGestureSignatures();
 
   // Connect to the corresponding serial port
-  serialPort = new Serial(this, Serial.list()[8], 9600);
+  serialPort = new Serial(this, Serial.list()[serialPortIndex], 9600);
 
   // Defer callback until new line
   serialPort.bufferUntil('\n');
