@@ -30,11 +30,14 @@ struct Behavior {
   int value; // i.e., high or low
 };
 
+// "Delay"
+
 struct Delay {
   int startTime; // i.e., write, read, PWM, "remember value at this time"
   int duration;
   Behavior *behavior;
 };
+
 #define DELAY_LIMIT 20
 Delay delays[DELAY_LIMIT];
 int delayCount = 0;

@@ -55,8 +55,8 @@ void setup () {
 
 void setupDeviceCommunication() {
   Wire.begin(I2C_DEVICE_ADDRESS); // Join I2C bus with the device's address
-  Wire.onReceive(receiveEvent);   // Register event handler to receive data from the master I2C device
-  Wire.onRequest(requestEvent);   // Event handler to respond to a request for data from the I2C master device
+  Wire.onReceive(i2cReceiveEvent);   // Register event handler to receive data from the master I2C device
+  Wire.onRequest(i2cRequestEvent);   // Event handler to respond to a request for data from the I2C master device
 }
 
 /**
@@ -80,7 +80,9 @@ boolean hasMessage = false;
  * function that executes whenever data is received from master
  * this function is registered as an event, see setup()
  */
-void receiveEvent (int howMany) {
+void i2cReceiveEvent (int howMany) {
+  
+  Serial.println("Receiving");
   
   while (Wire.available () > 0) { // loop through all but the last
     char c = Wire.read (); // receive byte as a character
@@ -121,33 +123,30 @@ void receiveEvent (int howMany) {
  * function that executes whenever data is requested by master
  * this function is registered as an event, see setup()
  */
-void requestEvent () {
-//  Wire.write ("13 w d o h "); // respond with message of 6 bytes as expected by master
-
-//  Serial.print("Count: ");
-//  Serial.println(behaviorNodeCount);
+void i2cRequestEvent () {
   
-  char buf[8]; // "-2147483648\0"
-//  Wire.write (itoa(behaviorNodeCount, buf, 10));
+  char buf[6]; // "-2147483648\0"
   
   if (behaviorNodeCount > 0) {
+    
+    //Serial.print("behaviorNodeCount = "); Serial.print(behaviorNodeCount); Serial.println();
+
+    // Send status
+    Wire.write ("1 ");
 
     // Send serialized behavior
     Wire.write (itoa(behaviorNodes[0].operation, buf, 10)); Wire.write (" ");
     Wire.write (itoa(behaviorNodes[0].pin, buf, 10));       Wire.write (" ");
-    Wire.write (itoa(behaviorNodes[0].type, buf, 10));      Wire.write (" ");
+    // Wire.write (itoa(behaviorNodes[0].type, buf, 10));      Wire.write (" ");
     Wire.write (itoa(behaviorNodes[0].mode, buf, 10));      Wire.write (" ");
     Wire.write (itoa(behaviorNodes[0].value, buf, 10));     Wire.write (" ");
     
     // Remove the behavior from the processing queue once it's been sent over I2C
     removeBehaviorNode (0);
+  } else {
+    // Send status
+    Wire.write ("0 ");
   }
   
-  // Wire.write("3 14 digital high"); // Step 3: Ensures that stat of pin 14 is digital and that it is set to high, doing so as needed
-  // Wire.write("4 delay 5"); // Step 4: Adds a delay of 5 seconds in the program
-  // Wire.write("6 14 digital low"); // Step 6: Same as above, but sets low rather than high.
-  
   // pin, operation, type, mode, value
-  // "13 write digital output high"
-  // "13 w d o h"
 }

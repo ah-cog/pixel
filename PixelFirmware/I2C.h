@@ -4,7 +4,7 @@
 #include "Behavior.h"
 #include "Pixel.h"
 
-#define I2C_MESSAGE_BYTE_SIZE 40
+#define I2C_MESSAGE_BYTE_SIZE 30
 
 char i2cMessageBuffer[128] = { 0 };
 int i2cMessageBufferSize = 0;
@@ -18,14 +18,14 @@ int i2cMessageBufferSize = 0;
 // - Request top message (but don't remove it)
 // - Remove top message (but don't send it, send removal status)
 
-#define SLAVE_DEVICE 2 // Slave device address
+#define SLAVE_DEVICE_ADDRESS 2 // Slave device address
 
 String getValue (String data, char separator, int index);
 
 // TODO: Move this to "Ports.h"
 void sendToSlave(char* text) {
   // Send to slave
-  Wire.beginTransmission(SLAVE_DEVICE); // transmit to device #4
+  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
 //  Wire.write("x is ");        // sends five bytes
 //  Wire.write(x);              // sends one byte  
   Wire.write(text);
@@ -48,7 +48,7 @@ void setPinValue2(int pin, int value) {
   
   // Update the state (on slave board for Looper)
   char buf[8]; // "-2147483648\0"
-  Wire.beginTransmission(SLAVE_DEVICE); // transmit to device #4
+  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
   Wire.write("pin ");
   Wire.write(itoa(pin, buf, 10)); // The pin number
   Wire.write(" ");
@@ -74,8 +74,8 @@ int getPinValue2(int pin) {
   setPinValue (pin, (value == 1 ? PIN_VALUE_HIGH : PIN_VALUE_LOW));
   
   // Update the state
-  char buf[8]; // "-2147483648\0"
-  Wire.beginTransmission(SLAVE_DEVICE); // transmit to device #4
+  char buf[6]; // "-2147483648\0"
+  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
   Wire.write("pin ");
   Wire.write(itoa(pin, buf, 10)); // The pin number
   Wire.write(" ");
@@ -96,14 +96,22 @@ int getPinValue2(int pin) {
  * The "behavior" data structure and interpretter
  */
 // TODO: Updates behavior (i.e., the state of the program being interpretted)
-void updateBehavior() {
-  // Request messages from slave
-  Wire.requestFrom(SLAVE_DEVICE, I2C_MESSAGE_BYTE_SIZE); // Request 6 bytes from slave device #2
-
-  while(Wire.available ()) { // slave may send less than requested
+void syncBehavior() {
   
-    char c = Wire.read (); // receive a byte as character
-    Serial.print(c); // print the character
+  // Request messages from slave
+  // NOTE: This causes the function "requestEvent" specified in "Wire.onRequest(requestEvent);" 
+  //       to be called on the slave device.
+  int bytes = Wire.requestFrom(SLAVE_DEVICE_ADDRESS, I2C_MESSAGE_BYTE_SIZE); // Request 6 bytes from slave device #2
+  
+//  Serial.print ("bytes = "); Serial.println(bytes);
+
+  // Receive messages from slave (if any)
+  while (Wire.available () > 0) { // slave may send less than requested
+  
+    //char c = Wire.read (); // receive a byte as character
+    char c = Wire.receive (); // receive a byte as character
+//    Serial.print(c); // print the character
+//    Serial.print(" ");
     
     // Copy byte into message buffer
     i2cMessageBuffer[i2cMessageBufferSize] = c;
@@ -113,36 +121,43 @@ void updateBehavior() {
 
   i2cMessageBufferSize = 0; // Reset I2C message buffer size
   
-  // Parse data
-  if (strlen(i2cMessageBuffer) > 0) {
-//  if (i2cMessageBufferSize > 0) {
-    Serial.println(i2cMessageBuffer);
+  // Process received data (i.e., parse the received messages)
+  if (strlen(i2cMessageBuffer) > 1) { // if (i2cMessageBufferSize > 0) {
     
     // Split message by space
     String split = String(i2cMessageBuffer); // "hi this is a split test";
     
-    // Parse instruction message relayed by the "slave" device from "Looper"
-    int operation = getValue(split, ' ', 0).toInt();
+    String statusSymbol = getValue(split, ' ', 0).toInt();
+      
+    if (statusSymbol.equals("1") == true) { // Check if status character is "1"
     
-    // Check operation and take handle it accordingly
-    if (operation == BEHAVIOR_ERASE) {
+      Serial.println(i2cMessageBuffer);
       
-      eraseLoop();
+      // Split message by space
+      // String split = String(i2cMessageBuffer); // "hi this is a split test";
       
-    } else {
-    
-      // Parse behavior node's string form
-      int pin       = getValue(split, ' ', 1).toInt();
-      int type      = getValue(split, ' ', 2).toInt();
-      int mode      = getValue(split, ' ', 3).toInt();
-      int value     = getValue(split, ' ', 4).toInt();
+      // Parse instruction message relayed by the "slave" device from "Looper"
+      int operation = getValue(split, ' ', 1).toInt();
       
-      // TODO: Create node object from parsed data (i.e., "Behavior behavior = deserializeBehavior();").
-      // TODO: Add node object to queue (i.e., the program) (i.e., "appendBehavior(behavior);")
-      appendLoopNode(pin, operation, type, mode, value);
+      // Check operation and take handle it accordingly
+      if (operation == BEHAVIOR_ERASE) {
+        
+        eraseLoop();
+        
+      } else {
       
+        // Parse behavior node's string form
+        int pin       = getValue(split, ' ', 2).toInt();
+        int type      = getValue(split, ' ', 3).toInt();
+        // int mode      = getValue(split, ' ', 3).toInt();
+        int value     = getValue(split, ' ', 4).toInt();
+        
+        // TODO: Create node object from parsed data (i.e., "Behavior behavior = deserializeBehavior();").
+        // TODO: Add node object to queue (i.e., the program) (i.e., "appendBehavior(behavior);")
+        appendLoopNode(pin, operation, type, value);
+        
+      }
     }
-    
   }
 }
 
@@ -173,7 +188,7 @@ void behaviorLoopStep() {
         int pinValue = getPinValue2((*currentBehavior).pin);
       
 //        int pinValue = digitalRead((*currentBehavior).pin);
-//         Wire.beginTransmission(SLAVE_DEVICE); // transmit to device #4
+//         Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
 //  Wire.write("pin");
 //          if (pinValue == 1) {
 //          Wire.write("HIGH");

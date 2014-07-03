@@ -25,7 +25,7 @@ boolean setupLoop() {
 /**
  * Insert a behavior node into the behavior loop at the specified index.
  */
-boolean appendLoopNode(int pin, int operation, int type, int mode, int value) {
+boolean appendLoopNode(int pin, int operation, int type, int value) {
   // TODO: Add message to queue... and use sendMessage to send the messages...
   
   if (loopSize < DEFAULT_LOOP_CAPACITY) {
@@ -34,7 +34,7 @@ boolean appendLoopNode(int pin, int operation, int type, int mode, int value) {
     behaviorLoop[loopSize].operation = operation;
     behaviorLoop[loopSize].pin = pin;
     behaviorLoop[loopSize].type = type;
-    behaviorLoop[loopSize].mode = mode;
+    // behaviorLoop[loopSize].mode = mode;
     behaviorLoop[loopSize].value = value;
     
     // Set up support structures for the behavior

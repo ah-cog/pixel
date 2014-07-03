@@ -3,7 +3,7 @@ showPalette = false;
 
 // Pixel addresses
 deviceAddresses = [];
-deviceAddresses[0] = "10.10.0.118"; // deviceAddresses[0] = "10.10.0.146";
+deviceAddresses[0] = "192.168.69.146"; // deviceAddresses[0] = "10.10.0.146";
 deviceAddresses[1] = "10.10.0.137";
 deviceAddresses[2] = "10.10.0.112";
 // - 10.10.0.118 (Blue, 1)

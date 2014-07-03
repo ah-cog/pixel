@@ -69,37 +69,49 @@ boolean doLightBehavior() {
       currentLightBehaviorStepStartTime = millis();
     }
     
-    // Do the behavior!
+    // Actually do the behavior!
     if (currentLightBehavior == LIGHT_BEHAVIOR_OFF) {
+      
       setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
       applyColor(COLOR_APPLICATION_MODE_CUT);
       
       currentLightBehavior = -1; // Reset the current behavior to indicate it's done
+      
     } else if (currentLightBehavior == LIGHT_BEHAVIOR_ON) {
+      
       setColor(0, 0, 0);
       applyColor(COLOR_APPLICATION_MODE_CUT);
   
       currentLightBehavior = -1; // Reset the current behavior to indicate it's done
+      
     } else if (currentLightBehavior == LIGHT_BEHAVIOR_DELAY_50MS) {
+      
       unsigned long currentTime = millis();
       if (currentTime > (currentLightBehaviorStepStartTime + 50)) {
         currentLightBehavior = -1; // Reset the current behavior to indicate it's done
       }
+      
     } else if (currentLightBehavior == LIGHT_BEHAVIOR_DELAY_100MS) {
+      
       unsigned long currentTime = millis();
       if (currentTime > (currentLightBehaviorStepStartTime + 100)) {
         currentLightBehavior = -1; // Reset the current behavior to indicate it's done
       }
+      
     } else if (currentLightBehavior == LIGHT_BEHAVIOR_DELAY_150MS) {
+      
       unsigned long currentTime = millis();
       if (currentTime > (currentLightBehaviorStepStartTime + 150)) {
         currentLightBehavior = -1; // Reset the current behavior to indicate it's done
       }
+      
     } else if (currentLightBehavior == LIGHT_BEHAVIOR_DELAY_200MS) {
+      
       unsigned long currentTime = millis();
       if (currentTime > (currentLightBehaviorStepStartTime + 200)) {
         currentLightBehavior = -1; // Reset the current behavior to indicate it's done
       }
+      
     }
     
     // Continue to the next step
@@ -107,7 +119,9 @@ boolean doLightBehavior() {
     
     // TODO: When finish behavior, set currentLightBehavior to -1
     return true;
+    
   } else {
+    
     // There's no current light behavior, so check if there are any queued up.
     if (lightBehaviorQueueSize > 0) {
       currentLightBehavior = dequeueLightBehavior(); // Get the next behavior in the queue
@@ -308,13 +322,17 @@ void applyColor(int applicationMethod) {
   }
 }
 
-void blinkLight() {
-  queueLightBehavior(LIGHT_BEHAVIOR_ON); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
-  queueLightBehavior(LIGHT_BEHAVIOR_OFF); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
-  queueLightBehavior(LIGHT_BEHAVIOR_ON); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
-  queueLightBehavior(LIGHT_BEHAVIOR_OFF); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
-  queueLightBehavior(LIGHT_BEHAVIOR_ON); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
-  queueLightBehavior(LIGHT_BEHAVIOR_OFF);
+/**
+ * Blinks the lights the specified number of times.
+ */
+void blinkLight(int count) {
+  for (int i = 0; i < count; i++) {
+    queueLightBehavior(LIGHT_BEHAVIOR_ON); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
+    queueLightBehavior(LIGHT_BEHAVIOR_OFF);
+    if (i < (count - 1)) {
+      queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
+    }
+  }
 }
 
 /**

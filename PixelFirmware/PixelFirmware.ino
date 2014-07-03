@@ -76,13 +76,7 @@ void setup() {
   setupOrientationSensing();
   
   // Flash RGB LEDs
-  blinkLight();
-//  ledOn();  delay(100);
-//  ledOff(); delay(100);
-//  ledOn();  delay(100);
-//  ledOff(); delay(100);
-//  ledOn();  delay(100);
-//  ledOff();
+  blinkLight(3);
 }
 
 //   _                   
@@ -176,7 +170,7 @@ void loop() {
   // TODO: Send updated state of THIS board (master) to the OTHER board (slave) for caching.
   
   // Get behavior updates from slave (Apply)
-  updateBehavior(); // TODO: Update "mental model" of device
+  syncBehavior(); // TODO: Update "mental model" of device
   
   // Perform behavior step in the interpreter (Evaluate)
   behaviorLoopStep();
@@ -570,6 +564,9 @@ boolean handleGestureAtRest() {
 boolean handleGestureSwing() {
 //  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
 
+  // Blink the lights
+  blinkLight(3);
+
   // Update the module's color
   if (isSequenced) {
     setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
@@ -600,7 +597,9 @@ boolean handleGestureSwing() {
  * Current (i.e., "left") module handle "tap to another, as left" gesture.
  */
 boolean handleGestureTapToAnotherAsLeft() {
-  setColor(255, 0, 0);
+  //setColor(255, 0, 0);
+  // Blink the lights five times
+  blinkLight(5);
   
 //  if (!awaitingPreviousModule) {
 //    awaitingNextModule = true;
@@ -626,7 +625,9 @@ boolean handleGestureTapToAnotherAsLeft() {
  * Current (i.e., "right") module handle "tap to another, as right" gesture.
  */
 boolean handleGestureTapToAnotherAsRight() {
-  setColor(255, 0, 0);
+//  setColor(255, 0, 0);
+  // Blink the lights five times
+  blinkLight(5);
   
   // Send to all linked devices
 //      for (int i = 0; i < 1; i++) {
