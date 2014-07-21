@@ -101,12 +101,14 @@ void drawLiveGesturePlot() {
     stroke(0, 0, 255); 
     drawPlot(liveGestureSample.get(2), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
     
-    stroke(255, 0, 0); 
-    drawPlot(liveGestureSample.get(3), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
-    stroke(0, 255, 0); 
-    drawPlot(liveGestureSample.get(4), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
-    stroke(0, 0, 255); 
-    drawPlot(liveGestureSample.get(5), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
+    if (dimensionCount > 3) {
+      stroke(255, 0, 0); 
+      drawPlot(liveGestureSample.get(3), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
+      stroke(0, 255, 0); 
+      drawPlot(liveGestureSample.get(4), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
+      stroke(0, 0, 255); 
+      drawPlot(liveGestureSample.get(5), gestureSignatureOffset[gestureIndex], gestureSignatureSize[gestureIndex], scaledBoundLeft, height / 2, scaledBoundRight - scaledBoundLeft, height, 0, 1000);
+    }
   }
 
   // Draw beginning bound of gesture signature
@@ -133,39 +135,19 @@ void drawGesturePlotBoundaries() {
   ArrayList<ArrayList<Integer>> gestureSampleAverageSum = new ArrayList<ArrayList<Integer>>();
   ArrayList<ArrayList<Integer>> gestureSampleAverageCount = new ArrayList<ArrayList<Integer>>();
 
-  if (gestureSampleUpperBounds.size() < 6) {
-    gestureSampleUpperBounds.add(new ArrayList<Integer>());
-    gestureSampleUpperBounds.add(new ArrayList<Integer>());
-    gestureSampleUpperBounds.add(new ArrayList<Integer>());
-    gestureSampleUpperBounds.add(new ArrayList<Integer>());
-    gestureSampleUpperBounds.add(new ArrayList<Integer>());
+  while (gestureSampleUpperBounds.size() < dimensionCount) {
     gestureSampleUpperBounds.add(new ArrayList<Integer>());
   }
 
-  if (gestureSampleLowerBounds.size() < 6) {
-    gestureSampleLowerBounds.add(new ArrayList<Integer>());
-    gestureSampleLowerBounds.add(new ArrayList<Integer>());
-    gestureSampleLowerBounds.add(new ArrayList<Integer>());
-    gestureSampleLowerBounds.add(new ArrayList<Integer>());
-    gestureSampleLowerBounds.add(new ArrayList<Integer>());
+  while (gestureSampleLowerBounds.size() < dimensionCount) {
     gestureSampleLowerBounds.add(new ArrayList<Integer>());
   }
 
-  if (gestureSampleAverageSum.size() < 6) {
-    gestureSampleAverageSum.add(new ArrayList<Integer>());
-    gestureSampleAverageSum.add(new ArrayList<Integer>());
-    gestureSampleAverageSum.add(new ArrayList<Integer>());
-    gestureSampleAverageSum.add(new ArrayList<Integer>());
-    gestureSampleAverageSum.add(new ArrayList<Integer>());
+  while (gestureSampleAverageSum.size() < dimensionCount) {
     gestureSampleAverageSum.add(new ArrayList<Integer>());
   }
 
-  if (gestureSampleAverageCount.size() < 6) {
-    gestureSampleAverageCount.add(new ArrayList<Integer>());
-    gestureSampleAverageCount.add(new ArrayList<Integer>());
-    gestureSampleAverageCount.add(new ArrayList<Integer>());
-    gestureSampleAverageCount.add(new ArrayList<Integer>());
-    gestureSampleAverageCount.add(new ArrayList<Integer>());
+  while (gestureSampleAverageCount.size() < dimensionCount) {
     gestureSampleAverageCount.add(new ArrayList<Integer>());
   }
 
@@ -194,7 +176,7 @@ void drawGesturePlotBoundaries() {
     if (singleGestureSample.size() > 0) {
       sampleCount++;
 
-      for (int axis = 0; axis < 6; axis++) {
+      for (int axis = 0; axis < dimensionCount; axis++) {
 
         // Draw gesture accelerometer data for current axis
 

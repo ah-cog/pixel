@@ -1,12 +1,24 @@
 import processing.serial.*;
+import controlP5.*;
 
-int serialPortIndex = 7;
+// ControlP5:
+ControlP5 controlP5;
+boolean showGUI = false;
+Slider[] sliders;
+Range[] ranges;
+Toggle[] toggles;
 
+// Gesture Builder:
+
+// Serial port
+int serialPortIndex = 7; // NOTE: This must be set correctly manually, here in the code!
 Serial serialPort;
-String serialInputString;
+String serialInputString; // Used to buffer a received string
 
+// Keyboard state
 boolean shiftPressed = false;
 
+// Intertial measurement unit (IMU) data
 int dataTimestamp = 0;
 float roll = 0, minRoll = 0, maxRoll = 0, avgRoll = 0;
 float pitch = 0, minPitch = 0, maxPitch = 0, avgPitch = 0;
@@ -15,6 +27,8 @@ int gyroX, gyroY, gyroZ;
 int accelerometerX, accelerometerY, accelerometerZ;
 int magnetometerX, magnetometerY, magnetometerZ;
 float pressure, altitude, temperature;
+
+int dimensionCount = 3; // The number of dimensions to model and classify along.
 
 PFont gestureFont, classifiedGestureFont;
 PFont boundaryLabelFont;
@@ -112,8 +126,11 @@ ArrayList<ArrayList<ArrayList<ArrayList<Integer>>>> cachedGestureSamples;
 ArrayList<Boolean> hasCachedGestureSamples;
 
 void setup () {
-  // size(1200, 800, P3D);
-  size(displayWidth, displayHeight, P3D);
+  size(displayWidth, displayHeight, P3D); // size(1200, 800, P3D);
+  frame.setTitle("Gesture Builder");
+  
+  // Setup menu
+  setupMenu();
 
   // Set up font
   gestureFont = createFont("DidactGothic.ttf", 64, true);
@@ -213,6 +230,9 @@ boolean sketchFullScreen() {
   return isFullScreen;
 }
 
+/**
+ * Receives and processes incoming serial port data.   
+ */
 void serialEvent (Serial serialPort) {
 
   // Read serial data
@@ -263,9 +283,11 @@ void serialEvent (Serial serialPort) {
           liveGestureSample.get(1).add(accelerometerY);
           liveGestureSample.get(2).add(accelerometerZ);
           
-          liveGestureSample.get(3).add(gyroX);
-          liveGestureSample.get(4).add(gyroY);
-          liveGestureSample.get(5).add(gyroZ);
+          if (dimensionCount > 3) {
+            liveGestureSample.get(3).add(gyroX);
+            liveGestureSample.get(4).add(gyroY);
+            liveGestureSample.get(5).add(gyroZ);
+          }
 
           // Remove oldest element from live gesture queue if greater than threshold
           if (liveGestureSample.get(0).size() > liveGestureSize) { // TODO: In classifier function, compare only the "latest" values...
@@ -273,9 +295,11 @@ void serialEvent (Serial serialPort) {
             liveGestureSample.get(1).remove(0);
             liveGestureSample.get(2).remove(0);
             
-            liveGestureSample.get(3).remove(0);
-            liveGestureSample.get(4).remove(0);
-            liveGestureSample.get(5).remove(0);
+            if (dimensionCount > 3) {
+              liveGestureSample.get(3).remove(0);
+              liveGestureSample.get(4).remove(0);
+              liveGestureSample.get(5).remove(0);
+            }
           }
 
           // Classify live gesture sample
@@ -382,9 +406,7 @@ void keyPressed() {
   }
 
   if (key == ' ') {
-    
     recordGestureExample();
-   
   } else if (key == ESC) {
     exit(); // Stops the program
   } else if (key == 'x' || key == 'X') {
@@ -415,4 +437,11 @@ void keyReleased() {
       shiftPressed = false;
     }
   }
+  
+  if (key == 'm' || key == 'M') {
+    showGUI = controlP5.group("menu").isOpen();
+    showGUI = !showGUI;
+  }
+  if (showGUI) { controlP5.group("menu").open(); }
+  else { controlP5.group("menu").close(); }
 }

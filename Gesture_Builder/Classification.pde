@@ -69,23 +69,14 @@ int classifyGestureFromTransitions(ArrayList<ArrayList<Integer>> liveSample) {
  */
 int getGestureInstability(ArrayList<ArrayList<Integer>> averageSample, ArrayList<ArrayList<Integer>> liveSample) {
   int instabilityTotal = 0;
-
-  //  println("averageSample = " + averageSample.get(0).size() + ", liveSample = " + liveSample.get(0).size());
-  //  if (averageSample.get(0).size() > 0 && liveSample.get(0).size() > 0) {
-
+  
   // Compare the difference between the average sample for each axis and the live sample
-  for (int axis = 0; axis < 3; axis++) {
-    ArrayList<Integer> liveSampleAxis = liveSample.get(axis);
+  for (int dimension = 0; dimension < dimensionCount; dimension++) {
+    ArrayList<Integer> liveSampleAxis = liveSample.get(dimension);
 
-    int instability = getGestureAxisInstability(averageSample.get(axis), liveSample.get(axis));
+    int instability = getGestureAxisInstability(averageSample.get(dimension), liveSample.get(dimension));
     instabilityTotal = instabilityTotal + instability;
-    //      print(instability);
-    //      print("\t");
   }
-
-  //    print(instabilityTotal);
-  //    println();
-  //  }
 
   return instabilityTotal;
 }
@@ -97,7 +88,7 @@ int getGestureDeviation(ArrayList<ArrayList<Integer>> averageSample, ArrayList<A
   int deltaTotal = 0;
 
   // Compare the difference between the average sample for each axis and the live sample
-  for (int dimension = 0; dimension < 6; dimension++) {
+  for (int dimension = 0; dimension < dimensionCount; dimension++) {
     ArrayList<Integer> liveSampleAxis = liveSample.get(dimension);
 
     int delta = getGestureAxisDeviation(averageSample.get(dimension), liveSample.get(dimension));

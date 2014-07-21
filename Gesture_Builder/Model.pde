@@ -409,9 +409,11 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage2(ArrayList<ArrayList<Array
     averageSubsample.get(1).add(averageSample.get(1).get(i)); // i.e., Accelerometer Y
     averageSubsample.get(2).add(averageSample.get(2).get(i)); // i.e., Accelerometer Z
     
-    averageSubsample.get(3).add(averageSample.get(3).get(i)); // i.e., Gyro X
-    averageSubsample.get(4).add(averageSample.get(4).get(i)); // i.e., Gyro Y
-    averageSubsample.get(5).add(averageSample.get(5).get(i)); // i.e., Gyro Z
+    if (dimensionCount > 3) {
+      averageSubsample.get(3).add(averageSample.get(3).get(i)); // i.e., Gyro X
+      averageSubsample.get(4).add(averageSample.get(4).get(i)); // i.e., Gyro Y
+      averageSubsample.get(5).add(averageSample.get(5).get(i)); // i.e., Gyro Z
+    }
   }
 
   //    println("offset = " + offset + ", size = " + size + ", size(sample) = " + averageSample.get(0).size() + ", size(slice) = " + averageSubsample.get(0).size());
@@ -438,7 +440,7 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage(ArrayList<ArrayList<ArrayL
   ArrayList<ArrayList<Integer>> gestureSampleAverageCount = new ArrayList<ArrayList<Integer>>();
 
   // Create array to store average of accelerometer sample data
-  if (gestureSampleAverageSum.size() < 6) {
+  if (gestureSampleAverageSum.size() < dimensionCount) {
     gestureSampleAverageSum.add(new ArrayList<Integer>()); // i.e., Accelerometer X
     gestureSampleAverageSum.add(new ArrayList<Integer>()); // i.e., Accelerometer Y
     gestureSampleAverageSum.add(new ArrayList<Integer>()); // i.e., Accelerometer Z
@@ -448,7 +450,7 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage(ArrayList<ArrayList<ArrayL
   }
 
   // Create array to store the number of accelerometer sample data points (for the division in the computation of the accelerometer point averages)
-  if (gestureSampleAverageCount.size() < 6) {
+  if (gestureSampleAverageCount.size() < dimensionCount) {
     gestureSampleAverageCount.add(new ArrayList<Integer>()); // i.e., Accelerometer X
     gestureSampleAverageCount.add(new ArrayList<Integer>()); // i.e., Accelerometer Y
     gestureSampleAverageCount.add(new ArrayList<Integer>()); // i.e., Accelerometer Z
@@ -466,7 +468,7 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage(ArrayList<ArrayList<ArrayL
     if (singleGestureSample.size() > 0) {
       sampleCount++;
 
-      for (int dimension = 0; dimension < 6; dimension++) {
+      for (int dimension = 0; dimension < dimensionCount; dimension++) {
 
         // Update list sizes
         while (gestureSampleAverageSum.get (dimension).size() < singleGestureSample.get(dimension).size()) {
@@ -490,7 +492,7 @@ ArrayList<ArrayList<Integer>> getGestureSampleAverage(ArrayList<ArrayList<ArrayL
   }
 
   // Compute average of accelerometer x-axis, y-axis, and z-axis data
-  for (int dimension = 0; dimension < 6; dimension++) {
+  for (int dimension = 0; dimension < dimensionCount; dimension++) {
     // Compute average of accelerometer data for current axis
     for (int j = 0; j < gestureSampleAverageSum.get(dimension).size(); j++) {
       int cumulativeGestureSample = int(float(gestureSampleAverageSum.get(dimension).get(j)) / float(gestureSampleAverageCount.get(dimension).get(j)));
