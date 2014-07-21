@@ -48,7 +48,9 @@ void setup() {
 
   // Initialize module's color
   //setModuleColor(random(256), random(256), random(256)); // Set the module's default color
-#if MESH_DEVICE_ADDRESS == 0x0001
+#if MESH_DEVICE_ADDRESS == 0x0000
+  setModuleColor(255, 0, 0);
+#elif MESH_DEVICE_ADDRESS == 0x0001
   setModuleColor(0, 0, 255);
 #elif MESH_DEVICE_ADDRESS == 0x0002
   setModuleColor(255, 255, 0);
@@ -114,7 +116,7 @@ void loop() {
   
   if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
     if (outputPinRemote == false) {
-      // Output port is on this module!  
+      // Output port is on this module!
       setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
     } else {
       // Output port is on a different module than this one!

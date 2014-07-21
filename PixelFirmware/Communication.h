@@ -1,10 +1,12 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#define MESH_DEVICE_ADDRESS 0x0002 // The device of the mesh networking radio
+#define MESH_DEVICE_ADDRESS 0x0001 // The device of the mesh networking radio
 
 #if defined(MESH_DEVICE_ADDRESS)
-  #if MESH_DEVICE_ADDRESS == 0x0001
+  #if MESH_DEVICE_ADDRESS == 0x0000
+    #define NEIGHBOR_ADDRESS 0x0001
+  #elif MESH_DEVICE_ADDRESS == 0x0001
     #define NEIGHBOR_ADDRESS 0x0002
   #elif MESH_DEVICE_ADDRESS == 0x0002
     #define NEIGHBOR_ADDRESS 0x0001
