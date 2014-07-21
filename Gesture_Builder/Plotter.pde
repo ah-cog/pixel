@@ -73,6 +73,8 @@ void drawSignatureData() {
   textFont(boundaryLabelFont); 
   textAlign(RIGHT);
   text("" + gestureName[gestureIndex] + "\nsize " + maximumSampleSize[gestureIndex] + "\nexamples " + gestureSamples.size(), width - 8, 30);
+  
+  text("" + "mode " + keyMode, width - 8, height - 30);
 } 
 
 /**
