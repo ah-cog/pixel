@@ -1,3 +1,54 @@
+void openGestureData() {
+
+  String gestureFilePath = "data/gestureSampleSet.json";
+//  File gestureFile = new File(gestureFilePath);
+//  if (!gestureFile.exists()) {
+//    PrintWriter emptyGestureFile = createWriter(gestureFilePath);
+//    emptyGestureFile.println("[]"); // Write empty JSON array for storing gestures
+//    emptyGestureFile.flush();
+//    emptyGestureFile.close();
+//  }
+//  if (gestureFile.exists()) {
+    // Load existing gesture data file
+    gestureSampleSet = loadJSONArray(gestureFilePath);
+//  }
+
+  // updateCurrentGesture();
+}
+
+
+/**
+ * Store gesture data sample, consisting of a sequence of data points 
+ * collected over time, during a specific duration, specified manually 
+ * by a human.
+ */
+void storeGestureData() {
+  
+  JSONObject gestureDataPoint = new JSONObject();
+  
+  gestureDataPoint.setString("timestamp", str(dataTimestamp));
+  gestureDataPoint.setString("roll", str(roll));
+  gestureDataPoint.setString("pitch", str(pitch));
+  gestureDataPoint.setString("yaw", str(yaw));
+  gestureDataPoint.setString("gyroX", str(gyroX));
+  gestureDataPoint.setString("gyroY", str(gyroY));
+  gestureDataPoint.setString("gyroZ", str(gyroZ));
+  gestureDataPoint.setString("accelerometerX", str(accelerometerX));
+  gestureDataPoint.setString("accelerometerY", str(accelerometerY));
+  gestureDataPoint.setString("accelerometerZ", str(accelerometerZ));
+  gestureDataPoint.setString("magnetometerX", str(magnetometerX));
+  gestureDataPoint.setString("magnetometerY", str(magnetometerY));
+  gestureDataPoint.setString("magnetometerZ", str(magnetometerZ));
+  gestureDataPoint.setString("pressure", str(pressure));
+  gestureDataPoint.setString("altitude", str(altitude));
+  gestureDataPoint.setString("temperature", str(temperature));
+
+  // gestureDataSample.setJSONObject(gestureSensorSampleCount, gestureData);
+  gestureDataSample.append(gestureDataPoint);
+  
+  gestureSensorSampleCount++;
+}
+
 /**
  * Writes the current gesture model to a .h header file for use with Arduino sketches.
  */
