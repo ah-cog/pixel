@@ -1,9 +1,7 @@
 Pixel
 =====
 
-# Overview #
-
-Pixel is a modular tangible user interface for physical computing.
+Pixel is a modular, tangible interface for physical computing.
 
 ## Physical Design ##
 
