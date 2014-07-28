@@ -14,7 +14,7 @@ Authors: Michael Gubbels
 #include <Wire.h>
 
 // TODO: Master board I/O state for (1) requested state and (2) reported state (by master).
-struct PinModel {  
+struct PinModel {
   int pin; // The pin number
   int type; // i.e., digital, analog, pwm, touch
   int mode; // i.e., input or output
