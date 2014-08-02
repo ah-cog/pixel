@@ -59,6 +59,53 @@ boolean appendLoopNode(int pin, int operation, int type, int value) {
   return false;
 }
 
+/**
+ * Insert a behavior node into the behavior loop at the specified index.
+ */
+boolean applyBehaviorTransformation(int index, int pin, int operation, int type, int value) {
+  // TODO: Add message to queue... and use sendMessage to send the messages...
+  
+  if (loopSize < DEFAULT_LOOP_CAPACITY) {
+    
+    // Move any behaviors back if needed
+    for (int i = index; i < loopSize; i++) {
+      behaviorLoop[i + 1].operation = behaviorLoop[loopSize].operation;
+      behaviorLoop[i + 1].pin = behaviorLoop[i].pin;
+      behaviorLoop[i + 1].type = behaviorLoop[i].type;
+      // behaviorLoop[i + 1].mode = behaviorLoop[i].mode;
+      behaviorLoop[i + 1].value = behaviorLoop[i].value;
+    }
+    
+    // Add behavior to queue
+//    behaviorLoop[loopSize].id = generateBehaviorIdentifier();
+    behaviorLoop[index].operation = operation;
+    behaviorLoop[index].pin = pin;
+    behaviorLoop[index].type = type;
+    // behaviorLoop[index].mode = mode;
+    behaviorLoop[index].value = value;
+    
+    // Set up support structures for the behavior
+    if (operation == BEHAVIOR_DELAY) {
+      // Set up timer
+      delays[delayCount].startTime = 0; // Initialize/Reset the timer
+      delays[delayCount].duration = behaviorLoop[index].value;
+      delays[delayCount].behavior = &behaviorLoop[index];
+      
+      Serial.print("Creating delay...");
+      Serial.print(delays[delayCount].duration);
+      Serial.println();
+      
+      delayCount++;
+    }
+    
+    loopSize++; // Increment the loop size
+    
+    return true;
+  }
+  
+  return false;
+}
+
 ///**
 // * Insert a behavior node into the behavior loop at the specified index.
 // */

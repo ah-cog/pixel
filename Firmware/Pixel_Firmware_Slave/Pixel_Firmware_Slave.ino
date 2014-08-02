@@ -127,22 +127,23 @@ void i2cRequestEvent () {
   
   char buf[6]; // "-2147483648\0"
   
-  if (behaviorNodeCount > 0) {
+  if (behaviorTransformationCount > 0) {
     
-    //Serial.print("behaviorNodeCount = "); Serial.print(behaviorNodeCount); Serial.println();
+    //Serial.print("behaviorTransformationCount = "); Serial.print(behaviorTransformationCount); Serial.println();
 
     // Send status
     Wire.write ("1 ");
 
     // Send serialized behavior
-    Wire.write (itoa(behaviorNodes[0].operation, buf, 10)); Wire.write (" ");
-    Wire.write (itoa(behaviorNodes[0].pin, buf, 10));       Wire.write (" ");
-    // Wire.write (itoa(behaviorNodes[0].type, buf, 10));      Wire.write (" ");
-    Wire.write (itoa(behaviorNodes[0].mode, buf, 10));      Wire.write (" ");
-    Wire.write (itoa(behaviorNodes[0].value, buf, 10));     Wire.write (" ");
+    Wire.write (itoa(behaviorTransformations[0].index, buf, 10)); Wire.write (" ");
+    Wire.write (itoa(behaviorTransformations[0].operation, buf, 10)); Wire.write (" ");
+    Wire.write (itoa(behaviorTransformations[0].pin, buf, 10));       Wire.write (" ");
+    // Wire.write (itoa(behaviorTransformations[0].type, buf, 10));      Wire.write (" ");
+    Wire.write (itoa(behaviorTransformations[0].mode, buf, 10));      Wire.write (" ");
+    Wire.write (itoa(behaviorTransformations[0].value, buf, 10));     Wire.write (" ");
     
     // Remove the behavior from the processing queue once it's been sent over I2C
-    removeBehaviorNode (0);
+    removeBehaviorTransformation (0);
   } else {
     // Send status
     Wire.write ("0 ");

@@ -172,7 +172,7 @@ void loop() {
   // TODO: Send updated state of THIS board (master) to the OTHER board (slave) for caching.
   
   // Get behavior updates from slave (Apply)
-  syncBehavior(); // TODO: Update "mental model" of device
+  acceptBehaviorTransformations(); // TODO: Update "mental model" of device
   
   // Perform behavior step in the interpreter (Evaluate)
   behaviorLoopStep();

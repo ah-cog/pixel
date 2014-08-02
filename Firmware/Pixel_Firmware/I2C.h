@@ -96,7 +96,7 @@ int getPinValue2(int pin) {
  * The "behavior" data structure and interpretter
  */
 // TODO: Updates behavior (i.e., the state of the program being interpretted)
-void syncBehavior() {
+void acceptBehaviorTransformations() { // consider renaming this something like acceptBehaviorTransformation
   
   // Request messages from slave
   // NOTE: This causes the function "requestEvent" specified in "Wire.onRequest(requestEvent);" 
@@ -137,7 +137,7 @@ void syncBehavior() {
       // String split = String(i2cMessageBuffer); // "hi this is a split test";
       
       // Parse instruction message relayed by the "slave" device from "Looper"
-      int operation = getValue(split, ' ', 1).toInt();
+      int operation = getValue(split, ' ', 2).toInt();
       
       // Check operation and take handle it accordingly
       if (operation == BEHAVIOR_ERASE) {
@@ -147,14 +147,16 @@ void syncBehavior() {
       } else {
       
         // Parse behavior node's string form
-        int pin       = getValue(split, ' ', 2).toInt();
-        int type      = getValue(split, ' ', 3).toInt();
+        int index     = getValue(split, ' ', 1).toInt();
+        int pin       = getValue(split, ' ', 3).toInt();
+        int type      = getValue(split, ' ', 4).toInt();
         // int mode      = getValue(split, ' ', 3).toInt();
-        int value     = getValue(split, ' ', 4).toInt();
+        int value     = getValue(split, ' ', 5).toInt();
         
         // TODO: Create node object from parsed data (i.e., "Behavior behavior = deserializeBehavior();").
         // TODO: Add node object to queue (i.e., the program) (i.e., "appendBehavior(behavior);")
-        appendLoopNode(pin, operation, type, value);
+        //appendLoopNode(pin, operation, type, value);
+        applyBehaviorTransformation(index, pin, operation, type, value);
         
       }
     }

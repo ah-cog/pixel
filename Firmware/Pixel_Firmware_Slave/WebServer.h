@@ -1,7 +1,7 @@
 #ifndef WEB_SERVER_H
 #define WEB_SERVER_H
 
-#include "BehaviorInterpretter.h"
+#include "BehaviorTransformation.h"
 
 //#include <Adafruit_CC3000.h>
 //#include <SPI.h>
@@ -161,6 +161,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               Serial.println("PARAMETERS:");
               Serial.println(httpRequestParameters[0]);
               Serial.println(httpRequestParameters[1]);
+              Serial.println(httpRequestParameters[2]);
               Serial.println(httpRequestParameters[4]);
               
               // Split parameters by '='
@@ -168,16 +169,20 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
 //              String key = getValue(split, '=', 0);
 //              String value = getValue(split, '=', 1);
 
-              String pinParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int index = getValue(indexParameter, '=', 1).toInt();
+
+              String pinParameter = String(httpRequestParameters[1]); // "hi this is a split test";
               int pin = getValue(pinParameter, '=', 1).toInt();
               
-              String operationParameter = String(httpRequestParameters[1]); // "hi this is a split test";
+              String operationParameter = String(httpRequestParameters[2]); // "hi this is a split test";
               int operation = getValue(operationParameter, '=', 1).toInt();
               
               String valueParameter = String(httpRequestParameters[4]); // "hi this is a split test";
               int value = getValue(valueParameter, '=', 1).toInt();
               
               Serial.println("PIN/OPERATION/VALUE:");
+              Serial.println(index);
               Serial.println(pin);
               Serial.println(operation);
               Serial.println(value);
@@ -195,7 +200,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
 //              Serial.print("\n");
               
               //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              insertBehaviorNode(0, operation, pin, 0, 1, value);
+              insertBehavior(index, operation, pin, 0, 1, value);
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
@@ -219,8 +224,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               Serial.println(milliseconds);
               
               // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              //insertBehaviorNode(0, 2, 1, 0, 1, milliseconds);
-              insertBehaviorNode(0, 2, 1, 0, 1, milliseconds);
+              //insertBehavior(0, 2, 1, 0, 1, milliseconds);
+              insertBehavior(0, 2, 1, 0, 1, milliseconds);
               
               // TODO: Wait for master to create the node (so can return it's ID)
               
@@ -237,7 +242,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             } else if (strcmp (httpRequestAddress, "/erase") == 0) {
               
               //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              insertBehaviorNode(0, 3, 1, 0, 1, 0);
+              insertBehavior(0, 3, 1, 0, 1, 0);
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
@@ -311,7 +316,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
 //              Serial.print("\n");
               
               //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-//              insertBehaviorNode(0, operation, pin, 0, 1, value);
+//              insertBehavior(0, operation, pin, 0, 1, value);
 
 //              client.println("pin 13 = ");
 //              client.println(pin);
