@@ -19,39 +19,47 @@ boolean insertBehavior(int index, int operation, int pin, int type, int mode, in
   // TODO: Add message to queue... and use sendMessage to send the messages...
   
   // If index is -1, set the index to the last position in the list
-  if (index == -1) {
-    index = behaviorTransformationCount;
-  }
+//  if (index == -1) {
+//    index = behaviorTransformationCount;
+//  }
   
   if (behaviorTransformationCount < BEHAVIOR_TRANSFORMATION_CAPACITY) {
-    if (index >= 0 && index < BEHAVIOR_TRANSFORMATION_CAPACITY) {
+//    if (index >= 0 && index < BEHAVIOR_TRANSFORMATION_CAPACITY) {
       
-      // If specified index is larger than the number of behaviors
-      if (index > behaviorTransformationCount) {
-        index = behaviorTransformationCount;
-      }
-      
-      // Push subsequent behaviors to end of queue
-      for (int i = index; i < behaviorTransformationCount; i++) {
-        // Insert behavior to queue
-        if (i + 1 < BEHAVIOR_TRANSFORMATION_CAPACITY) {
-          behaviorTransformations[i + 1].operation = behaviorTransformations[i].operation;
-          behaviorTransformations[i + 1].pin = behaviorTransformations[i].pin;
-          behaviorTransformations[i + 1].type = behaviorTransformations[i].type;
-          behaviorTransformations[i + 1].mode = behaviorTransformations[i].mode;
-          behaviorTransformations[i + 1].value = behaviorTransformations[i].value;
-        }
-      }
-      
+//      // If specified index is larger than the number of behaviors
+//      if (index > behaviorTransformationCount) {
+//        index = behaviorTransformationCount;
+//      }
+//      
+//      // Push subsequent behaviors to end of queue
+//      for (int i = index; i < behaviorTransformationCount; i++) {
+//        // Insert behavior to queue
+//        if (i + 1 < BEHAVIOR_TRANSFORMATION_CAPACITY) {
+//          behaviorTransformations[i + 1].operation = behaviorTransformations[i].operation;
+//          behaviorTransformations[i + 1].pin = behaviorTransformations[i].pin;
+//          behaviorTransformations[i + 1].type = behaviorTransformations[i].type;
+//          behaviorTransformations[i + 1].mode = behaviorTransformations[i].mode;
+//          behaviorTransformations[i + 1].value = behaviorTransformations[i].value;
+//        }
+//      }
+//      
+//      // Insert behavior to queue
+//      behaviorTransformations[index].operation = operation;
+//      behaviorTransformations[index].pin = pin;
+//      behaviorTransformations[index].type = type;
+//      behaviorTransformations[index].mode = mode;
+//      behaviorTransformations[index].value = value;
+
       // Insert behavior to queue
-      behaviorTransformations[index].operation = operation;
-      behaviorTransformations[index].pin = pin;
-      behaviorTransformations[index].type = type;
-      behaviorTransformations[index].mode = mode;
-      behaviorTransformations[index].value = value;
+      behaviorTransformations[behaviorTransformationCount].index = index;
+      behaviorTransformations[behaviorTransformationCount].operation = operation;
+      behaviorTransformations[behaviorTransformationCount].pin = pin;
+      behaviorTransformations[behaviorTransformationCount].type = type;
+      behaviorTransformations[behaviorTransformationCount].mode = mode;
+      behaviorTransformations[behaviorTransformationCount].value = value;
       
       behaviorTransformationCount++; // Increment the behavior node count
-    }
+//    }
   }
   
   Serial.print("queueing behavior (size: ");

@@ -28,7 +28,7 @@ Adafruit_CC3000_Server httpServer(LISTEN_PORT);
  * Data structures
  */
 
-char httpRequestUriBuffer[50]; // HTTP request buffer
+char httpRequestUriBuffer[100]; // HTTP request buffer
 int bi = 0; // HTTP request buffer index
 char* httpRequestParameters[10]; // HTTP request parameters (i.e., key/value pairs encoded in the URI like "?key1=value1&key2=value2")
 int httpRequestParameterCount = 0;
@@ -163,7 +163,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               Serial.println(httpRequestParameters[0]);
               Serial.println(httpRequestParameters[1]);
               Serial.println(httpRequestParameters[2]);
-              Serial.println(httpRequestParameters[4]);
+              Serial.println(httpRequestParameters[5]);
               
               // Split parameters by '='
 //              String split = String(httpRequestParameters[0]); // "hi this is a split test";
@@ -179,10 +179,10 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               String operationParameter = String(httpRequestParameters[2]); // "hi this is a split test";
               int operation = getValue(operationParameter, '=', 1).toInt();
               
-              String valueParameter = String(httpRequestParameters[4]); // "hi this is a split test";
+              String valueParameter = String(httpRequestParameters[5]); // "hi this is a split test";
               int value = getValue(valueParameter, '=', 1).toInt();
               
-              Serial.println("PIN/OPERATION/VALUE:");
+              Serial.println("INDEX/PIN/OPERATION/VALUE:");
               Serial.println(index);
               Serial.println(pin);
               Serial.println(operation);
@@ -219,8 +219,11 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               Serial.println("PARAMETERS:");
               Serial.println(httpRequestParameters[0]);
+
+              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int index = getValue(indexParameter, '=', 1).toInt();
               
-              String millisecondsParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              String millisecondsParameter = String(httpRequestParameters[1]); // e.g., "milliseconds=1000";
               int milliseconds = getValue(millisecondsParameter, '=', 1).toInt();
               
               Serial.println("MILLISECONDS:");
@@ -228,7 +231,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               // TODO: Only do this when /add-node is called (or whatever the URI will be)
               //insertBehavior(0, 2, 1, 0, 1, milliseconds);
-              insertBehavior(0, 2, 1, 0, 1, milliseconds);
+              insertBehavior(index, 2, 1, 0, 1, milliseconds);
               
               // TODO: Wait for master to create the node (so can return it's ID)
               
@@ -344,12 +347,41 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
               client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Content-Type: text/html");
+              client.println("Content-Type: application/json");
               client.println("Connection: close");
               client.println();
               
               // Response data
-              client.print("pin = "); client.print(deviceReportedModel[pin].value);
+              client.println("{");
+              client.println("\tpin: {");
+              client.print("\t\t{ number: "); client.print(pin); client.print(", value: "); client.print(virtualPin[pin].value); client.print(" }"); client.println();
+              client.println("\t}");
+              client.println("}");
+              
+              // Write newline at end of response
+              // TODO: Remove this newline character in responses?
+              client.println();
+              
+              break;
+              
+            } else if (strcmp (httpRequestAddress, "/pins") == 0) {
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+              client.println("Content-Type: application/json");
+              client.println("Connection: close");
+              client.println();
+              
+              // Response data
+              client.println("{");
+              client.println("\tpins: [");
+              for (int i = 0; i < VIRTUAL_PIN_COUNT - 1; i++) {
+                client.print("\t\t{ number: "); client.print(i); client.print(", value: "); client.print(virtualPin[i].value); client.print(" },"); client.println();
+              }
+              client.print("\t\t{ number: "); client.print(VIRTUAL_PIN_COUNT - 1); client.print(", value: "); client.print(virtualPin[VIRTUAL_PIN_COUNT - 1].value); client.print(" }"); client.println();
+              client.println("\t]");
+              client.println("}");
               
               // Write newline at end of response
               // TODO: Remove this newline character in responses?

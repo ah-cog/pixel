@@ -66,15 +66,37 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
   // TODO: Add message to queue... and use sendMessage to send the messages...
   
   if (loopSize < DEFAULT_LOOP_CAPACITY) {
+
+    // If index is -1 or greater than the loopSize then add the beahvior transformation to the end of the loop
+    if (index == -1 || index > loopSize) {
+      index = loopSize;
+    }
+    
+    Serial.print("index = "); Serial.print(index); Serial.println();
     
     // Move any behaviors back if needed
-    for (int i = index; i < loopSize; i++) {
-      behaviorLoop[i + 1].operation = behaviorLoop[loopSize].operation;
-      behaviorLoop[i + 1].pin = behaviorLoop[i].pin;
-      behaviorLoop[i + 1].type = behaviorLoop[i].type;
-      // behaviorLoop[i + 1].mode = behaviorLoop[i].mode;
-      behaviorLoop[i + 1].value = behaviorLoop[i].value;
+    //for (int i = index; i < loopSize; i++) {
+    for (int i = loopSize; i > index; i--) {
+      behaviorLoop[i].operation = behaviorLoop[i - 1].operation;
+      behaviorLoop[i].pin = behaviorLoop[i - 1].pin;
+      behaviorLoop[i].type = behaviorLoop[i - 1].type;
+      // behaviorLoop[i].mode = behaviorLoop[i - 1].mode;
+      behaviorLoop[i].value = behaviorLoop[i - 1].value;
+      
+      // Update delays' that point to the moved behavior
+      if (behaviorLoop[i].operation == BEHAVIOR_DELAY) {
+        for (int j = 0; j < delayCount; j++) {
+          if (delays[j].behavior == &behaviorLoop[i - 1]) {
+            delays[j].behavior = &behaviorLoop[i];
+          }
+        }
+      }
     }
+    
+    // Update the beahvior counter if needed
+//    if (loopCounter >= index) {
+//      loopCounter++;
+//    }
     
     // Add behavior to queue
 //    behaviorLoop[loopSize].id = generateBehaviorIdentifier();

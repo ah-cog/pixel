@@ -186,64 +186,31 @@ void behaviorLoopStep() {
     if (true) { // if ((*currentBehavior).instructionType [equals] "pin I/O") 
     
       if ((*currentBehavior).operation == PIN_READ_DIGITAL) { // Read pin state
-      
+        
         int pinValue = getPinValue2((*currentBehavior).pin);
-      
-//        int pinValue = digitalRead((*currentBehavior).pin);
-//         Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
-//  Wire.write("pin");
-//          if (pinValue == 1) {
-//          Wire.write("HIGH");
-//        } else {
-//          Wire.write("LOW");
-//        }
-//  Wire.endTransmission();    // stop transmitting
+        Serial.println("PIN_READ_DIGITAL");
       
       } else if ((*currentBehavior).operation == PIN_WRITE_DIGITAL) { // Write to pin
-      
-        //digitalWrite((*currentBehavior).pin, ((*currentBehavior).value == 1 ? HIGH : LOW));
+
         setPinValue2((*currentBehavior).pin, ((*currentBehavior).value == 1 ? HIGH : LOW));
-        
-        // TODO: Update state of memory model of self
-      
-//        if ((*currentBehavior).pin == 13) {
-//          Serial.println("PIN 13");
-//          
-//          if ((*currentBehavior).value == 1) {
-//            Serial.println("ON");
-//            digitalWrite(13, HIGH);
-//          } else {
-//            Serial.println("OFF");
-//            digitalWrite(13, LOW);
-//            
-//  //          sendToSlave("pin state from master!");
-//          }
-//        }
+        Serial.println("PIN_WRITE_DIGITAL");
         
       } else if ((*currentBehavior).operation == BEHAVIOR_DELAY) {
         
-        Serial.println("DELAY");
-          
-//        int milliseconds = 1000;
-//        delay(milliseconds);
-        
-//        // Set up timer
+        // Set up timer
         Delay* currentDelay = NULL;
         for (int i = 0; i < delayCount; i++) {
           if (delays[i].behavior == currentBehavior) {
-            Serial.println("Found");
-            Serial.print("\t");
-            Serial.print(i);
-            Serial.print("\n");
+//            Serial.println("Found delay"); Serial.print("\t"); Serial.print(i); Serial.print("\n");
             currentDelay = &delays[i];
           }
         }
         if (currentDelay != NULL) {
           unsigned long currentTime = millis();
-          Serial.println(currentTime);
-          Serial.println((*currentDelay).startTime);
-          Serial.println((*currentDelay).duration);
-          Serial.println(currentTime - (*currentDelay).startTime);
+//          Serial.println(currentTime);
+//          Serial.println((*currentDelay).startTime);
+//          Serial.println((*currentDelay).duration);
+//          Serial.println(currentTime - (*currentDelay).startTime);
           // Set up start time if it's been reset (i.e., if it is zero)
           if ((*currentDelay).startTime == 0) {
             (*currentDelay).startTime = currentTime;
@@ -262,6 +229,10 @@ void behaviorLoopStep() {
 //        delays[delayCount].duration = 1000;
 //        delays[delayCount].behavior = currentBehavior;
 //        delayCount++;
+
+        if (sustainCounter == false) {
+          Serial.println("DELAY");
+        }
         
       } else if ((*currentBehavior).operation == BEHAVIOR_ERASE) {
         

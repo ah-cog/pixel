@@ -13,20 +13,26 @@ Authors: Michael Gubbels
 
 #include <Wire.h>
 
+// "Transcluded" device. Changes to this device are reflected in the associated physical device.
+//struct VirtualDevice {
+//  int ipAddress;
+//  int meshAddress;
+//  // TODO: Include "physicalDevice" reference.
+//};
+//VirtualDevice virtualDevice;
+
+// TODO: Impelment PhysicalDevice class.
+// #define PHYSICAL_PIN_COUNT 24
+
 // TODO: Master board I/O state for (1) requested state and (2) reported state (by master).
-struct PinModel {
+struct VirtualPin {
   int pin; // The pin number
   int type; // i.e., digital, analog, pwm, touch
   int mode; // i.e., input or output
   int value; // i.e., high or low
 };
-PinModel deviceReportedModel[24];
-//for (int i = 0; i < 24; i++) {
-//  deviceReportedModel[i].pin = i;
-//  deviceReportedModel[i].type = 0; // i.e., Digital
-//  deviceReportedModel[i].mode = 1; // i.e., Output
-//  deviceReportedModel[i].value = 0;
-//}
+#define VIRTUAL_PIN_COUNT 24
+VirtualPin virtualPin[VIRTUAL_PIN_COUNT];
 
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
@@ -82,7 +88,7 @@ boolean hasMessage = false;
  */
 void i2cReceiveEvent (int howMany) {
   
-  Serial.println("Receiving");
+//  Serial.println("Receiving");
   
   while (Wire.available () > 0) { // loop through all but the last
     char c = Wire.read (); // receive byte as a character
@@ -94,17 +100,21 @@ void i2cReceiveEvent (int howMany) {
   i2cBuffer[i2cBufferSize] = NULL; // Terminate the string
 //  Serial.println();
   
+  // Parse received pin value
   String split = String(i2cBuffer); // "hi this is a split test";
   String operation = getValue(split, ' ', 0);
   int pin = getValue(split, ' ', 1).toInt();
   int value = getValue(split, ' ', 2).toInt();
+  
+  // Update virtual device state
+  virtualPin[pin].value = value;
   
   /*
   Serial.print("PIN ");
   Serial.print(pin);
   Serial.print(" = ");
   Serial.print(value);
-  deviceReportedModel[pin].value = value;
+  virtualPin[pin].value = value;
   // TODO: Update other state info for pin (or other state)
 //  Serial.print(pin);
   Serial.println();
