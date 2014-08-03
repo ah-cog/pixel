@@ -12,8 +12,7 @@
 #define ADAFRUIT_CC3000_IRQ  1  // Note: MUST be assigned to an interrupt pin.
 #define ADAFRUIT_CC3000_VBAT 3  // Note: Can be assigned to any pin.
 #define ADAFRUIT_CC3000_CS   10 // Note: Can be assigned to any pin.
-// Use hardware SPI for the remaining pins
-// On an UNO, SCK = 13, MISO = 12, and MOSI = 11
+// Use the hardware SPI pins for the remaining connections to the Wi-Fi module (e.g., On an UNO, SCK = 13, MISO = 12, and MOSI = 11).
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV4); // you can change this clock speed
 
 #define WLAN_SSID "Pixel" // Cannot be longer than 32 characters!
@@ -154,6 +153,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
         
         if (hasReceivedRequest) {
           
+          Serial.println(httpRequestMethod);
+          
           if (strcmp (httpRequestMethod, "POST") == 0) {
             
             if (strcmp (httpRequestAddress, "/pin") == 0) {
@@ -204,8 +205,10 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
               client.println("Content-Type: text/html");
               client.println("Connection: close");
+              client.println();
               
               // TODO: flush
               // TODO: close
@@ -231,6 +234,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *");
               client.println("Content-Type: text/html");
               client.println("Connection: close");
               
@@ -246,6 +250,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *");
               client.println("Content-Type: text/html");
               client.println("Connection: close");
               
@@ -260,12 +265,30 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               // Send a standard 404 HTTP response header
               client.println("HTTP/1.1 404 Not Found");
+              client.println("Access-Control-Allow-Origin: *");
               client.println("Content-Type: text/html");
               client.println("Connection: close");  // the connection will be closed after completion of the response
               client.println();
               
               break;
             } 
+            
+          } else if (strcmp (httpRequestMethod, "OPTIONS") == 0) {
+            
+//            if (strcmp (httpRequestAddress, "/pin") == 0) {
+              // client.println("HTTP/1.1 204 No Content");
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+              client.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+              client.println("Access-Control-Allow-Headers: X-PINGOTHER"); // client.println("Access-Control-Allow-Headers: Content-Type");
+              client.println("Access-Control-Max-Age: 1728000");
+              client.println("Content-Length: 0");
+//              client.println("Keep-Alive: timeout=2, max=100");
+//              client.println("Connection: Keep-Alive");
+              client.println("Content-Type: text/html");
+              client.println();
+              break;
+//            }
             
           } else if (strcmp (httpRequestMethod, "GET") == 0) {
             
@@ -277,8 +300,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             } else if (strcmp (httpRequestAddress, "/pin") == 0) {
               
               Serial.println("PARAMETERS:");
-              Serial.println(httpRequestParameters[0]);
-//              Serial.println(httpRequestParameters[1]);
+//              Serial.println(httpRequestParameters[0]);
+              Serial.println(httpRequestParameters[1]);
 //              Serial.println(httpRequestParameters[4]);
               
               // Split parameters by '='
@@ -286,11 +309,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
 //              String key = getValue(split, '=', 0);
 //              String value = getValue(split, '=', 1);
 
-              String pinParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              String pinParameter = String(httpRequestParameters[1]); // "hi this is a split test";
               int pin = getValue(pinParameter, '=', 1).toInt();
-              
-              client.print("pin = ");
-              client.println(deviceReportedModel[pin].value);
               
 //              String operationParameter = String(httpRequestParameters[1]); // "hi this is a split test";
 //              int operation = getValue(operationParameter, '=', 1).toInt();
@@ -323,8 +343,17 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
               client.println("Content-Type: text/html");
               client.println("Connection: close");
+              client.println();
+              
+              // Response data
+              client.print("pin = "); client.print(deviceReportedModel[pin].value);
+              
+              // Write newline at end of response
+              // TODO: Remove this newline character in responses?
+              client.println();
               
               // TODO: flush
               // TODO: close
@@ -337,6 +366,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               // Send a standard 404 HTTP response header
               client.println("HTTP/1.1 404 Not Found");
+              client.println("Access-Control-Allow-Origin: *");
               client.println("Content-Type: text/html");
               client.println("Connection: close");  // the connection will be closed after completion of the response
               client.println();
@@ -351,6 +381,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               // Send a standard 404 HTTP response header
               client.println("HTTP/1.1 404 Not Found");
+              client.println("Access-Control-Allow-Origin: *");
               client.println("Content-Type: text/html");
               client.println("Connection: close");  // the connection will be closed after completion of the response
               client.println();

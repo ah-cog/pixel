@@ -77,6 +77,8 @@ void setup() {
   // Setup physical orientation sensing peripherals (i.e., IMU)
   setupOrientationSensing();
   
+  setupGestureSensing();
+  
   // Flash RGB LEDs
   blinkLight(3);
 }
@@ -220,6 +222,43 @@ void loop() {
     unsigned long currentTime = millis();
     if (currentTime - lastGestureClassificationTime >= gestureSustainDuration[classifiedGestureIndex]) { // Check if gesture duration has expired
       classifiedGestureIndex = classifyGestureFromTransitions(); // (gestureCandidate);
+      
+      if (classifyMostFrequentGesture) {
+        // Add the most recent gesture classification to the end of the classification history list
+        if (previousClassifiedGestureCount < PREVIOUS_CLASSIFIED_GESTURE_COUNT) {
+          previousClassifiedGestures[previousClassifiedGestureCount] = classifiedGestureIndex;
+          previousClassifiedGestureCount++;
+        } else {
+          for (int i = 0; i < (PREVIOUS_CLASSIFIED_GESTURE_COUNT - 1); i++) {
+            previousClassifiedGestures[i] = previousClassifiedGestures[i + 1];
+          }
+          previousClassifiedGestures[PREVIOUS_CLASSIFIED_GESTURE_COUNT - 1] = classifiedGestureIndex;
+        }
+        
+        // Get the most frequently classified gesture in the history
+        for (int i = 0; i < GESTURE_COUNT; i++) { // Reset the previous classified gesture frequency (the number of times each occured in the short history)
+          previousClassifiedGestureFrequency[i] = 0;
+        }
+        
+        // Count the number of times each previous gesture occurred i.e., compute frequency of gesture classifications in short history)
+        for (int i = 0; i < previousClassifiedGestureCount; i++) {
+          int previouslyClassifiedGestureIndex = previousClassifiedGestures[i]; // Get a previous gesture's index
+          previousClassifiedGestureFrequency[previouslyClassifiedGestureIndex]++; // Increment the gesture's frequency by one
+        }
+        
+        // Determine the gesture most frequently classified
+        int mostFrequentGestureIndex = 0;
+        for (int i = 0; i < GESTURE_COUNT; i++) {
+  //        Serial.print(previousClassifiedGestureFrequency[i]); Serial.print(" ");
+          if (previousClassifiedGestureFrequency[i] > previousClassifiedGestureFrequency[mostFrequentGestureIndex]) {
+            mostFrequentGestureIndex = i;
+          }
+        }
+  //      Serial.println();
+        
+        // Update the classified gesture to the most frequent one
+        classifiedGestureIndex = mostFrequentGestureIndex;
+      }
       
       // HACK: Doesn't allow tilt left and tilt right (reclassifies them as "at rest, in hand"
 //      if (classifiedGestureIndex == 4 || classifiedGestureIndex == 5) {

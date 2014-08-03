@@ -33,6 +33,28 @@
 #define ACTIVATE_MODULE_OUTPUT 20
 #define DEACTIVATE_MODULE_OUTPUT 21
 
+boolean classifyMostFrequentGesture = false;
+#define PREVIOUS_CLASSIFIED_GESTURE_COUNT 10
+int previousClassifiedGestures[PREVIOUS_CLASSIFIED_GESTURE_COUNT];
+int previousClassifiedGestureCount = 0;
+
+int previousClassifiedGestureFrequency[GESTURE_COUNT];
+
+/**
+ * Sets up gesture sensing.
+ */
+void setupGestureSensing() {
+  for (int i = 0; i < PREVIOUS_CLASSIFIED_GESTURE_COUNT; i++) {
+    previousClassifiedGestures[i] = -1;
+  }
+  previousClassifiedGestureCount = 0;
+  
+  // Reset the previous classified gesture frequency (the number of times each occured in the short history)
+  for (int i = 0; i < GESTURE_COUNT; i++) {
+    previousClassifiedGestureFrequency[i] = 0;
+  }
+}
+
 /**
  * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
  */
