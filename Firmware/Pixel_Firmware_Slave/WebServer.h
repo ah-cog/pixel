@@ -32,7 +32,7 @@ char httpRequestUriBuffer[100]; // HTTP request buffer
 int bi = 0; // HTTP request buffer index
 char* httpRequestParameters[10]; // HTTP request parameters (i.e., key/value pairs encoded in the URI like "?key1=value1&key2=value2")
 int httpRequestParameterCount = 0;
-//char* httpRequestParameterDictionary[10][2]; // HTTP request parameters (i.e., key/value pairs encoded in the URI like "?key1=value1&key2=value2")
+//char* httpRequestParameterDictionary[10][2]; // HTTP rdequest parameters (i.e., key/value pairs encoded in the URI like "?key1=value1&key2=value2")
 // httpRequestParameterDictionary[paramIndex][key] // key = 0 (returns char*)
 // httpRequestParameterDictionary[paramIndex][value] // value = 1 (returns char*)
 
@@ -155,145 +155,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
           
           Serial.println(httpRequestMethod);
           
-          if (strcmp (httpRequestMethod, "POST") == 0) {
-            
-            if (strcmp (httpRequestAddress, "/pin") == 0) {
-              
-              Serial.println("PARAMETERS:");
-              Serial.println(httpRequestParameters[0]);
-              Serial.println(httpRequestParameters[1]);
-              Serial.println(httpRequestParameters[2]);
-              Serial.println(httpRequestParameters[5]);
-              
-              // Split parameters by '='
-//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
-//              String key = getValue(split, '=', 0);
-//              String value = getValue(split, '=', 1);
-
-              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
-              int index = getValue(indexParameter, '=', 1).toInt();
-
-              String pinParameter = String(httpRequestParameters[1]); // "hi this is a split test";
-              int pin = getValue(pinParameter, '=', 1).toInt();
-              
-              String operationParameter = String(httpRequestParameters[2]); // "hi this is a split test";
-              int operation = getValue(operationParameter, '=', 1).toInt();
-              
-              String valueParameter = String(httpRequestParameters[5]); // "hi this is a split test";
-              int value = getValue(valueParameter, '=', 1).toInt();
-              
-              Serial.println("INDEX/PIN/OPERATION/VALUE:");
-              Serial.println(index);
-              Serial.println(pin);
-              Serial.println(operation);
-              Serial.println(value);
-              
-//              // TODO: Parse parameters from HTTP request
-//              int pin = String(httpRequestParameters[0]).toInt();
-//              int value = String(httpRequestParameters[4]).toInt();
-//              
-//              Serial.print("pin = ");
-//              Serial.print(pin);
-//              Serial.print("\n");
-//              
-//              Serial.print("value = ");
-//              Serial.print(value);
-//              Serial.print("\n");
-              
-              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              insertBehavior(index, operation, pin, 0, 1, value);
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              client.println();
-              
-              // TODO: flush
-              // TODO: close
-              
-              break;
-              
-            } else if (strcmp (httpRequestAddress, "/delay") == 0) {
-              
-              Serial.println("PARAMETERS:");
-              Serial.println(httpRequestParameters[0]);
-
-              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
-              int index = getValue(indexParameter, '=', 1).toInt();
-              
-              String millisecondsParameter = String(httpRequestParameters[1]); // e.g., "milliseconds=1000";
-              int milliseconds = getValue(millisecondsParameter, '=', 1).toInt();
-              
-              Serial.println("MILLISECONDS:");
-              Serial.println(milliseconds);
-              
-              // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              //insertBehavior(0, 2, 1, 0, 1, milliseconds);
-              insertBehavior(index, 2, 1, 0, 1, milliseconds);
-              
-              // TODO: Wait for master to create the node (so can return it's ID)
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              
-              // TODO: flush
-              // TODO: close
-              
-              break;
-              
-            } else if (strcmp (httpRequestAddress, "/erase") == 0) {
-              
-              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              insertBehavior(0, 3, 1, 0, 1, 0);
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              
-              // TODO: flush
-              // TODO: close
-              
-              break;
-              
-            } else {
-              
-              // TODO: Default, catch-all GET handler that scaffolds further action
-              
-              // Send a standard 404 HTTP response header
-              client.println("HTTP/1.1 404 Not Found");
-              client.println("Access-Control-Allow-Origin: *");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");  // the connection will be closed after completion of the response
-              client.println();
-              
-              break;
-            } 
-            
-          } else if (strcmp (httpRequestMethod, "OPTIONS") == 0) {
-            
-//            if (strcmp (httpRequestAddress, "/pin") == 0) {
-              // client.println("HTTP/1.1 204 No Content");
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-              client.println("Access-Control-Allow-Headers: X-PINGOTHER"); // client.println("Access-Control-Allow-Headers: Content-Type");
-              client.println("Access-Control-Max-Age: 1728000");
-              client.println("Content-Length: 0");
-//              client.println("Keep-Alive: timeout=2, max=100");
-//              client.println("Connection: Keep-Alive");
-              client.println("Content-Type: text/html");
-              client.println();
-              break;
-//            }
-            
-          } else if (strcmp (httpRequestMethod, "GET") == 0) {
+          if (strcmp (httpRequestMethod, "GET") == 0) {
             
             if (strcmp (httpRequestAddress, "/") == 0) {
               
@@ -406,6 +268,190 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               break;
               
             }
+            
+          } else if (strcmp (httpRequestMethod, "POST") == 0) {
+            
+            if (strcmp (httpRequestAddress, "/pin") == 0) {
+              
+              Serial.println("PARAMETERS:");
+              Serial.println(httpRequestParameters[0]);
+              Serial.println(httpRequestParameters[1]);
+              Serial.println(httpRequestParameters[2]);
+              Serial.println(httpRequestParameters[5]);
+              
+              // Split parameters by '='
+//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
+//              String key = getValue(split, '=', 0);
+//              String value = getValue(split, '=', 1);
+
+              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int index = getValue(indexParameter, '=', 1).toInt();
+
+              String pinParameter = String(httpRequestParameters[1]); // "hi this is a split test";
+              int pin = getValue(pinParameter, '=', 1).toInt();
+              
+              String operationParameter = String(httpRequestParameters[2]); // "hi this is a split test";
+              int operation = getValue(operationParameter, '=', 1).toInt();
+              
+              String valueParameter = String(httpRequestParameters[5]); // "hi this is a split test";
+              int value = getValue(valueParameter, '=', 1).toInt();
+              
+              Serial.println("INDEX/PIN/OPERATION/VALUE:");
+              Serial.println(index);
+              Serial.println(pin);
+              Serial.println(operation);
+              Serial.println(value);
+              
+//              // TODO: Parse parameters from HTTP request
+//              int pin = String(httpRequestParameters[0]).toInt();
+//              int value = String(httpRequestParameters[4]).toInt();
+//              
+//              Serial.print("pin = ");
+//              Serial.print(pin);
+//              Serial.print("\n");
+//              
+//              Serial.print("value = ");
+//              Serial.print(value);
+//              Serial.print("\n");
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehavior(index, operation, pin, 0, 1, value);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              client.println();
+              
+              // TODO: flush
+              // TODO: close
+              
+              break;
+              
+            } else if (strcmp (httpRequestAddress, "/delay") == 0) {
+              
+              Serial.println("PARAMETERS:");
+              Serial.println(httpRequestParameters[0]);
+
+              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int index = getValue(indexParameter, '=', 1).toInt();
+              
+              String millisecondsParameter = String(httpRequestParameters[1]); // e.g., "milliseconds=1000";
+              int milliseconds = getValue(millisecondsParameter, '=', 1).toInt();
+              
+              Serial.println("MILLISECONDS:");
+              Serial.println(milliseconds);
+              
+              // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              //insertBehavior(0, 2, 1, 0, 1, milliseconds);
+              insertBehavior(index, 2, 1, 0, 1, milliseconds);
+              
+              // TODO: Wait for master to create the node (so can return it's ID)
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              
+              // TODO: flush
+              // TODO: close
+              
+              break;
+              
+            } else if (strcmp (httpRequestAddress, "/erase") == 0) {
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehavior(0, 3, 1, 0, 1, 0);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              
+              break;
+              
+            } else {
+              
+              // TODO: Default, catch-all GET handler that scaffolds further action
+              
+              // Send a standard 404 HTTP response header
+              client.println("HTTP/1.1 404 Not Found");
+              client.println("Access-Control-Allow-Origin: *");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");  // the connection will be closed after completion of the response
+              client.println();
+              
+              break;
+            } 
+            
+          } else if (strcmp (httpRequestMethod, "DELETE") == 0) {
+            
+            if (strcmp (httpRequestAddress, "/behavior") == 0) {
+              
+              Serial.println("PARAMETERS:");
+              Serial.println(httpRequestParameters[0]);
+              
+              // Split parameters by '='
+//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
+//              String key = getValue(split, '=', 0);
+//              String value = getValue(split, '=', 1);
+
+              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int index = getValue(indexParameter, '=', 1).toInt();
+              
+              int operation = 4; // BEHAVIOR_DELETE
+              
+              Serial.println("INDEX:");
+              Serial.println(index);
+              
+//              // TODO: Parse parameters from HTTP request
+//              int pin = String(httpRequestParameters[0]).toInt();
+//              int value = String(httpRequestParameters[4]).toInt();
+//              
+//              Serial.print("pin = ");
+//              Serial.print(pin);
+//              Serial.print("\n");
+//              
+//              Serial.print("value = ");
+//              Serial.print(value);
+//              Serial.print("\n");
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehavior(index, operation, 0, 0, 0, 0);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              client.println();
+              
+              // TODO: flush
+              // TODO: close
+              
+              break;
+              
+            }
+            
+          } else if (strcmp (httpRequestMethod, "OPTIONS") == 0) {
+            
+//            if (strcmp (httpRequestAddress, "/pin") == 0) {
+              // client.println("HTTP/1.1 204 No Content");
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+              client.println("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE");
+              client.println("Access-Control-Allow-Headers: X-PINGOTHER"); // client.println("Access-Control-Allow-Headers: Content-Type");
+              client.println("Access-Control-Max-Age: 1728000");
+              client.println("Content-Length: 0");
+//              client.println("Keep-Alive: timeout=2, max=100");
+//              client.println("Connection: Keep-Alive");
+              client.println("Content-Type: text/html");
+              client.println();
+              break;
+//            }
             
           } else { // Unrecognized HTTP request method (possibly an error, such as a malformed request)
               

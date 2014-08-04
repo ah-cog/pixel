@@ -6,6 +6,7 @@
 #define PIN_WRITE_DIGITAL 1
 #define BEHAVIOR_DELAY 2
 #define BEHAVIOR_ERASE 3
+#define BEHAVIOR_DELETE 4
 
 // turn digital pin on
 // turn digital pin off
