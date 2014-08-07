@@ -23,7 +23,7 @@ int generateBehaviorIdentifier() {
 
 struct Behavior {
   // TODO: add "instruction" so can add "delay" etc.
-//  int id; // The behavior's unique ID
+  int uid; // The behavior's unique ID (uid will recur on other modules since it's just a counter associated with behaviors added)
   int operation; // i.e., write, read, PWM, "remember value at this time"
   int pin; // The pin number
   int type; // i.e., digital or analog

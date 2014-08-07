@@ -74,6 +74,7 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
       // Move any behaviors back if needed
       //for (int i = index; i < loopSize; i++) {
       for (int i = index; i < loopSize; i++) {
+        behaviorLoop[i].uid = behaviorLoop[i + 1].uid;
         behaviorLoop[i].operation = behaviorLoop[i + 1].operation;
         behaviorLoop[i].pin = behaviorLoop[i + 1].pin;
         behaviorLoop[i].type = behaviorLoop[i + 1].type;
@@ -115,6 +116,7 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
     // Move any behaviors back if needed
     //for (int i = index; i < loopSize; i++) {
     for (int i = loopSize; i > index; i--) {
+      behaviorLoop[i].uid = behaviorLoop[i - 1].uid;
       behaviorLoop[i].operation = behaviorLoop[i - 1].operation;
       behaviorLoop[i].pin = behaviorLoop[i - 1].pin;
       behaviorLoop[i].type = behaviorLoop[i - 1].type;
@@ -137,7 +139,7 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
     }
     
     // Add behavior to queue
-//    behaviorLoop[loopSize].id = generateBehaviorIdentifier();
+    behaviorLoop[loopSize].uid = generateBehaviorIdentifier();
     behaviorLoop[index].operation = operation;
     behaviorLoop[index].pin = pin;
     behaviorLoop[index].type = type;

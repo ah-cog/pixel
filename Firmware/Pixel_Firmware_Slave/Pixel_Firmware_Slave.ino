@@ -12,30 +12,9 @@ Authors: Michael Gubbels
 // - Firmware V. 1.24
 
 #include <Wire.h>
-
-// "Transcluded" device. Changes to this device are reflected in the associated physical device.
-//struct VirtualDevice {
-//  int ipAddress;
-//  int meshAddress;
-//  // TODO: Include "physicalDevice" reference.
-//};
-//VirtualDevice virtualDevice;
-
-// TODO: Impelment PhysicalDevice class.
-// #define PHYSICAL_PIN_COUNT 24
-
-// TODO: Master board I/O state for (1) requested state and (2) reported state (by master).
-struct VirtualPin {
-  int pin; // The pin number
-  int type; // i.e., digital, analog, pwm, touch
-  int mode; // i.e., input or output
-  int value; // i.e., high or low
-};
-#define VIRTUAL_PIN_COUNT 24
-VirtualPin virtualPin[VIRTUAL_PIN_COUNT];
-
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
+#include "VirtualDevice.h"
 #include "WebServer.h"
 
 #define I2C_DEVICE_ADDRESS 2
@@ -101,13 +80,14 @@ void i2cReceiveEvent (int howMany) {
 //  Serial.println();
   
   // Parse received pin value
-  String split = String(i2cBuffer); // "hi this is a split test";
+  String split     = String(i2cBuffer); // "hi this is a split test";
   String operation = getValue(split, ' ', 0);
-  int pin = getValue(split, ' ', 1).toInt();
-  int value = getValue(split, ' ', 2).toInt();
+  int pin          = getValue(split, ' ', 1).toInt();
+  int value        = getValue(split, ' ', 2).toInt();
   
   // Update virtual device state
-  virtualPin[pin].value = value;
+  // virtualPin[pin].value = value;
+  setPinValue(pin, value);
   
   /*
   Serial.print("PIN ");
