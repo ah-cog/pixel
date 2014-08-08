@@ -54,7 +54,7 @@ void setPinValue2(int pin, int value) {
   Wire.write(" ");
   Wire.write(value == HIGH ? "1" : "0"); // The pin's value
   //  Wire.write(";");        // sends five bytes
-  Wire.endTransmission();    // stop transmitting 
+  Wire.endTransmission();    // stop transmitting
   
   // TODO: Update state on other pixels in mesh network
 }

@@ -436,13 +436,67 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
             }
             
+          } else if (strcmp (httpRequestMethod, "PUT") == 0) {
+            
+            Serial.println("PUTTING!");
+            
+            if (strcmp (httpRequestAddress, "/pin") == 0) {
+              
+              Serial.println("PARAMETERS:");
+              Serial.println(httpRequestParameters[0]);
+              Serial.println(httpRequestParameters[1]);
+              Serial.println(httpRequestParameters[2]);
+              Serial.println(httpRequestParameters[5]);
+              
+              // Split parameters by '='
+//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
+//              String key = getValue(split, '=', 0);
+//              String value = getValue(split, '=', 1);
+
+              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int index = getValue(indexParameter, '=', 1).toInt();
+
+              String pinParameter = String(httpRequestParameters[1]); // "hi this is a split test";
+              int pin = getValue(pinParameter, '=', 1).toInt();
+              
+//              String operationParameter = String(httpRequestParameters[2]); // "hi this is a split test";
+//              int operation = getValue(operationParameter, '=', 1).toInt();
+              
+              String valueParameter = String(httpRequestParameters[5]); // "hi this is a split test";
+              int value = getValue(valueParameter, '=', 1).toInt();
+              
+              Serial.println("INDEX/PIN/VALUE:");
+              Serial.println(index);
+              Serial.println(pin);
+//              Serial.println(operation);
+              Serial.println(value);
+              
+              int operation = 5; // BEHAVIOR_UPDATE
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehavior(index, operation, pin, 0, 1, value);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              client.println();
+              
+              // TODO: flush
+              // TODO: close
+              
+              break;
+              
+            }
+            
           } else if (strcmp (httpRequestMethod, "OPTIONS") == 0) {
             
 //            if (strcmp (httpRequestAddress, "/pin") == 0) {
               // client.println("HTTP/1.1 204 No Content");
               client.println("HTTP/1.1 200 OK");
               client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE");
+              client.println("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
               client.println("Access-Control-Allow-Headers: X-PINGOTHER"); // client.println("Access-Control-Allow-Headers: Content-Type");
               client.println("Access-Control-Max-Age: 1728000");
               client.println("Content-Length: 0");
@@ -634,9 +688,9 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
   // (1) http://htmlcompressor.com/compressor/
   // (2) http://www.willpeavy.com/minifier/
   // (3) http://www.freeformatter.com/java-dotnet-escape.html
-//  client.println("<!DOCTYPE html><html><head><title>Pixel</title><body><a href=\"http://www.physical.computer/looper\"></body></html>");
-  client.println("<!DOCTYPE html><html><head><title>Pixel</title><script src=\"http://192.168.43.127:3000/javascripts/processing.js\"></script><meta name=\"viewport\" content=\"user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1\"><link href='http://fonts.googleapis.com/css?family=Didact+Gothic' rel='stylesheet' type='text/css'><link rel=\"stylesheet\" href=\"http://192.168.43.127:3000/stylesheets/style.css\"/></head><body><script src=\"http://192.168.43.127:3000/javascripts/jquery-1.9.1.min.js\"></script><script src=\"http://192.168.43.127:3000/javascripts/modernizr.js\"></script><div id=\"carousel\"><ul id=\"panes\"><li class=\"pane1\"><canvas id=\"looperCanvas\" style=\"width: 100%;height: 100%;\"></canvas></li></ul></div><script src=\"http://192.168.43.127:3000/javascripts/jquery.hammer.min.js\"></script><script>/* var debug_el=$(\"#debug\");function debug(text){debug_el.text(text);}*/ /** * requestAnimationFrame and cancel polyfill */ (function(){var lastTime=0;var vendors=['ms', 'moz', 'webkit', 'o'];for(var x=0;x < vendors.length && !window.requestAnimationFrame;++x){window.requestAnimationFrame=window[vendors[x]+'RequestAnimationFrame'];window.cancelAnimationFrame=window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];}if (!window.requestAnimationFrame) window.requestAnimationFrame=function(callback, element){var currTime=new Date().getTime();var timeToCall=Math.max(0, 16 - (currTime - lastTime));var id=window.setTimeout(function(){callback(currTime + timeToCall);}, timeToCall);lastTime=currTime + timeToCall;return id;};if (!window.cancelAnimationFrame) window.cancelAnimationFrame=function(id){clearTimeout(id);};}());</script><script type=\"application/processing\" data-processing-target=\"looperCanvas\"> /* @pjs crisp=true;font=\"http://192.168.43.127:3000/DidactGothic.ttf\";*/ PFont primaryFont;void setup(){size(screenWidth, screenHeight);primaryFont=loadFont(\"http://192.168.43.127:3000/DidactGothic.ttf\");}void draw(){background(#F0F1F0);primaryFont=createFont(\"http://192.168.43.127:3000/DidactGothic.ttf\", 32);textFont(primaryFont, 100);textAlign(CENTER);fill(65, 65, 65);text(\"pixel\", screenWidth / 2, screenHeight / 2 + 20);}</script><script src=\"http://192.168.43.127:3000/javascripts/looper.js\"></script><script>looper=new Looper();looper.addDevice();looper.addDevice();looper.addDevice();looper.showDeviceByIndex(0);</script></body></html>");
-  //client.println("<!DOCTYPE html><html><head><title>Pixel</title><script src=\"http://physical.computer:80/javascripts/processing.js\"></script><meta name=\"viewport\" content=\"user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1\"><link href='http://fonts.googleapis.com/css?family=Didact+Gothic' rel='stylesheet' type='text/css'><link rel=\"stylesheet\" href=\"http://physical.computer:80/stylesheets/style.css\"/></head><body><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js\"></script><script src=\"http://physical.computer:80/javascripts/modernizr.js\"></script><div id=\"carousel\"><ul id=\"panes\"><li class=\"pane1\"><canvas id=\"looperCanvas\" style=\"width: 100%;height: 100%;\"></canvas></li></ul></div><script src=\"http://physical.computer:80/javascripts/jquery.hammer.min.js\"></script><script>/* var debug_el=$(\"#debug\");function debug(text){debug_el.text(text);}*/ /** * requestAnimationFrame and cancel polyfill */ (function(){var lastTime=0;var vendors=['ms', 'moz', 'webkit', 'o'];for(var x=0;x < vendors.length && !window.requestAnimationFrame;++x){window.requestAnimationFrame=window[vendors[x]+'RequestAnimationFrame'];window.cancelAnimationFrame=window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];}if (!window.requestAnimationFrame) window.requestAnimationFrame=function(callback, element){var currTime=new Date().getTime();var timeToCall=Math.max(0, 16 - (currTime - lastTime));var id=window.setTimeout(function(){callback(currTime + timeToCall);}, timeToCall);lastTime=currTime + timeToCall;return id;};if (!window.cancelAnimationFrame) window.cancelAnimationFrame=function(id){clearTimeout(id);};}());</script><script type=\"application/processing\" data-processing-target=\"looperCanvas\"> /* @pjs crisp=true;font=\"http://physical.computer:80/DidactGothic.ttf\";*/ PFont primaryFont;void setup(){size(screenWidth, screenHeight);primaryFont=loadFont(\"http://physical.computer:80/DidactGothic.ttf\");}void draw(){background(#F0F1F0);primaryFont=createFont(\"http://physical.computer:80/DidactGothic.ttf\", 32);textFont(primaryFont, 100);textAlign(CENTER);fill(65, 65, 65);text(\"pixel\", screenWidth / 2, screenHeight / 2 + 20);}</script><script src=\"http://physical.computer:80/javascripts/looper.js\"></script><script>looper=new Looper();looper.addDevice();looper.addDevice();looper.addDevice();looper.showDeviceByIndex(0);</script></body></html>");
+  client.println("<!DOCTYPE html><html><head><title>Pixel</title><body><a href=\"http://www.physical.computer/looper\"></body></html>");
+  // client.println("<!DOCTYPE html><html><head><title>Pixel</title><script src=\"http://192.168.43.127:3000/javascripts/processing.js\"></script><meta name=\"viewport\" content=\"user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1\"><link href='http://fonts.googleapis.com/css?family=Didact+Gothic' rel='stylesheet' type='text/css'><link rel=\"stylesheet\" href=\"http://192.168.43.127:3000/stylesheets/style.css\"/></head><body><script src=\"http://192.168.43.127:3000/javascripts/jquery-1.9.1.min.js\"></script><script src=\"http://192.168.43.127:3000/javascripts/modernizr.js\"></script><div id=\"carousel\"><ul id=\"panes\"><li class=\"pane1\"><canvas id=\"looperCanvas\" style=\"width: 100%;height: 100%;\"></canvas></li></ul></div><script src=\"http://192.168.43.127:3000/javascripts/jquery.hammer.min.js\"></script><script>/* var debug_el=$(\"#debug\");function debug(text){debug_el.text(text);}*/ /** * requestAnimationFrame and cancel polyfill */ (function(){var lastTime=0;var vendors=['ms', 'moz', 'webkit', 'o'];for(var x=0;x < vendors.length && !window.requestAnimationFrame;++x){window.requestAnimationFrame=window[vendors[x]+'RequestAnimationFrame'];window.cancelAnimationFrame=window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];}if (!window.requestAnimationFrame) window.requestAnimationFrame=function(callback, element){var currTime=new Date().getTime();var timeToCall=Math.max(0, 16 - (currTime - lastTime));var id=window.setTimeout(function(){callback(currTime + timeToCall);}, timeToCall);lastTime=currTime + timeToCall;return id;};if (!window.cancelAnimationFrame) window.cancelAnimationFrame=function(id){clearTimeout(id);};}());</script><script type=\"application/processing\" data-processing-target=\"looperCanvas\"> /* @pjs crisp=true;font=\"http://192.168.43.127:3000/DidactGothic.ttf\";*/ PFont primaryFont;void setup(){size(screenWidth, screenHeight);primaryFont=loadFont(\"http://192.168.43.127:3000/DidactGothic.ttf\");}void draw(){background(#F0F1F0);primaryFont=createFont(\"http://192.168.43.127:3000/DidactGothic.ttf\", 32);textFont(primaryFont, 100);textAlign(CENTER);fill(65, 65, 65);text(\"pixel\", screenWidth / 2, screenHeight / 2 + 20);}</script><script src=\"http://192.168.43.127:3000/javascripts/looper.js\"></script><script>looper=new Looper();looper.addDevice();looper.addDevice();looper.addDevice();looper.showDeviceByIndex(0);</script></body></html>");
+  // client.println("<!DOCTYPE html><html><head><title>Pixel</title><script src=\"http://physical.computer:80/javascripts/processing.js\"></script><meta name=\"viewport\" content=\"user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1\"><link href='http://fonts.googleapis.com/css?family=Didact+Gothic' rel='stylesheet' type='text/css'><link rel=\"stylesheet\" href=\"http://physical.computer:80/stylesheets/style.css\"/></head><body><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js\"></script><script src=\"http://physical.computer:80/javascripts/modernizr.js\"></script><div id=\"carousel\"><ul id=\"panes\"><li class=\"pane1\"><canvas id=\"looperCanvas\" style=\"width: 100%;height: 100%;\"></canvas></li></ul></div><script src=\"http://physical.computer:80/javascripts/jquery.hammer.min.js\"></script><script>/* var debug_el=$(\"#debug\");function debug(text){debug_el.text(text);}*/ /** * requestAnimationFrame and cancel polyfill */ (function(){var lastTime=0;var vendors=['ms', 'moz', 'webkit', 'o'];for(var x=0;x < vendors.length && !window.requestAnimationFrame;++x){window.requestAnimationFrame=window[vendors[x]+'RequestAnimationFrame'];window.cancelAnimationFrame=window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];}if (!window.requestAnimationFrame) window.requestAnimationFrame=function(callback, element){var currTime=new Date().getTime();var timeToCall=Math.max(0, 16 - (currTime - lastTime));var id=window.setTimeout(function(){callback(currTime + timeToCall);}, timeToCall);lastTime=currTime + timeToCall;return id;};if (!window.cancelAnimationFrame) window.cancelAnimationFrame=function(id){clearTimeout(id);};}());</script><script type=\"application/processing\" data-processing-target=\"looperCanvas\"> /* @pjs crisp=true;font=\"http://physical.computer:80/DidactGothic.ttf\";*/ PFont primaryFont;void setup(){size(screenWidth, screenHeight);primaryFont=loadFont(\"http://physical.computer:80/DidactGothic.ttf\");}void draw(){background(#F0F1F0);primaryFont=createFont(\"http://physical.computer:80/DidactGothic.ttf\", 32);textFont(primaryFont, 100);textAlign(CENTER);fill(65, 65, 65);text(\"pixel\", screenWidth / 2, screenHeight / 2 + 20);}</script><script src=\"http://physical.computer:80/javascripts/looper.js\"></script><script>looper=new Looper();looper.addDevice();looper.addDevice();looper.addDevice();looper.showDeviceByIndex(0);</script></body></html>");
   client.println();
 }
 

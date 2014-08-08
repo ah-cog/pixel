@@ -102,9 +102,46 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
     }
     
     return false;
-  }
-  
-  else if (loopSize < DEFAULT_LOOP_CAPACITY) {
+    
+  } else if (operation == BEHAVIOR_UPDATE) {
+
+    // Check if the behavior index is in bounds
+    if (index < 0  || index >= loopSize) {
+      return false;
+    }
+    
+    Serial.print("index = "); Serial.print(index); Serial.println();
+    
+    // Add behavior to queue
+    //behaviorLoop[loopSize].uid = generateBehaviorIdentifier();
+    //behaviorLoop[index].operation = operation;
+    behaviorLoop[index].pin = pin;
+    behaviorLoop[index].type = type;
+    // behaviorLoop[index].mode = mode;
+    behaviorLoop[index].value = value;
+    
+    Serial.print("value = "); Serial.print(behaviorLoop[index].value); Serial.println();
+    
+//    setPinValue2 (index, value);
+    
+    // TODO: Update the delay behavior.
+    // Set up support structures for the behavior
+//    if (operation == BEHAVIOR_DELAY) {
+//      // Set up timer
+//      delays[delayCount].startTime = 0; // Initialize/Reset the timer
+//      delays[delayCount].duration = behaviorLoop[index].value;
+//      delays[delayCount].behavior = &behaviorLoop[index];
+//      
+//      Serial.print("Creating delay...");
+//      Serial.print(delays[delayCount].duration);
+//      Serial.println();
+//      
+//      delayCount++;
+//    }
+
+    return true;
+    
+  } else if (loopSize < DEFAULT_LOOP_CAPACITY) {
 
     // If index is -1 or greater than the loopSize then add the beahvior transformation to the end of the loop
     if (index == -1 || index > loopSize) {

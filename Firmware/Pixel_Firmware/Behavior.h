@@ -7,6 +7,7 @@
 #define BEHAVIOR_DELAY 2
 #define BEHAVIOR_ERASE 3
 #define BEHAVIOR_DELETE 4
+#define BEHAVIOR_UPDATE 5
 
 // turn digital pin on
 // turn digital pin off
