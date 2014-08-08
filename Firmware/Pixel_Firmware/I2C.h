@@ -2,7 +2,7 @@
 #define I2C_H
 
 #include "Behavior.h"
-#include "Pixel.h"
+#include "Device.h"
 
 #define I2C_MESSAGE_BYTE_SIZE 30
 
@@ -23,68 +23,60 @@ int i2cMessageBufferSize = 0;
 String getValue (String data, char separator, int index);
 
 // TODO: Move this to "Ports.h"
-void sendToSlave(char* text) {
-  // Send to slave
-  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
-//  Wire.write("x is ");        // sends five bytes
-//  Wire.write(x);              // sends one byte  
-  Wire.write(text);
-  Wire.endTransmission();    // stop transmitting
-}
+//void sendToSlave(char* text) {
+//  // Send character string to slave device
+//  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
+//  Wire.write(text);
+//  Wire.endTransmission();    // stop transmitting
+//}
 
 // TODO: Move this to "Ports.h"
-void setPinValue2(int pin, int value) {
-  
-//  // TODO: Consider not having this?
-////  pinMode(0, INPUT);
-////  setPinState (pin, 0, 1, value);
-//  setPinMode (pin, PIN_MODE_OUTPUT);
-//  
-//  // TODO: Include "pin mode" and "analog, digital, touch, pwm" in the output
-//  
-//  // Write to the pin
-//  digitalWrite (pin, value);
-  setPinValue (pin, value);
+void syncPinValue(int pin) {
+
+  // Get the most recent pin value
+  int pinValue = getLastPinValue(pin);
   
   // Update the state (on slave board for Looper)
-  char buf[8]; // "-2147483648\0"
+  char buf[8];
   Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
   Wire.write("pin ");
   Wire.write(itoa(pin, buf, 10)); // The pin number
   Wire.write(" ");
-  Wire.write(value == HIGH ? "1" : "0"); // The pin's value
+  Wire.write(pinValue == HIGH ? "1" : "0"); // The pin's value
   //  Wire.write(";");        // sends five bytes
   Wire.endTransmission();    // stop transmitting
   
   // TODO: Update state on other pixels in mesh network
+  
+  physicalPin[pin].isUpdated = false;
 }
 
-int getPinValue2(int pin) {
-  
-  // TODO: Store current value on history stack (i.e., cache some locally, and store all of them in the cloud)
-  
-  // TODO: Update stored state of pin, so it can be updated only if needed, and its state can be queried, too (and transfered to another pixel).
-  // pinMode(pin, INPUT);
-  setPinMode (pin, PIN_MODE_INPUT);
-  
-  // Read to the pin
-  int value = digitalRead (pin);
-  
-  // Update the virtual Pixel's state
-  setPinValue (pin, (value == 1 ? PIN_VALUE_HIGH : PIN_VALUE_LOW));
-  
-  // Update the state
-  char buf[6]; // "-2147483648\0"
-  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
-  Wire.write("pin ");
-  Wire.write(itoa(pin, buf, 10)); // The pin number
-  Wire.write(" ");
-  Wire.write(value == HIGH ? "1" : "0");
-  //  Wire.write(";");        // sends five bytes
-  Wire.endTransmission();    // stop transmitting 
-  
-  return value;
-}
+//int getPinValue2(int pin) {
+//  
+//  // TODO: Store current value on history stack (i.e., cache some locally, and store all of them in the cloud)
+//  
+//  // TODO: Update stored state of pin, so it can be updated only if needed, and its state can be queried, too (and transfered to another pixel).
+//  // pinMode(pin, INPUT);
+//  setPinMode (pin, PIN_MODE_INPUT);
+//  
+//  // Read to the pin
+//  int value = digitalRead (pin);
+//  
+//  // Update the virtual Pixel's state
+//  setPinValue (pin, (value == 1 ? PIN_VALUE_HIGH : PIN_VALUE_LOW));
+//  
+//  // Update the state
+//  char buf[6]; // "-2147483648\0"
+//  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
+//  Wire.write("pin ");
+//  Wire.write(itoa(pin, buf, 10)); // The pin number
+//  Wire.write(" ");
+//  Wire.write(value == HIGH ? "1" : "0");
+//  //  Wire.write(";");        // sends five bytes
+//  Wire.endTransmission();    // stop transmitting 
+//  
+//  return value;
+//}
 
 
 
@@ -187,12 +179,16 @@ void behaviorLoopStep() {
     
       if ((*currentBehavior).operation == PIN_READ_DIGITAL) { // Read pin state
         
-        int pinValue = getPinValue2((*currentBehavior).pin);
+        //int pinValue = getPinValue2((*currentBehavior).pin);
+        int pinValue = getPinValue((*currentBehavior).pin);
+        syncPinValue((*currentBehavior).pin);
         Serial.println("PIN_READ_DIGITAL");
       
       } else if ((*currentBehavior).operation == PIN_WRITE_DIGITAL) { // Write to pin
 
-        setPinValue2((*currentBehavior).pin, ((*currentBehavior).value == 1 ? HIGH : LOW));
+        // setPinValue((*currentBehavior).pin, ((*currentBehavior).value == 1 ? HIGH : LOW));
+        setPinValue((*currentBehavior).pin, (*currentBehavior).value);
+        syncPinValue((*currentBehavior).pin);
         Serial.println("PIN_WRITE_DIGITAL");
         
       } else if ((*currentBehavior).operation == BEHAVIOR_DELAY) {

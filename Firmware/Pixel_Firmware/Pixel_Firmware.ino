@@ -36,7 +36,7 @@ Authors: Michael Gubbels
 void setup() {
   
   // Setup Pixel's reflection (i.e., it's virtual machine)
-  setupPixel();
+  setupDevice();
   
   // Set up pin mode for I/O
   setupPorts();
@@ -119,7 +119,8 @@ void loop() {
   if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
     if (outputPinRemote == false) {
       // Output port is on this module!
-      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+      setPinValue(MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+      syncPinValue(MODULE_OUTPUT_PIN);
     } else {
       // Output port is on a different module than this one!
       addMessage(NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
@@ -127,7 +128,8 @@ void loop() {
 //    delay(500);
   } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
     if (outputPinRemote == false) {
-      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+      setPinValue(MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+      syncPinValue(MODULE_OUTPUT_PIN);
     } else {
       addMessage(NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
     }
@@ -376,9 +378,11 @@ void loop() {
     
     } else if (message.message == ACTIVATE_MODULE_OUTPUT) {
       // ACTIVATE_MODULE_OUTPUT
-      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+      setPinValue(MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+      syncPinValue(MODULE_OUTPUT_PIN);
     } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
-      setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+      setPinValue(MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+      syncPinValue(MODULE_OUTPUT_PIN);
     }
     
     // TODO: ANNOUNCE_GESTURE_SHAKE
