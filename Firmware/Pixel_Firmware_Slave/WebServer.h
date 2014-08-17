@@ -175,24 +175,25 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
 //              String key = getValue(split, '=', 0);
 //              String value = getValue(split, '=', 1);
 
-              String idParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              String idParameter = String(httpRequestParameters[0]);
               int id = getValue(idParameter, '=', 1).toInt();
               
-              Behavior* behavior = getBehavior(id);
+              Behavior* behavior = getBehavior2(id);
               
               // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
+              if (behavior != NULL) {
+                client.println("HTTP/1.1 200 OK");
+              } else {
+                client.println("HTTP/1.1 404 Not Found");
+              }
               client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
               client.println("Content-Type: application/json");
               client.println("Connection: close");
               client.println();
               
               // Response data
-              if (behavior != NULL) {
-                client.println("FOUND");  
-              } else {
-                client.println("NOT FOUND");
-              }
+              // NOTE: Add response data here.
+              // e.g., client.println("<html><body>Example Page</body></html>");
               
               break;
               
@@ -307,14 +308,22 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             
             if (strcmp (httpRequestAddress, "/behavior") == 0) {
               
-              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-//              insertBehavior(0, 3, 1, 0, 1, 0);
+              String typeParameter = String(httpRequestParameters[0]);
+              String type = getValue(typeParameter, '=', 1);
 
+              String pinParameter = String(httpRequestParameters[1]);
+              int pin = getValue(pinParameter, '=', 1).toInt();
               
-
-              // TODO: Create behavior and get its generated UUID to include in the "Locaiton" header of the response.
+              String modeParameter = String(httpRequestParameters[2]);
+              String mode = getValue(modeParameter, '=', 1);
               
-              Behavior* behavior = createBehavior();
+              String signalParameter = String(httpRequestParameters[3]);
+              String signal = getValue(signalParameter, '=', 1);
+              
+              String dataParameter = String(httpRequestParameters[4]);
+              String data = getValue(dataParameter, '=', 1);
+              
+              Behavior* behavior = createBehavior2(type, pin, mode, signal, data);
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 201 Created"); // client.println("HTTP/1.1 200 OK");
@@ -465,7 +474,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               int id = getValue(idParameter, '=', 1).toInt();
               
               // Process request
-              boolean isDeleted = deleteBehavior(id);
+              boolean isDeleted = deleteBehavior2(id);
               
               // Respond to request. Send a standard HTTP response header.
               if (isDeleted) {
@@ -536,16 +545,16 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
 //          }
           else if (strcmp (httpRequestMethod, "PUT") == 0) {
             
-            Serial.println("PUTTING!");
-            
             if (strcmp (httpRequestAddress, "/behavior") == 0) {
 
+               // Parse request's URI parameters
               String idParameter = String(httpRequestParameters[0]); // "hi this is a split test";
               int id = getValue(idParameter, '=', 1).toInt();
               
-              Behavior* behavior = updateBehavior(id);
+              // Process request
+              Behavior* behavior = updateBehavior2(id);
               
-              // Send a standard HTTP response header
+              // Respond to request. Send a standard HTTP response header.
               if (behavior != NULL) {
                 client.println("HTTP/1.1 200 OK");
               } else {
@@ -555,10 +564,6 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               client.println("Content-Type: text/html");
               client.println("Connection: close");
               client.println();
-              
-              // TODO: flush
-              // TODO: close
-              
               break;
               
             } else if (strcmp (httpRequestAddress, "/pin") == 0) {
@@ -603,10 +608,6 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               client.println("Content-Type: text/html");
               client.println("Connection: close");
               client.println();
-              
-              // TODO: flush
-              // TODO: close
-              
               break;
               
             }

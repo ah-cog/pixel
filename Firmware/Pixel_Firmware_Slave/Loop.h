@@ -27,16 +27,146 @@ long generateUuid() {
   return uuid;
 }
 
+//Loop* createLoop(Substrate* substrate) {
+//  
+//}
+
+Behavior* createBehavior2(String type, int pin, String mode, String signal, String data) {
+  
+//  if (loopSize < DEFAULT_LOOP_CAPACITY) {
+  
+  // Create behavior substrate
+  if (substrate == NULL) {
+    substrate              = (Substrate*) malloc (sizeof (Substrate));
+    (*substrate).sequences = NULL;
+    (*substrate).entry     = NULL;
+  }
+  
+  // Create sequence
+  // TODO: Add parameter "Substrate* substrate"
+  if (substrate != NULL) {
+    if ((*substrate).sequences == NULL) {
+      
+      // Create sequence
+      Sequence* sequence = (Sequence*) malloc (sizeof (Sequence));
+      (*sequence).uid      = NULL;
+      (*sequence).type     = SEQUENCE_TYPE_LOOP;
+      (*sequence).behavior = NULL;
+      (*sequence).size     = 0;
+      (*sequence).previous = NULL;
+      (*sequence).next     = NULL;
+      
+      // TODO: Create sequence schema
+      
+      // Add sequence to substrate
+      if ((*substrate).sequences == NULL) {
+        Serial.println("First sequence");
+        (*substrate).sequences = sequence;
+      } else {
+        
+        // Get the last behavior in the loop
+        Sequence* lastSequence = (*substrate).sequences;
+        while ((*lastSequence).next != NULL) {
+          Serial.println("Next sequence");
+          lastSequence = (*lastSequence).next;
+        }
+        
+        // Insert at end of the list (iterate to find the last behavior)
+        (*sequence).previous = lastSequence; // Set up the pointer from the new behavior to the previous behavior.
+        (*lastSequence).next = sequence; // Finally, set up the link to the new behavior.
+      }
+//      (*coreLoop).size = (*coreLoop).size + 1;
+    }
+  }
+  
+  //Behavior* behavior = &behaviorLoop[loopSize];
+  // Create a behavior
+  Behavior* behavior = (Behavior*) malloc (sizeof (Behavior));
+  (*behavior).uid      = 0;
+  (*behavior).type     = BEHAVIOR_TYPE_NONE;
+  (*behavior).schema   = NULL;
+  (*behavior).previous = NULL;
+  (*behavior).next     = NULL;
+  
+  // Generate UUID for the behavior
+  (*behavior).uid  = generateUuid();
+  
+  // Parse behavior type parameter
+  Serial.println(type);
+  (*behavior).type = BEHAVIOR_TYPE_INPUT;
+  
+  // Parse behavior schema parameters
+  Serial.println(pin);
+  Serial.println(mode);
+  Serial.println(signal);
+  Serial.println(data);
+  
+  // Set up the behavior schema
+  Input* input = (Input*) malloc(sizeof(Input));
+  (*behavior).schema = input;
+  
+  Serial.println((int)(*behavior).schema);
+  
+  if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+    Input* in = (Input*) (*behavior).schema;
+  }
+  
+  // Add the behavior to the loop
+  Sequence* coreLoop = (*substrate).sequences;
+  if ((*coreLoop).behavior == NULL) {
+    Serial.println("First");
+    (*coreLoop).behavior = behavior;
+  } else {
+    
+    // Get the last behavior in the loop
+    Behavior* lastBehavior = (*coreLoop).behavior;
+    while ((*lastBehavior).next != NULL) {
+      Serial.println("Next");
+      lastBehavior = (*lastBehavior).next;
+    }
+    
+    // Insert at end of the list (iterate to find the last behavior)
+    (*behavior).previous = lastBehavior; // Set up the pointer from the new behavior to the previous behavior.
+    (*lastBehavior).next = behavior; // Finally, set up the link to the new behavior.
+  }
+  (*coreLoop).size = (*coreLoop).size + 1;
+  
+  Serial.print("Loop size: "); Serial.print((*coreLoop).size); Serial.print("\n");
+  
+  return behavior;
+}
+
 /**
  * Insert a behavior node into the behavior loop at the specified index.
  */
-Behavior* createBehavior() {
-  // TODO: Add message to queue... and use sendMessage to send the messages...
+Behavior* createBehavior(String type, int pin, String mode, String signal, String data) {
   
   if (loopSize < DEFAULT_LOOP_CAPACITY) {
+    
+    Behavior* behavior = &behaviorLoop[loopSize];
+    
     // Add behavior to queue
-//    behaviorLoop[loopSize].id = generateBehaviorIdentifier();
-    behaviorLoop[loopSize].uid = generateUuid();
+    (*behavior).uid  = generateUuid();
+    (*behavior).type = BEHAVIOR_TYPE_INPUT;
+    
+    Serial.println(type);
+    Serial.println(pin);
+    Serial.println(mode);
+    Serial.println(signal);
+    Serial.println(data);
+    
+    Input* input = (Input*) malloc(sizeof(Input));
+    (*behavior).schema = input;
+    
+    Serial.println((int)(*behavior).schema);
+    
+    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+      Input* in = (Input*) (*behavior).schema;
+    }
+    
+//    if (strcmp (type, "pin") == 0) {
+//      insertBehavior(index, operation, pin, 0, 1, value);
+//    }
     
     
 //    behaviorLoop[loopSize].operation = operation;
@@ -85,6 +215,45 @@ Behavior* getBehavior(int id) {
   return behavior;
 }
 
+/**
+ * Returns a pointer to behavior node at specified index.
+ */
+Behavior* getBehavior2(int uid) {
+    
+  // Get pointer to behavior node at specified index
+  Behavior* behavior = NULL;
+  
+  // TODO: Search the sequences for the specified behavior
+  
+  // Search the loop for the behavior with the specified UID.
+  if (substrate != NULL) {
+    
+    // Get the last behavior in the loop
+    Sequence* currentSequence = (*substrate).sequences;
+    while (currentSequence != NULL) {
+      Serial.println("Searching sequence");
+      
+      // Get the last behavior in the loop
+      Behavior* soughtBehavior = (*currentSequence).behavior;
+      while (soughtBehavior != NULL) {
+        Serial.println("Searching behavior");
+        
+        // Return the behavior if it has been found
+        if ((*soughtBehavior).uid == uid) {
+          return soughtBehavior;
+        }
+        
+        soughtBehavior = (*soughtBehavior).next;
+      }
+      
+      currentSequence = (*currentSequence).next;
+    }
+    
+  }
+  
+  return behavior;
+}
+
 Behavior* updateBehavior(int id) {
     
   // Get pointer to behavior node at specified index
@@ -98,6 +267,43 @@ Behavior* updateBehavior(int id) {
       
       break;
     }
+  }
+  
+  return behavior;
+}
+
+Behavior* updateBehavior2(int uid) {
+    
+  // Get pointer to behavior node at specified index
+  Behavior* behavior = NULL;
+  
+  // Search the loop for the behavior with the specified UID.
+  if (substrate != NULL) {
+    
+    // Get the last behavior in the loop
+    Sequence* currentSequence = (*substrate).sequences;
+    while (currentSequence != NULL) {
+      Serial.println("Searching sequence");
+      
+      // Get the last behavior in the loop
+      Behavior* soughtBehavior = (*currentSequence).behavior;
+      while (soughtBehavior != NULL) {
+        Serial.println("Searching behavior");
+        
+        // Return the behavior if it has been found
+        if ((*soughtBehavior).uid == uid) {
+          
+          // TODO: Update the behavior
+          
+          return soughtBehavior;
+        }
+        
+        soughtBehavior = (*soughtBehavior).next;
+      }
+      
+      currentSequence = (*currentSequence).next;
+    }
+    
   }
   
   return behavior;
@@ -128,6 +334,116 @@ boolean deleteBehavior(int id) {
   return false;
 }
 
+boolean deleteBehavior2(int uid) {
+    
+  // Get pointer to behavior node at specified index
+  Behavior* behavior = NULL;
+  
+  // Search the loop for the behavior with the specified UID.
+  if (substrate != NULL) {
+    
+    // Get the last behavior in the loop
+    Sequence* currentSequence = (*substrate).sequences;
+    while (currentSequence != NULL) {
+      Serial.println("Searching sequence");
+      
+      // Get the last behavior in the loop
+      Behavior* soughtBehavior = (*currentSequence).behavior;
+      while (soughtBehavior != NULL) {
+        Serial.println("Searching behavior");
+        
+        // Return the behavior if it has been found
+        if ((*soughtBehavior).uid == uid) {
+          
+          Serial.println("Deleting behavior");
+          
+          // Update behavior topology
+          Behavior* previousBehavior = (*soughtBehavior).previous;
+          Behavior* nextBehavior     = (*soughtBehavior).next;
+          
+          // Update the forward sequence
+          if (previousBehavior != NULL) {
+            (*previousBehavior).next = nextBehavior;
+          }
+          
+          // Update the backward sequence
+          if (nextBehavior != NULL) {
+            (*nextBehavior).previous = previousBehavior;
+          }
+          
+          // Update sequence if needed
+          if ((*currentSequence).behavior == soughtBehavior) {
+            if ((*soughtBehavior).next == NULL) {
+              (*currentSequence).behavior = NULL;
+            } else {
+              (*currentSequence).behavior = (*soughtBehavior).next;
+            }
+          }
+          
+          // Resize the sequence
+          (*currentSequence).size = (*currentSequence).size - 1;
+          
+          // Free the behavior from memory
+//          assert(soughtBehavior != NULL);
+          free((*soughtBehavior).schema); // Free the behavior's schema from memory
+          free(soughtBehavior); // Free the behavior from memory
+          
+          return true;
+        }
+        
+        soughtBehavior = (*soughtBehavior).next;
+      }
+      
+      currentSequence = (*currentSequence).next;
+    }
+    
+  }
+  
+//  // Search the loop for the behavior with the specified UID.
+//  if (coreLoop != NULL) {
+//    
+//    // Check if the current behavior is the sought behavior
+//    Behavior* soughtBehavior = (*coreLoop).behavior;
+//    while (soughtBehavior != NULL) {
+//      Serial.println("Searching");
+//      
+//      // Return the behavior if it has been found
+//      if ((*soughtBehavior).uid == uid) {
+//        
+//        Serial.println("Deleting");
+//        
+//        // Update behavior topology
+//        Behavior* previousBehavior = (*soughtBehavior).previous;
+//        Behavior* nextBehavior     = (*soughtBehavior).next;
+//        
+//        // Update the forward sequence
+//        if (previousBehavior != NULL) {
+//          (*previousBehavior).next = nextBehavior;
+//        }
+//        
+//        // Update the backward sequence
+//        if (nextBehavior != NULL) {
+//          (*nextBehavior).previous = previousBehavior;
+//        }
+//        
+//        // Free the behavior from memory
+////        assert(soughtBehavior != NULL);
+//        free((*soughtBehavior).schema); // Free the behavior's schema from memory
+//        free(soughtBehavior); // Free the behavior from memory
+//        
+//        // TODO: Resize the loop!
+//        
+//        return true;
+//      }
+//      
+//      soughtBehavior = (*soughtBehavior).next;
+//    }
+//    
+//  }
+
+  return false;
+}
+
 /**
  * Insert a behavior node into the behavior loop at the specified index.
  */
@@ -142,20 +458,6 @@ boolean appendLoopNode(int pin, int operation, int type, int value) {
     behaviorLoop[loopSize].type = type;
     // behaviorLoop[loopSize].mode = mode;
     behaviorLoop[loopSize].value = value;
-    
-    // Set up support structures for the behavior
-    if (operation == BEHAVIOR_DELAY) {
-      // Set up timer
-      delays[delayCount].startTime = 0; // Initialize/Reset the timer
-      delays[delayCount].duration = behaviorLoop[loopSize].value;
-      delays[delayCount].behavior = &behaviorLoop[loopSize];
-      
-      Serial.print("Creating delay...");
-      Serial.print(delays[delayCount].duration);
-      Serial.println();
-      
-      delayCount++;
-    }
     
     loopSize++; // Increment the loop size
     
@@ -186,15 +488,6 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
         behaviorLoop[i].type = behaviorLoop[i + 1].type;
         // behaviorLoop[i].mode = behaviorLoop[i + 1].mode;
         behaviorLoop[i].value = behaviorLoop[i + 1].value;
-        
-        // Update delays' that point to the moved behavior
-        if (behaviorLoop[i].operation == BEHAVIOR_DELAY) {
-          for (int j = 0; j < delayCount; j++) {
-            if (delays[j].behavior == &behaviorLoop[i + 1]) {
-              delays[j].behavior = &behaviorLoop[i];
-            }
-          }
-        }
       }
       
       // Update the beahvior counter if needed
@@ -286,15 +579,6 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
       behaviorLoop[i].type = behaviorLoop[i - 1].type;
       // behaviorLoop[i].mode = behaviorLoop[i - 1].mode;
       behaviorLoop[i].value = behaviorLoop[i - 1].value;
-      
-      // Update delays' that point to the moved behavior
-      if (behaviorLoop[i].operation == BEHAVIOR_DELAY) {
-        for (int j = 0; j < delayCount; j++) {
-          if (delays[j].behavior == &behaviorLoop[i - 1]) {
-            delays[j].behavior = &behaviorLoop[i];
-          }
-        }
-      }
     }
     
     // Update the beahvior counter if needed
@@ -309,20 +593,6 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
     behaviorLoop[index].type = type;
     // behaviorLoop[index].mode = mode;
     behaviorLoop[index].value = value;
-    
-    // Set up support structures for the behavior
-    if (operation == BEHAVIOR_DELAY) {
-      // Set up timer
-      delays[delayCount].startTime = 0; // Initialize/Reset the timer
-      delays[delayCount].duration = behaviorLoop[index].value;
-      delays[delayCount].behavior = &behaviorLoop[index];
-      
-      Serial.print("Creating delay...");
-      Serial.print(delays[delayCount].duration);
-      Serial.println();
-      
-      delayCount++;
-    }
     
     loopSize++; // Increment the loop size
     
@@ -385,25 +655,25 @@ boolean eraseLoop() {
 }
 
 
-/**
- * Returns a copy of the behavior node at the specified index.
- */
-Behavior getBehaviorCopy(int index) {
-  
-  if (index >= 0 && index < loopSize) {
-    
-    // Copy the behavior node at the specified index
-    Behavior behaviorNode = {
-      behaviorLoop[index].pin,
-      behaviorLoop[index].operation,
-      behaviorLoop[index].type,
-      behaviorLoop[index].mode,
-      behaviorLoop[index].value
-    }; // Get behavior node at specified index
-    
-    return behaviorNode;
-  }
-}
+///**
+// * Returns a copy of the behavior node at the specified index.
+// */
+//Behavior getBehaviorCopy(int index) {
+//  
+//  if (index >= 0 && index < loopSize) {
+//    
+//    // Copy the behavior node at the specified index
+//    Behavior behaviorNode = {
+//      behaviorLoop[index].pin,
+//      behaviorLoop[index].operation,
+//      behaviorLoop[index].type,
+//      behaviorLoop[index].mode,
+//      behaviorLoop[index].value
+//    }; // Get behavior node at specified index
+//    
+//    return behaviorNode;
+//  }
+//}
 
 /**
  * Returns a pointer to behavior node at specified index.
