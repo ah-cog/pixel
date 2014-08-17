@@ -1,6 +1,7 @@
 #ifndef WEB_SERVER_H
 #define WEB_SERVER_H
 
+#include "Loop.h"
 #include "BehaviorTransformation.h"
 
 //#include <Adafruit_CC3000.h>
@@ -162,6 +163,39 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               handleDefaultHttpRequest(client);
               break;
               
+            } else if (strcmp (httpRequestAddress, "/behavior") == 0) {
+              
+              Serial.println("PARAMETERS:");
+//              Serial.println(httpRequestParameters[0]);
+              Serial.println(httpRequestParameters[0]);
+//              Serial.println(httpRequestParameters[4]);
+              
+              // Split parameters by '='
+//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
+//              String key = getValue(split, '=', 0);
+//              String value = getValue(split, '=', 1);
+
+              String idParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int id = getValue(idParameter, '=', 1).toInt();
+              
+              Behavior* behavior = getBehavior(id);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+              client.println("Content-Type: application/json");
+              client.println("Connection: close");
+              client.println();
+              
+              // Response data
+              if (behavior != NULL) {
+                client.println("FOUND");  
+              } else {
+                client.println("NOT FOUND");
+              }
+              
+              break;
+              
             } else if (strcmp (httpRequestAddress, "/pin") == 0) {
               
               Serial.println("PARAMETERS:");
@@ -271,7 +305,28 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             
           } else if (strcmp (httpRequestMethod, "POST") == 0) {
             
-            if (strcmp (httpRequestAddress, "/pin") == 0) {
+            if (strcmp (httpRequestAddress, "/behavior") == 0) {
+              
+              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+//              insertBehavior(0, 3, 1, 0, 1, 0);
+
+              
+
+              // TODO: Create behavior and get its generated UUID to include in the "Locaiton" header of the response.
+              
+              Behavior* behavior = createBehavior();
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 201 Created"); // client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *");
+              client.println("Access-Control-Expose-Headers: Location");
+              client.println("Content-Type: text/html");
+              client.print("Location: /behavior/"); client.print((*behavior).uid); client.print("\n");
+              client.println("Connection: close");
+              
+              break;
+              
+            } else if (strcmp (httpRequestAddress, "/pin") == 0) {
               
               Serial.println("PARAMETERS:");
               Serial.println(httpRequestParameters[0]);
@@ -373,6 +428,18 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               break;
               
+            } else if (strcmp (httpRequestAddress, "/reboot") == 0) {
+              
+              // TODO: Only do this when /add-node is called (or whatever the URI will be)
+              insertBehavior(0, 20, 0, 0, 0, 0);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              break;
+              
             } else {
               
               // TODO: Default, catch-all GET handler that scaffolds further action
@@ -387,43 +454,103 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               break;
             } 
             
-          } else if (strcmp (httpRequestMethod, "DELETE") == 0) {
+          }
+          
+          else if (strcmp (httpRequestMethod, "DELETE") == 0) {
             
             if (strcmp (httpRequestAddress, "/behavior") == 0) {
-              
-              Serial.println("PARAMETERS:");
-              Serial.println(httpRequestParameters[0]);
-              
-              // Split parameters by '='
-//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
-//              String key = getValue(split, '=', 0);
-//              String value = getValue(split, '=', 1);
 
-              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
-              int index = getValue(indexParameter, '=', 1).toInt();
+              // Parse request's URI parameters
+              String idParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int id = getValue(idParameter, '=', 1).toInt();
               
-              int operation = 4; // BEHAVIOR_DELETE
+              // Process request
+              boolean isDeleted = deleteBehavior(id);
               
-              Serial.println("INDEX:");
-              Serial.println(index);
+              // Respond to request. Send a standard HTTP response header.
+              if (isDeleted) {
+                client.println("HTTP/1.1 200 OK");
+              } else {
+                client.println("HTTP/1.1 403 Forbidden");
+              }
+              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              client.println();
               
-//              // TODO: Parse parameters from HTTP request
-//              int pin = String(httpRequestParameters[0]).toInt();
-//              int value = String(httpRequestParameters[4]).toInt();
+              break;
+              
+            }
+            
+          }
+          
+//          else if (strcmp (httpRequestMethod, "DELETE") == 0) {
+//            
+//            if (strcmp (httpRequestAddress, "/behavior") == 0) {
 //              
-//              Serial.print("pin = ");
-//              Serial.print(pin);
-//              Serial.print("\n");
+//              Serial.println("PARAMETERS:");
+//              Serial.println(httpRequestParameters[0]);
 //              
-//              Serial.print("value = ");
-//              Serial.print(value);
-//              Serial.print("\n");
+//              // Split parameters by '='
+////              String split = String(httpRequestParameters[0]); // "hi this is a split test";
+////              String key = getValue(split, '=', 0);
+////              String value = getValue(split, '=', 1);
+//
+//              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+//              int index = getValue(indexParameter, '=', 1).toInt();
+//              
+//              int operation = 4; // BEHAVIOR_DELETE
+//              
+//              Serial.println("INDEX:");
+//              Serial.println(index);
+//              
+////              // TODO: Parse parameters from HTTP request
+////              int pin = String(httpRequestParameters[0]).toInt();
+////              int value = String(httpRequestParameters[4]).toInt();
+////              
+////              Serial.print("pin = ");
+////              Serial.print(pin);
+////              Serial.print("\n");
+////              
+////              Serial.print("value = ");
+////              Serial.print(value);
+////              Serial.print("\n");
+//              
+//              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
+//              insertBehavior(index, operation, 0, 0, 0, 0);
+//              
+//              // Send a standard HTTP response header
+//              client.println("HTTP/1.1 200 OK");
+//              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+//              client.println("Content-Type: text/html");
+//              client.println("Connection: close");
+//              client.println();
+//              
+//              // TODO: flush
+//              // TODO: close
+//              
+//              break;
+//              
+//            }
+//            
+//          }
+          else if (strcmp (httpRequestMethod, "PUT") == 0) {
+            
+            Serial.println("PUTTING!");
+            
+            if (strcmp (httpRequestAddress, "/behavior") == 0) {
+
+              String idParameter = String(httpRequestParameters[0]); // "hi this is a split test";
+              int id = getValue(idParameter, '=', 1).toInt();
               
-              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              insertBehavior(index, operation, 0, 0, 0, 0);
+              Behavior* behavior = updateBehavior(id);
               
               // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
+              if (behavior != NULL) {
+                client.println("HTTP/1.1 200 OK");
+              } else {
+                client.println("HTTP/1.1 404 Not Found");
+              }
               client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
               client.println("Content-Type: text/html");
               client.println("Connection: close");
@@ -434,13 +561,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               break;
               
-            }
-            
-          } else if (strcmp (httpRequestMethod, "PUT") == 0) {
-            
-            Serial.println("PUTTING!");
-            
-            if (strcmp (httpRequestAddress, "/pin") == 0) {
+            } else if (strcmp (httpRequestAddress, "/pin") == 0) {
               
               Serial.println("PARAMETERS:");
               Serial.println(httpRequestParameters[0]);

@@ -22,6 +22,112 @@ boolean setupLoop() {
   // TODO: Initialize empty behavior loop
 }
 
+long generateUuid() {
+  long uuid = random(65000L);
+  return uuid;
+}
+
+/**
+ * Insert a behavior node into the behavior loop at the specified index.
+ */
+Behavior* createBehavior() {
+  // TODO: Add message to queue... and use sendMessage to send the messages...
+  
+  if (loopSize < DEFAULT_LOOP_CAPACITY) {
+    // Add behavior to queue
+//    behaviorLoop[loopSize].id = generateBehaviorIdentifier();
+    behaviorLoop[loopSize].uid = generateUuid();
+    
+    
+//    behaviorLoop[loopSize].operation = operation;
+//    behaviorLoop[loopSize].pin = pin;
+//    behaviorLoop[loopSize].type = type;
+//    // behaviorLoop[loopSize].mode = mode;
+//    behaviorLoop[loopSize].value = value;
+//    
+//    // Set up support structures for the behavior
+//    if (operation == BEHAVIOR_DELAY) {
+//      // Set up timer
+//      delays[delayCount].startTime = 0; // Initialize/Reset the timer
+//      delays[delayCount].duration = behaviorLoop[loopSize].value;
+//      delays[delayCount].behavior = &behaviorLoop[loopSize];
+//      
+//      Serial.print("Creating delay...");
+//      Serial.print(delays[delayCount].duration);
+//      Serial.println();
+//      
+//      delayCount++;
+//    }
+    
+    loopSize++; // Increment the loop size
+    
+    return &behaviorLoop[loopSize - 1];
+  }
+  
+  return NULL;
+}
+
+/**
+ * Returns a pointer to behavior node at specified index.
+ */
+Behavior* getBehavior(int id) {
+    
+  // Get pointer to behavior node at specified index
+  Behavior* behavior = NULL;
+  
+  for (int i = 0; i < loopSize; i++) {
+    if (behaviorLoop[i].uid == id) {
+      behavior = &behaviorLoop[i]; // Get behavior node at specified index
+      break;
+    }
+  }
+  
+  return behavior;
+}
+
+Behavior* updateBehavior(int id) {
+    
+  // Get pointer to behavior node at specified index
+  Behavior* behavior = NULL;
+  
+  for (int i = 0; i < loopSize; i++) {
+    if (behaviorLoop[i].uid == id) {
+      behavior = &behaviorLoop[i]; // Get behavior node at specified index
+      
+      // TODO: Update behavior with specified values.
+      
+      break;
+    }
+  }
+  
+  return behavior;
+}
+
+boolean deleteBehavior(int id) {
+  
+  if (loopSize > 0) { // Make sure there at least one behavior node exists
+    
+    for (int i = 0; i < loopSize; i++) {
+      if (behaviorLoop[i].uid == id) {
+        
+        // Delete behavior by found index for behavior with specified ID
+        if (i >= 0 && i < loopSize) {
+          // Remove the behavior node from the sequence of behavior nodes
+          for (int j = i; j < loopSize - 1; j++) {
+            behaviorLoop[j] = behaviorLoop[j + 1];
+          }
+          loopSize--;
+          
+          return true;
+        }
+        
+      }
+    }
+  }
+
+  return false;
+}
+
 /**
  * Insert a behavior node into the behavior loop at the specified index.
  */
@@ -302,7 +408,7 @@ Behavior getBehaviorCopy(int index) {
 /**
  * Returns a pointer to behavior node at specified index.
  */
-Behavior* getBehavior(int index) {
+Behavior* getBehaviorByIndex(int index) {
   
   if (index >= 0 && index < loopSize) {
     

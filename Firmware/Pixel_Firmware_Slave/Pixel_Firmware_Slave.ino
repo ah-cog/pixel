@@ -42,6 +42,9 @@ void setupDeviceCommunication() {
   Wire.begin(I2C_DEVICE_ADDRESS); // Join I2C bus with the device's address
   Wire.onReceive(i2cReceiveEvent);   // Register event handler to receive data from the master I2C device
   Wire.onRequest(i2cRequestEvent);   // Event handler to respond to a request for data from the I2C master device
+  
+  // Send reboot message to master device
+  insertBehavior(0, 30, 0, 0, 0, 0);
 }
 
 /**
@@ -80,33 +83,44 @@ void i2cReceiveEvent (int howMany) {
 //  Serial.println();
   
   // Parse received pin value
-  String split     = String(i2cBuffer); // "hi this is a split test";
+  String split     = String(i2cBuffer);
   String operation = getValue(split, ' ', 0);
-  int pin          = getValue(split, ' ', 1).toInt();
-  int value        = getValue(split, ' ', 2).toInt();
   
-  // Update virtual device state
-  // virtualPin[pin].value = value;
-  setPinValue(pin, value);
-  
-  /*
-  Serial.print("PIN ");
-  Serial.print(pin);
-  Serial.print(" = ");
-  Serial.print(value);
-  virtualPin[pin].value = value;
-  // TODO: Update other state info for pin (or other state)
-//  Serial.print(pin);
-  Serial.println();
-  */
-  
-  i2cBufferSize = 0;
-  
-  
-  // TODO: Parse the message
-  // TODO: Handle initial processing for message
-  // TODO: Add to incoming I2C message queue (to process)
-  // TODO: (elsewhere) Process messages one by one, in order
+  // Handle operation
+  if (operation.compareTo("reboot") == 0) {
+    
+    _reboot_Teensyduino_();
+//    while(1) { /* NOTE: This is an infinite loop! */ }
+    
+  } else {
+    
+    int pin          = getValue(split, ' ', 1).toInt();
+    int value        = getValue(split, ' ', 2).toInt();
+    
+    // Update virtual device state
+    // virtualPin[pin].value = value;
+    setPinValue(pin, value);
+    
+    /*
+    Serial.print("PIN ");
+    Serial.print(pin);
+    Serial.print(" = ");
+    Serial.print(value);
+    virtualPin[pin].value = value;
+    // TODO: Update other state info for pin (or other state)
+  //  Serial.print(pin);
+    Serial.println();
+    */
+    
+    i2cBufferSize = 0;
+    
+    
+    // TODO: Parse the message
+    // TODO: Handle initial processing for message
+    // TODO: Add to incoming I2C message queue (to process)
+    // TODO: (elsewhere) Process messages one by one, in order
+    
+  }
 }
 
 /**

@@ -35,13 +35,9 @@ Authors: Michael Gubbels
 
 void setup() {
   
-  // Setup Pixel's reflection (i.e., it's virtual machine)
-  setupDevice();
-  
-  // Set up pin mode for I/O
-  setupPorts();
-  
-  setupLight();
+  setupDevice(); // Setup Pixel's reflection (i.e., it's virtual machine)
+  setupPorts(); // Setup pin mode for I/O
+  setupLight(); // Setup the Pixel's color
   
   // Initialize pseudorandom number generator
   randomSeed(analogRead(0));
@@ -78,6 +74,13 @@ void setup() {
   setupOrientationSensing();
   
   setupGestureSensing();
+  
+  // Send message to slave to reboot
+//  int SLAVE_DEVICE_ADDRESS = 2;
+  char buf[8];
+  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
+  Wire.write("reboot  ");
+  Wire.endTransmission();    // stop transmitting
   
   // Flash RGB LEDs
   blinkLight(3);
