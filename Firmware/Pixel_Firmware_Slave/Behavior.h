@@ -43,6 +43,7 @@ int generateBehaviorIdentifier() {
   return behaviorIdentifier;
 }
 
+struct Substrate;
 struct Sequence;
 
 struct Behavior {
@@ -50,6 +51,7 @@ struct Behavior {
   int type; // i.e., digital or analog
   void* schema; // The schema for the specific behavior type (e.g., for the "set pin" behavior)
   
+  Substrate* substrate; // The substrate containing the behavior
   Sequence* sequence; // The sequence containing the behavior (if any)
   Behavior* previous; // The previous behavior in the sequence
   Behavior* next; // The next behavior in the sequence
@@ -61,22 +63,34 @@ struct Behavior {
   int value; // i.e., high or low
 };
 
+#define MODE_OUTPUT 0
+#define MODE_INPUT 1
+
+#define SIGNAL_DIGITAL 0
+#define SIGNAL_ANALOG  1
+
+#define DATA_OFF 0
+#define DATA_ON  1
+
 struct Input {
   Behavior* behavior;
   
   int pin;
-  int mode;
+//  int mode;
   int signal;
   int data;
 };
 
+//! \struct Output
+//! The definition of the Output structure.
+//!
 struct Output {
   Behavior* behavior;
   
-  int type; // i.e., Behavior type
+//  int type; // i.e., Behavior type
   
   int pin;
-  int mode;
+//  int mode;
   int signal;
   int data;
 };
@@ -101,6 +115,8 @@ struct Loop {
 struct Sequence {
   int uid;
   int type; // e.g., line or loop
+  void* schema;
+  Substrate* substrate;
   
   Behavior* behavior; // The first behavior in the sequence
   int size;
@@ -120,21 +136,21 @@ struct Substrate {
 
 Substrate* substrate = NULL;
 
-class Behavior2 {
-  public:
-    Behavior2();
-    
-    int type;
-    int operation;
-    int pin;
-    int mode;
-    int value;
-    
-    Behavior* previous; // Previous behavior
-    Behavior* next; // Next behavior
-    
-  private:
-    int uid;  
-};
+//class Behavior2 {
+//  public:
+//    Behavior2();
+//    
+//    int type;
+//    int operation;
+//    int pin;
+//    int mode;
+//    int value;
+//    
+//    Behavior* previous; // Previous behavior
+//    Behavior* next; // Next behavior
+//    
+//  private:
+//    int uid;  
+//};
 
 #endif

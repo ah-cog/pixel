@@ -31,6 +31,8 @@ void setup () {
   Serial.begin(9600); // Start serial for output
   Serial.println(F("Pixel, Firmware Denmark"));
   
+  setupLooper();
+  
   // Setup Wi-Fi and web server
   setupWebServer();
   

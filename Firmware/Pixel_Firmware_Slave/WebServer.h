@@ -178,7 +178,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               String idParameter = String(httpRequestParameters[0]);
               int id = getValue(idParameter, '=', 1).toInt();
               
-              Behavior* behavior = getBehavior2(id);
+              Behavior* behavior = Get_Behavior (id);
               
               // Send a standard HTTP response header
               if (behavior != NULL) {
@@ -310,27 +310,85 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               String typeParameter = String(httpRequestParameters[0]);
               String type = getValue(typeParameter, '=', 1);
+              
+              Behavior* behavior = NULL;
+              
+              if (type.compareTo("output") == 0) {
+                
+                Serial.println("Creating output behavior.");
 
-              String pinParameter = String(httpRequestParameters[1]);
-              int pin = getValue(pinParameter, '=', 1).toInt();
-              
-              String modeParameter = String(httpRequestParameters[2]);
-              String mode = getValue(modeParameter, '=', 1);
-              
-              String signalParameter = String(httpRequestParameters[3]);
-              String signal = getValue(signalParameter, '=', 1);
-              
-              String dataParameter = String(httpRequestParameters[4]);
-              String data = getValue(dataParameter, '=', 1);
-              
-              Behavior* behavior = createBehavior2(type, pin, mode, signal, data);
+                String pinParameter = String(httpRequestParameters[1]);
+                int pin = getValue(pinParameter, '=', 1).toInt();
+                
+                String signalParameter = String(httpRequestParameters[2]);
+                String signal = getValue(signalParameter, '=', 1);
+                
+                String dataParameter = String(httpRequestParameters[3]);
+                String data = getValue(dataParameter, '=', 1);
+                
+                behavior = Create_Output_Behavior (substrate, pin, signal, data);
+                
+//                Serial.println("Test:");
+//                Serial.println((*behavior).type);
+//                Output* output = Get_Output_Behavior (behavior);
+//                Serial.println((*output).pin);
+//                Serial.println((*output).signal);
+//                Serial.println((*output).data);
+//                behavior = createBehavior(substrate, type, pin, signal, data);
+//                behavior = Behavior_createOutput(
+
+                  // TODO: Remove this! Only call it when the behavior is added to the loop in Looper (and relayed via HTTP requests)
+                  // Add the behavior to the loop
+//                  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//                  Add_Behavior_To_Sequence (sequence, behavior);
+                
+              } else if (type.compareTo("input") == 0) {
+                
+                Serial.println("Creating input behavior.");
+
+                String pinParameter = String(httpRequestParameters[1]);
+                int pin = getValue(pinParameter, '=', 1).toInt();
+                
+                String signalParameter = String(httpRequestParameters[2]);
+                String signal = getValue(signalParameter, '=', 1);
+                
+                String dataParameter = String(httpRequestParameters[3]);
+                String data = getValue(dataParameter, '=', 1);
+                
+                behavior = Create_Input_Behavior (substrate, pin, signal, data);
+                
+//                Serial.println("Test:");
+//                Serial.println((*behavior).type);
+//                Output* output = Get_Output_Behavior (behavior);
+//                Serial.println((*output).pin);
+//                Serial.println((*output).signal);
+//                Serial.println((*output).data);
+//                behavior = createBehavior(substrate, type, pin, signal, data);
+//                behavior = Behavior_createOutput(
+
+                  // TODO: Remove this! Only call it when the behavior is added to the loop in Looper (and relayed via HTTP requests)
+                  // Add the behavior to the loop
+//                  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//                  Add_Behavior_To_Sequence (sequence, behavior);
+                
+              } else if (type.compareTo("delay")) {
+                
+                // TODO: Parse delay parameters and create behavior.
+                
+              }
               
               // Send a standard HTTP response header
-              client.println("HTTP/1.1 201 Created"); // client.println("HTTP/1.1 200 OK");
+              if (behavior != NULL) {
+                client.println("HTTP/1.1 201 Created"); // client.println("HTTP/1.1 200 OK");
+              } else {
+                client.println("HTTP/1.1 400 Bad Request");
+              }
               client.println("Access-Control-Allow-Origin: *");
               client.println("Access-Control-Expose-Headers: Location");
               client.println("Content-Type: text/html");
-              client.print("Location: /behavior/"); client.print((*behavior).uid); client.print("\n");
+              if (behavior != NULL) {
+                client.print("Location: /behavior/"); client.print((*behavior).uid); client.print("\n");
+              }
               client.println("Connection: close");
               
               break;
@@ -474,7 +532,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               int id = getValue(idParameter, '=', 1).toInt();
               
               // Process request
-              boolean isDeleted = deleteBehavior2(id);
+              boolean isDeleted = Delete_Behavior (id);
               
               // Respond to request. Send a standard HTTP response header.
               if (isDeleted) {
@@ -552,7 +610,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               int id = getValue(idParameter, '=', 1).toInt();
               
               // Process request
-              Behavior* behavior = updateBehavior2(id);
+              Behavior* behavior = Update_Behavior (id);
               
               // Respond to request. Send a standard HTTP response header.
               if (behavior != NULL) {
@@ -673,7 +731,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             httpRequestUriBuffer[spaceCharIndex] = NULL; // Terminate the request method string
             Serial.println(httpRequestMethod);
             
-            // Get HTTP request address
+            // Get HTTP request URI, including parameters
             httpRequestAddress = &httpRequestUriBuffer[spaceCharIndex + 1];
             spaceChar = strchr(httpRequestAddress, ' ');
             spaceCharIndex = (int) (spaceChar - httpRequestUriBuffer);
@@ -681,6 +739,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             questionCharIndex = (int) (questionChar - httpRequestUriBuffer);
             if (questionChar != NULL) {
               httpRequestUriBuffer[questionCharIndex] = NULL; // Terminate the request method string
+              
+              httpRequestUriBuffer[spaceCharIndex] = NULL; // Terminate the parameter string
               
               // NOTE: The following can be removed. The logic is basically paranoia.
               // if (questionCharIndex < spaceCharIndex) {
@@ -742,7 +802,9 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                   
                   // If no '&' character found, then find the end of the parameter list
                   // spaceChar = strchr(httpRequestParameterString, ' '); // Find end of parameter list
-                  spaceChar = strchr(httpRequestParameterString, '\0'); // Find end of parameter list
+                  Serial.println(httpRequestUriBuffer);
+                  spaceChar = strchr(httpRequestParameters[httpRequestParameterCount], '\0');
+//                  spaceChar = strchr(httpRequestParameterString, '\0'); // Find end of parameter list
                   // if (endChar != NULL) { // Check if a ' ' character was found
                   spaceCharIndex = (int) (spaceChar - httpRequestUriBuffer);
                   httpRequestUriBuffer[spaceCharIndex] = NULL; // Terminate the parameter key/value pair string

@@ -17,109 +17,182 @@ Behavior behaviorLoop[DEFAULT_LOOP_CAPACITY]; // Behavior nodes
 int loopSize = 0;
 int loopCounter = -1; // i.e., the "program counter"
 
-boolean setupLoop() {
-  // TODO: Dynamically allocate memory for behavior loop
-  // TODO: Initialize empty behavior loop
-}
+Behavior* Create_Behavior (Substrate* substrate);
 
 long generateUuid() {
   long uuid = random(65000L);
   return uuid;
 }
 
-//Loop* createLoop(Substrate* substrate) {
-//  
-//}
-
-Behavior* createBehavior2(String type, int pin, String mode, String signal, String data) {
-  
-//  if (loopSize < DEFAULT_LOOP_CAPACITY) {
-  
-  // Create behavior substrate
-  if (substrate == NULL) {
-    substrate              = (Substrate*) malloc (sizeof (Substrate));
-    (*substrate).sequences = NULL;
-    (*substrate).entry     = NULL;
-  }
+Sequence* Create_Sequence (Substrate* substrate) {
   
   // Create sequence
-  // TODO: Add parameter "Substrate* substrate"
-  if (substrate != NULL) {
-    if ((*substrate).sequences == NULL) {
-      
-      // Create sequence
-      Sequence* sequence = (Sequence*) malloc (sizeof (Sequence));
-      (*sequence).uid      = NULL;
-      (*sequence).type     = SEQUENCE_TYPE_LOOP;
-      (*sequence).behavior = NULL;
-      (*sequence).size     = 0;
-      (*sequence).previous = NULL;
-      (*sequence).next     = NULL;
-      
-      // TODO: Create sequence schema
-      
-      // Add sequence to substrate
-      if ((*substrate).sequences == NULL) {
-        Serial.println("First sequence");
-        (*substrate).sequences = sequence;
-      } else {
-        
-        // Get the last behavior in the loop
-        Sequence* lastSequence = (*substrate).sequences;
-        while ((*lastSequence).next != NULL) {
-          Serial.println("Next sequence");
-          lastSequence = (*lastSequence).next;
-        }
-        
-        // Insert at end of the list (iterate to find the last behavior)
-        (*sequence).previous = lastSequence; // Set up the pointer from the new behavior to the previous behavior.
-        (*lastSequence).next = sequence; // Finally, set up the link to the new behavior.
-      }
-//      (*coreLoop).size = (*coreLoop).size + 1;
+  Sequence* sequence = (Sequence*) malloc (sizeof (Sequence));
+  
+  // Initialize sequence
+  (*sequence).uid      = NULL;
+  (*sequence).type     = SEQUENCE_TYPE_LOOP;
+  (*sequence).behavior = NULL;
+  (*sequence).size     = 0;
+  (*sequence).previous = NULL;
+  (*sequence).next     = NULL;
+  (*sequence).schema   = NULL;
+  
+  // TODO: Create sequence schema
+  
+  // Return sequence
+  return sequence;
+  
+}
+
+boolean Delete_Sequence (Sequence* sequence) {
+  
+  if (sequence != NULL) {
+    
+    // TODO: Possibly delete all behaviors from the sequence (or only the ones that are only referenced in this sequence)
+    
+    // Update behavior topology
+    Sequence* current  = sequence;
+    Sequence* previous = (*current).previous;
+    Sequence* next     = (*current).next;
+    
+    // Update the forward sequence
+    if (previous != NULL) {
+      (*previous).next = next;
     }
+    
+    // Update the backward sequence
+    if (next != NULL) {
+      (*next).previous = previous;
+    }
+    
+    // Update substrate if needed
+    if ((*substrate).sequences == current) {
+      if ((*current).next == NULL) {
+        (*substrate).sequences = NULL;
+      } else {
+        (*substrate).sequences = (*current).next;
+      }
+    }
+    
+    if ((*substrate).entry == current) {
+      (*substrate).entry = NULL;
+    }
+    
+    // Free the sequence from memory
+    if ((*sequence).schema != NULL) {
+      free((*sequence).schema);
+    }
+    free(sequence);
+    
+    return true;
   }
   
-  //Behavior* behavior = &behaviorLoop[loopSize];
-  // Create a behavior
-  Behavior* behavior = (Behavior*) malloc (sizeof (Behavior));
-  (*behavior).uid      = 0;
-  (*behavior).type     = BEHAVIOR_TYPE_NONE;
-  (*behavior).schema   = NULL;
-  (*behavior).previous = NULL;
-  (*behavior).next     = NULL;
+  return false;
   
-  // Generate UUID for the behavior
-  (*behavior).uid  = generateUuid();
+}
+
+// Methods:
+//
+// createSubstrate
+// substrate_addSequence
+// substrate_removeSequence
+//
+// createSequence
+// sequence_addBehavior
+// sequence_removeBehavior
+//
+// createBehavior
+// getBehavior
+// updateBehavior
+// deleteBehavior
+
+// Create behavior substrate
+Substrate* Create_Substrate () {
   
-  // Parse behavior type parameter
-  Serial.println(type);
-  (*behavior).type = BEHAVIOR_TYPE_INPUT;
+  // Create substrate
+  Substrate* substrate = (Substrate*) malloc (sizeof (Substrate));
   
-  // Parse behavior schema parameters
-  Serial.println(pin);
-  Serial.println(mode);
-  Serial.println(signal);
-  Serial.println(data);
+  // Initialize sequence
+  (*substrate).sequences = NULL;
+  (*substrate).entry     = NULL;
   
-  // Set up the behavior schema
-  Input* input = (Input*) malloc(sizeof(Input));
-  (*behavior).schema = input;
+  // Return sequence
+  return substrate;
   
-  Serial.println((int)(*behavior).schema);
+}
+
+boolean Update_Sequence_Substrate (Sequence* sequence, Substrate* substrate) {
   
-  if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
-    Input* in = (Input*) (*behavior).schema;
-  }
-  
-  // Add the behavior to the loop
-  Sequence* coreLoop = (*substrate).sequences;
-  if ((*coreLoop).behavior == NULL) {
-    Serial.println("First");
-    (*coreLoop).behavior = behavior;
+  // Add sequence to substrate
+  if ((*substrate).sequences == NULL) {
+    
+    Serial.println("First sequence");
+    (*substrate).sequences = sequence;
+    
   } else {
     
     // Get the last behavior in the loop
-    Behavior* lastBehavior = (*coreLoop).behavior;
+    Sequence* lastSequence = (*substrate).sequences;
+    while ((*lastSequence).next != NULL) {
+      Serial.println("Next sequence");
+      lastSequence = (*lastSequence).next;
+    }
+    
+    // Insert at end of the list (iterate to find the last behavior)
+    (*sequence).previous = lastSequence; // Set up the pointer from the new behavior to the previous behavior.
+    (*lastSequence).next = sequence; // Finally, set up the link to the new behavior.
+    
+//      (*coreLoop).size = (*coreLoop).size + 1;
+  }
+  
+  return true;
+  
+}
+
+boolean Remove_Sequence_From_Substrate (Substrate* substrate, Sequence* sequence) {
+  
+  // Update behavior topology
+  Sequence* previousSequence = (*sequence).previous;
+  Sequence* nextSequence     = (*sequence).next;
+  
+  // Update the forward sequence
+  if (previousSequence != NULL) {
+    (*previousSequence).next = nextSequence;
+  }
+  
+  // Update the backward sequence
+  if (nextSequence != NULL) {
+    (*nextSequence).previous = previousSequence;
+  }
+  
+  // Update sequence if needed
+  if ((*substrate).sequences == sequence) {
+    if ((*sequence).next == NULL) {
+      (*substrate).sequences = NULL;
+    } else {
+      (*substrate).sequences = (*sequence).next;
+    }
+  }
+  
+  // Resize the sequence
+//  (*sequence).size = (*sequence).size - 1;
+  
+  return true;
+}
+
+boolean Update_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
+  
+//  Sequence* coreLoop = (*substrate).sequences;
+  if ((*sequence).behavior == NULL) {
+    
+    Serial.println("First");
+    (*sequence).behavior = behavior;
+    
+  } else {
+    
+    // Get the last behavior in the loop
+    Behavior* lastBehavior = (*sequence).behavior;
     while ((*lastBehavior).next != NULL) {
       Serial.println("Next");
       lastBehavior = (*lastBehavior).next;
@@ -129,88 +202,281 @@ Behavior* createBehavior2(String type, int pin, String mode, String signal, Stri
     (*behavior).previous = lastBehavior; // Set up the pointer from the new behavior to the previous behavior.
     (*lastBehavior).next = behavior; // Finally, set up the link to the new behavior.
   }
-  (*coreLoop).size = (*coreLoop).size + 1;
+  (*sequence).size = (*sequence).size + 1;
   
-  Serial.print("Loop size: "); Serial.print((*coreLoop).size); Serial.print("\n");
+  Serial.print("Loop size: "); Serial.print((*sequence).size); Serial.print("\n");
   
-  return behavior;
+  return true;
+  
 }
 
-/**
- * Insert a behavior node into the behavior loop at the specified index.
- */
-Behavior* createBehavior(String type, int pin, String mode, String signal, String data) {
+boolean Remove_Sequence_Behavior (Sequence* sequence, Behavior* behavior) {
   
-  if (loopSize < DEFAULT_LOOP_CAPACITY) {
+  // Update behavior topology
+  Behavior* previousBehavior = (*behavior).previous;
+  Behavior* nextBehavior     = (*behavior).next;
+  
+  // Update the forward sequence
+  if (previousBehavior != NULL) {
+    (*previousBehavior).next = nextBehavior;
+  }
+  
+  // Update the backward sequence
+  if (nextBehavior != NULL) {
+    (*nextBehavior).previous = previousBehavior;
+  }
+  
+  // Update sequence if needed
+  if ((*sequence).behavior == behavior) {
+    if ((*behavior).next == NULL) {
+      (*sequence).behavior = NULL;
+    } else {
+      (*sequence).behavior = (*behavior).next;
+    }
+  }
+  
+  // Resize the sequence
+  (*sequence).size = (*sequence).size - 1;
+  
+  return false;
+}
+
+boolean setupLooper() {
+  
+  // Create behavior substrate
+  if (substrate == NULL) {
+    substrate = Create_Substrate ();
+  }
+  
+  // Create sequence
+  // TODO: Add parameter "Substrate* substrate"
+  if (substrate != NULL) {
     
-    Behavior* behavior = &behaviorLoop[loopSize];
+    Sequence* sequence = Create_Sequence (substrate);
     
-    // Add behavior to queue
-    (*behavior).uid  = generateUuid();
-    (*behavior).type = BEHAVIOR_TYPE_INPUT;
+    boolean isAdded = Update_Sequence_Substrate (sequence, substrate);
     
-    Serial.println(type);
+//    return isAdded;
+  }
+  
+  return true;
+}
+
+//! Creates an Output
+//!
+Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, String data) {
+  
+  Behavior* behavior = NULL;
+  
+  Serial.println("Create_Output_Behavior");
+  
+  if (substrate != NULL) {
+    
     Serial.println(pin);
-    Serial.println(mode);
     Serial.println(signal);
     Serial.println(data);
     
-    Input* input = (Input*) malloc(sizeof(Input));
-    (*behavior).schema = input;
-    
-    Serial.println((int)(*behavior).schema);
-    
-    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
-      Input* in = (Input*) (*behavior).schema;
+    // Parse and validate parameters
+    int signal2 = 0;
+    if (signal.compareTo("digital") == 0) {
+      signal2 = SIGNAL_DIGITAL;
+    } else if (signal.compareTo("analog") == 0) {
+      signal2 = SIGNAL_ANALOG;
+    } else {
+      return NULL;
     }
     
-//    if (strcmp (type, "pin") == 0) {
-//      insertBehavior(index, operation, pin, 0, 1, value);
+    Serial.println("Parsed signal");
+    
+    int data2 = 0;
+    if (data.compareTo("on") == 0) {
+      Serial.println("on");
+      data2 = DATA_ON;
+    } else if (data.compareTo("off") == 0) {
+      Serial.println("off");
+      data2 = DATA_OFF;
+    } else {
+      Serial.println("NULL");
+      Serial.println(data.length());
+      return NULL;
+    }
+    
+    Serial.println("Parsed data");
+    
+    Serial.println("CREATING OUTPUT BEHAVIOR");
+    
+    // Create the Output schema for Behavior
+    Output* output   = (Output*) malloc (sizeof (Output));
+    (*output).pin    = pin;
+    (*output).signal = signal2;
+    (*output).data   = data2;
+    
+    // Create the Behavior
+    behavior = Create_Behavior (substrate);
+    (*behavior).type   = BEHAVIOR_TYPE_OUTPUT;
+    (*behavior).schema = (void *) output;
+    
+    // Associate the created Output schema with the corresponding created Behavior
+    (*output).behavior = behavior;
+    
+    // Parse behavior schema parameters
+    Serial.println(pin);
+    Serial.println(signal);
+    Serial.println(data);
+    
+//    // Set up the behavior schema
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* input = (Input*) malloc(sizeof(Input));
+//      (*behavior).schema = input;
+//    } else {
+//      // TODO: Handle schema creation for other behavior types
 //    }
     
+//    Serial.println((int)(*behavior).schema);
     
-//    behaviorLoop[loopSize].operation = operation;
-//    behaviorLoop[loopSize].pin = pin;
-//    behaviorLoop[loopSize].type = type;
-//    // behaviorLoop[loopSize].mode = mode;
-//    behaviorLoop[loopSize].value = value;
-//    
-//    // Set up support structures for the behavior
-//    if (operation == BEHAVIOR_DELAY) {
-//      // Set up timer
-//      delays[delayCount].startTime = 0; // Initialize/Reset the timer
-//      delays[delayCount].duration = behaviorLoop[loopSize].value;
-//      delays[delayCount].behavior = &behaviorLoop[loopSize];
-//      
-//      Serial.print("Creating delay...");
-//      Serial.print(delays[delayCount].duration);
-//      Serial.println();
-//      
-//      delayCount++;
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* in = (Input*) (*behavior).schema;
 //    }
     
-    loopSize++; // Increment the loop size
+    // Add the behavior to the loop
+//    Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//    sequence_addBehavior(sequence, behavior);
     
-    return &behaviorLoop[loopSize - 1];
   }
   
-  return NULL;
+  return behavior;
 }
 
-/**
- * Returns a pointer to behavior node at specified index.
- */
-Behavior* getBehavior(int id) {
-    
-  // Get pointer to behavior node at specified index
+Output* Get_Output_Behavior (Behavior* behavior) {
+  return ((Output*) (*behavior).schema);
+}
+
+//! Creates an Output
+//!
+Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal, String data) {
+  
   Behavior* behavior = NULL;
   
-  for (int i = 0; i < loopSize; i++) {
-    if (behaviorLoop[i].uid == id) {
-      behavior = &behaviorLoop[i]; // Get behavior node at specified index
-      break;
+  Serial.println("Create_Input_Behavior");
+  
+  if (substrate != NULL) {
+    
+    Serial.println(pin);
+    Serial.println(signal);
+    Serial.println(data);
+    
+    // Parse and validate parameters
+    int signal2 = 0;
+    if (signal.compareTo("digital") == 0) {
+      signal2 = SIGNAL_DIGITAL;
+    } else if (signal.compareTo("analog") == 0) {
+      signal2 = SIGNAL_ANALOG;
+    } else {
+      return NULL;
     }
+    
+    Serial.println("Parsed signal");
+    
+    int data2 = 0;
+    if (data.compareTo("on") == 0) {
+      Serial.println("on");
+      data2 = DATA_ON;
+    } else if (data.compareTo("off") == 0) {
+      Serial.println("off");
+      data2 = DATA_OFF;
+    } else {
+      Serial.println("NULL");
+      Serial.println(data.length());
+      return NULL;
+    }
+    
+    Serial.println("Parsed data");
+    
+    Serial.println("CREATING INPUT BEHAVIOR");
+    
+    // Create the Output schema for Behavior
+    Input* input   = (Input*) malloc (sizeof (Input));
+    (*input).pin    = pin;
+    (*input).signal = signal2;
+    (*input).data   = data2;
+    
+    // Create the Behavior
+    behavior = Create_Behavior (substrate);
+    (*behavior).type   = BEHAVIOR_TYPE_INPUT;
+    (*behavior).schema = (void *) input;
+    
+    // Associate the created Output schema with the corresponding created Behavior
+    (*input).behavior = behavior;
+    
+    // Parse behavior schema parameters
+    Serial.println(pin);
+    Serial.println(signal);
+    Serial.println(data);
+    
+//    // Set up the behavior schema
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* input = (Input*) malloc(sizeof(Input));
+//      (*behavior).schema = input;
+//    } else {
+//      // TODO: Handle schema creation for other behavior types
+//    }
+    
+//    Serial.println((int)(*behavior).schema);
+    
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* in = (Input*) (*behavior).schema;
+//    }
+    
+    // Add the behavior to the loop
+//    Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//    sequence_addBehavior(sequence, behavior);
+    
   }
+  
+  return behavior;
+}
+
+Input* Get_Input_Behavior (Behavior* behavior) {
+  return ((Input*) (*behavior).schema);
+}
+
+// TODO: Consider: Behavior* Create_Behavior (String type, void* schema), at least internally to this method... called by the method as part of the process.
+Behavior* Create_Behavior (Substrate* substrate) {
+  
+  // Create a behavior
+  Behavior* behavior    = (Behavior*) malloc (sizeof (Behavior));
+  (*behavior).uid       = 0;
+  (*behavior).type      = BEHAVIOR_TYPE_NONE;
+  (*behavior).schema    = NULL;
+  (*behavior).substrate = substrate;
+  (*behavior).previous  = NULL;
+  (*behavior).next      = NULL;
+  
+  // Generate UUID for the behavior
+  (*behavior).uid  = generateUuid();
+  
+//  // Parse behavior type parameters
+//  if (type.compareTo("output") == 0) {
+//    (*behavior).type = BEHAVIOR_TYPE_OUTPUT;
+//  } else if (type.compareTo("input") == 0) {
+//    (*behavior).type = BEHAVIOR_TYPE_INPUT;
+//  } else if (type.compareTo("delay") == 0) {
+//    (*behavior).type = BEHAVIOR_TYPE_DELAY;
+//  } else {
+//    (*behavior).type = BEHAVIOR_TYPE_NONE;
+//  }
+  
+  // Set up the behavior schema and parse parameters accordingly
+//  if ((*behavior).type == BEHAVIOR_TYPE_OUTPUT) {
+//    Output* output = Create_Output_Behavior (behavior, pin, signal, data);
+//    (*behavior).schema = (void *) output;
+//  } else {
+//    // TODO: Handle schema creation for other behavior types
+//  }
+  
+//  // Add the behavior to the loop
+//  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//  sequence_addBehavior(sequence, behavior);
   
   return behavior;
 }
@@ -218,7 +484,7 @@ Behavior* getBehavior(int id) {
 /**
  * Returns a pointer to behavior node at specified index.
  */
-Behavior* getBehavior2(int uid) {
+Behavior* Get_Behavior (int uid) {
     
   // Get pointer to behavior node at specified index
   Behavior* behavior = NULL;
@@ -254,25 +520,7 @@ Behavior* getBehavior2(int uid) {
   return behavior;
 }
 
-Behavior* updateBehavior(int id) {
-    
-  // Get pointer to behavior node at specified index
-  Behavior* behavior = NULL;
-  
-  for (int i = 0; i < loopSize; i++) {
-    if (behaviorLoop[i].uid == id) {
-      behavior = &behaviorLoop[i]; // Get behavior node at specified index
-      
-      // TODO: Update behavior with specified values.
-      
-      break;
-    }
-  }
-  
-  return behavior;
-}
-
-Behavior* updateBehavior2(int uid) {
+Behavior* Update_Behavior (int uid) {
     
   // Get pointer to behavior node at specified index
   Behavior* behavior = NULL;
@@ -309,32 +557,7 @@ Behavior* updateBehavior2(int uid) {
   return behavior;
 }
 
-boolean deleteBehavior(int id) {
-  
-  if (loopSize > 0) { // Make sure there at least one behavior node exists
-    
-    for (int i = 0; i < loopSize; i++) {
-      if (behaviorLoop[i].uid == id) {
-        
-        // Delete behavior by found index for behavior with specified ID
-        if (i >= 0 && i < loopSize) {
-          // Remove the behavior node from the sequence of behavior nodes
-          for (int j = i; j < loopSize - 1; j++) {
-            behaviorLoop[j] = behaviorLoop[j + 1];
-          }
-          loopSize--;
-          
-          return true;
-        }
-        
-      }
-    }
-  }
-
-  return false;
-}
-
-boolean deleteBehavior2(int uid) {
+boolean Delete_Behavior (int uid) {
     
   // Get pointer to behavior node at specified index
   Behavior* behavior = NULL;
@@ -357,31 +580,7 @@ boolean deleteBehavior2(int uid) {
           
           Serial.println("Deleting behavior");
           
-          // Update behavior topology
-          Behavior* previousBehavior = (*soughtBehavior).previous;
-          Behavior* nextBehavior     = (*soughtBehavior).next;
-          
-          // Update the forward sequence
-          if (previousBehavior != NULL) {
-            (*previousBehavior).next = nextBehavior;
-          }
-          
-          // Update the backward sequence
-          if (nextBehavior != NULL) {
-            (*nextBehavior).previous = previousBehavior;
-          }
-          
-          // Update sequence if needed
-          if ((*currentSequence).behavior == soughtBehavior) {
-            if ((*soughtBehavior).next == NULL) {
-              (*currentSequence).behavior = NULL;
-            } else {
-              (*currentSequence).behavior = (*soughtBehavior).next;
-            }
-          }
-          
-          // Resize the sequence
-          (*currentSequence).size = (*currentSequence).size - 1;
+          int isRemoved = Remove_Sequence_Behavior (currentSequence, soughtBehavior);
           
           // Free the behavior from memory
 //          assert(soughtBehavior != NULL);
@@ -398,51 +597,14 @@ boolean deleteBehavior2(int uid) {
     }
     
   }
-  
-//  // Search the loop for the behavior with the specified UID.
-//  if (coreLoop != NULL) {
-//    
-//    // Check if the current behavior is the sought behavior
-//    Behavior* soughtBehavior = (*coreLoop).behavior;
-//    while (soughtBehavior != NULL) {
-//      Serial.println("Searching");
-//      
-//      // Return the behavior if it has been found
-//      if ((*soughtBehavior).uid == uid) {
-//        
-//        Serial.println("Deleting");
-//        
-//        // Update behavior topology
-//        Behavior* previousBehavior = (*soughtBehavior).previous;
-//        Behavior* nextBehavior     = (*soughtBehavior).next;
-//        
-//        // Update the forward sequence
-//        if (previousBehavior != NULL) {
-//          (*previousBehavior).next = nextBehavior;
-//        }
-//        
-//        // Update the backward sequence
-//        if (nextBehavior != NULL) {
-//          (*nextBehavior).previous = previousBehavior;
-//        }
-//        
-//        // Free the behavior from memory
-////        assert(soughtBehavior != NULL);
-//        free((*soughtBehavior).schema); // Free the behavior's schema from memory
-//        free(soughtBehavior); // Free the behavior from memory
-//        
-//        // TODO: Resize the loop!
-//        
-//        return true;
-//      }
-//      
-//      soughtBehavior = (*soughtBehavior).next;
-//    }
-//    
-//  }
 
   return false;
 }
+
+
+
+
+
 
 /**
  * Insert a behavior node into the behavior loop at the specified index.
