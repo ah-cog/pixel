@@ -18,10 +18,195 @@ int loopSize = 0;
 int loopCounter = -1; // i.e., the "program counter"
 
 Behavior* Create_Behavior (Substrate* substrate);
+boolean Remove_Sequence_Substrate (Sequence* sequence, Substrate* substrate);
 
 long generateUuid() {
   long uuid = random(65000L);
   return uuid;
+}
+
+// Methods:
+//
+// Create_Substrate
+// Get_Substrate_Origin
+// TODO: Get_Substrate_Behaviors
+// TODO: Get_Substrate_Sequences
+// Update_Substrate_Origin
+// Delete_Substrate
+// TODO: Deep_Delete_Substrate
+//
+// Create_Sequence
+// Update_Sequence_Substrate
+// Remove_Sequence_Substrate
+// Delete_Sequence
+// TODO: Deep_Delete_Sequence
+// Dissociate_Sequence
+//
+// Create_Behavior
+// Get_Behavior
+// Update_Behavior
+// Update_Behavior_Substrate
+// Update_Behavior_Sequence
+// Remove_Behavior_Sequence
+// Delete_Behavior
+// TODO: Deeper_Delete_Behavior/Network_Delete_Behavior (i.e., (1) deep delete behavior and (2) delete everything that was connected to it and everything that was connected to the things connected to it)
+// Dissociate_Behavior
+
+// Create behavior substrate
+Substrate* Create_Substrate () {
+  
+  // Create substrate
+  Substrate* substrate = (Substrate*) malloc (sizeof (Substrate));
+  
+  // Initialize sequence
+  (*substrate).sequences = NULL;
+  (*substrate).origin    = NULL;
+  
+  // Return sequence
+  return substrate;
+  
+}
+
+Sequence* Get_Substrate_Origin (Substrate* substrate) {
+  Sequence* origin = NULL;
+  
+  if (substrate != NULL) {
+    origin = (*substrate).origin;
+  }
+  
+  return origin;
+}
+
+boolean Update_Substrate_Origin (Substrate* substrate, Sequence* origin) {
+  if (substrate != NULL) {
+    (*substrate).origin = origin;
+  }
+}
+
+//! Dissociates all references to the specified sequence and returns it.
+//!
+Sequence* Dissociate_Sequence (Sequence* sequence) {
+//  Sequence* sequence = NULL;
+  if (sequence != NULL) {
+    
+//    while (sequence != NULL) {
+    
+    // Step 1. Dissociate from behaviors in the sequence
+    Behavior* currentBehavior  = (*sequence).behavior;
+    while (currentBehavior != NULL) {
+      
+//      Dissociate_Behavior (currentBehavior);
+      // Dissociate a single behavior
+      // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
+      (*currentBehavior).substrate = NULL;
+      
+      // Proceed to the next behavior
+      currentBehavior = (*currentBehavior).next;
+    }
+    
+    // Step 2. Remove sequence from substrate
+    boolean hasRemoved = Remove_Sequence_Substrate (sequence, (*sequence).substrate);
+    
+    // Dissociate from sequence
+    // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
+//    (*sequence).substrate = NULL;
+    
+//    // Proceed to next sequence
+//    sequence = (*sequence).next;
+//      
+//    }
+    
+  }
+  return sequence;
+}
+
+////! Dissociates all references to the specified sequence and returns it.
+////!
+//Behavior* Dissociate_Behavior (Behavior* behavior) {
+////  Behavior* behavior = NULL;
+//  if (behavior != NULL) {
+//      
+//    // Dissociate behaviors
+////    Behavior* currentBehavior  = (*sequence).behavior;
+////    while (currentBehavior != NULL) {
+//  
+//  
+//  
+//  
+//    // TODO: Substrate: Remove reference to behavior 
+//    
+//    // TODO: Sequence: Remove reference to behavior 
+//
+//    // TODO: Behavior.previous, Behavior.next: Remove reference to behavior 
+//    
+//    // Dissociate behavior
+//    // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
+//    (*behavior).substrate = NULL;
+//      
+//      
+//      
+//      
+//      // Proceed to next behavior
+////      currentBehavior = (*currentBehavior).next;
+//    }
+//      
+//      // Dissociate sequence
+//      // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
+////      (*sequence).substrate = NULL;
+//      
+//      // Proceed to next sequence
+////      sequence = (*sequence).next;
+//      
+//    }
+//    
+//  }
+//  return sequence;
+//}
+
+//! Deletes the specified substrate. Removes all references to the substrate before deleting it.
+//!
+boolean Delete_Substrate (Substrate* substrate) {
+  
+  // TODO: Delete substrate "sequences" and "origin"
+  
+  if (substrate != NULL) {
+    
+    // TODO: Possibly delete all behaviors from the sequence (or only the ones that are only referenced in this sequence)
+    
+    // Update the sequence's topologies (for the sequences in the specified substrate being deleted)
+    
+    // Update sequence topology (i.e., Remove all sequences' references to the substrate)
+    Sequence* currentSequence  = (*substrate).sequences;
+    while (currentSequence != NULL) {
+      
+      // Dissociate behavior topology (i.e., Remove all behaviors' references to the substrate)
+      Behavior* currentBehavior  = (*currentSequence).behavior;
+      while (currentBehavior != NULL) {
+        
+        // Dissociate behavior
+        // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
+        (*currentBehavior).substrate = NULL;
+        
+        currentBehavior = (*currentBehavior).next;
+      }
+      
+      // Dissociate sequence
+      // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
+      (*currentSequence).substrate = NULL;
+      
+      // Proceed to next sequence
+      currentSequence = (*currentSequence).next;
+      
+    }
+    
+    // Free the substrate from memory
+    free(substrate);
+    
+    return true;
+  }
+  
+  return false;
+  
 }
 
 Sequence* Create_Sequence (Substrate* substrate) {
@@ -45,6 +230,8 @@ Sequence* Create_Sequence (Substrate* substrate) {
   
 }
 
+//! Deletes a sequence structure, freeing it from memory (specifically, from the heap).
+//!
 boolean Delete_Sequence (Sequence* sequence) {
   
   if (sequence != NULL) {
@@ -75,8 +262,8 @@ boolean Delete_Sequence (Sequence* sequence) {
       }
     }
     
-    if ((*substrate).entry == current) {
-      (*substrate).entry = NULL;
+    if ((*substrate).origin == sequence) {
+      (*substrate).origin = NULL;
     }
     
     // Free the sequence from memory
@@ -89,36 +276,6 @@ boolean Delete_Sequence (Sequence* sequence) {
   }
   
   return false;
-  
-}
-
-// Methods:
-//
-// createSubstrate
-// substrate_addSequence
-// substrate_removeSequence
-//
-// createSequence
-// sequence_addBehavior
-// sequence_removeBehavior
-//
-// createBehavior
-// getBehavior
-// updateBehavior
-// deleteBehavior
-
-// Create behavior substrate
-Substrate* Create_Substrate () {
-  
-  // Create substrate
-  Substrate* substrate = (Substrate*) malloc (sizeof (Substrate));
-  
-  // Initialize sequence
-  (*substrate).sequences = NULL;
-  (*substrate).entry     = NULL;
-  
-  // Return sequence
-  return substrate;
   
 }
 
@@ -150,7 +307,9 @@ boolean Update_Sequence_Substrate (Sequence* sequence, Substrate* substrate) {
   
 }
 
-boolean Remove_Sequence_From_Substrate (Substrate* substrate, Sequence* sequence) {
+//! Removes the specified sequence from the specified substrate.
+//!
+boolean Remove_Sequence_Substrate (Sequence* sequence, Substrate* substrate) {
   
   // Update behavior topology
   Sequence* previousSequence = (*sequence).previous;
@@ -174,6 +333,9 @@ boolean Remove_Sequence_From_Substrate (Substrate* substrate, Sequence* sequence
       (*substrate).sequences = (*sequence).next;
     }
   }
+  
+  // Dissociate from the substrate
+  (*sequence).substrate = NULL;
   
   // Resize the sequence
 //  (*sequence).size = (*sequence).size - 1;
@@ -210,7 +372,7 @@ boolean Update_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
   
 }
 
-boolean Remove_Sequence_Behavior (Sequence* sequence, Behavior* behavior) {
+boolean Remove_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
   
   // Update behavior topology
   Behavior* previousBehavior = (*behavior).previous;
@@ -580,7 +742,7 @@ boolean Delete_Behavior (int uid) {
           
           Serial.println("Deleting behavior");
           
-          int isRemoved = Remove_Sequence_Behavior (currentSequence, soughtBehavior);
+          int isRemoved = Remove_Behavior_Sequence (soughtBehavior, currentSequence);
           
           // Free the behavior from memory
 //          assert(soughtBehavior != NULL);
@@ -606,28 +768,148 @@ boolean Delete_Behavior (int uid) {
 
 
 
+
+
+
+
+//struct PropagationBuffer {
+//  
+//};
+
+struct Behavior_Transformation {
+  int type;
+  void* behavior; // i.e., Substrate, Behavior, Sequence
+};
+
+//struct BehaviorDescription {
+//  int type;
+//  void* behavior;
+//};
+
+//boolean Propagate_Behavior_Transformation (int transformationType) {
+//}
+
+boolean Propagate_Create_Loop () {
+  return false;
+}
+
+boolean Propagate_Update_Loop () {
+  return false;
+}
+
+//boolean appendLoopNode (Behavior* behavior) {
+//boolean Propagate_Behavior (Behavior* behavior) {
+//boolean Propagate (int description) {
+//boolean Propagate_Request (Behavior* behavior) {
+boolean Propagate_Create_Output_Behavior (Behavior* behavior) {
+  
+  // POST
+  // /behavior
+  // ?type=output
+  // &pin=
+  // &signal=
+  // &data=
+  
+//  // Loop
+//  #define CREATE_LOOP 1
+//  
+//  // Behavior
+//  #define CREATE_BEHAVIOR 10
+//  #define GET_BEHAVIOR 11
+
+//  "1 CREATE_LOOP"
+//  "1 uid 34234"
+//  "1 DONE"
+
+//  "1 CREATE_BEHAVIOR"
+//  "1 type BEHAVIOR_TYPE_INPUT"
+//  "1 pin 13"
+//  "1 signal SIGNAL_DIGITAL"
+//  "1 data DATA_ON"
+//  "1 DONE"
+
+
+
+  
+//  if (behavior != NULL) {
+//    
+//    if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
+//      
+//    } else if ((*behavior).type == BEHAVIOR_TYPE_OUTPUT) {
+//      
+//      
+//      
+//    } else if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      
+//      Input* input = (Input*) (*behavior).schema;
+//      Queue_Behavior_Propagation ((*input).pin, (*input).signal, BEHAVIOR_TYPE_INPUT, (*input).data);
+//      
+//    } else if ((*behavior).type == BEHAVIOR_TYPE_DELAY) {
+//      Delay* delay = (Delay*) (*behavior).schema;
+//    }
+//    
+//  }
+  
+//  if (loopSize < DEFAULT_LOOP_CAPACITY) {
+//    // Add behavior to queue
+////    behaviorLoop[loopSize].id = generateBehaviorIdentifier();
+//    behaviorLoop[loopSize].operation = operation;
+//    behaviorLoop[loopSize].pin = pin;
+//    behaviorLoop[loopSize].type = type;
+//    // behaviorLoop[loopSize].mode = mode;
+//    behaviorLoop[loopSize].value = value;
+//    
+//    loopSize++; // Increment the loop size
+//    
+//    return true;
+//  }
+//  
+//  return false;
+}
+
+//boolean Queue_Behavior_Propagation (int pin, int operation, int type, int value) {
+//  // TODO: Add message to queue... and use sendMessage to send the messages...
+//  
+//  if (loopSize < DEFAULT_LOOP_CAPACITY) {
+//    // Add behavior to queue
+////    behaviorLoop[loopSize].id = generateBehaviorIdentifier();
+//    behaviorLoop[loopSize].operation = operation;
+//    behaviorLoop[loopSize].pin = pin;
+//    behaviorLoop[loopSize].type = type;
+//    // behaviorLoop[loopSize].mode = mode;
+//    behaviorLoop[loopSize].value = value;
+//    
+//    loopSize++; // Increment the loop size
+//    
+//    return true;
+//  }
+//  
+//  return false;
+//}
+
+
 /**
  * Insert a behavior node into the behavior loop at the specified index.
  */
-boolean appendLoopNode(int pin, int operation, int type, int value) {
-  // TODO: Add message to queue... and use sendMessage to send the messages...
-  
-  if (loopSize < DEFAULT_LOOP_CAPACITY) {
-    // Add behavior to queue
-//    behaviorLoop[loopSize].id = generateBehaviorIdentifier();
-    behaviorLoop[loopSize].operation = operation;
-    behaviorLoop[loopSize].pin = pin;
-    behaviorLoop[loopSize].type = type;
-    // behaviorLoop[loopSize].mode = mode;
-    behaviorLoop[loopSize].value = value;
-    
-    loopSize++; // Increment the loop size
-    
-    return true;
-  }
-  
-  return false;
-}
+//boolean appendLoopNode(int pin, int operation, int type, int value) {
+//  // TODO: Add message to queue... and use sendMessage to send the messages...
+//  
+//  if (loopSize < DEFAULT_LOOP_CAPACITY) {
+//    // Add behavior to queue
+////    behaviorLoop[loopSize].id = generateBehaviorIdentifier();
+//    behaviorLoop[loopSize].operation = operation;
+//    behaviorLoop[loopSize].pin = pin;
+//    behaviorLoop[loopSize].type = type;
+//    // behaviorLoop[loopSize].mode = mode;
+//    behaviorLoop[loopSize].value = value;
+//    
+//    loopSize++; // Increment the loop size
+//    
+//    return true;
+//  }
+//  
+//  return false;
+//}
 
 /**
  * Insert a behavior node into the behavior loop at the specified index.
@@ -644,12 +926,12 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
       // Move any behaviors back if needed
       //for (int i = index; i < loopSize; i++) {
       for (int i = index; i < loopSize; i++) {
-        behaviorLoop[i].uid = behaviorLoop[i + 1].uid;
-        behaviorLoop[i].operation = behaviorLoop[i + 1].operation;
-        behaviorLoop[i].pin = behaviorLoop[i + 1].pin;
-        behaviorLoop[i].type = behaviorLoop[i + 1].type;
-        // behaviorLoop[i].mode = behaviorLoop[i + 1].mode;
-        behaviorLoop[i].value = behaviorLoop[i + 1].value;
+//        behaviorLoop[i].uid = behaviorLoop[i + 1].uid;
+//        behaviorLoop[i].operation = behaviorLoop[i + 1].operation;
+//        behaviorLoop[i].pin = behaviorLoop[i + 1].pin;
+//        behaviorLoop[i].type = behaviorLoop[i + 1].type;
+//        // behaviorLoop[i].mode = behaviorLoop[i + 1].mode;
+//        behaviorLoop[i].value = behaviorLoop[i + 1].value;
       }
       
       // Update the beahvior counter if needed
@@ -673,15 +955,15 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
     
     Serial.print("index = "); Serial.print(index); Serial.println();
     
-    // Add behavior to queue
-    //behaviorLoop[loopSize].uid = generateBehaviorIdentifier();
-    //behaviorLoop[index].operation = operation;
-    behaviorLoop[index].pin = pin;
-    behaviorLoop[index].type = type;
-    // behaviorLoop[index].mode = mode;
-    behaviorLoop[index].value = value;
+//    // Add behavior to queue
+//    //behaviorLoop[loopSize].uid = generateBehaviorIdentifier();
+//    //behaviorLoop[index].operation = operation;
+//    behaviorLoop[index].pin = pin;
+//    behaviorLoop[index].type = type;
+//    // behaviorLoop[index].mode = mode;
+//    behaviorLoop[index].value = value;
     
-    Serial.print("value = "); Serial.print(behaviorLoop[index].value); Serial.println();
+//    Serial.print("value = "); Serial.print(behaviorLoop[index].value); Serial.println();
     
 //    setPinValue2 (index, value);
     
@@ -735,12 +1017,12 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
     // Move any behaviors back if needed
     //for (int i = index; i < loopSize; i++) {
     for (int i = loopSize; i > index; i--) {
-      behaviorLoop[i].uid = behaviorLoop[i - 1].uid;
-      behaviorLoop[i].operation = behaviorLoop[i - 1].operation;
-      behaviorLoop[i].pin = behaviorLoop[i - 1].pin;
-      behaviorLoop[i].type = behaviorLoop[i - 1].type;
-      // behaviorLoop[i].mode = behaviorLoop[i - 1].mode;
-      behaviorLoop[i].value = behaviorLoop[i - 1].value;
+//      behaviorLoop[i].uid = behaviorLoop[i - 1].uid;
+//      behaviorLoop[i].operation = behaviorLoop[i - 1].operation;
+//      behaviorLoop[i].pin = behaviorLoop[i - 1].pin;
+//      behaviorLoop[i].type = behaviorLoop[i - 1].type;
+//      // behaviorLoop[i].mode = behaviorLoop[i - 1].mode;
+//      behaviorLoop[i].value = behaviorLoop[i - 1].value;
     }
     
     // Update the beahvior counter if needed
@@ -748,13 +1030,13 @@ boolean applyBehaviorTransformation(int index, int pin, int operation, int type,
       loopCounter++;
     }
     
-    // Add behavior to queue
-    behaviorLoop[loopSize].uid = generateBehaviorIdentifier();
-    behaviorLoop[index].operation = operation;
-    behaviorLoop[index].pin = pin;
-    behaviorLoop[index].type = type;
-    // behaviorLoop[index].mode = mode;
-    behaviorLoop[index].value = value;
+//    // Add behavior to queue
+//    behaviorLoop[loopSize].uid = generateBehaviorIdentifier();
+//    behaviorLoop[index].operation = operation;
+//    behaviorLoop[index].pin = pin;
+//    behaviorLoop[index].type = type;
+//    // behaviorLoop[index].mode = mode;
+//    behaviorLoop[index].value = value;
     
     loopSize++; // Increment the loop size
     

@@ -11,6 +11,19 @@
 #define BEHAVIOR_REBOOT 20
 #define STATUS_WIFI_CONNECTED 30
 
+
+// Behavior Transformations
+#define CREATE 1
+#define GET 2
+#define UPDATE 3
+#define DELETE 4
+
+// Behaviors
+#define BEHAVIOR 1
+#define DOT 2
+#define LINE 3
+#define LOOP 4
+
 // Loop
 #define CREATE_LOOP 1
 
@@ -45,6 +58,24 @@ int generateBehaviorIdentifier() {
 
 struct Substrate;
 struct Sequence;
+//struct Dot;
+//struct Line;
+struct Loop;
+struct Behavior;
+struct Input;
+struct Output;
+struct Delay;
+
+// The "behavioral substrate" which provides an unconstrained context for behaviors.
+struct Substrate {
+  // TOOD: List of sequences (i.e., loops)
+  Sequence* origin; // The start sequence (i.e., the first sequence to execute in the substrate)
+  Sequence* sequences;
+  
+  // TODO: Implement previous and next
+  // Substrate* previous;
+  // Substrate* next;
+};
 
 struct Behavior {
   int uid; // The behavior's unique ID (uid will recur on other modules since it's just a counter associated with behaviors added)
@@ -56,11 +87,11 @@ struct Behavior {
   Behavior* previous; // The previous behavior in the sequence
   Behavior* next; // The next behavior in the sequence
   
-  // TODO: Remove these!
-  int operation; // i.e., write, read, PWM, "remember value at this time"
-  int pin; // The pin number
-  int mode; // i.e., input or output
-  int value; // i.e., high or low
+//  // TODO: Remove these!
+//  int operation; // i.e., write, read, PWM, "remember value at this time"
+//  int pin; // The pin number
+//  int mode; // i.e., input or output
+//  int value; // i.e., high or low
 };
 
 #define MODE_OUTPUT 0
@@ -101,12 +132,6 @@ struct Delay {
   int milliseconds;
 };
 
-// The "looping" behavioral filter, providing dynamical/behavioral form within the general, unconstrained substrate.
-// This provides a constraining context (i.e., structure) for behaviors and sequences.
-struct Loop {
-  boolean continuous;
-};
-
 #define SEQUENCE_TYPE_NONE 0
 //#define SEQUENCE_TYPE_DOT  1
 //#define SEQUENCE_TYPE_LINE 2
@@ -125,32 +150,23 @@ struct Sequence {
   Sequence* next;
 };
 
-// The "behavioral substrate" which provides an unconstrained context for behaviors.
-struct Substrate {
-  // TOOD: List of sequences (i.e., loops)
-  Sequence* entry; // The start sequence
-  Sequence* sequences;
-  
-  // TODO?: Add previous and next
+// The "looping" behavioral filter, providing dynamical/behavioral form within the general, unconstrained substrate.
+// This provides a constraining context (i.e., structure) for behaviors and sequences.
+struct Loop {
+  boolean continuous; // set to true
+  boolean singleton; // set to false
 };
 
-Substrate* substrate = NULL;
-
-//class Behavior2 {
-//  public:
-//    Behavior2();
-//    
-//    int type;
-//    int operation;
-//    int pin;
-//    int mode;
-//    int value;
-//    
-//    Behavior* previous; // Previous behavior
-//    Behavior* next; // Next behavior
-//    
-//  private:
-//    int uid;  
+//struct Line {
+//  boolean continuous; // set to false
+//  boolean singleton; // set to false
 //};
+
+//struct Dot {
+//  boolean continuous;
+//  boolean singleton;
+//};
+
+Substrate* substrate = NULL;
 
 #endif

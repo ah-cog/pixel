@@ -328,6 +328,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 
                 behavior = Create_Output_Behavior (substrate, pin, signal, data);
                 
+//                Propagate_Behavior_Transformation (CREATE, BEHAVIOR);
+                
 //                Serial.println("Test:");
 //                Serial.println((*behavior).type);
 //                Output* output = Get_Output_Behavior (behavior);

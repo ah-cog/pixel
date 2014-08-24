@@ -1,5 +1,5 @@
-#ifndef VIRTUAL_DEVICE
-#define VIRTUAL_DEVICE
+#ifndef VIRTUAL_DEVICE_H
+#define VIRTUAL_DEVICE_H
 
 // "Transcluded" device. Changes to this device are reflected in the associated physical device.
 //struct VirtualDevice {

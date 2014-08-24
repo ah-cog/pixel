@@ -1,6 +1,15 @@
 /*
-"Pixel" Firmware (for Gestural Language), Rendition 2
-Authors: Michael Gubbels
+  "Pixel" Firmware (for Gestural Language), Rendition 2
+  
+  Creator: Michael Gubbels
+
+  "The reasonable man adapts himself to the world;
+   the unreasonable one persists in trying to adapt the world to himself.
+   Therefore all progress depends on the unreasonable man."
+   
+   - George Bernard Shaw
+     Man and Superman (1903) "Maxims for Revolutionists"
+
 */
 
 #include <Wire.h>
