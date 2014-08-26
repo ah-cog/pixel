@@ -89,6 +89,8 @@ void syncPinValue(int pin) {
  */
 // TODO: Updates behavior (i.e., the state of the program being interpretted)
 void acceptBehaviorTransformations() { // consider renaming this something like acceptBehaviorTransformation
+
+//  Serial.println ("acceptBehaviorTransformations");
   
   // Request messages from slave
   // NOTE: This causes the function "requestEvent" specified in "Wire.onRequest(requestEvent);" 
@@ -102,7 +104,7 @@ void acceptBehaviorTransformations() { // consider renaming this something like 
   
     //char c = Wire.read (); // receive a byte as character
     char c = Wire.receive (); // receive a byte as character
-//    Serial.print(c); // print the character
+//    Serial.print (c); // print the character
 //    Serial.print(" ");
     
     // Copy byte into message buffer
@@ -110,49 +112,98 @@ void acceptBehaviorTransformations() { // consider renaming this something like 
     i2cMessageBufferSize++;
   }
   i2cMessageBuffer[i2cMessageBufferSize] = '\0'; // Terminate I2C message buffer
+//  Serial.print("\n");
 
   i2cMessageBufferSize = 0; // Reset I2C message buffer size
   
   // Process received data (i.e., parse the received messages)
   if (strlen(i2cMessageBuffer) > 1) { // if (i2cMessageBufferSize > 0) {
+    Serial.println("Buffer > 1");
     
-    // Split message by space
-    String split = String(i2cMessageBuffer); // "hi this is a split test";
-    
-    String statusSymbol = getValue(split, ' ', 0).toInt();
-      
-    if (statusSymbol.equals("1") == true) { // Check if status character is "1"
-    
-      Serial.println(i2cMessageBuffer);
-      
-      // Split message by space
-      // String split = String(i2cMessageBuffer); // "hi this is a split test";
-      
-      // Parse instruction message relayed by the "slave" device from "Looper"
-      int operation = getValue(split, ' ', 2).toInt();
-      
-      // Check operation and take handle it accordingly
-      if (operation == BEHAVIOR_ERASE) {
-        
-        eraseLoop();
-        
-      } else {
-      
-        // Parse behavior node's string form
-        int index     = getValue(split, ' ', 1).toInt();
-        int pin       = getValue(split, ' ', 3).toInt();
-        int type      = getValue(split, ' ', 4).toInt();
-        // int mode      = getValue(split, ' ', 3).toInt();
-        int value     = getValue(split, ' ', 5).toInt();
-        
-        // TODO: Create node object from parsed data (i.e., "Behavior behavior = deserializeBehavior();").
-        // TODO: Add node object to queue (i.e., the program) (i.e., "appendBehavior(behavior);")
-        //appendLoopNode(pin, operation, type, value);
-        applyBehaviorTransformation(index, pin, operation, type, value);
-        
-      }
+    if (i2cMessageBuffer[0] != '0') { // if (i2cMessageBuffer[0] == '(') {
+      Serial.println("Received message!");
     }
+    
+//    // Split message by space
+//    String split = String(i2cMessageBuffer); // "hi this is a split test";
+//    
+//    String statusSymbol = getValue(split, ' ', 0).toInt();
+//      
+//    if (statusSymbol.equals("1") == true) { // Check if status character is "1"
+//    
+//      Serial.println(i2cMessageBuffer);
+//      
+//      // Split message by space
+//      // String split = String(i2cMessageBuffer); // "hi this is a split test";
+//      
+//      // Parse instruction message relayed by the "slave" device from "Looper"
+//      int operation = getValue(split, ' ', 2).toInt();
+//      
+//      // Check operation and take handle it accordingly
+//      if (operation == BEHAVIOR_ERASE) {
+//        
+//        eraseLoop();
+//        
+//      } else {
+//      
+//        // Parse behavior node's string form
+//        int index     = getValue(split, ' ', 1).toInt();
+//        int pin       = getValue(split, ' ', 3).toInt();
+//        int type      = getValue(split, ' ', 4).toInt();
+//        // int mode      = getValue(split, ' ', 3).toInt();
+//        int value     = getValue(split, ' ', 5).toInt();
+//        
+//        // TODO: Create node object from parsed data (i.e., "Behavior behavior = deserializeBehavior();").
+//        // TODO: Add node object to queue (i.e., the program) (i.e., "appendBehavior(behavior);")
+//        //appendLoopNode(pin, operation, type, value);
+//        applyBehaviorTransformation(index, pin, operation, type, value);
+//        
+//      }
+//    }
   }
+
+//  i2cMessageBufferSize = 0; // Reset I2C message buffer size
+//  
+//  // Process received data (i.e., parse the received messages)
+//  if (strlen(i2cMessageBuffer) > 1) { // if (i2cMessageBufferSize > 0) {
+//    
+//    // Split message by space
+//    String split = String(i2cMessageBuffer); // "hi this is a split test";
+//    
+//    String statusSymbol = getValue(split, ' ', 0).toInt();
+//      
+//    if (statusSymbol.equals("1") == true) { // Check if status character is "1"
+//    
+//      Serial.println(i2cMessageBuffer);
+//      
+//      // Split message by space
+//      // String split = String(i2cMessageBuffer); // "hi this is a split test";
+//      
+//      // Parse instruction message relayed by the "slave" device from "Looper"
+//      int operation = getValue(split, ' ', 2).toInt();
+//      
+//      // Check operation and take handle it accordingly
+//      if (operation == BEHAVIOR_ERASE) {
+//        
+//        eraseLoop();
+//        
+//      } else {
+//      
+//        // Parse behavior node's string form
+//        int index     = getValue(split, ' ', 1).toInt();
+//        int pin       = getValue(split, ' ', 3).toInt();
+//        int type      = getValue(split, ' ', 4).toInt();
+//        // int mode      = getValue(split, ' ', 3).toInt();
+//        int value     = getValue(split, ' ', 5).toInt();
+//        
+//        // TODO: Create node object from parsed data (i.e., "Behavior behavior = deserializeBehavior();").
+//        // TODO: Add node object to queue (i.e., the program) (i.e., "appendBehavior(behavior);")
+//        //appendLoopNode(pin, operation, type, value);
+//        applyBehaviorTransformation(index, pin, operation, type, value);
+//        
+//      }
+//    }
+//  }
 }
 
 

@@ -27,9 +27,9 @@ Authors: Michael Gubbels
 //       over I2C upon request.
 
 void setup () {
-//  delay(2000);
+
   Serial.begin(9600); // Start serial for output
-  Serial.println(F("Pixel, Firmware Denmark"));
+  Serial.println(F("Looper Firmware"));
   
   setupLooper();
   
@@ -40,13 +40,20 @@ void setup () {
   setupDeviceCommunication();
 }
 
+
+Propagator* propagator = NULL;
+
 void setupDeviceCommunication() {
   Wire.begin(I2C_DEVICE_ADDRESS); // Join I2C bus with the device's address
   Wire.onReceive(i2cReceiveEvent);   // Register event handler to receive data from the master I2C device
   Wire.onRequest(i2cRequestEvent);   // Event handler to respond to a request for data from the I2C master device
   
   // Send reboot message to master device
-  insertBehavior(0, 30, 0, 0, 0, 0);
+//  insertBehavior(0, 30, 0, 0, 0, 0);
+  
+  propagator = Create_Propagator ();
+//  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
+//  Queue_Propagation (propagator, propagation);
 }
 
 /**
@@ -60,9 +67,22 @@ void loop () {
   if (client) {
     handleClientConnection (client);
   }
+
+//  Propagator* propagator = Create_Propagator ();
+//  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
+////  String data = Get_Propagation_Data (propagation);
+////  Serial.println (data);
+//  Queue_Propagation (propagator, propagation);
+//  Propagate (propagator, I2C_CHANNEL);
+//  Delete_Propagator (propagator);
+//  
+//  delay (2000);
+  
+//  while (true);
 }
 
-char i2cBuffer[32];
+#define I2C_BUFFER_BYTE_SIZE 32
+char i2cBuffer[I2C_BUFFER_BYTE_SIZE];
 int i2cBufferSize = 0;
 boolean hasMessage = false;
 
@@ -131,29 +151,60 @@ void i2cReceiveEvent (int howMany) {
  */
 void i2cRequestEvent () {
   
-  char buf[6]; // "-2147483648\0"
+//  if ((*propagator).queueSize > 0) {
   
-  if (behaviorTransformationCount > 0) {
-    
-    //Serial.print("behaviorTransformationCount = "); Serial.print(behaviorTransformationCount); Serial.println();
+//  Propagator* propagator = Create_Propagator ();
+//  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
+//  String data = Get_Propagation_Data (propagation);
+//  Serial.println (data);
+//  Queue_Propagation (propagator, propagation);
 
-    // Send status
-    Wire.write ("1 ");
+  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
+  Queue_Propagation (propagator, propagation);
 
-    // Send serialized behavior
-    Wire.write (itoa(behaviorTransformations[0].index, buf, 10)); Wire.write (" ");
-    Wire.write (itoa(behaviorTransformations[0].operation, buf, 10)); Wire.write (" ");
-    Wire.write (itoa(behaviorTransformations[0].pin, buf, 10));       Wire.write (" ");
-    // Wire.write (itoa(behaviorTransformations[0].type, buf, 10));      Wire.write (" ");
-    Wire.write (itoa(behaviorTransformations[0].mode, buf, 10));      Wire.write (" ");
-    Wire.write (itoa(behaviorTransformations[0].value, buf, 10));     Wire.write (" ");
+  Serial.println ("i2cRequestEvent");
+  Serial.println ((int) propagator);
+  
+  if (propagator != NULL) {
     
-    // Remove the behavior from the processing queue once it's been sent over I2C
-    removeBehaviorTransformation (0);
+    Serial.println ((int) (*propagator).propagation);
+    
+    if ((*propagator).propagation != NULL) {
+      
+      Propagate (propagator, I2C_CHANNEL);
+  //    Delete_Propagator (propagator);
+    }
+    
   } else {
-    // Send status
-    Wire.write ("0 ");
+    
+    Wire.write("0 ");
+    
   }
+
+
+
   
-  // pin, operation, type, mode, value
+//  char buf[6]; // "-2147483648\0"
+//  
+//  if (behaviorTransformationCount > 0) {
+//    
+//    //Serial.print("behaviorTransformationCount = "); Serial.print(behaviorTransformationCount); Serial.println();
+//
+//    // Send status
+//    Wire.write ("1 ");
+//
+//    // Send serialized behavior
+//    Wire.write (itoa(behaviorTransformations[0].index, buf, 10)); Wire.write (" ");
+//    Wire.write (itoa(behaviorTransformations[0].operation, buf, 10)); Wire.write (" ");
+//    Wire.write (itoa(behaviorTransformations[0].pin, buf, 10));       Wire.write (" ");
+//    // Wire.write (itoa(behaviorTransformations[0].type, buf, 10));      Wire.write (" ");
+//    Wire.write (itoa(behaviorTransformations[0].mode, buf, 10));      Wire.write (" ");
+//    Wire.write (itoa(behaviorTransformations[0].value, buf, 10));     Wire.write (" ");
+//    
+//    // Remove the behavior from the processing queue once it's been sent over I2C
+//    removeBehaviorTransformation (0);
+//  } else {
+//    // Send status
+//    Wire.write ("0 ");
+//  }
 }

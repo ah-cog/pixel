@@ -3,12 +3,6 @@
 
 #include "Behavior.h"
 
-//struct Loop {
-//  Behavior* nodes; // Behavior nodes
-//  int nodeCount;
-//  int counter; // i.e., the "program counter"
-//};
-
 // Behavior nodes that define the module's beahvior
 #define DEFAULT_LOOP_CAPACITY 20
 //Loop behaviorLoop[DEFAULT_LOOP_CAPACITY]; // TODO: FIx this!
@@ -17,8 +11,270 @@ Behavior behaviorLoop[DEFAULT_LOOP_CAPACITY]; // Behavior nodes
 int loopSize = 0;
 int loopCounter = -1; // i.e., the "program counter"
 
+
+#define PROPAGATION_SIZE 32
+
+//! Propagation (i.e., Transformation) to propagate.
+//!
+//! TODO: Rename to Transformation
+struct Propagation {
+  // String data;
+  char* data;
+  int size;
+  
+  Propagation* previous;
+  Propagation* next;
+};
+
+//! Propagator of behavior transformations.
+//!
+struct Propagator {
+  Propagation* propagation;
+};
+
+//! Create behavior transformation propagator.
+//!
+Propagator* Create_Propagator () {
+  
+  Serial.println ("Create_Propagator");
+  
+  // Create substrate
+  Propagator* propagator = (Propagator*) malloc (sizeof (Propagator));
+  
+  // Initialize sequence
+  (*propagator).propagation = NULL;
+  
+  // Return sequence
+  return propagator;
+  
+}
+
+//! Deletes the propagator from dynamic memory.
+//!
+boolean Delete_Propagator (Propagator* propagator) {
+  
+  Serial.println ("Delete_Propagator");
+  
+  if (propagator != NULL) {
+  
+    // Delete propagator
+    free (propagator);
+    
+    // Return success
+    return true;
+  
+  }
+  
+  // Return failure
+  return false;
+  
+}
+
+//! Create propagation (i.e., a behavior transformation).
+//!
+Propagation* Create_Propagation (String data) {
+  
+  Serial.println ("Create_Propagation");
+  Serial.print ("data = "); Serial.print (data); Serial.print ("\n");
+  
+  // Create substrate
+  Propagation* propagation = (Propagation*) malloc (sizeof (Propagation));
+  
+  Serial.println ("Allocated Propagation.");
+  
+  // Initialize propagation
+  (*propagation).size = PROPAGATION_SIZE;
+  (*propagation).data = (char*) malloc (PROPAGATION_SIZE * sizeof (char));
+  data.toCharArray ((*propagation).data, PROPAGATION_SIZE);
+  (*propagation).previous = NULL;
+  (*propagation).next = NULL;
+  
+  Serial.print ("Initialized Propagation "); Serial.print ((int) propagation); Serial.print ("\n");
+  
+  // Return sequence
+  return propagation;
+  
+}
+
+String Get_Propagation_Data (Propagation* propagation) {
+  
+  if (propagation != NULL) {
+    
+    return (*propagation).data;
+    
+  }
+  
+  return NULL;
+  
+}
+
+//! Frees the Propagation from dynamic memory.
+//!
+boolean Delete_Propagation (Propagation* propagation) {
+  
+  Serial.println ("Delete_Propagation");
+  
+  if (propagation != NULL) {
+    
+    // Free the data payload
+    if ((*propagation).data != NULL) {
+      free ((*propagation).data);
+    }
+    
+    // Free the propagation object
+    free (propagation);
+    
+  }
+  
+}
+
+//! Queue the transformation for propagation.
+//!
+Propagation* Queue_Propagation (Propagator* propagator, Propagation* propagation) {
+  
+  Serial.println ("Queue_Propagation");
+  
+  if ((*propagator).propagation == NULL) {
+    
+    // Push to the top of the stack (as the first element)
+    (*propagator).propagation = propagation;
+    
+    // Set up the forward and back links
+    (*propagation).previous = NULL;
+    (*propagation).next     = NULL;
+    
+  } else {
+    
+    // Get the propagation at the end of the queue
+    Propagation* currentPropagation = (*propagator).propagation;
+    while (currentPropagation != NULL) {
+      currentPropagation = (*currentPropagation).previous;
+    }
+    
+    // Push to the top of the stack
+    (*currentPropagation).previous = propagation;
+    
+    // Set up the backward and forward links
+    (*propagation).next = currentPropagation;
+    (*propagation).previous = NULL;
+    
+  }
+  
+  // Return sequence
+  return propagation;
+  
+}
+
+//! Pop propagation off the propagator's stack
+//!
+Propagation* Dequeue_Propagation (Propagator* propagator) {
+  
+  Serial.println ("Dequeue_Propagation");
+  
+  Propagation* propagation = NULL;
+  
+  if (propagator != NULL) {
+    
+    // Get the propagation at the front of the propagator's queue
+    propagation = (*propagator).propagation;
+    
+    // Update the Propagator. Set the next of the propagator's propagation queue.
+    (*propagator).propagation = (*propagation).previous;
+    
+    // Dissociate the dequeued propagation. Update the backward and forward links of the dequeued propagation.
+    (*propagation).next = NULL;
+    (*propagation).previous = NULL;
+    
+  }
+  
+  return propagation;
+  
+}
+
+#define NO_CHANNEL 0
+#define I2C_CHANNEL 1
+// TODO: #define VISUAL_CHANNEL 2
+// TODO: #define AURAL_CHANNEL 2
+// TODO: #define TEXTUAL_CHANNEL 3
+
+boolean Propagate (Propagator* propagator, int channel) {
+  
+  Serial.println ("Propagate");
+  
+  if (propagator != NULL) {
+    
+    if (channel == I2C_CHANNEL) {
+      
+      // "(create input behavior 38472934)" // Pass on the parentheticized "secret"
+      
+//      char buf[6];
+      const int AVAILABLE_BUFFER_BYTES = 34;
+      char buffer[AVAILABLE_BUFFER_BYTES];
+      
+//      Propagation* propagation = (*propagator).propagation;
+      Propagation* propagation = Dequeue_Propagation (propagator);
+//      String data = (*propagation).data;
+//      data.toCharArray(buffer, AVAILABLE_BUFFER_BYTES);
+      
+      // Start transformation description
+      Wire.write ("(");
+      
+      //Wire.write (buffer);
+      Wire.write ((*propagation).data);
+  
+      // Send serialized behavior
+//      Wire.write (itoa(behaviorTransformations[0].index, buf, 10)); Wire.write (" ");
+//      Wire.write (itoa(behaviorTransformations[0].operation, buf, 10)); Wire.write (" ");
+//      Wire.write (itoa(behaviorTransformations[0].pin, buf, 10));       Wire.write (" ");
+//      // Wire.write (itoa(behaviorTransformations[0].type, buf, 10));      Wire.write (" ");
+//      Wire.write (itoa(behaviorTransformations[0].mode, buf, 10));      Wire.write (" ");
+//      Wire.write (itoa(behaviorTransformations[0].value, buf, 10));     Wire.write (" ");
+      
+      // Conclude transformation description
+      Wire.write (")");
+      
+      // Free the propagation from memory
+      Delete_Propagation (propagation);
+      
+      // Remove the behavior from the processing queue once it's been sent over I2C
+//      removeBehaviorTransformation (0);
+      
+    }
+    
+  }
+  
+  return true;
+  
+}
+
+
+
+Substrate* Create_Substrate ();
+Sequence* Create_Sequence (Substrate* substrate);
+boolean Update_Sequence_Substrate (Sequence* sequence, Substrate* substrate);
 Behavior* Create_Behavior (Substrate* substrate);
 boolean Remove_Sequence_Substrate (Sequence* sequence, Substrate* substrate);
+
+boolean setupLooper() {
+  
+  // Create behavior substrate
+  if (substrate == NULL) {
+    substrate = Create_Substrate ();
+  }
+  
+  // Create sequence
+  // TODO: Add parameter "Substrate* substrate"
+  if (substrate != NULL) {
+    
+    Sequence* sequence = Create_Sequence (substrate);
+    
+    boolean isAdded = Update_Sequence_Substrate (sequence, substrate);
+    
+//    return isAdded;
+  }
+  
+  return true;
+}
 
 long generateUuid() {
   long uuid = random(65000L);
@@ -403,27 +659,6 @@ boolean Remove_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
   return false;
 }
 
-boolean setupLooper() {
-  
-  // Create behavior substrate
-  if (substrate == NULL) {
-    substrate = Create_Substrate ();
-  }
-  
-  // Create sequence
-  // TODO: Add parameter "Substrate* substrate"
-  if (substrate != NULL) {
-    
-    Sequence* sequence = Create_Sequence (substrate);
-    
-    boolean isAdded = Update_Sequence_Substrate (sequence, substrate);
-    
-//    return isAdded;
-  }
-  
-  return true;
-}
-
 //! Creates an Output
 //!
 Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, String data) {
@@ -509,6 +744,8 @@ Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, 
   return behavior;
 }
 
+//! Returns the Output schema for the Behavior.
+//!
 Output* Get_Output_Behavior (Behavior* behavior) {
   return ((Output*) (*behavior).schema);
 }

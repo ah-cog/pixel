@@ -1,3 +1,6 @@
+#ifndef BEHAVIOR_TRANSFORMATION_H
+#define BEHAVIOR_TRANSFORMATION_H
+
 struct BehaviorTransformation { // formerly BehaviorTransformation
   int index; // The index in the loop of this behaviodr
   int pin; // The pin number
@@ -55,3 +58,5 @@ boolean removeBehaviorTransformation(int index) {
 
   return false;
 }
+
+#endif

@@ -95,7 +95,7 @@ struct Behavior {
 };
 
 #define MODE_OUTPUT 0
-#define MODE_INPUT 1
+#define MODE_INPUT  1
 
 #define SIGNAL_DIGITAL 0
 #define SIGNAL_ANALOG  1

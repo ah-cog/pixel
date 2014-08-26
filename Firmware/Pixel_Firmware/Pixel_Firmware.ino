@@ -77,7 +77,7 @@ void setup() {
   //
   
   Serial.begin(9600);
-  Serial.println(F("Pixel, Firmware South Korea"));
+  Serial.println(F("Pixel Firmware"));
   
   // Setup physical orientation sensing peripherals (i.e., IMU)
   setupOrientationSensing();
