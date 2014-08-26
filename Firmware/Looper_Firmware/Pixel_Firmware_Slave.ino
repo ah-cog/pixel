@@ -159,7 +159,7 @@ void i2cRequestEvent () {
 //  Serial.println (data);
 //  Queue_Propagation (propagator, propagation);
 
-  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
+  Propagation* propagation = Create_Propagation ("create substrate 55ff68064"); // 55ff68064989495329092587
   Queue_Propagation (propagator, propagation);
 
   Serial.println ("i2cRequestEvent");

@@ -121,7 +121,8 @@ void acceptBehaviorTransformations() { // consider renaming this something like 
     Serial.println("Buffer > 1");
     
     if (i2cMessageBuffer[0] != '0') { // if (i2cMessageBuffer[0] == '(') {
-      Serial.println("Received message!");
+//      Serial.println("Received message!");
+      Serial.println (i2cMessageBuffer);
     }
     
 //    // Split message by space
