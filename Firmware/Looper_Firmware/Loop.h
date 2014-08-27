@@ -207,43 +207,31 @@ boolean Propagate (Propagator* propagator, int channel) {
       
       // "(create input behavior 38472934)" // Pass on the parentheticized "secret"
       
-//      char buf[6];
-      const int AVAILABLE_BUFFER_BYTES = 34;
+      // Create buffer for storing the bytes to be sent (over I2C)
+      const int AVAILABLE_BUFFER_BYTES = 32;
       char buffer[AVAILABLE_BUFFER_BYTES];
       
-//      Propagation* propagation = (*propagator).propagation;
+      // Dequeue the next description to be sent by the specified propagator
       Propagation* propagation = Dequeue_Propagation (propagator);
-//      String data = (*propagation).data;
-//      data.toCharArray(buffer, AVAILABLE_BUFFER_BYTES);
       
-      // Start transformation description
-      Wire.write ("(");
+      // TODO: Break up dequeued string to be sent into 32 byte segments, then queue them in the I2C outgoing data buffer.
+
+      // Transmit data over via the I2C protocol
+      Wire.write ("("); // Start transformation description
+      Wire.write ((*propagation).data); // Write the serialized data
+      Wire.write (")"); // Conclude transformation description
       
-      //Wire.write (buffer);
-      Wire.write ((*propagation).data);
-  
-      // Send serialized behavior
-//      Wire.write (itoa(behaviorTransformations[0].index, buf, 10)); Wire.write (" ");
-//      Wire.write (itoa(behaviorTransformations[0].operation, buf, 10)); Wire.write (" ");
-//      Wire.write (itoa(behaviorTransformations[0].pin, buf, 10));       Wire.write (" ");
-//      // Wire.write (itoa(behaviorTransformations[0].type, buf, 10));      Wire.write (" ");
-//      Wire.write (itoa(behaviorTransformations[0].mode, buf, 10));      Wire.write (" ");
-//      Wire.write (itoa(behaviorTransformations[0].value, buf, 10));     Wire.write (" ");
-      
-      // Conclude transformation description
-      Wire.write (")");
-      
-      // Free the propagation from memory
+      // Free the propagation from memory (once sent via I2C)
       Delete_Propagation (propagation);
       
-      // Remove the behavior from the processing queue once it's been sent over I2C
-//      removeBehaviorTransformation (0);
+      return true;
       
     }
     
   }
   
-  return true;
+  // Return false because a valid propagator or channel was not specified.
+  return false;
   
 }
 
@@ -255,7 +243,7 @@ boolean Update_Sequence_Substrate (Sequence* sequence, Substrate* substrate);
 Behavior* Create_Behavior (Substrate* substrate);
 boolean Remove_Sequence_Substrate (Sequence* sequence, Substrate* substrate);
 
-boolean setupLooper() {
+boolean setupLooper () {
   
   // Create behavior substrate
   if (substrate == NULL) {
