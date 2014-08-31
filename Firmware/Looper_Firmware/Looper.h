@@ -231,7 +231,10 @@ boolean Delete_Substrate (Substrate* substrate) {
   
 }
 
+//! Creates a sequence into which behaviors can be placed.
+//!
 Sequence* Create_Sequence (Substrate* substrate) {
+  Serial.println ("Create_Sequence");
   
   // Create sequence
   Sequence* sequence = (Sequence*) malloc (sizeof (Sequence));
@@ -247,9 +250,18 @@ Sequence* Create_Sequence (Substrate* substrate) {
   
   // TODO: Create sequence schema
   
+  Serial.print ("\ttype: "); Serial.print ((*sequence).type); Serial.print ("\n");
+  
   // Return sequence
   return sequence;
   
+}
+
+int Get_Sequence_Type (Sequence* sequence) {
+  if (sequence != NULL) {
+    return (*sequence).type;
+  }
+  return SEQUENCE_TYPE_NONE;
 }
 
 //! Deletes a sequence structure, freeing it from memory (specifically, from the heap).
@@ -309,6 +321,11 @@ boolean Update_Sequence_Substrate (Sequence* sequence, Substrate* substrate) {
     Serial.println("First sequence");
     (*substrate).sequences = sequence;
     
+    // Set the substrate's origin if it has not been set
+    if ((*substrate).origin == NULL) {
+      (*substrate).origin = sequence;
+    }
+    
   } else {
     
     // Get the last behavior in the loop
@@ -365,7 +382,12 @@ boolean Remove_Sequence_Substrate (Sequence* sequence, Substrate* substrate) {
   return true;
 }
 
+//! Adds the specified behavior to the specified sequence.
+//!
 boolean Update_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
+  Serial.println ("Update_Behavior_Sequence");
+  
+  Serial.print ("\tsequence type: "); Serial.print ((*sequence).type); Serial.print ("\n");
   
 //  Sequence* coreLoop = (*substrate).sequences;
   if ((*sequence).behavior == NULL) {
@@ -375,10 +397,12 @@ boolean Update_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
     
   } else {
     
+    Serial.println("Next");
+    
     // Get the last behavior in the loop
     Behavior* lastBehavior = (*sequence).behavior;
     while ((*lastBehavior).next != NULL) {
-      Serial.println("Next");
+      Serial.println("Next (again)");
       lastBehavior = (*lastBehavior).next;
     }
     
@@ -394,6 +418,8 @@ boolean Update_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
   
 }
 
+//! Removes the specified behavior from the specified sequence
+//!
 boolean Remove_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
   
   // Update behavior topology
@@ -795,6 +821,7 @@ struct Performer {
 //! Creates a behavior performer in the specified substrate.
 //!
 Performer* Create_Performer (Substrate* substrate) {
+  Serial.println ("Create_Performer");
   
   Performer* performer = NULL;
   
@@ -812,8 +839,11 @@ Performer* Create_Performer (Substrate* substrate) {
     
     // Initialize the processor's current behavior
     if ((*substrate).origin != NULL) {
+      Serial.println ("Setting performer's origin and behavior.");
       (*performer).origin = (*substrate).origin;
-      (*performer).behavior = (*((*performer).origin)).behavior;
+      (*performer).behavior = (*((*substrate).origin)).behavior;
+      
+      Serial.print ("\tsequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
     }
   
   }
@@ -825,26 +855,79 @@ Performer* Create_Performer (Substrate* substrate) {
 //! interpreter (i.e., analogous to a JavaScript interpreter).
 //!
 boolean Perform_Behavior (Performer* performer) {
+  Serial.println ("Perform_Behavior");
+  
   if (performer != NULL) {
     Behavior* behavior = (*performer).behavior;
+    Serial.println ("performer != NULL");
     
-    if (behavior != NULL) {
+    if (behavior != NULL) { // Check if the Behavior is valid.  
+      Serial.println ("behavior != NULL");
     
       if ((*behavior).type == BEHAVIOR_TYPE_OUTPUT) {
         Output* output = (Output*) (*behavior).schema;
         
+        Serial.println ("Output");
+        
         // Update the pin's state
 //        Update_Virtual_Pin ((*output).pin, (*output).signal, (*output).data);
+      } else if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+        Input* input = (Input*) (*behavior).schema;
+        
+        Serial.println ("Input");
+        
+        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+      } else if ((*behavior).type == BEHAVIOR_TYPE_DELAY) {
+        Delay* delay = (Delay*) (*behavior).schema;
+        
+        Serial.println ("Delay");
+        
+        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+      } else if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
+        
+        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+        
+      } else {
+        
+        // NOTE: The Behavior type is invalid or not supported.
+        // NOTE: To add additional Behaviors, append this if-else control flow.
+        
       }
       
       // Continue behavior performance
-      (*performer).behavior = (*((*performer).behavior)).next;
+      // TODO: Get next behavior (following logic specific to loops, lines, dots).
+      //Serial.print ("behavior's sequence type: "); Serial.print ((*(*behavior).sequence).type); Serial.print ("\n");
+      Serial.print ("behavior's sequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
+      // if ((*(*behavior).sequence).type == SEQUENCE_TYPE_LOOP) {
+      if ((*((*performer).origin)).type == SEQUENCE_TYPE_LOOP) {
+        
+        Behavior* nextBehavior = (*((*performer).behavior)).next;
+        
+        if (nextBehavior != NULL) {
+          Serial.println("next behavior");
+          // Go to next behavior in the sequence
+          (*performer).behavior = (*((*performer).behavior)).next;
+        } else {
+          Serial.println("restart sequence from first behavior");
+          // The end of the looping sequence has been reached, so start again from the beginning of the performer's origin behavior sequence.
+          (*performer).behavior = (*((*performer).origin)).behavior;
+        }
+        return true;
+        
+      } else {
+        
+        // TODO: Implement "next" code for Dot and Line (i.e., they are terminal, non-repeating, so only execute once)
+        
+        return false; // Return false, indicating "no next/more behaviors"
+        
+      }
       
-      return true;
+      return false;
     }
   }
   
   return false;
+  
 }
 
 

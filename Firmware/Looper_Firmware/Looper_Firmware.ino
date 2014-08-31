@@ -14,7 +14,6 @@ Authors: Michael Gubbels
 #include <Wire.h>
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
-#include "Looper.h"
 #include "VirtualDevice.h"
 #include "WebServer.h"
 
@@ -32,7 +31,7 @@ void setup () {
   Serial.begin(9600); // Start serial for output
   Serial.println(F("Looper Firmware"));
   
-  setupLooper();
+  //setupLooper();
   
   // Setup Wi-Fi and web server
   setupWebServer();
@@ -70,6 +69,40 @@ void loop () {
   if (client) {
     handleClientConnection (client);
   }
+  
+  // Create behavior substrate
+  substrate = Create_Substrate ();
+  
+  // Create sequence (i.e., a "(behavior) transformation context"... this is a transformation context for behaviors like a pottery wheel is a context for transforming clay in a particular way) for behaviors
+  // In this analogy, transforming behaviors in a unconstrained graph would be akin to transforming clay with only one's hands (and possibly, but not likely, some basic clay knives... these are likely other things in the analogous situation).
+  Sequence* sequence = Create_Sequence (substrate);
+  boolean isAdded = Update_Sequence_Substrate (sequence, substrate);
+  
+  // Create behaviors in the sequence:
+  sequence = (*substrate).sequences;
+  int sequenceType = Get_Sequence_Type (sequence);
+  Serial.print ("sequenceType: "); Serial.print (sequenceType); Serial.print ("\n");
+  
+  // Create Input Behavior
+  Behavior* inputBehavior = Create_Input_Behavior (substrate, 5, "digital", "off");
+  Update_Behavior_Sequence (inputBehavior, sequence);
+  
+  // Create Output Behavior
+  Behavior* outputBehavior = Create_Output_Behavior (substrate, 5, "digital", "on");
+  Update_Behavior_Sequence (outputBehavior, sequence);
+  
+  // Create Delay Behavior
+//  Behavior* delayBehavior = Create_Delay_Behavior (substrate, 5, "digital", "on");
+//  Update_Behavior_Sequence (delayBehavior, sequence);
+  
+  // Create performer
+  Performer* performer = Create_Performer (substrate);
+  
+  // Perform the next behavior
+  while (true) {
+    boolean performanceResult = Perform_Behavior (performer);
+    delay (800);
+  }
 
 //  Propagator* propagator = Create_Propagator ();
 //  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
@@ -81,7 +114,7 @@ void loop () {
 //  
 //  delay (2000);
   
-//  while (true);
+  while (true);
 }
 
 #define I2C_BUFFER_BYTE_SIZE 32

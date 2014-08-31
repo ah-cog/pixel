@@ -77,13 +77,52 @@ struct Substrate {
   // Substrate* next;
 };
 
+#define SEQUENCE_TYPE_NONE 0
+//#define SEQUENCE_TYPE_DOT  1
+//#define SEQUENCE_TYPE_LINE 2
+#define SEQUENCE_TYPE_LOOP 3
+
+struct Sequence {
+  int uid;
+  int type; // e.g., line or loop
+  void* schema;
+  Substrate* substrate;
+  
+  Behavior* behavior; // The first behavior in the sequence
+  int size;
+  
+  Sequence* previous; // The previous sequence in the list
+  Sequence* next; // THe next sequence in the list
+};
+
+// The "looping" behavioral filter, providing dynamical/behavioral form within the general, unconstrained substrate.
+// This provides a constraining context (i.e., structure) for behaviors and sequences.
+struct Loop {
+  boolean continuous; // set to true
+  boolean singleton; // set to false
+};
+
+//struct Line {
+//  boolean continuous; // set to false
+//  boolean singleton; // set to false
+//};
+
+//struct Dot {
+//  boolean continuous;
+//  boolean singleton;
+//};
+
+Substrate* substrate = NULL;
+
 struct Behavior {
   int uid; // The behavior's unique ID (uid will recur on other modules since it's just a counter associated with behaviors added)
   int type; // i.e., digital or analog
   void* schema; // The schema for the specific behavior type (e.g., for the "set pin" behavior)
   
   Substrate* substrate; // The substrate containing the behavior
+  
   Sequence* sequence; // The sequence containing the behavior (if any)
+  
   Behavior* previous; // The previous behavior in the sequence
   Behavior* next; // The next behavior in the sequence
   
@@ -131,42 +170,5 @@ struct Delay {
   
   int milliseconds;
 };
-
-#define SEQUENCE_TYPE_NONE 0
-//#define SEQUENCE_TYPE_DOT  1
-//#define SEQUENCE_TYPE_LINE 2
-#define SEQUENCE_TYPE_LOOP 3
-
-struct Sequence {
-  int uid;
-  int type; // e.g., line or loop
-  void* schema;
-  Substrate* substrate;
-  
-  Behavior* behavior; // The first behavior in the sequence
-  int size;
-  
-  Sequence* previous;
-  Sequence* next;
-};
-
-// The "looping" behavioral filter, providing dynamical/behavioral form within the general, unconstrained substrate.
-// This provides a constraining context (i.e., structure) for behaviors and sequences.
-struct Loop {
-  boolean continuous; // set to true
-  boolean singleton; // set to false
-};
-
-//struct Line {
-//  boolean continuous; // set to false
-//  boolean singleton; // set to false
-//};
-
-//struct Dot {
-//  boolean continuous;
-//  boolean singleton;
-//};
-
-Substrate* substrate = NULL;
 
 #endif
