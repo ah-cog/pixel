@@ -631,6 +631,69 @@ Input* Get_Input_Behavior (Behavior* behavior) {
   return ((Input*) (*behavior).schema);
 }
 
+//! Creates an Output
+//!
+Behavior* Create_Delay_Behavior (Substrate* substrate, int milliseconds) {
+  
+  Behavior* behavior = NULL;
+  
+  Serial.println("Create_Delay_Behavior");
+  
+  if (substrate != NULL) {
+    
+    Serial.println(milliseconds);
+    
+    // Parse and validate parameters
+    if (milliseconds < 0) {
+      return NULL;
+    }
+    
+    Serial.println("Parsed data");
+    
+    Serial.println("CREATING DELAY BEHAVIOR");
+    
+    // Create the Output schema for Behavior
+    Delay* delay = (Delay*) malloc (sizeof (Delay));
+    (*delay).milliseconds = milliseconds;
+    
+    // Create the Behavior
+    behavior = Create_Behavior (substrate);
+    (*behavior).type   = BEHAVIOR_TYPE_DELAY;
+    (*behavior).schema = (void *) delay;
+    
+    // Associate the created Output schema with the corresponding created Behavior
+    (*delay).behavior = behavior;
+    
+    // Parse behavior schema parameters
+    Serial.println(milliseconds);
+    
+//    // Set up the behavior schema
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* input = (Input*) malloc(sizeof(Input));
+//      (*behavior).schema = input;
+//    } else {
+//      // TODO: Handle schema creation for other behavior types
+//    }
+    
+//    Serial.println((int)(*behavior).schema);
+    
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* in = (Input*) (*behavior).schema;
+//    }
+    
+    // Add the behavior to the loop
+//    Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//    sequence_addBehavior(sequence, behavior);
+    
+  }
+  
+  return behavior;
+}
+
+Delay* Get_Delay_Behavior (Behavior* behavior) {
+  return ((Delay*) (*behavior).schema);
+}
+
 // TODO: Consider: Behavior* Create_Behavior (String type, void* schema), at least internally to this method... called by the method as part of the process.
 Behavior* Create_Behavior (Substrate* substrate) {
   

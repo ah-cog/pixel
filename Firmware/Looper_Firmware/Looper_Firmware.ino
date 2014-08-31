@@ -92,6 +92,10 @@ void loop () {
   Update_Behavior_Sequence (outputBehavior, sequence);
   
   // Create Delay Behavior
+  Behavior* delayBehavior = Create_Delay_Behavior (substrate, 1000);
+  Update_Behavior_Sequence (delayBehavior, sequence);
+  
+  // Create Delay Behavior
 //  Behavior* delayBehavior = Create_Delay_Behavior (substrate, 5, "digital", "on");
 //  Update_Behavior_Sequence (delayBehavior, sequence);
   
