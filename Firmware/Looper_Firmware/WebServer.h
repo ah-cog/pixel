@@ -439,7 +439,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
 //              Serial.print("\n");
               
               //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              insertBehavior(index, operation, pin, 0, 1, value);
+//              insertBehavior(index, operation, pin, 0, 1, value);
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
@@ -469,7 +469,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               
               // TODO: Only do this when /add-node is called (or whatever the URI will be)
               //insertBehavior(0, 2, 1, 0, 1, milliseconds);
-              insertBehavior(index, 2, 1, 0, 1, milliseconds);
+//              insertBehavior(index, 2, 1, 0, 1, milliseconds);
               
               // TODO: Wait for master to create the node (so can return it's ID)
               
@@ -487,7 +487,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             } else if (strcmp (httpRequestAddress, "/erase") == 0) {
               
               //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              insertBehavior(0, 3, 1, 0, 1, 0);
+//              insertBehavior(0, 3, 1, 0, 1, 0);
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
@@ -500,7 +500,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             } else if (strcmp (httpRequestAddress, "/reboot") == 0) {
               
               // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              insertBehavior(0, 20, 0, 0, 0, 0);
+//              insertBehavior(0, 20, 0, 0, 0, 0);
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
@@ -660,7 +660,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
               int operation = 5; // BEHAVIOR_UPDATE
               
               //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              insertBehavior(index, operation, pin, 0, 1, value);
+//              insertBehavior(index, operation, pin, 0, 1, value);
               
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");

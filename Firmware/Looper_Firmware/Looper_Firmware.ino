@@ -14,6 +14,7 @@ Authors: Michael Gubbels
 #include <Wire.h>
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
+#include "Looper.h"
 #include "VirtualDevice.h"
 #include "WebServer.h"
 
@@ -43,10 +44,12 @@ void setup () {
 
 Propagator* propagator = NULL;
 
+//! Set up I2C communication for device-device communication.
+//!
 void setupDeviceCommunication() {
   Wire.begin(I2C_DEVICE_ADDRESS); // Join I2C bus with the device's address
-  Wire.onReceive(i2cReceiveEvent);   // Register event handler to receive data from the master I2C device
-  Wire.onRequest(i2cRequestEvent);   // Event handler to respond to a request for data from the I2C master device
+  Wire.onReceive(i2cReceiveHandler);   // Register event handler to receive data from the master I2C device
+  Wire.onRequest(i2cRequestHandler);   // Event handler to respond to a request for data from the I2C master device
   
   // Send reboot message to master device
 //  insertBehavior(0, 30, 0, 0, 0, 0);
@@ -90,7 +93,7 @@ boolean hasMessage = false;
  * function that executes whenever data is received from master
  * this function is registered as an event, see setup()
  */
-void i2cReceiveEvent (int howMany) {
+void i2cReceiveHandler (int howMany) {
   
 //  Serial.println("Receiving");
   
@@ -149,7 +152,7 @@ void i2cReceiveEvent (int howMany) {
  * function that executes whenever data is requested by master
  * this function is registered as an event, see setup()
  */
-void i2cRequestEvent () {
+void i2cRequestHandler () {
   
 //  if ((*propagator).queueSize > 0) {
   
@@ -162,7 +165,7 @@ void i2cRequestEvent () {
   Propagation* propagation = Create_Propagation ("create substrate 55ff68064"); // 55ff68064989495329092587
   Queue_Propagation (propagator, propagation);
 
-  Serial.println ("i2cRequestEvent");
+  Serial.println ("i2cRequestHandler");
   Serial.println ((int) propagator);
   
   if (propagator != NULL) {

@@ -1,15 +1,15 @@
 #ifndef BEHAVIOR_H
 #define BEHAVIOR_H
 
-// Instruction operation codes (op. codes)
-#define PIN_READ_DIGITAL 0
-#define PIN_WRITE_DIGITAL 1
-#define BEHAVIOR_DELAY 2
-#define BEHAVIOR_ERASE 3
-#define BEHAVIOR_DELETE 4
-#define BEHAVIOR_UPDATE 5
-#define BEHAVIOR_REBOOT 20
-#define STATUS_WIFI_CONNECTED 30
+//// Instruction operation codes (op. codes)
+//#define PIN_READ_DIGITAL 0
+//#define PIN_WRITE_DIGITAL 1
+//#define BEHAVIOR_DELAY 2
+//#define BEHAVIOR_ERASE 3
+//#define BEHAVIOR_DELETE 4
+//#define BEHAVIOR_UPDATE 5
+//#define BEHAVIOR_REBOOT 20
+//#define STATUS_WIFI_CONNECTED 30
 
 
 // Behavior Transformations

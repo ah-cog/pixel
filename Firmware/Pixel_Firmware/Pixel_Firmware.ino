@@ -53,13 +53,14 @@ void setup() {
 
   // Initialize module's color
   //setModuleColor(random(256), random(256), random(256)); // Set the module's default color
-#if MESH_DEVICE_ADDRESS == 0x0000
-  setModuleColor(255, 0, 0);
-#elif MESH_DEVICE_ADDRESS == 0x0001
-  setModuleColor(0, 0, 255);
-#elif MESH_DEVICE_ADDRESS == 0x0002
-  setModuleColor(255, 255, 0);
-#endif
+//#if MESH_DEVICE_ADDRESS == 0x0000
+//  setModuleColor(255, 0, 0);
+//#elif MESH_DEVICE_ADDRESS == 0x0001
+//  setModuleColor(0, 0, 255);
+//#elif MESH_DEVICE_ADDRESS == 0x0002
+//  setModuleColor(255, 255, 0);
+//#endif
+  setModuleColor(255, 255, 255);
   // setModuleColor(205, 205, 205); // Set the module's default color
   
   // Assign the module a unique color
@@ -188,7 +189,7 @@ void loop() {
   // TODO: Send updated state of THIS board (master) to the OTHER board (slave) for caching.
   
   // Get behavior updates from slave (Apply)
-  Get_Behavior_Transformations ();
+  void getBehaviorTransformations ();
   
   // Perform behavior step in the interpreter (Evaluate)
   behaviorLoopStep();

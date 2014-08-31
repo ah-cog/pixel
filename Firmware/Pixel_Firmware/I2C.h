@@ -176,18 +176,48 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
       String split = String (behaviorDescriptionBuffer);
       int spaceCount = getValueCount (split, ' ');
       
-      Serial.println (spaceCount);
+//      Serial.println (spaceCount);
+//      
+//      for (int i = 0; i < spaceCount; i++) {
+//        
+//        String value = getValue (split, ' ', i);
+//        Serial.print (i);
+//        Serial.print (" ");
+//        Serial.print (value);
+//        Serial.print (" ");
+//        
+//      }
+//      Serial.print ("\n");
+
+      String first = getValue (split, ' ', 0);
       
-      for (int i = 0; i < spaceCount; i++) {
+      if (first.compareTo ("create")) {
         
-        String value = getValue (split, ' ', i);
-        Serial.print (i);
-        Serial.print (" ");
-        Serial.print (value);
-        Serial.print (" ");
+        String second = getValue (split, ' ', 1);
+        
+        if (first.compareTo ("substrate")) {
+          // TODO: create substrate
+          
+          String uid = getValue (split, ' ', 2);
+          
+          // TODO: Create the substrate with the specified UID.
+          
+        } else if (first.compareTo ("behavior")) {
+          
+          // TODO: create behavior
+          
+        } else if (first.compareTo ("loop")) {
+          
+          // TODO: create loop
+          
+        } 
+//        else if (first.compareTo ("line")) {
+//          // TODO: Substrate
+//        } else if (first.compareTo ("dot")) {
+//          // TODO: Substrate
+//        }
         
       }
-      Serial.print ("\n");
       
     }
     
