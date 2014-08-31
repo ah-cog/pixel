@@ -921,6 +921,16 @@ boolean Perform_Behavior (Performer* performer) {
   Serial.println ("Perform_Behavior");
   
   if (performer != NULL) {
+    
+    // Update the Performer
+    if ((*performer).behavior == NULL) {
+      Serial.println ("Updating performer's origin and behavior.");
+      (*performer).origin = (*((*performer).substrate)).origin; // (*substrate).origin
+      (*performer).behavior = (*((*((*performer).substrate)).origin)).behavior;
+      
+      Serial.print ("\tsequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
+    }
+    
     Behavior* behavior = (*performer).behavior;
     Serial.println ("performer != NULL");
     

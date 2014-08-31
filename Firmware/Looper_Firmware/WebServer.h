@@ -327,6 +327,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 String data = getValue(dataParameter, '=', 1);
                 
                 behavior = Create_Output_Behavior (substrate, pin, signal, data);
+                Sequence* sequence = (*substrate).sequences;
+                Update_Behavior_Sequence (behavior, sequence);
                 
 //                Propagate_Behavior_Transformation (CREATE, BEHAVIOR);
                 
@@ -358,6 +360,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 String data = getValue(dataParameter, '=', 1);
                 
                 behavior = Create_Input_Behavior (substrate, pin, signal, data);
+                Sequence* sequence = (*substrate).sequences;
+                Update_Behavior_Sequence (behavior, sequence);
                 
 //                Serial.println("Test:");
 //                Serial.println((*behavior).type);
@@ -373,9 +377,18 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
 //                  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
 //                  Add_Behavior_To_Sequence (sequence, behavior);
                 
-              } else if (type.compareTo("delay")) {
+              } else if (type.compareTo("delay") == 0) {
                 
-                // TODO: Parse delay parameters and create behavior.
+                Serial.println("Creating delay behavior.");
+
+                String millisecondsParameter = String(httpRequestParameters[1]);
+                int milliseconds = getValue(millisecondsParameter, '=', 1).toInt();
+                
+                Serial.println (milliseconds);
+                
+                behavior = Create_Delay_Behavior (substrate, milliseconds);
+                Sequence* sequence = (*substrate).sequences;
+                Update_Behavior_Sequence (behavior, sequence);
                 
               }
               
