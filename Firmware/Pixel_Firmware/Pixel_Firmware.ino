@@ -23,7 +23,8 @@
 #include "Gesture.h"
 #include "Movement.h"
 #include "Communication.h"
-#include "Loop.h"
+//#include "Loop.h"
+#include "Looper.h"
 #include "I2C.h"
 #include "Ports.h"
 
@@ -43,6 +44,8 @@
 //                     |_|    
 
 void setup() {
+  
+  setupLooper(); // Setup the Looper engine.
   
   setupDevice(); // Setup Pixel's reflection (i.e., it's virtual machine)
   setupPorts(); // Setup pin mode for I/O
@@ -189,10 +192,11 @@ void loop() {
   // TODO: Send updated state of THIS board (master) to the OTHER board (slave) for caching.
   
   // Get behavior updates from slave (Apply)
-  void getBehaviorTransformations ();
+//  getBehaviorTransformations ();
+  Get_Behavior_Transformations ();
   
   // Perform behavior step in the interpreter (Evaluate)
-  behaviorLoopStep();
+//  behaviorLoopStep();
   
   
   

@@ -330,6 +330,10 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Sequence* sequence = (*substrate).sequences;
                 Update_Behavior_Sequence (behavior, sequence);
                 
+                // Propagate behavior
+                Propagation* propagation = Create_Propagation ("create behavior output");
+                Queue_Propagation (propagator, propagation);
+                
 //                Propagate_Behavior_Transformation (CREATE, BEHAVIOR);
                 
 //                Serial.println("Test:");
@@ -363,6 +367,10 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Sequence* sequence = (*substrate).sequences;
                 Update_Behavior_Sequence (behavior, sequence);
                 
+                // Propagate behavior
+                Propagation* propagation = Create_Propagation ("create behavior input");
+                Queue_Propagation (propagator, propagation);
+                
 //                Serial.println("Test:");
 //                Serial.println((*behavior).type);
 //                Output* output = Get_Output_Behavior (behavior);
@@ -389,6 +397,10 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 behavior = Create_Delay_Behavior (substrate, milliseconds);
                 Sequence* sequence = (*substrate).sequences;
                 Update_Behavior_Sequence (behavior, sequence);
+                
+                // Propagate behavior
+                Propagation* propagation = Create_Propagation ("create behavior delay");
+                Queue_Propagation (propagator, propagation);
                 
               }
               

@@ -139,6 +139,7 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
       
 //      strncpy (behaviorDescriptionBuffer + behaviorDescriptionBufferIndex, firstCharacterIndex + 1, );
     }
+    Serial.print ("\tfirstCharacterIndex: "); Serial.print (firstCharacterIndex); Serial.print ("\n");
     
     boolean done = false;
     
@@ -164,13 +165,18 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
       Serial.print ("Found end of string at position "); Serial.print (BUFFER_SIZE_I2C); Serial.print ("\n");
       lastCharacterIndex = i2cMessageBuffer + BUFFER_SIZE_I2C;
     }
+    Serial.print ("\tlastCharacterIndex: "); Serial.print (lastCharacterIndex); Serial.print ("\n");
     
     // Copy the received data into the local buffer
-    int behaviorDescriptionSize = lastCharacterIndex - firstCharacterIndex;
+    int behaviorDescriptionSize = (lastCharacterIndex + 1) - firstCharacterIndex;
     strncpy (behaviorDescriptionBuffer + behaviorDescriptionBufferIndex, firstCharacterIndex, behaviorDescriptionSize);
     behaviorDescriptionBufferIndex = behaviorDescriptionBufferIndex + behaviorDescriptionSize;
     
     if (done) {
+      
+      // Terminate the string stored in the buffer.
+      behaviorDescriptionBuffer[behaviorDescriptionBufferIndex] = '\0';
+      
       Serial.println (behaviorDescriptionBuffer);
       
       String split = String (behaviorDescriptionBuffer);
@@ -191,22 +197,58 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
 
       String first = getValue (split, ' ', 0);
       
-      if (first.compareTo ("create")) {
+      Serial.println (first);
+      
+      if (first.compareTo ("create") == 0) {
         
         String second = getValue (split, ' ', 1);
+        Serial.println (second);
         
-        if (first.compareTo ("substrate")) {
+        if (second.compareTo ("substrate") == 0) {
           // TODO: create substrate
           
           String uid = getValue (split, ' ', 2);
           
           // TODO: Create the substrate with the specified UID.
           
-        } else if (first.compareTo ("behavior")) {
+        } else if (second.compareTo ("behavior") == 0) {
           
           // TODO: create behavior
+          String behaviorType = getValue (split, ' ', 2);
           
-        } else if (first.compareTo ("loop")) {
+          Serial.println (behaviorType);
+          
+          if (behaviorType.compareTo ("input") == 0) {
+            
+            Behavior* behavior = Create_Input_Behavior (substrate, 5, "digital", "digital");
+            Sequence* sequence = (*substrate).sequences;
+            Update_Behavior_Sequence (behavior, sequence);
+            
+            // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+            
+          } else if (behaviorType.compareTo ("output") == 0) {
+            
+            Behavior* behavior = Create_Output_Behavior (substrate, 5, "digital", "analog");
+            Sequence* sequence = (*substrate).sequences;
+            Update_Behavior_Sequence (behavior, sequence);
+            
+            // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+            
+          } else if (behaviorType.compareTo ("delay") == 0) {
+            
+            Behavior* behavior = Create_Delay_Behavior (substrate, 1000);
+            Sequence* sequence = (*substrate).sequences;
+            Update_Behavior_Sequence (behavior, sequence);
+            
+            // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+            
+          } else {
+            
+            // TODO: Implement "custom" cloud "RPC" behavior.
+            
+          }
+          
+        } else if (second.compareTo ("loop") == 0) {
           
           // TODO: create loop
           
@@ -438,100 +480,100 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
 
 
 
-/**
- * TODO: Move this to "Loop.h" (and/or break it down into "Behavior.h")
- */
-void behaviorLoopStep() {
-  
-  if (loopSize > 0) {
-    Behavior* currentBehavior = &behaviorLoop[loopCounter]; // Get current behavior
-    
-    boolean sustainCounter = false; // Should the counter stay the same this iteration?
-    
-    // Interpret the behavior
-    
-    // NOTE: right now, assuming the instruction type... pin I/O
-    
-//    Serial.println((*currentBehavior).pin);
-//    Serial.println((*currentBehavior).value);
-    
-    if (true) { // if ((*currentBehavior).instructionType [equals] "pin I/O") 
-    
-      if ((*currentBehavior).operation == PIN_READ_DIGITAL) { // Read pin state
-        
-        //int pinValue = getPinValue2((*currentBehavior).pin);
-        int pinValue = getPinValue((*currentBehavior).pin);
-        syncPinValue((*currentBehavior).pin);
-        Serial.println("PIN_READ_DIGITAL");
-      
-      } else if ((*currentBehavior).operation == PIN_WRITE_DIGITAL) { // Write to pin
-
-        // setPinValue((*currentBehavior).pin, ((*currentBehavior).value == 1 ? HIGH : LOW));
-        setPinValue((*currentBehavior).pin, (*currentBehavior).value);
-        syncPinValue((*currentBehavior).pin);
-        Serial.println("PIN_WRITE_DIGITAL");
-        
-      } else if ((*currentBehavior).operation == BEHAVIOR_DELAY) {
-        
-        // Set up timer
-        Delay* currentDelay = NULL;
-        for (int i = 0; i < delayCount; i++) {
-          if (delays[i].behavior == currentBehavior) {
-//            Serial.println("Found delay"); Serial.print("\t"); Serial.print(i); Serial.print("\n");
-            currentDelay = &delays[i];
-          }
-        }
-        if (currentDelay != NULL) {
-          unsigned long currentTime = millis();
-//          Serial.println(currentTime);
-//          Serial.println((*currentDelay).startTime);
-//          Serial.println((*currentDelay).duration);
-//          Serial.println(currentTime - (*currentDelay).startTime);
-          // Set up start time if it's been reset (i.e., if it is zero)
-          if ((*currentDelay).startTime == 0) {
-            (*currentDelay).startTime = currentTime;
-          }
-          
-          // Check if delay has passed
-          if (currentTime - (*currentDelay).startTime < (*currentDelay).duration) {
-            sustainCounter = true;
-          } else {
-            (*currentDelay).startTime = currentTime; // Update the start time of the delay
-            (*currentDelay).startTime = 0; // Reset timer (because it expired)
-//            sustainCounter = false;
-          }
-        }
-//        delays[delayCount].startTime = millis();
-//        delays[delayCount].duration = 1000;
-//        delays[delayCount].behavior = currentBehavior;
-//        delayCount++;
-
-        if (sustainCounter == false) {
-          Serial.println("DELAY");
-        }
-        
-      } else if ((*currentBehavior).operation == BEHAVIOR_ERASE) {
-        
-        Serial.println("ERASE");
-          
-//        int milliseconds = 1000;
-//        delay(milliseconds);
-        
-      }
-    }
-    
-    if (!sustainCounter) {
-      // Advance the loop behavior counter
-      if (loopSize == 0) {
-        loopCounter = 0;
-      }
-      loopCounter = (loopCounter + 1) % loopSize; // Increment loop counter
-    }
-    
-    
-    // Serial.print(".");
-  }
-}
+///**
+// * TODO: Move this to "Loop.h" (and/or break it down into "Behavior.h")
+// */
+//void behaviorLoopStep() {
+//  
+//  if (loopSize > 0) {
+//    Behavior* currentBehavior = &behaviorLoop[loopCounter]; // Get current behavior
+//    
+//    boolean sustainCounter = false; // Should the counter stay the same this iteration?
+//    
+//    // Interpret the behavior
+//    
+//    // NOTE: right now, assuming the instruction type... pin I/O
+//    
+////    Serial.println((*currentBehavior).pin);
+////    Serial.println((*currentBehavior).value);
+//    
+//    if (true) { // if ((*currentBehavior).instructionType [equals] "pin I/O") 
+//    
+//      if ((*currentBehavior).operation == PIN_READ_DIGITAL) { // Read pin state
+//        
+//        //int pinValue = getPinValue2((*currentBehavior).pin);
+//        int pinValue = getPinValue((*currentBehavior).pin);
+//        syncPinValue((*currentBehavior).pin);
+//        Serial.println("PIN_READ_DIGITAL");
+//      
+//      } else if ((*currentBehavior).operation == PIN_WRITE_DIGITAL) { // Write to pin
+//
+//        // setPinValue((*currentBehavior).pin, ((*currentBehavior).value == 1 ? HIGH : LOW));
+//        setPinValue((*currentBehavior).pin, (*currentBehavior).value);
+//        syncPinValue((*currentBehavior).pin);
+//        Serial.println("PIN_WRITE_DIGITAL");
+//        
+//      } else if ((*currentBehavior).operation == BEHAVIOR_DELAY) {
+//        
+//        // Set up timer
+//        Delay* currentDelay = NULL;
+//        for (int i = 0; i < delayCount; i++) {
+//          if (delays[i].behavior == currentBehavior) {
+////            Serial.println("Found delay"); Serial.print("\t"); Serial.print(i); Serial.print("\n");
+//            currentDelay = &delays[i];
+//          }
+//        }
+//        if (currentDelay != NULL) {
+//          unsigned long currentTime = millis();
+////          Serial.println(currentTime);
+////          Serial.println((*currentDelay).startTime);
+////          Serial.println((*currentDelay).duration);
+////          Serial.println(currentTime - (*currentDelay).startTime);
+//          // Set up start time if it's been reset (i.e., if it is zero)
+//          if ((*currentDelay).startTime == 0) {
+//            (*currentDelay).startTime = currentTime;
+//          }
+//          
+//          // Check if delay has passed
+//          if (currentTime - (*currentDelay).startTime < (*currentDelay).duration) {
+//            sustainCounter = true;
+//          } else {
+//            (*currentDelay).startTime = currentTime; // Update the start time of the delay
+//            (*currentDelay).startTime = 0; // Reset timer (because it expired)
+////            sustainCounter = false;
+//          }
+//        }
+////        delays[delayCount].startTime = millis();
+////        delays[delayCount].duration = 1000;
+////        delays[delayCount].behavior = currentBehavior;
+////        delayCount++;
+//
+//        if (sustainCounter == false) {
+//          Serial.println("DELAY");
+//        }
+//        
+//      } else if ((*currentBehavior).operation == BEHAVIOR_ERASE) {
+//        
+//        Serial.println("ERASE");
+//          
+////        int milliseconds = 1000;
+////        delay(milliseconds);
+//        
+//      }
+//    }
+//    
+//    if (!sustainCounter) {
+//      // Advance the loop behavior counter
+//      if (loopSize == 0) {
+//        loopCounter = 0;
+//      }
+//      loopCounter = (loopCounter + 1) % loopSize; // Increment loop counter
+//    }
+//    
+//    
+//    // Serial.print(".");
+//  }
+//}
 
 String getValue (String data, char separator, int index) {
   

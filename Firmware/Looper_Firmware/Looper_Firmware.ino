@@ -26,17 +26,12 @@ Authors: Michael Gubbels
 //       changes to (1) make to Looper, and (2) to queue for sending to the other device 
 //       over I2C upon request.
 
-Propagator* propagator = NULL;
-Performer* performer = NULL;
-
 void setup () {
 
   Serial.begin(9600); // Start serial for output
   Serial.println(F("Looper Firmware"));
   
   setupLooper();
-  performer = Create_Performer (substrate);
-  propagator = Create_Propagator ();
 //  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
 //  Queue_Propagation (propagator, propagation);
   
@@ -195,8 +190,8 @@ void i2cRequestHandler () {
 //  Serial.println (data);
 //  Queue_Propagation (propagator, propagation);
 
-  Propagation* propagation = Create_Propagation ("create substrate 55ff68064"); // 55ff68064989495329092587
-  Queue_Propagation (propagator, propagation);
+//  Propagation* propagation = Create_Propagation ("create substrate 55ff68064"); // 55ff68064989495329092587
+//  Queue_Propagation (propagator, propagation);
 
   Serial.println ("i2cRequestHandler");
   Serial.println ((int) propagator);
