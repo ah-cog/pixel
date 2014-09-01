@@ -556,7 +556,7 @@ Output* Get_Output_Behavior (Behavior* behavior) {
 
 //! Creates an Output
 //!
-Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal, String data) {
+Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal) {
   
   Behavior* behavior = NULL;
   
@@ -566,7 +566,6 @@ Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal, S
     
     Serial.println(pin);
     Serial.println(signal);
-    Serial.println(data);
     
     // Parse and validate parameters
     int signal2 = 0;
@@ -580,28 +579,13 @@ Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal, S
     
     Serial.println("Parsed signal");
     
-    int data2 = 0;
-    if (data.compareTo("on") == 0) {
-      Serial.println("on");
-      data2 = DATA_ON;
-    } else if (data.compareTo("off") == 0) {
-      Serial.println("off");
-      data2 = DATA_OFF;
-    } else {
-      Serial.println("NULL");
-      Serial.println(data.length());
-      return NULL;
-    }
-    
-    Serial.println("Parsed data");
-    
     Serial.println("CREATING INPUT BEHAVIOR");
     
     // Create the Output schema for Behavior
     Input* input   = (Input*) malloc (sizeof (Input));
     (*input).pin    = pin;
     (*input).signal = signal2;
-    (*input).data   = data2;
+//    (*input).data   = data2;
     
     // Create the Behavior
     behavior = Create_Behavior (substrate);
@@ -614,7 +598,7 @@ Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal, S
     // Parse behavior schema parameters
     Serial.println(pin);
     Serial.println(signal);
-    Serial.println(data);
+//    Serial.println(data);
     
 //    // Set up the behavior schema
 //    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {

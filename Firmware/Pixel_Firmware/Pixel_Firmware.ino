@@ -197,6 +197,10 @@ void loop() {
   
   // Perform behavior step in the interpreter (Evaluate)
 //  behaviorLoopStep();
+
+  // TODO: Transform_Behavior (i.e., the Behavior Transformer does this, akin to interpreting an instruction/command)
+  boolean performanceResult = Perform_Behavior (performer);
+//  delay (800);
   
   
   

@@ -360,10 +360,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 String signalParameter = String(httpRequestParameters[2]);
                 String signal = getValue(signalParameter, '=', 1);
                 
-                String dataParameter = String(httpRequestParameters[3]);
-                String data = getValue(dataParameter, '=', 1);
-                
-                behavior = Create_Input_Behavior (substrate, pin, signal, data);
+                behavior = Create_Input_Behavior (substrate, pin, signal);
                 Sequence* sequence = (*substrate).sequences;
                 Update_Behavior_Sequence (behavior, sequence);
                 

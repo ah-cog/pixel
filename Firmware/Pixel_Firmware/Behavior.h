@@ -148,7 +148,7 @@ struct Input {
   int pin;
 //  int mode;
   int signal;
-  int data;
+//  int data;
 };
 
 //! \struct Output

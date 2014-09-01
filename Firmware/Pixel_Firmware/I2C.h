@@ -220,7 +220,7 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
           
           if (behaviorType.compareTo ("input") == 0) {
             
-            Behavior* behavior = Create_Input_Behavior (substrate, 5, "digital", "digital");
+            Behavior* behavior = Create_Input_Behavior (substrate, 5, "digital");
             Sequence* sequence = (*substrate).sequences;
             Update_Behavior_Sequence (behavior, sequence);
             
@@ -228,7 +228,7 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
             
           } else if (behaviorType.compareTo ("output") == 0) {
             
-            Behavior* behavior = Create_Output_Behavior (substrate, 5, "digital", "analog");
+            Behavior* behavior = Create_Output_Behavior (substrate, 5, "digital", "on");
             Sequence* sequence = (*substrate).sequences;
             Update_Behavior_Sequence (behavior, sequence);
             
