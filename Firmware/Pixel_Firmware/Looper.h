@@ -914,42 +914,42 @@ Performer* Create_Performer (Substrate* substrate) {
 //! interpreter (i.e., analogous to a JavaScript interpreter).
 //!
 boolean Perform_Behavior (Performer* performer) {
-  Serial.println ("Perform_Behavior");
+  // Serial.println ("Perform_Behavior");
   
   if (performer != NULL) {
     
     // Update the Performer
     if ((*performer).behavior == NULL) {
-      Serial.println ("Updating performer's origin and behavior.");
+      // Serial.println ("Updating performer's origin and behavior.");
       (*performer).origin = (*((*performer).substrate)).origin; // (*substrate).origin
       (*performer).behavior = (*((*((*performer).substrate)).origin)).behavior;
       
-      Serial.print ("\tsequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
+      // Serial.print ("\tsequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
     }
     
     Behavior* behavior = (*performer).behavior;
-    Serial.println ("performer != NULL");
+    // Serial.println ("performer != NULL");
     
     if (behavior != NULL) { // Check if the Behavior is valid.  
-      Serial.println ("behavior != NULL");
+      // Serial.println ("behavior != NULL");
     
       if ((*behavior).type == BEHAVIOR_TYPE_OUTPUT) {
         Output* output = (Output*) (*behavior).schema;
         
-        Serial.println ("Output");
+        Serial.print ("Output "); Serial.print ((*output).pin); Serial.print ("\n");
         
         // Update the pin's state
 //        Update_Virtual_Pin ((*output).pin, (*output).signal, (*output).data);
       } else if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
         Input* input = (Input*) (*behavior).schema;
         
-        Serial.println ("Input");
+        Serial.print ("Input "); Serial.print ((*input).pin); Serial.print ("\n");
         
         // TODO: Call device-specific routine (retreived from cloud to change the device itself).
       } else if ((*behavior).type == BEHAVIOR_TYPE_DELAY) {
         Delay* delay = (Delay*) (*behavior).schema;
         
-        Serial.println ("Delay");
+        Serial.print ("Delay "); Serial.print ((*delay).milliseconds); Serial.print ("\n");
         
         // TODO: Call device-specific routine (retreived from cloud to change the device itself).
       } else if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
@@ -1007,22 +1007,22 @@ boolean Perform_Behavior (Performer* performer) {
 
 #define PROPAGATION_SIZE 32
 
-//! Propagation (i.e., Transformation) to propagate.
+//! Transformation (i.e., Transformation) to propagate.
 //!
 //! TODO: Rename to Transformation
-struct Propagation {
+struct Transformation {
   // String data;
   char* data;
   int size;
   
-  Propagation* previous;
-  Propagation* next;
+  Transformation* previous;
+  Transformation* next;
 };
 
 //! Propagator of behavior transformations.
 //!
 struct Propagator {
-  Propagation* propagation;
+  Transformation* transformation;
 };
 
 //! Create behavior transformation propagator.
@@ -1035,7 +1035,7 @@ Propagator* Create_Propagator () {
   Propagator* propagator = (Propagator*) malloc (sizeof (Propagator));
   
   // Initialize sequence
-  (*propagator).propagation = NULL;
+  (*propagator).transformation = NULL;
   
   // Return sequence
   return propagator;
@@ -1063,37 +1063,37 @@ boolean Delete_Propagator (Propagator* propagator) {
   
 }
 
-//! Create propagation (i.e., a behavior transformation).
+//! Create transformation (i.e., a behavior transformation).
 //!
-Propagation* Create_Propagation (String data) {
+Transformation* Create_Transformation (String data) {
   
-  Serial.println ("Create_Propagation");
+  Serial.println ("Create_Transformation");
   Serial.print ("data = "); Serial.print (data); Serial.print ("\n");
   
   // Create substrate
-  Propagation* propagation = (Propagation*) malloc (sizeof (Propagation));
+  Transformation* transformation = (Transformation*) malloc (sizeof (Transformation));
   
-  Serial.println ("Allocated Propagation.");
+  Serial.println ("Allocated Transformation.");
   
-  // Initialize propagation
-  (*propagation).size = PROPAGATION_SIZE;
-  (*propagation).data = (char*) malloc (PROPAGATION_SIZE * sizeof (char));
-  data.toCharArray ((*propagation).data, PROPAGATION_SIZE);
-  (*propagation).previous = NULL;
-  (*propagation).next = NULL;
+  // Initialize transformation
+  (*transformation).size = PROPAGATION_SIZE;
+  (*transformation).data = (char*) malloc (PROPAGATION_SIZE * sizeof (char));
+  data.toCharArray ((*transformation).data, PROPAGATION_SIZE);
+  (*transformation).previous = NULL;
+  (*transformation).next = NULL;
   
-  Serial.print ("Initialized Propagation "); Serial.print ((int) propagation); Serial.print ("\n");
+  Serial.print ("Initialized Transformation "); Serial.print ((int) transformation); Serial.print ("\n");
   
   // Return sequence
-  return propagation;
+  return transformation;
   
 }
 
-String Get_Propagation_Data (Propagation* propagation) {
+String Get_Transformation_Data (Transformation* transformation) {
   
-  if (propagation != NULL) {
+  if (transformation != NULL) {
     
-    return (*propagation).data;
+    return (*transformation).data;
     
   }
   
@@ -1101,96 +1101,96 @@ String Get_Propagation_Data (Propagation* propagation) {
   
 }
 
-//! Frees the Propagation from dynamic memory.
+//! Frees the Transformation from dynamic memory.
 //!
-boolean Delete_Propagation (Propagation* propagation) {
+boolean Delete_Transformation (Transformation* transformation) {
   
-  Serial.println ("Delete_Propagation");
+  Serial.println ("Delete_Transformation");
   
-  if (propagation != NULL) {
+  if (transformation != NULL) {
     
     // Free the data payload
-    if ((*propagation).data != NULL) {
-      free ((*propagation).data);
+    if ((*transformation).data != NULL) {
+      free ((*transformation).data);
     }
     
-    // Free the propagation object
-    free (propagation);
+    // Free the transformation object
+    free (transformation);
     
   }
   
 }
 
-//! Queue the transformation for propagation.
+//! Queue the transformation for transformation.
 //!
-Propagation* Queue_Propagation (Propagator* propagator, Propagation* propagation) {
+Transformation* Queue_Transformation (Propagator* propagator, Transformation* transformation) {
   
-  Serial.println ("Queue_Propagation");
+  Serial.println ("Queue_Transformation");
   
   Serial.print ("\tpropagator: "); Serial.print ((int) propagator); Serial.print ("\n");
-  Serial.print ("\tpropagation: "); Serial.print ((int) propagation); Serial.print ("\n");
+  Serial.print ("\ttransformation: "); Serial.print ((int) transformation); Serial.print ("\n");
   
-  if ((*propagator).propagation == NULL) {
+  if ((*propagator).transformation == NULL) {
     Serial.println ("NULL");
     
     // Push to the top of the stack (as the first element)
-    (*propagator).propagation = propagation;
+    (*propagator).transformation = transformation;
     
     // Set up the forward and back links
-    (*propagation).previous = NULL;
-    (*propagation).next     = NULL;
+    (*transformation).previous = NULL;
+    (*transformation).next     = NULL;
     
   } else {
     Serial.println ("NOT NULL");
     
-    // Get the propagation at the end of the queue
-    Propagation* currentPropagation = (*propagator).propagation;
-    while ((*currentPropagation).previous != NULL) {
+    // Get the transformation at the end of the queue
+    Transformation* currentTransformation = (*propagator).transformation;
+    while ((*currentTransformation).previous != NULL) {
       Serial.print ("\tprevious");
-      currentPropagation = (*currentPropagation).previous;
+      currentTransformation = (*currentTransformation).previous;
     }
     
     Serial.println ("\tfinished loop");
     
     // Push to the top of the stack
-    (*currentPropagation).previous = propagation;
+    (*currentTransformation).previous = transformation;
     
     // Set up the backward and forward links
-    (*propagation).previous = NULL;
-    (*propagation).next = currentPropagation;
+    (*transformation).previous = NULL;
+    (*transformation).next = currentTransformation;
     
     Serial.println ("finished scope");
     
   }
   
   // Return sequence
-  return propagation;
+  return transformation;
   
 }
 
-//! Pop propagation off the propagator's stack
+//! Pop transformation off the propagator's stack
 //!
-Propagation* Dequeue_Propagation (Propagator* propagator) {
+Transformation* Dequeue_Transformation (Propagator* propagator) {
   
-  Serial.println ("Dequeue_Propagation");
+  Serial.println ("Dequeue_Transformation");
   
-  Propagation* propagation = NULL;
+  Transformation* transformation = NULL;
   
   if (propagator != NULL) {
     
-    // Get the propagation at the front of the propagator's queue
-    propagation = (*propagator).propagation;
+    // Get the transformation at the front of the propagator's queue
+    transformation = (*propagator).transformation;
     
-    // Update the Propagator. Set the next of the propagator's propagation queue.
-    (*propagator).propagation = (*propagation).previous;
+    // Update the Propagator. Set the next of the propagator's transformation queue.
+    (*propagator).transformation = (*transformation).previous;
     
-    // Dissociate the dequeued propagation. Update the backward and forward links of the dequeued propagation.
-    (*propagation).next = NULL;
-    (*propagation).previous = NULL;
+    // Dissociate the dequeued transformation. Update the backward and forward links of the dequeued transformation.
+    (*transformation).next = NULL;
+    (*transformation).previous = NULL;
     
   }
   
-  return propagation;
+  return transformation;
   
 }
 
@@ -1217,17 +1217,17 @@ boolean Propagate (Propagator* propagator, int channel) {
       char buffer[AVAILABLE_BUFFER_BYTES];
       
       // Dequeue the next description to be sent by the specified propagator
-      Propagation* propagation = Dequeue_Propagation (propagator);
+      Transformation* transformation = Dequeue_Transformation (propagator);
       
       // TODO: Break up dequeued string to be sent into 32 byte segments, then queue them in the I2C outgoing data buffer.
 
       // Transmit data over via the I2C protocol
       Wire.write ("("); // Start transformation description
-      Wire.write ((*propagation).data); // Write the serialized data
+      Wire.write ((*transformation).data); // Write the serialized data
       Wire.write (")"); // Conclude transformation description
       
-      // Free the propagation from memory (once sent via I2C)
-      Delete_Propagation (propagation);
+      // Free the transformation from memory (once sent via I2C)
+      Delete_Transformation (transformation);
       
       return true;
       
@@ -1246,7 +1246,7 @@ boolean Propagate (Propagator* propagator, int channel) {
 //! Miscellaneous
 //!
 
-//struct PropagationBuffer {
+//struct TransformationBuffer {
 //  
 //};
 

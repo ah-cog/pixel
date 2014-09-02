@@ -219,24 +219,36 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
           Serial.println (behaviorType);
           
           if (behaviorType.compareTo ("input") == 0) {
+        
+            // Parse parameters
+            int pin = getValue (split, ' ', 3).toInt();
             
-            Behavior* behavior = Create_Input_Behavior (substrate, 5, "digital");
+            // Create behavior and add it to the behavior substrate
+            Behavior* behavior = Create_Input_Behavior (substrate, pin, "digital");
             Sequence* sequence = (*substrate).sequences;
             Update_Behavior_Sequence (behavior, sequence);
             
             // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
             
           } else if (behaviorType.compareTo ("output") == 0) {
+        
+            // Parse parameters
+            int pin = getValue (split, ' ', 3).toInt();
             
-            Behavior* behavior = Create_Output_Behavior (substrate, 5, "digital", "on");
+            // Create behavior and add it to the behavior substrate
+            Behavior* behavior = Create_Output_Behavior (substrate, pin, "digital", "on");
             Sequence* sequence = (*substrate).sequences;
             Update_Behavior_Sequence (behavior, sequence);
             
             // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
             
           } else if (behaviorType.compareTo ("delay") == 0) {
+        
+            // Parse parameters
+            int milliseconds = getValue (split, ' ', 3).toInt();
             
-            Behavior* behavior = Create_Delay_Behavior (substrate, 1000);
+            // Create behavior and add it to the behavior substrate
+            Behavior* behavior = Create_Delay_Behavior (substrate, milliseconds);
             Sequence* sequence = (*substrate).sequences;
             Update_Behavior_Sequence (behavior, sequence);
             

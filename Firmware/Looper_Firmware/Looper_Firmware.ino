@@ -32,8 +32,8 @@ void setup () {
   Serial.println(F("Looper Firmware"));
   
   setupLooper();
-//  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
-//  Queue_Propagation (propagator, propagation);
+//  Propagation* transformation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
+//  Queue_Propagation (propagator, transformation);
   
   // Setup Wi-Fi and web server
   setupWebServer();
@@ -100,10 +100,10 @@ void loop () {
 //  }
 
 //  Propagator* propagator = Create_Propagator ();
-//  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
-////  String data = Get_Propagation_Data (propagation);
+//  Propagation* transformation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
+////  String data = Get_Propagation_Data (transformation);
 ////  Serial.println (data);
-//  Queue_Propagation (propagator, propagation);
+//  Queue_Propagation (propagator, transformation);
 //  Propagate (propagator, I2C_CHANNEL);
 //  Delete_Propagator (propagator);
 //  
@@ -185,22 +185,22 @@ void i2cRequestHandler () {
 //  if ((*propagator).queueSize > 0) {
   
 //  Propagator* propagator = Create_Propagator ();
-//  Propagation* propagation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
-//  String data = Get_Propagation_Data (propagation);
+//  Propagation* transformation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
+//  String data = Get_Propagation_Data (transformation);
 //  Serial.println (data);
-//  Queue_Propagation (propagator, propagation);
+//  Queue_Propagation (propagator, transformation);
 
-//  Propagation* propagation = Create_Propagation ("create substrate 55ff68064"); // 55ff68064989495329092587
-//  Queue_Propagation (propagator, propagation);
+//  Propagation* transformation = Create_Propagation ("create substrate 55ff68064"); // 55ff68064989495329092587
+//  Queue_Propagation (propagator, transformation);
 
   Serial.println ("i2cRequestHandler");
   Serial.println ((int) propagator);
   
   if (propagator != NULL) {
     
-    Serial.println ((int) (*propagator).propagation);
+    Serial.println ((int) (*propagator).transformation);
     
-    if ((*propagator).propagation != NULL) {
+    if ((*propagator).transformation != NULL) {
       
       Propagate (propagator, I2C_CHANNEL);
   //    Delete_Propagator (propagator);

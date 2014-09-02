@@ -330,9 +330,9 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Sequence* sequence = (*substrate).sequences;
                 Update_Behavior_Sequence (behavior, sequence);
                 
-                // Propagate behavior
-                Propagation* propagation = Create_Propagation ("create behavior output");
-                Queue_Propagation (propagator, propagation);
+                // Propagate behaviorCreate_Transformation
+                Transformation* transformation = Create_Transformation (String("create behavior output 5 digital on"));
+                Queue_Transformation (propagator, transformation);
                 
 //                Propagate_Behavior_Transformation (CREATE, BEHAVIOR);
                 
@@ -365,8 +365,9 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Update_Behavior_Sequence (behavior, sequence);
                 
                 // Propagate behavior
-                Propagation* propagation = Create_Propagation ("create behavior input");
-                Queue_Propagation (propagator, propagation);
+                //Transformation* transformation = Create_Transformation (String("create behavior input " + String(pin)));
+                Transformation* transformation = Create_Transformation (String("create behavior input 15"));
+                Queue_Transformation (propagator, transformation);
                 
 //                Serial.println("Test:");
 //                Serial.println((*behavior).type);
@@ -396,8 +397,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Update_Behavior_Sequence (behavior, sequence);
                 
                 // Propagate behavior
-                Propagation* propagation = Create_Propagation ("create behavior delay");
-                Queue_Propagation (propagator, propagation);
+                Transformation* transformation = Create_Transformation ("create behavior delay 1000");
+                Queue_Transformation (propagator, transformation);
                 
               }
               
