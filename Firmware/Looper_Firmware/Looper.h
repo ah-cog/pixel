@@ -1014,6 +1014,7 @@ struct Transformation {
   // String data;
   char* data;
   int size;
+  int position;
   
   Transformation* previous;
   Transformation* next;
@@ -1076,9 +1077,14 @@ Transformation* Create_Transformation (String data) {
   Serial.println ("Allocated Transformation.");
   
   // Initialize transformation
-  (*transformation).size = PROPAGATION_SIZE;
-  (*transformation).data = (char*) malloc (PROPAGATION_SIZE * sizeof (char));
-  data.toCharArray ((*transformation).data, PROPAGATION_SIZE);
+  // (*transformation).size = PROPAGATION_SIZE;
+  //(*transformation).size = data.length() + 1; // NOTE: Add 1 to the length to account for the '\0' character.
+  (*transformation).size = data.length(); // NOTE: Add 1 to the length to account for the '\0' character.
+  (*transformation).position = 0;
+  //(*transformation).data = (char*) malloc (PROPAGATION_SIZE * sizeof (char));
+  (*transformation).data = (char*) malloc (((*transformation).size + 1) * sizeof (char));
+  //data.toCharArray ((*transformation).data, PROPAGATION_SIZE);
+  data.toCharArray ((*transformation).data, ((*transformation).size + 1));
   (*transformation).previous = NULL;
   (*transformation).next = NULL;
   
@@ -1089,6 +1095,8 @@ Transformation* Create_Transformation (String data) {
   
 }
 
+//! Return the transformation description (i.e., the transformation encoded as a character string).
+//!
 String Get_Transformation_Data (Transformation* transformation) {
   
   if (transformation != NULL) {
@@ -1168,6 +1176,25 @@ Transformation* Queue_Transformation (Propagator* propagator, Transformation* tr
   
 }
 
+//! Returns the transformation on the top of the propagator's transformation queue.
+//!
+Transformation* Get_Transformation (Propagator* propagator) {
+  
+  Serial.println ("Get_Transformation");
+  
+  Transformation* transformation = NULL;
+  
+  if (propagator != NULL) {
+    
+    // Get the transformation at the front of the propagator's queue
+    transformation = (*propagator).transformation;
+    
+  }
+  
+  return transformation;
+  
+}
+
 //! Pop transformation off the propagator's stack
 //!
 Transformation* Dequeue_Transformation (Propagator* propagator) {
@@ -1214,22 +1241,75 @@ boolean Propagate (Propagator* propagator, int channel) {
       
       // Create buffer for storing the bytes to be sent (over I2C)
       const int AVAILABLE_BUFFER_BYTES = 32;
-      char buffer[AVAILABLE_BUFFER_BYTES];
+      int sentByteCount = 0; // i.e., the number of bytes sent so far (during this call to Propagate)
+//      char buffer[AVAILABLE_BUFFER_BYTES];
+      
+      // Get the next behavior transformation description to be sent by the specified propagator (but don't yet dequeue it)
+      Transformation* transformation = Get_Transformation (propagator);
+      
+      // Check if the transformation has data yet to be propagated (and if so, propagate the next data).
+      if ((*transformation).position < (*transformation).size) {
+        
+        while (sentByteCount < AVAILABLE_BUFFER_BYTES) {
+          
+          // Send the next character of the behavior transformation description string.
+          if (sentByteCount < AVAILABLE_BUFFER_BYTES) {
+            
+            // Check if this is the beginning of the transformation description being sent (i.e., the first byte of data)
+            if ((*transformation).position == 0) {
+              Serial.println ("\tfirst byte");
+              Wire.write ("("); // Start transformation description
+              sentByteCount++;
+            }
+            
+            // Send the next charaactual transformation description string.
+            if ((*transformation).position < (*transformation).size) {
+              Wire.write ((*transformation).data[((*transformation).position)]);
+              (*transformation).position = (*transformation).position + 1; // Increment the position of the next character to be propagated.
+              sentByteCount++; // Count the byte as propagated (i.e., sent over the I2C channel).
+              Serial.print ("\tbyte"); Serial.print (sentByteCount); Serial.print ("(position: "); Serial.print ((*transformation).position); Serial.print (")\n");
+            }
+            
+//          else {
+//            Wire.write ("\n")
+//          }
+//          sentByteCount++; // Count the byte as propagated (i.e., sent over the I2C channel).
+          }
+          
+          // Check if this is the end of the transformation description being sent (i.e., the last byte of data)
+          if (sentByteCount < AVAILABLE_BUFFER_BYTES) {
+            if ((*transformation).position >= (*transformation).size) {
+              Serial.println ("\tlast byte");
+              Wire.write (")"); // Conclude transformation description
+              sentByteCount++;
+              
+              // Dequeue the transformation since it's been completely propagated
+              Dequeue_Transformation (propagator);
+              
+              // Free the transformation from memory (once sent via I2C)
+              Delete_Transformation (transformation);
+              
+              return true;
+            }
+          }
+          
+        }
+      }
       
       // Dequeue the next description to be sent by the specified propagator
-      Transformation* transformation = Dequeue_Transformation (propagator);
+//      Transformation* transformation = Dequeue_Transformation (propagator);
       
       // TODO: Break up dequeued string to be sent into 32 byte segments, then queue them in the I2C outgoing data buffer.
 
-      // Transmit data over via the I2C protocol
-      Wire.write ("("); // Start transformation description
-      Wire.write ((*transformation).data); // Write the serialized data
-      Wire.write (")"); // Conclude transformation description
+//      // Transmit data over via the I2C protocol
+//      Wire.write ("("); // Start transformation description
+//      Wire.write ((*transformation).data); // Write the serialized data
+//      Wire.write (")"); // Conclude transformation description
+//      
+//      // Free the transformation from memory (once sent via I2C)
+//      Delete_Transformation (transformation);
       
-      // Free the transformation from memory (once sent via I2C)
-      Delete_Transformation (transformation);
-      
-      return true;
+//      return true;
       
     }
     

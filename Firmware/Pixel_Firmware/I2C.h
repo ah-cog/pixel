@@ -100,9 +100,13 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
   // Request messages from slave
   // NOTE: This causes the function "requestEvent" specified in "Wire.onRequest(requestEvent);" 
   //       to be called on the slave device.
-  int bytes = Wire.requestFrom (SLAVE_DEVICE_ADDRESS, I2C_MESSAGE_BYTE_SIZE); // Request 6 bytes from slave device #2
+  //int bytes = Wire.requestFrom (SLAVE_DEVICE_ADDRESS, I2C_MESSAGE_BYTE_SIZE); // Request 6 bytes from slave device #2
+  int bytes = Wire.requestFrom (SLAVE_DEVICE_ADDRESS, BUFFER_SIZE_I2C); // Request 6 bytes from slave device #2
   
 //  Serial.print ("bytes = "); Serial.println(bytes);
+  int transformationDataSize = 0; // The actual transformation data received (less than or equal to 32 bytes)
+  
+  i2cMessageBufferSize = 0;
 
   // Receive messages from slave (if any)
   while (Wire.available () > 0) { // slave may send less than requested
@@ -112,17 +116,28 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
 //    Serial.print (c); // print the character
 //    Serial.print(" ");
     
+    // Count the bytes of actual data received (other than NULL bytes)
+    if (c != '\0') {
+      transformationDataSize++;
+    }
+    
     // Copy byte into message buffer
     i2cMessageBuffer[i2cMessageBufferSize] = c;
     i2cMessageBufferSize++;
   }
-  i2cMessageBuffer[i2cMessageBufferSize] = '\0'; // Terminate I2C message buffer
-//  Serial.print("\n");
+  //i2cMessageBuffer[i2cMessageBufferSize] = '\0'; // Terminate I2C message buffer
+  i2cMessageBuffer[transformationDataSize] = '\0'; // Terminate I2C message buffer
+//  Serial.print ("\ti2cMessageBufferSize: "); Serial.print (i2cMessageBufferSize); Serial.print ("\n");
+//  Serial.print ("\ttransformationDataSize: "); Serial.print (transformationDataSize); Serial.print ("\n");
 
+//  int transformationDataSize = i2cMessageBufferSize; // TODO: Combine i2cMessageBufferSize and transformationDataSize to make more space/time efficient.
+  
   i2cMessageBufferSize = 0; // Reset I2C message buffer size
   
   // Process received data (i.e., parse the received messages)
-  if (strlen(i2cMessageBuffer) > 1) { // if (i2cMessageBufferSize > 0) {
+  //if (strlen(i2cMessageBuffer) > 1) { // if (i2cMessageBufferSize > 0) {
+  if (transformationDataSize > 0) { // if (i2cMessageBufferSize > 0) {
+    Serial.println (i2cMessageBuffer);
 //    Serial.println("Buffer > 1");
 
     // Search for start of message
@@ -138,8 +153,15 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
       // Find first of '\0', ')', or the (maximum) index of 32 (which means there should be more coming!)
       
 //      strncpy (behaviorDescriptionBuffer + behaviorDescriptionBufferIndex, firstCharacterIndex + 1, );
+      Serial.print ("\tfirstCharacterIndex: "); Serial.print (firstCharacterIndex); Serial.print ("\n");
+      
+    } else {
+      
+      // The '(' character was not found, so set the beginning to the first character in the buffer.
+      firstCharacterIndex = i2cMessageBuffer;
+      Serial.print ("\tfirst character not found! setting firstCharacterIndex to "); Serial.print (firstCharacterIndex); Serial.print ("\n");
+      
     }
-    Serial.print ("\tfirstCharacterIndex: "); Serial.print (firstCharacterIndex); Serial.print ("\n");
     
     boolean done = false;
     
@@ -149,28 +171,43 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
     
     // Update the last character index
     if (lastCharacterIndex != NULL) {
-      Serial.println ("Found ')'");
+      Serial.println ("Found(1) ')'");
       lastCharacterIndex = lastCharacterIndex - 1;
       done = true;
     } 
     
     // Search for the '\0' character if ')' not found
     if (lastCharacterIndex == NULL) {
-      Serial.println ("Found '\0'");
+      //lastCharacterIndex = strchr (i2cMessageBuffer, '\0');
       lastCharacterIndex = strchr (i2cMessageBuffer, '\0');
+      if (lastCharacterIndex != NULL) {
+        Serial.println ("Found(2) '\0'");
+        lastCharacterIndex = lastCharacterIndex - 1;
+      }
     }
     
     // Search for the last character in the message
     if (lastCharacterIndex == NULL) {
-      Serial.print ("Found end of string at position "); Serial.print (BUFFER_SIZE_I2C); Serial.print ("\n");
       lastCharacterIndex = i2cMessageBuffer + BUFFER_SIZE_I2C;
+      if (lastCharacterIndex != NULL) {
+        Serial.print ("Found(3) end of string at position "); Serial.print (BUFFER_SIZE_I2C); Serial.print ("\n");
+      }
     }
     Serial.print ("\tlastCharacterIndex: "); Serial.print (lastCharacterIndex); Serial.print ("\n");
     
     // Copy the received data into the local buffer
     int behaviorDescriptionSize = (lastCharacterIndex + 1) - firstCharacterIndex;
+//    int behaviorDescriptionSize = (lastCharacterIndex) - firstCharacterIndex;
+//    if (i2cMessageBuffer[lastCharacterIndex] == ')') {
+//      behaviorDescriptionSize = behaviorDescriptionSize + 1;
+//    }
     strncpy (behaviorDescriptionBuffer + behaviorDescriptionBufferIndex, firstCharacterIndex, behaviorDescriptionSize);
     behaviorDescriptionBufferIndex = behaviorDescriptionBufferIndex + behaviorDescriptionSize;
+    
+    behaviorDescriptionBuffer[behaviorDescriptionBufferIndex] = '\0';
+    Serial.print ("\tbehaviorDescriptionBuffer: "); Serial.print (behaviorDescriptionBuffer); Serial.print ("\n");
+    
+    // TODO: Check for an infinite loop and prevent it (e.g., with a timer).
     
     if (done) {
       

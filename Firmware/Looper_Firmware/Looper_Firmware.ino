@@ -193,12 +193,12 @@ void i2cRequestHandler () {
 //  Propagation* transformation = Create_Propagation ("create substrate 55ff68064"); // 55ff68064989495329092587
 //  Queue_Propagation (propagator, transformation);
 
-  Serial.println ("i2cRequestHandler");
-  Serial.println ((int) propagator);
+//  Serial.println ("i2cRequestHandler");
+//  Serial.println ((int) propagator);
   
   if (propagator != NULL) {
     
-    Serial.println ((int) (*propagator).transformation);
+//    Serial.println ((int) (*propagator).transformation);
     
     if ((*propagator).transformation != NULL) {
       
@@ -208,7 +208,7 @@ void i2cRequestHandler () {
     
   } else {
     
-    Wire.write("0 ");
+    Wire.write('\0'); // Send NULL symbol (i.e., ASCII code 0)
     
   }
 
