@@ -331,7 +331,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Update_Behavior_Sequence (behavior, sequence);
                 
                 // Propagate behaviorCreate_Transformation
-                Transformation* transformation = Create_Transformation (String("create behavior output 5 digital on and create behavior output 5 digital on"));
+//                Transformation* transformation = Create_Transformation (String("create behavior output 5 digital on"));
+                Transformation* transformation = Create_Transformation (String("create behavior output ") + String (pin) + " " + String (signal) + " " + String (data));
                 Queue_Transformation (propagator, transformation);
                 
 //                Propagate_Behavior_Transformation (CREATE, BEHAVIOR);
@@ -365,8 +366,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Update_Behavior_Sequence (behavior, sequence);
                 
                 // Propagate behavior
-                //Transformation* transformation = Create_Transformation (String("create behavior input " + String(pin)));
-                Transformation* transformation = Create_Transformation (String("create behavior input 15"));
+                Transformation* transformation = Create_Transformation (String("create behavior input ") + String (pin) + " " + String (signal));
+//                Transformation* transformation = Create_Transformation (String("create behavior input 15"));
                 Queue_Transformation (propagator, transformation);
                 
 //                Serial.println("Test:");
@@ -397,7 +398,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Update_Behavior_Sequence (behavior, sequence);
                 
                 // Propagate behavior
-                Transformation* transformation = Create_Transformation ("create behavior delay 1000");
+                Transformation* transformation = Create_Transformation (String("create behavior delay ") + String(milliseconds));
                 Queue_Transformation (propagator, transformation);
                 
               }

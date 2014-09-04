@@ -121,6 +121,10 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
       transformationDataSize++;
     }
     
+    if (c == ')') {
+      Serial.println ("\t))))))))))");
+    }
+    
     // Copy byte into message buffer
     i2cMessageBuffer[i2cMessageBufferSize] = c;
     i2cMessageBufferSize++;

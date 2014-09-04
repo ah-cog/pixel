@@ -1248,7 +1248,7 @@ boolean Propagate (Propagator* propagator, int channel) {
       Transformation* transformation = Get_Transformation (propagator);
       
       // Check if the transformation has data yet to be propagated (and if so, propagate the next data).
-      if ((*transformation).position < (*transformation).size) {
+      if ((*transformation).position <= (*transformation).size) {
         
         while (sentByteCount < AVAILABLE_BUFFER_BYTES) {
           
@@ -1261,7 +1261,9 @@ boolean Propagate (Propagator* propagator, int channel) {
               Wire.write ("("); // Start transformation description
               sentByteCount++;
             }
-            
+          }
+           
+          if (sentByteCount < AVAILABLE_BUFFER_BYTES) { 
             // Send the next charaactual transformation description string.
             if ((*transformation).position < (*transformation).size) {
               Wire.write ((*transformation).data[((*transformation).position)]);
