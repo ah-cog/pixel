@@ -22,6 +22,9 @@ Performer* performer = NULL;
 Performer* Create_Performer (Substrate* substrate);
 Propagator* Create_Propagator ();
 
+
+
+
 // Methods:
 //
 // Create_Substrate
@@ -876,6 +879,19 @@ struct Performer {
   
 //  Device* device; // i.e., The device upon which the performance will take place.
 };
+
+////! Behavior Performer Dialect (e.g., Teensy, Arduino)
+////!
+//struct TeensyPerformer {
+//  int uid;
+//  Substrate* substrate;
+//  Behavior* behavior; // i.e., The current behavior. This is akin to a "program counter".
+//  
+//  Sequence* origin; // i.e., The performer's first behavior sequence.
+//  // Behavior* origin; // i.e., The performer's first behavior.
+//  
+////  Device* device; // i.e., The device upon which the performance will take place.
+//};
 
 //! Creates a behavior performer in the specified substrate.
 //!

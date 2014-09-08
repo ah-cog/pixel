@@ -23,7 +23,6 @@
 #include "Gesture.h"
 #include "Movement.h"
 #include "Communication.h"
-//#include "Loop.h"
 #include "Looper.h"
 #include "I2C.h"
 #include "Ports.h"
@@ -47,7 +46,7 @@ void setup() {
   
   setupLooper(); // Setup the Looper engine.
   
-  setupDevice(); // Setup Pixel's reflection (i.e., it's virtual machine)
+//  setupPlatform(); // Setup Pixel's reflection (i.e., it's virtual machine)
   setupPorts(); // Setup pin mode for I/O
   setupLight(); // Setup the Pixel's color
   
@@ -82,6 +81,8 @@ void setup() {
   
   Serial.begin(9600);
   Serial.println(F("Pixel Firmware"));
+  
+  setupPlatform(); // Setup Pixel's reflection (i.e., it's virtual machine)
   
   // Setup physical orientation sensing peripherals (i.e., IMU)
   setupOrientationSensing();
@@ -135,8 +136,10 @@ void loop() {
   if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
     if (outputPinRemote == false) {
       // Output port is on this module!
-      setPinValue(MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
-      syncPinValue(MODULE_OUTPUT_PIN);
+      //Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
+      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
+      Propagate_Channel_Value (moduleOutputChannel);
     } else {
       // Output port is on a different module than this one!
       addMessage(NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
@@ -144,8 +147,11 @@ void loop() {
 //    delay(500);
   } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
     if (outputPinRemote == false) {
-      setPinValue(MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
-      syncPinValue(MODULE_OUTPUT_PIN);
+//      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+//      syncPinValue(MODULE_OUTPUT_PIN);
+      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
+      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
+      Propagate_Channel_Value (moduleOutputChannel);
     } else {
       addMessage(NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
     }
@@ -399,11 +405,17 @@ void loop() {
     
     } else if (message.message == ACTIVATE_MODULE_OUTPUT) {
       // ACTIVATE_MODULE_OUTPUT
-      setPinValue(MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
-      syncPinValue(MODULE_OUTPUT_PIN);
+//      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+//      syncPinValue(MODULE_OUTPUT_PIN);
+      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
+      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
+      Propagate_Channel_Value (moduleOutputChannel);
     } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
-      setPinValue(MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
-      syncPinValue(MODULE_OUTPUT_PIN);
+//      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+//      syncPinValue(MODULE_OUTPUT_PIN);
+      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
+      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
+      Propagate_Channel_Value (moduleOutputChannel);
     }
     
     // TODO: ANNOUNCE_GESTURE_SHAKE

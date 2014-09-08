@@ -2,7 +2,7 @@
 #define I2C_H
 
 #include "Behavior.h"
-#include "Device.h"
+#include "Platform.h"
 
 #define I2C_MESSAGE_BYTE_SIZE 30
 #define BUFFER_SIZE_I2C 32
@@ -33,16 +33,17 @@ int getValueCount (String data, char separator);
 //}
 
 // TODO: Move this to "Ports.h"
-void syncPinValue(int pin) {
+void Propagate_Channel_Value (Channel* channel) {
+//void syncPinValue(int pin) {
 
   // Get the most recent pin value
-  int pinValue = getLastPinValue(pin);
+  int pinValue = Get_Current_Pin_Value (channel);
   
   // Update the state (on slave board for Looper)
   char buf[8];
   Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
   Wire.write("pin ");
-  Wire.write(itoa(pin, buf, 10)); // The pin number
+  Wire.write(itoa((*channel).address, buf, 10)); // The pin number
   Wire.write(" ");
   Wire.write(pinValue == HIGH ? "1" : "0"); // The pin's value
   //  Wire.write(";");        // sends five bytes
@@ -50,7 +51,8 @@ void syncPinValue(int pin) {
   
   // TODO: Update state on other pixels in mesh network
   
-  physicalPin[pin].isUpdated = false;
+  //channels[pin].isUpdated = false;
+  (*channel).isUpdated = false;
 }
 
 //int getPinValue2(int pin) {
