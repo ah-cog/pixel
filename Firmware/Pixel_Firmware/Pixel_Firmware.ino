@@ -142,7 +142,7 @@ void loop() {
       Propagate_Channel_Value (moduleOutputChannel);
     } else {
       // Output port is on a different module than this one!
-      addMessage(NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
+      addMessage (NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
     }
 //    delay(500);
   } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
@@ -153,7 +153,7 @@ void loop() {
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
       Propagate_Channel_Value (moduleOutputChannel);
     } else {
-      addMessage(NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
+      addMessage (NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
     }
 //    delay(500);
   }

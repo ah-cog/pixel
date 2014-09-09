@@ -169,6 +169,10 @@ struct Delay {
   Behavior* behavior;
   
   int milliseconds;
+  
+  // Temporary variables (TODO: Consider moving these elsewhere, such as into a "schema" or similar structure.)
+  unsigned long startTime;
+  unsigned long currentTime;
 };
 
 #endif

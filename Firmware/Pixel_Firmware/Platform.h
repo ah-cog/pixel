@@ -17,27 +17,6 @@
 //  void* Update_Pin;
 //  void* Get_Pin;
 //};
-//
-////! Channels are paths along which messages or data can be propagated, 
-////! captured, or exchanged. 
-////! For example, pins on a hardware platform (e.g., Arduino) are channels.
-////! Channels can also be a web socket, HTTP interface, memory, cloud 
-////! database, etc.
-////!
-//struct Channel {
-//  Platform* platform; // The platform associated with the channel.
-//  
-//  int pin; // The pin number
-//  int type; // i.e., digital, analog, pwm, touch
-//  int mode; // i.e., input or output
-//  int value; // i.e., high or low
-//  
-//  boolean isUpdated; // Denotes that the physical pin has been updated and it should be synced up with its virtual pins (and associated hardware).
-//};
-//
-////boolean Update_Channel (Channel* channel) {
-////  
-////}
 
 struct Platform;
 struct Channel;
@@ -115,11 +94,6 @@ void setupPlatform () {
     
     // Create a channel for the specified platform with the specified address
     Channel* channel = Create_Channel (platform, i);
-    
-//    channels[i].pin   = i;
-//    channels[i].type  = PIN_TYPE_DIGITAL; // Initialize these for the hardware being used (e.g., Teensy 3.1)
-//    channels[i].mode  = PIN_MODE_INPUT; // Initialize pin mode to input
-//    channels[i].value = 0; // Initialize pin value to 0
   }
 }
 
@@ -139,7 +113,8 @@ Platform* Create_Platform () {
   (*platform).isUpdated   = false;
   
   // Generate UUID for the behavior
-  (*platform).uid  = generateUuid ();
+//  (*platform).uid  = generateUuid ();
+  (*platform).uid  = 0;
   
   // Return platform
   return platform;
@@ -201,7 +176,7 @@ Channel* Create_Channel (Platform* platform, int address) {
   (*channel).next  = NULL;
   
   // Generate UUID for the channel
-  (*channel).uid  = generateUuid ();
+  (*channel).uid  = 0; // (*channel).uid  = generateUuid ();
   (*channel).address = address;
   
   // Add the channel to the platform's list of channels
@@ -242,7 +217,7 @@ void Update_Channel_Type (Channel* channel, int type) {
   // NOTE: There's no "pin type" for Arduino. It's just a virtual construct for Pixel.
 }
 
-int Get_Channel_Type (Channel* channel, int pin) {
+int Get_Channel_Type (Channel* channel) {
   Serial.println ("Get_Channel_Type");
   if (channel != NULL) {
     (*channel).isUpdated = true; // TODO: Propagate this change to the platform associated with the channel.
@@ -267,7 +242,7 @@ void Update_Channel_Mode (Channel* channel, int mode) {
   // TODO: Return "none" if channel not found (if specified channel is NULL)
 }
 
-int Get_Channel_Mode (Channel* channel, int pin) {
+int Get_Channel_Mode (Channel* channel) {
   Serial.println ("Get_Channel_mode");
   
   if (channel != NULL) {
@@ -297,20 +272,8 @@ void Update_Channel_Value (Channel* channel, int value) {
   // TODO: Return "none" if channel not found (if specified channel is NULL)
 }
 
-int Get_Current_Pin_Value (Channel* channel) {
+int Get_Current_Channel_Value (Channel* channel) {
   Serial.println ("Get_Current_Pin_Value");
-  
-//int getLastPinValue (int pin) {
-  
-//  setPinMode(pin, PIN_MODE_INPUT);
-  
-//  channels[pin].value = digitalRead (pin);
-//  
-//  channels[pin].isUpdated = true;
-//  return channels[pin].value;
-  
-  Serial.println ((int) channel);
-  
   
   if (channel != NULL) {
     
@@ -324,17 +287,9 @@ int Get_Current_Pin_Value (Channel* channel) {
 
 //! Gets the value on the specified channel.
 //!
-int Get_Pin_Value (Channel* channel) {
+int Get_Channel_Value (Channel* channel) {
+//int Get_Pin_Value (Channel* channel) {
   Serial.println ("Get_Pin_Value");
-  
-//  Update_Channel_Mode (pin, PIN_MODE_INPUT);
-//  
-//  channels[pin].value = digitalRead (pin);
-//  
-//  channels[pin].isUpdated = true;
-//  return channels[pin].value;
-  
-  
   
   if (channel != NULL) {
     
@@ -349,5 +304,7 @@ int Get_Pin_Value (Channel* channel) {
   }
   // TODO: Return "none" if channel not found (if specified channel is NULL)
 }
+
+
 
 #endif

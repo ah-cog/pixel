@@ -2,6 +2,7 @@
 #define LOOPER_H
 
 #include "Behavior.h"
+#include "Platform.h"
 
 //!
 //! Looper Engine
@@ -654,6 +655,8 @@ Behavior* Create_Delay_Behavior (Substrate* substrate, int milliseconds) {
     // Create the Output schema for Behavior
     Delay* delay = (Delay*) malloc (sizeof (Delay));
     (*delay).milliseconds = milliseconds;
+    (*delay).startTime = 0L;
+    (*delay).currentTime = 0L;
     
     // Create the Behavior
     behavior = Create_Behavior (substrate);
@@ -932,6 +935,8 @@ Performer* Create_Performer (Substrate* substrate) {
 boolean Perform_Behavior (Performer* performer) {
   // Serial.println ("Perform_Behavior");
   
+  boolean sustainBehavior = false;
+  
   if (performer != NULL) {
     
     // Update the Performer
@@ -953,6 +958,13 @@ boolean Perform_Behavior (Performer* performer) {
         Output* output = (Output*) (*behavior).schema;
         
         Serial.print ("Output "); Serial.print ((*output).pin); Serial.print ("\n");
+        Serial.print ("\tdata: "); Serial.print ((*output).data); Serial.print ("\n");
+        
+        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+        Channel* channel = Get_Channel (platform, (*output).pin);
+        Update_Channel_Value (channel, (*output).data);
+//        Get_Channel_Value (channel);
+//        Propagate_Channel_Value (channel);
         
         // Update the pin's state
 //        Update_Virtual_Pin ((*output).pin, (*output).signal, (*output).data);
@@ -962,10 +974,35 @@ boolean Perform_Behavior (Performer* performer) {
         Serial.print ("Input "); Serial.print ((*input).pin); Serial.print ("\n");
         
         // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+        Channel* channel = Get_Channel (platform, (*input).pin);
+//        Update_Channel_Value (channel, PIN_VALUE_HIGH);
+        Get_Channel_Value (channel);
+//        Propagate_Channel_Value (channel);
+        
       } else if ((*behavior).type == BEHAVIOR_TYPE_DELAY) {
         Delay* delay = (Delay*) (*behavior).schema;
         
         Serial.print ("Delay "); Serial.print ((*delay).milliseconds); Serial.print ("\n");
+        Serial.print ("\tstartTime: "); Serial.print ((*delay).startTime); Serial.print ("\n");
+        Serial.print ("\tcurrentTime: "); Serial.print ((*delay).currentTime); Serial.print ("\n");
+        
+        // Update timers
+        if ((*delay).startTime == 0) {
+          (*delay).startTime = millis ();
+          (*delay).currentTime = (*delay).startTime;
+        }
+          
+        // Update timer with current time
+        (*delay).currentTime = millis ();
+        
+        // Check if timer has expired
+        if ((*delay).currentTime - (*delay).startTime >= (*delay).milliseconds) {
+          // Reset timers
+          (*delay).startTime = 0L;
+          (*delay).currentTime = 0L;
+        } else {
+          sustainBehavior = true;
+        }
         
         // TODO: Call device-specific routine (retreived from cloud to change the device itself).
       } else if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
@@ -980,31 +1017,35 @@ boolean Perform_Behavior (Performer* performer) {
       }
       
       // Continue behavior performance
-      // TODO: Get next behavior (following logic specific to loops, lines, dots).
-      //Serial.print ("behavior's sequence type: "); Serial.print ((*(*behavior).sequence).type); Serial.print ("\n");
-      Serial.print ("behavior's sequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
-      // if ((*(*behavior).sequence).type == SEQUENCE_TYPE_LOOP) {
-      if ((*((*performer).origin)).type == SEQUENCE_TYPE_LOOP) {
-        
-        Behavior* nextBehavior = (*((*performer).behavior)).next;
-        
-        if (nextBehavior != NULL) {
-          Serial.println("next behavior");
-          // Go to next behavior in the sequence
-          (*performer).behavior = (*((*performer).behavior)).next;
+      if (sustainBehavior == false) {
+        // TODO: Get next behavior (following logic specific to loops, lines, dots).
+        //Serial.print ("behavior's sequence type: "); Serial.print ((*(*behavior).sequence).type); Serial.print ("\n");
+        Serial.print ("behavior's sequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
+        // if ((*(*behavior).sequence).type == SEQUENCE_TYPE_LOOP) {
+        if ((*((*performer).origin)).type == SEQUENCE_TYPE_LOOP) {
+          
+          // TODO: If the current behavior is a delay, only proceed if the delay period has passed, otherwise, remain on the delay behavior.
+          
+          Behavior* nextBehavior = (*((*performer).behavior)).next;
+          
+          if (nextBehavior != NULL) {
+            Serial.println("next behavior");
+            // Go to next behavior in the sequence
+            (*performer).behavior = (*((*performer).behavior)).next;
+          } else {
+            Serial.println("restart sequence from first behavior");
+            // The end of the looping sequence has been reached, so start again from the beginning of the performer's origin behavior sequence.
+            (*performer).behavior = (*((*performer).origin)).behavior;
+          }
+          return true;
+          
         } else {
-          Serial.println("restart sequence from first behavior");
-          // The end of the looping sequence has been reached, so start again from the beginning of the performer's origin behavior sequence.
-          (*performer).behavior = (*((*performer).origin)).behavior;
+          
+          // TODO: Implement "next" code for Dot and Line (i.e., they are terminal, non-repeating, so only execute once)
+          
+          return false; // Return false, indicating "no next/more behaviors"
+          
         }
-        return true;
-        
-      } else {
-        
-        // TODO: Implement "next" code for Dot and Line (i.e., they are terminal, non-repeating, so only execute once)
-        
-        return false; // Return false, indicating "no next/more behaviors"
-        
       }
       
       return false;
