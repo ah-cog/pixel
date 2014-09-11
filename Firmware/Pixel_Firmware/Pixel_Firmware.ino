@@ -79,6 +79,8 @@ void setup() {
   // Setup serial communication (for debugging)
   //
   
+  delay(2000);
+  
   Serial.begin(9600);
   Serial.println(F("Pixel Firmware"));
   
@@ -123,6 +125,8 @@ boolean isSequenced = false; // Does the module belong to a sequence?
 boolean isActive = false; // Is the module the currently active module in the sequence
 
 void loop() {
+  
+  // startBlinkLight();
   
   doLightBehavior();
   
@@ -197,16 +201,12 @@ void loop() {
 
   // TODO: Send updated state of THIS board (master) to the OTHER board (slave) for caching.
   
-  // Get behavior updates from slave (Apply)
-//  getBehaviorTransformations ();
+  // Get behavior updates from slave
   Get_Behavior_Transformations ();
   
   // Perform behavior step in the interpreter (Evaluate)
-//  behaviorLoopStep();
-
   // TODO: Transform_Behavior (i.e., the Behavior Transformer does this, akin to interpreting an instruction/command)
   boolean performanceResult = Perform_Behavior (performer);
-//  delay (800);
   
   
   
@@ -677,7 +677,8 @@ boolean handleGestureSwing() {
 boolean handleGestureTapToAnotherAsLeft() {
   //setColor(255, 0, 0);
   // Blink the lights five times
-  blinkLight(5);
+//  blinkLight(5);
+  startBlinkLight();
   
 //  if (!awaitingPreviousModule) {
 //    awaitingNextModule = true;
@@ -705,7 +706,8 @@ boolean handleGestureTapToAnotherAsLeft() {
 boolean handleGestureTapToAnotherAsRight() {
 //  setColor(255, 0, 0);
   // Blink the lights five times
-  blinkLight(5);
+//  blinkLight(5);
+  startBlinkLight();
   
   // Send to all linked devices
 //      for (int i = 0; i < 1; i++) {
@@ -757,6 +759,10 @@ boolean handleGestureShake() {
     outputPinRemote = false;
     
   } else {
+    
+    // Stop blinking to cancel behavior shaping (i.e., cool the hot potato)
+    // TODO: Stop blinking when successfully linked, too!
+    stopBlinkLight ();
   
     // Unsequence modules
     isSequenced = false;

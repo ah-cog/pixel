@@ -14,9 +14,9 @@
 // - cut (to specified color, immediately)
 // - crossfade (to specified color, from current color)
 
-#define COLOR_APPLICATION_MODE_CUT 0
+#define COLORING_MODE_CUT 0
 #define COLOR_APPLICATION_MODE_CROSSFADE 1
-int colorApplicationMethod = COLOR_APPLICATION_MODE_CUT; // COLOR_APPLICATION_MODE_CROSSFADE;
+int colorApplicationMethod = COLORING_MODE_CUT; // COLOR_APPLICATION_MODE_CROSSFADE;
 int crossfadeStep = 0;
 
 int defaultModuleColor[3] = { 255, 255, 255 }; // The color associated with the module
@@ -39,28 +39,71 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_OUTPUT_PIN, NEO_GRB +
 int lightBehaviorQueue[LIGHT_BEHAVIOR_QUEUE_CAPACITY]; // 0 = off, 1 = on, 2 = delay 50 ms, 3 = delay 100 ms, 4 = delay 150 ms, 5 = delay 200 ms
 int lightBehaviorQueueSize = 0;
 
+#define LIGHT_BEHAVIOR_NONE 7
 #define LIGHT_BEHAVIOR_OFF 0
 #define LIGHT_BEHAVIOR_ON 1
 #define LIGHT_BEHAVIOR_DELAY_50MS 2
 #define LIGHT_BEHAVIOR_DELAY_100MS 3
 #define LIGHT_BEHAVIOR_DELAY_150MS 4
 #define LIGHT_BEHAVIOR_DELAY_200MS 5
+#define GENERATE_LIGHT_BEHAVIOR_BLINK_100MS 6
 
 int currentLightBehavior = -1;
 unsigned long currentLightBehaviorStartTime = 0;
 int currentLightBehaviorStep = 0;
 unsigned long currentLightBehaviorStepStartTime = 0;
 
-void setColor(int red, int green, int blue);
-void applyColor(int applicationMethod);
+void setColor (int red, int green, int blue);
+void applyColor (int applicationMethod);
 
-int dequeueLightBehavior();
+boolean queueLightBehavior(int behavior);
+int dequeueLightBehavior ();
 
-void blinkLight();
-void ledOn();
-void ledOff();
+void blinkLight (int count);
+void ledOn ();
+void ledOff ();
 
 boolean doLightBehavior() {
+  
+  // Check for a generative blink behavior on the front of the queue
+  if (currentLightBehavior == GENERATE_LIGHT_BEHAVIOR_BLINK_100MS) {
+    Serial.println ("GENERATE_LIGHT_BEHAVIOR_BLINK_100MS");
+    
+    // Queue blink behavior
+    queueLightBehavior (GENERATE_LIGHT_BEHAVIOR_BLINK_100MS);
+//    blinkLight (1);
+    int count = 1;
+    for (int i = 0; i < count; i++) {
+      queueLightBehavior(LIGHT_BEHAVIOR_ON); // Turn light on
+      queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS); // Delay
+      queueLightBehavior(LIGHT_BEHAVIOR_OFF); // Turn light off
+//      if (i < (count - 1)) {
+        queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS); // Delay
+//      }
+    }
+    
+    // Dequeue light behavior
+    if (lightBehaviorQueueSize > 0) {
+      currentLightBehavior = dequeueLightBehavior(); // Get the next behavior in the queue
+      currentLightBehaviorStep = 0; // Reset behavior step
+      currentLightBehaviorStartTime = millis(); // Set start time of behavior to present time
+    }
+    
+  } else if (currentLightBehavior == LIGHT_BEHAVIOR_NONE) {
+    
+    // Dequeue light behavior
+    if (lightBehaviorQueueSize > 0) {
+      currentLightBehavior = dequeueLightBehavior(); // Get the next behavior in the queue
+      currentLightBehaviorStep = 0; // Reset behavior step
+      currentLightBehaviorStartTime = millis(); // Set start time of behavior to present time
+    } else {
+      currentLightBehavior = -1; // Reset the current behavior to indicate it's done
+    }
+    
+  }
+  
+  // Process the light behavior:
+  
   if (currentLightBehavior != -1) { // If there is currently a light behavior
     // TODO: Do behavior
     
@@ -73,14 +116,14 @@ boolean doLightBehavior() {
     if (currentLightBehavior == LIGHT_BEHAVIOR_OFF) {
       
       setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-      applyColor(COLOR_APPLICATION_MODE_CUT);
+      applyColor(COLORING_MODE_CUT);
       
       currentLightBehavior = -1; // Reset the current behavior to indicate it's done
       
     } else if (currentLightBehavior == LIGHT_BEHAVIOR_ON) {
       
       setColor(0, 0, 0);
-      applyColor(COLOR_APPLICATION_MODE_CUT);
+      applyColor(COLORING_MODE_CUT);
   
       currentLightBehavior = -1; // Reset the current behavior to indicate it's done
       
@@ -138,6 +181,7 @@ boolean doLightBehavior() {
  * Push a message onto the queue of messages to be processed and sent via the mesh network.
  */
 boolean queueLightBehavior(int behavior) {
+  Serial.print ("queueLightBehavior "); Serial.print (behavior); Serial.print ("\n");
   // TODO: Add message to queue... and use sendMessage to send the messages...
   
   if (lightBehaviorQueueSize < LIGHT_BEHAVIOR_QUEUE_CAPACITY) {
@@ -305,7 +349,7 @@ void crossfadeColor(int red, int green, int blue) {
  * Physically changes the color of the LED by setting the PWM pins.
  */
 void applyColor(int applicationMethod) {
-  if (applicationMethod == COLOR_APPLICATION_MODE_CUT) {
+  if (applicationMethod == COLORING_MODE_CUT) {
     
     // Update LED color buffer
     ledColor[0] = targetColor[0];
@@ -335,6 +379,32 @@ void blinkLight(int count) {
   }
 }
 
+//! Make the light blink until it is manually stopped.
+//!
+void startBlinkLight () {
+  Serial.println ("startBlinkLight");
+  queueLightBehavior(GENERATE_LIGHT_BEHAVIOR_BLINK_100MS);
+}
+
+//! Make the light stop blinking.
+//!
+boolean stopBlinkLight () {
+  Serial.println ("stopBlinkLight");
+  // TODO: 
+  
+//  lightBehaviorQueue
+//  lightBehaviorQueueSize
+  
+  // Search for the first generate light behavior from the front of the queue
+  for (int i = 0; i < lightBehaviorQueueSize; i++) {
+    if (lightBehaviorQueue[i] == GENERATE_LIGHT_BEHAVIOR_BLINK_100MS) {
+      lightBehaviorQueue[i] = LIGHT_BEHAVIOR_NONE; // Replace the generate behavior with an empty behavior
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Applies the current target color using the current color application method.
  */
@@ -349,15 +419,6 @@ void ledOn() {
 void ledOff() {
   queueLightBehavior(LIGHT_BEHAVIOR_OFF);
 }
-
-
-//void ledToggle() {
-//  if (ledColor[0] == 255 && ledColor[1] == 255 && ledColor[2] == 255) {
-//    ledOff();
-//  } else {
-//    ledOn();
-//  }
-//}
 
 void fadeOn() {
 //  ledOff();
