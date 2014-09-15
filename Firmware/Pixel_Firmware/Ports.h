@@ -7,7 +7,7 @@
 #define TOUCH_SAMPLES (5000)   // maximum number of separate readings to take
 #define TOUCH_TIMEOUT (50) // (100) // (500)    // maximum sample integration time in milliseconds
 
-boolean outputPinRemote = false; // Flag indicating whether the output port is on this module or another module
+//boolean outputPinRemote = false; // Flag indicating whether the output port is on this module or another module
 
 int lastInputValue = 0;
 boolean inputStateChanged = false;
@@ -53,7 +53,7 @@ boolean setupInputPort() {
   }
 }
   
-void getInputPortContinous() {
+void Get_Input_Port_Continuous () {
   
   tStart = millis();
 //  for (int i = 0; i < TOUCH_SAMPLES && ((millis() - tStart) < TOUCH_TIMEOUT); i++) {

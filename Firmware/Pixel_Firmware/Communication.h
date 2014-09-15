@@ -1,7 +1,7 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#define MESH_DEVICE_ADDRESS 0x0001 // The device of the mesh networking radio
+#define MESH_DEVICE_ADDRESS 0x0002 // The device of the mesh networking radio
 
 #if defined(MESH_DEVICE_ADDRESS)
   #if MESH_DEVICE_ADDRESS == 0x0000
@@ -9,6 +9,8 @@
   #elif MESH_DEVICE_ADDRESS == 0x0001
     #define NEIGHBOR_ADDRESS 0x0002
   #elif MESH_DEVICE_ADDRESS == 0x0002
+    #define NEIGHBOR_ADDRESS 0x0001
+  #elif MESH_DEVICE_ADDRESS == 0x0003
     #define NEIGHBOR_ADDRESS 0x0001
   #endif
 #endif
@@ -184,7 +186,7 @@ int getPreviousModuleCount() {
 /**
  * Adds the specified module as a next module if it hasn't already been added.
  */
-boolean addNextModule(int module) {
+boolean addNextModule (int module) {
   
   if (nextModuleCount < NEXT_MODULE_CAPACITY) {
     
@@ -688,6 +690,199 @@ boolean receiveMeshData() {
     return false;
 
   }
+}
+
+//
+// Handle messages received over mesh networks
+//
+
+#define ANNOUNCE_GESTURE_AT_REST 1
+//#define ANNOUNCE_GESTURE_AT_REST_ON_TABLE 1
+//#define ANNOUNCE_GESTURE_AT_REST_IN_HAND 2
+//#define ANNOUNCE_GESTURE_PICK_UP 3
+//#define ANNOUNCE_GESTURE_PLACE_DOWN 4
+#define ANNOUNCE_GESTURE_SWING 2
+
+#define ANNOUNCE_GESTURE_TAP_AS_LEFT 3 // 8
+#define ANNOUNCE_GESTURE_TAP_AS_RIGHT 4 // 9
+
+#define ANNOUNCE_GESTURE_SHAKE 5 // 7
+
+#define ANNOUNCE_GESTURE_TILT_LEFT 6 // 5
+#define ANNOUNCE_GESTURE_TILT_RIGHT 7 // 6
+#define ANNOUNCE_GESTURE_TILT_FORWARD 8
+#define ANNOUNCE_GESTURE_TILT_BACKWARD 9
+
+#define REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT 13
+#define REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT 14
+
+#define CONFIRM_GESTURE_TAP_AS_LEFT 15
+#define CONFIRM_GESTURE_TAP_AS_RIGHT 16
+
+boolean awaitingNextModule = false;
+boolean awaitingPreviousModule = false;
+boolean awaitingNextModuleConfirm = false;
+boolean awaitingPreviousModuleConfirm = false;
+unsigned long awaitingNextModuleStartTime = 0;
+unsigned long awaitingPreviousModuleStartTime = 0;
+
+// Sequence:
+boolean isSequenced = false; // Does the module belong to a sequence?
+boolean isActive = false; // Is the module the currently active module in the sequence
+
+boolean outputPinRemote = false; // Flag indicating whether the output port is on this module or another module
+
+/**
+ * "Right" module handle "tap to another, as left" message.
+ */
+boolean handleMessageTapToAnotherAsLeft (Message message) {
+    if (awaitingPreviousModule) {
+      // Update message state
+      awaitingPreviousModule = false;
+      awaitingPreviousModuleConfirm = true;
+      
+//      Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_LEFT");
+      
+      // Send ACK message to message.source to confirm linking operation
+//      addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
+      addBroadcast(REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
+      
+//      Serial.println("<< Sending REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
+    }
+}
+
+/**
+ * "Left" module handle request for confirmation of "tap to another, as left" message.
+ */
+boolean handleMessageRequestConfirmTapToAnotherAsLeft(Message message) {
+        
+//  unsigned long currentTime = millis();
+//  if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
+//    awaitingNextModuleConfirm = false;
+//  }
+        
+  // Send ACK message to message.source to confirm linking operation (if not yet done)
+  if (awaitingNextModuleConfirm) {
+    awaitingNextModule = false;
+    awaitingNextModuleConfirm = false; // awaitingNextModuleConfirm = true;
+    
+    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
+  
+//    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
+    addMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
+    
+    // HACK: Move this! This should be more robust, likely!
+    // TODO: Make this map to the other module only when it is already sequenced!
+    outputPinRemote = true;
+    
+    
+  
+//    Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_LEFT");
+    
+    addNextModule(message.source);
+    // TODO: addNextModule(message.source, SEQUENCE_ID);
+    
+    // Add module to sequence
+    isSequenced = true;
+    setSequenceColor(0, 255, 0); // Set the color of the sequence
+    
+    // Update the module's color
+    if (isSequenced) {
+      setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+    } else {
+      setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+    }
+    //setModuleColor(255, 255, 255);
+    //setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+    
+//    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
+    addMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
+
+    Serial.println("<< Sending ");
+  }
+}
+
+/**
+ * "Right" module handle confirmation of "tap to another, as left" message.
+ */
+boolean handleMessageConfirmTapToAnotherAsLeft (Message message) {
+  Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
+}
+
+/**
+ * "Left" module handle "tap to another, as right" message.
+ */
+boolean handleMessageTapToAnotherAsRight(Message message) {
+  // NOTE: Received by the "left" module from the "right" module
+  
+  // If receive "tap to another, as left", then check if this module performed "tap to another, as right" recently. If so, link the modules in a sequence, starting with the other module first.
+  
+  if (awaitingNextModule) {
+    
+//    Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_RIGHT");
+    
+    // Update message state
+    awaitingNextModule = false;
+    awaitingNextModuleConfirm = true;
+    
+    // Send ACK message to message.source to confirm linking operation
+    addBroadcast(REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
+//    addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
+    
+//    Serial.println("<< Sending REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
+  }
+}
+
+/**
+ * "Right" module handle request for confirmation of "tap to another, as right" message.
+ */
+boolean handleMessageRequestConfirmTapToAnotherAsRight (Message message) {
+  // NOTE: Received by the "right" module from the "left" module
+  
+//      unsigned long currentTime = millis();
+//      if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
+//        awaitingNextModuleConfirm = false;
+//      }
+    
+  // Send ACK message to message.source to confirm linking operation (if not yet done)
+  if (awaitingPreviousModuleConfirm) {
+  
+    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
+
+    awaitingPreviousModule = false;
+    awaitingPreviousModuleConfirm = false;
+    
+    addPreviousModule (message.source);
+    // TODO: addPreviousModule(message.source, SEQUENCE_ID);
+    
+    // Add module to sequence
+    isSequenced = true;
+    setSequenceColor(0, 255, 0); // Set the color of the sequence
+    
+    // Update the module's color
+    if (isSequenced) {
+      setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+    } else {
+      setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+    }
+    //setModuleColor(255, 255, 255);
+    //setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+    
+    
+//    addBroadcast(CONFIRM_GESTURE_TAP_AS_RIGHT);
+    addMessage(message.source, CONFIRM_GESTURE_TAP_AS_RIGHT);
+
+    Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_RIGHT");
+  }
+}
+
+/**
+ * "Left" module handle confirmation of "tap to another, as left" message.
+ */
+boolean handleMessageConfirmTapToAnotherAsRight (Message message) {
+  Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_RIGHT");
+  
+  // TODO: Sequence the modules!
 }
 
 #endif

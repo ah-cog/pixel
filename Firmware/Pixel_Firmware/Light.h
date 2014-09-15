@@ -63,7 +63,7 @@ void blinkLight (int count);
 void ledOn ();
 void ledOff ();
 
-boolean doLightBehavior() {
+boolean Perform_Light_Behavior () {
   
   // Check for a generative blink behavior on the front of the queue
   if (currentLightBehavior == GENERATE_LIGHT_BEHAVIOR_BLINK_100MS) {

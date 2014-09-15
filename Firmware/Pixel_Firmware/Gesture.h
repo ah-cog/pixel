@@ -1,32 +1,33 @@
 #ifndef GESTURE_H
 #define GESTURE_H
 
+#include "Communication.h"
 #include "Gestures.h"
 
 #define MAX_INTEGER_VALUE 32767
 
-#define ANNOUNCE_GESTURE_AT_REST 1
-//#define ANNOUNCE_GESTURE_AT_REST_ON_TABLE 1
-//#define ANNOUNCE_GESTURE_AT_REST_IN_HAND 2
-//#define ANNOUNCE_GESTURE_PICK_UP 3
-//#define ANNOUNCE_GESTURE_PLACE_DOWN 4
-#define ANNOUNCE_GESTURE_SWING 2
-
-#define ANNOUNCE_GESTURE_TAP_AS_LEFT 3 // 8
-#define ANNOUNCE_GESTURE_TAP_AS_RIGHT 4 // 9
-
-#define ANNOUNCE_GESTURE_SHAKE 5 // 7
-
-#define ANNOUNCE_GESTURE_TILT_LEFT 6 // 5
-#define ANNOUNCE_GESTURE_TILT_RIGHT 7 // 6
-#define ANNOUNCE_GESTURE_TILT_FORWARD 8
-#define ANNOUNCE_GESTURE_TILT_BACKWARD 9
-
-#define REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT 13
-#define REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT 14
-
-#define CONFIRM_GESTURE_TAP_AS_LEFT 15
-#define CONFIRM_GESTURE_TAP_AS_RIGHT 16
+//#define ANNOUNCE_GESTURE_AT_REST 1
+////#define ANNOUNCE_GESTURE_AT_REST_ON_TABLE 1
+////#define ANNOUNCE_GESTURE_AT_REST_IN_HAND 2
+////#define ANNOUNCE_GESTURE_PICK_UP 3
+////#define ANNOUNCE_GESTURE_PLACE_DOWN 4
+//#define ANNOUNCE_GESTURE_SWING 2
+//
+//#define ANNOUNCE_GESTURE_TAP_AS_LEFT 3 // 8
+//#define ANNOUNCE_GESTURE_TAP_AS_RIGHT 4 // 9
+//
+//#define ANNOUNCE_GESTURE_SHAKE 5 // 7
+//
+//#define ANNOUNCE_GESTURE_TILT_LEFT 6 // 5
+//#define ANNOUNCE_GESTURE_TILT_RIGHT 7 // 6
+//#define ANNOUNCE_GESTURE_TILT_FORWARD 8
+//#define ANNOUNCE_GESTURE_TILT_BACKWARD 9
+//
+//#define REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT 13
+//#define REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT 14
+//
+//#define CONFIRM_GESTURE_TAP_AS_LEFT 15
+//#define CONFIRM_GESTURE_TAP_AS_RIGHT 16
 
 //#define ANNOUNCE_UNSEQUENCE 17 // Same as "ANNOUNCE_GESTURE_SHAKE" ?
 
@@ -161,6 +162,213 @@ int classifyGestureFromTransitions() {
   }
 
   return minimumDeviationIndex;
+}
+
+// Temporary/Need to refractor
+boolean hasSwung = false;
+
+/**
+ * Handle "at rest, on table" gesture.
+ */
+boolean handleGestureAtRest() {
+  setColor(0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
+  
+  addBroadcast(ANNOUNCE_GESTURE_AT_REST);
+}
+
+/**
+ * Handle "at rest, in hand" gesture.
+ */
+//#define COMPOSITION_MODE_SEQUENCE 0
+//#define COMPOSITION_MODE_MAP 1
+//int compositionMode = false;
+//unsigned long compositionModeStartTime = 0;
+
+boolean handleGestureSwing() {
+//  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+
+  // Blink the lights
+//  blinkLight(3);
+  startBlinkLight();
+  hasSwung = true;
+
+  // Update the module's color
+  if (isSequenced) {
+    setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+  } else {
+    setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+  }
+  
+  addBroadcast(ANNOUNCE_GESTURE_SWING);
+}
+
+///**
+// * Handle "at rest, in hand" gesture.
+// */
+//boolean handleGestureAtRestInHand() {
+////  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+//
+//  // Update the module's color
+//  if (isSequenced) {
+//    setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+//  } else {
+//    setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+//  }
+//  
+//  addBroadcast(ANNOUNCE_GESTURE_AT_REST_IN_HAND);
+//}
+
+boolean handleGestureTap() {
+  stopBlinkLight();
+  hasSwung = false;
+}
+
+/**
+ * Current (i.e., "left") module handle "tap to another, as left" gesture.
+ */
+boolean handleGestureTapToAnotherAsLeft() {
+  //setColor(255, 0, 0);
+  // Blink the lights five times
+  blinkLight(5);
+  startBlinkLight();
+  
+//  if (!awaitingPreviousModule) {
+//    awaitingNextModule = true;
+//    awaitingNextModuleConfirm = true;
+//    awaitingNextModuleStartTime = millis();
+//  }
+
+//  if (!awaitingNextModule) {
+//    awaitingPreviousModule = true;
+//    awaitingPreviousModuleConfirm = true;
+//    awaitingPreviousModuleStartTime = millis();
+//  }
+
+  awaitingNextModule = true;
+  awaitingNextModuleConfirm = true;
+  awaitingNextModuleStartTime = millis();
+  
+  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_LEFT);
+  Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_LEFT");
+}
+
+/**
+ * Current (i.e., "right") module handle "tap to another, as right" gesture.
+ */
+boolean handleGestureTapToAnotherAsRight() {
+//  setColor(255, 0, 0);
+  // Blink the lights five times
+//  blinkLight(5);
+//  startBlinkLight();
+  
+  // Send to all linked devices
+//      for (int i = 0; i < 1; i++) {
+//          // Set the destination address
+//          interface.setupMessage(next[i]);
+//  
+//          // Package the data payload for transmission
+//          interface.addData(1, (byte) 0x1F); // TYPE_INT8
+//          interface.sendMessage(); // Send data OTA
+//  
+//          // Wait for confirmation
+//          // delayUntilConfirmation();
+//      }
+ 
+//  if (!awaitingNextModule) {
+//    awaitingPreviousModule = true;
+//    awaitingPreviousModuleConfirm = true;
+//    awaitingPreviousModuleStartTime = millis();
+//  }
+
+//  if (!awaitingPreviousModule) {
+//    awaitingNextModule = true;
+//    awaitingNextModuleConfirm = true;
+//    awaitingNextModuleStartTime = millis();
+//  }
+
+  awaitingPreviousModule = true;
+  awaitingPreviousModuleConfirm = true;
+  awaitingPreviousModuleStartTime = millis();
+
+  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_RIGHT);
+  Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_RIGHT");
+}
+
+/**
+ * Handle "shake" gesture.
+ */
+boolean handleGestureShake() {
+//  setColor(255, 0, 0);
+  
+  // TODO: Message next modules, say this module is leaving the sequence
+  // TODO: Message previous module, say this module is leaving the sequence
+  
+  // HACK: Move this! This should be more robust, likely!
+  // TODO: Make this map to the other module only when it is already sequenced!
+  if (outputPinRemote == true) {
+    
+    // Revert output port to local module
+    outputPinRemote = false;
+    
+  } else {
+    
+    // Stop blinking to cancel behavior shaping (i.e., cool the hot potato)
+    // TODO: Stop blinking when successfully linked, too!
+    stopBlinkLight ();
+  
+    // Unsequence modules
+    isSequenced = false;
+    if (isSequenced) {
+      setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+    } else {
+      setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+    }
+    
+    // TODO: Send messages to adjacent modules so they can adapt to the change!
+//    addBroadcast(ANNOUNCE_GESTURE_SHAKE);
+    
+    removePreviousModules();
+    removeNextModules();
+    
+  }
+  
+  addBroadcast(ANNOUNCE_GESTURE_SHAKE);
+}
+
+/**
+ * Handle "tilt left" gesture.
+ */
+boolean handleGestureTiltLeft() {
+  setColor(0, 0, 255);
+  
+  addBroadcast(ANNOUNCE_GESTURE_TILT_LEFT);
+}
+
+/**
+ * Handle "tilt right" gesture.
+ */
+boolean handleGestureTiltRight() {
+  setColor(0, 255, 0);
+  
+  addBroadcast(ANNOUNCE_GESTURE_TILT_RIGHT);
+}
+
+/**
+ * Handle "tilt forward" gesture.
+ */
+boolean handleGestureTiltForward() {
+  setColor(0, 255, 0);
+  
+  addBroadcast(ANNOUNCE_GESTURE_TILT_FORWARD);
+}
+
+/**
+ * Handle "tilt backward" gesture.
+ */
+boolean handleGestureTiltBackward() {
+  setColor(0, 255, 0);
+  
+  addBroadcast(ANNOUNCE_GESTURE_TILT_BACKWARD);
 }
 
 #endif

@@ -79,8 +79,6 @@ void setup() {
   // Setup serial communication (for debugging)
   //
   
-  delay(2000);
-  
   Serial.begin(9600);
   Serial.println(F("Pixel Firmware"));
   
@@ -111,29 +109,16 @@ void setup() {
 //                | |    
 //                |_|    
 
-boolean awaitingNextModule = false;
-boolean awaitingPreviousModule = false;
-boolean awaitingNextModuleConfirm = false;
-boolean awaitingPreviousModuleConfirm = false;
-unsigned long awaitingNextModuleStartTime = 0;
-unsigned long awaitingPreviousModuleStartTime = 0;
-
 boolean hasGestureProcessed = false;
-
-// Sequence:
-boolean isSequenced = false; // Does the module belong to a sequence?
-boolean isActive = false; // Is the module the currently active module in the sequence
 
 void loop() {
   
-  // startBlinkLight();
-  
-  doLightBehavior();
+  Perform_Light_Behavior ();
   
   lastInputValue = touchInputMean;
   
   // Get module's input
-  getInputPortContinous(); // getInputPort(); // syncInputPort()
+  Get_Input_Port_Continuous (); // getInputPort(); // syncInputPort()
   
   //Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
   
@@ -161,43 +146,6 @@ void loop() {
     }
 //    delay(500);
   }
-  
-  // Set state of module's output based on its input
-  //if (output to local)
-//  if (outputPinRemote == false) {
-//    
-//    // Send output if input surpasses "touch" or "connected" thresholds
-////    if (pinReflection[MODULE_OUTPUT_PIN].value == 0) {
-//      if (touchInputMean > 3000) {
-//        // digitalWrite(MODULE_OUTPUT_PIN, HIGH);
-//        setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
-//        // TODO: Send message to "output" module(s).
-//      } else {
-//        // digitalWrite(MODULE_OUTPUT_PIN, LOW);
-//        setPinValue2 (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
-//      }
-////    }
-//    
-//  } else {
-//    
-//    // TODO: Relay "turn on output" message to the pixel's output module
-//    
-//  }
-  
-  
-  
-  ////// LOOPER/VPL STUFF (SLAVE)
-  
-  //  for (int i = 0; i < 24; i++) {
-//    char buf[4]; // "-2147483648\0"
-//    Wire.beginTransmission(slaveDevice); // transmit to device #4
-//    Wire.write("pin ");
-//    Wire.write(itoa(i, buf, 10));
-//    Wire.write(" ");
-//    Wire.write(digitalRead(i) == HIGH ? "1" : "0");
-//    //  Wire.write(";");        // sends five bytes
-//    Wire.endTransmission();    // stop transmitting 
-//  }
 
   // TODO: Send updated state of THIS board (master) to the OTHER board (slave) for caching.
   
@@ -227,7 +175,7 @@ void loop() {
 //    Serial.println();
 //  }
 
-  // Change color/light if needed
+  // Change color/light if neededse
   if (crossfadeStep < 256) {
     applyColor();
   }
@@ -244,7 +192,7 @@ void loop() {
   //
   
   boolean hasGestureChanged = false;
-  if (senseOrientation()) {
+  if (senseOrientation ()) {
     storeData();
     
     // Classify live gesture sample
@@ -293,6 +241,16 @@ void loop() {
 //      if (classifiedGestureIndex == 4 || classifiedGestureIndex == 5) {
 //        classifiedGestureIndex = 1;
 //      }
+
+      if (classifiedGestureIndex == 2 || classifiedGestureIndex == 3) { // If hasn't yet swung, then ignore tap gestures
+        if (!hasSwung) {
+          classifiedGestureIndex = 0;
+        }
+      } else if (classifiedGestureIndex == 1) { // If has swung, don't allow another swing if already swung (no effect)
+        if (hasSwung) {
+          classifiedGestureIndex = previousClassifiedGestureIndex;
+        }
+      }
       
       lastGestureClassificationTime = millis(); // Update time of most recent gesture classification
     }
@@ -330,9 +288,9 @@ void loop() {
       } else if (classifiedGestureIndex == 1) { // Check if gesture is "swing"
         handleGestureSwing();
       } else if (classifiedGestureIndex == 2) { // Check if gesture is "tap to another, as left"
-        handleGestureTapToAnotherAsLeft();
+        handleGestureTap(); // handleGestureTapToAnotherAsLeft();
       } else if (classifiedGestureIndex == 3) { // Check if gesture is "tap to another, as right"
-        handleGestureTapToAnotherAsRight();
+        handleGestureTap(); // handleGestureTapToAnotherAsRight();
       } else if (classifiedGestureIndex == 4) { // Check if gesture is "shake"
         handleGestureShake();
       } else if (classifiedGestureIndex == 5) { // Check if gesture is "tilt left"
@@ -463,358 +421,4 @@ void loop() {
     // Update the time that a message was most-recently dispatched
     lastMessageSendTime = millis();
   }
-}
-
-
-
-
-
-/**
- * "Right" module handle "tap to another, as left" message.
- */
-boolean handleMessageTapToAnotherAsLeft(Message message) {
-    if (awaitingPreviousModule) {
-      // Update message state
-      awaitingPreviousModule = false;
-      awaitingPreviousModuleConfirm = true;
-      
-//      Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_LEFT");
-      
-      // Send ACK message to message.source to confirm linking operation
-//      addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
-      addBroadcast(REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
-      
-//      Serial.println("<< Sending REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
-    }
-}
-
-/**
- * "Left" module handle request for confirmation of "tap to another, as left" message.
- */
-boolean handleMessageRequestConfirmTapToAnotherAsLeft(Message message) {
-        
-//  unsigned long currentTime = millis();
-//  if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
-//    awaitingNextModuleConfirm = false;
-//  }
-        
-  // Send ACK message to message.source to confirm linking operation (if not yet done)
-  if (awaitingNextModuleConfirm) {
-    awaitingNextModule = false;
-    awaitingNextModuleConfirm = false; // awaitingNextModuleConfirm = true;
-    
-    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
-  
-//    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
-    addMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
-    
-    // HACK: Move this! This should be more robust, likely!
-    // TODO: Make this map to the other module only when it is already sequenced!
-    outputPinRemote = true;
-    
-    
-  
-//    Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_LEFT");
-    
-    addNextModule(message.source);
-    // TODO: addNextModule(message.source, SEQUENCE_ID);
-    
-    // Add module to sequence
-    isSequenced = true;
-    setSequenceColor(0, 255, 0); // Set the color of the sequence
-    
-    // Update the module's color
-    if (isSequenced) {
-      setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-    } else {
-      setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-    }
-    //setModuleColor(255, 255, 255);
-    //setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-    
-//    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
-    addMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
-
-    Serial.println("<< Sending ");
-  }
-}
-
-/**
- * "Right" module handle confirmation of "tap to another, as left" message.
- */
-boolean handleMessageConfirmTapToAnotherAsLeft (Message message) {
-  Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
-}
-
-/**
- * "Left" module handle "tap to another, as right" message.
- */
-boolean handleMessageTapToAnotherAsRight(Message message) {
-  // NOTE: Received by the "left" module from the "right" module
-  
-  // If receive "tap to another, as left", then check if this module performed "tap to another, as right" recently. If so, link the modules in a sequence, starting with the other module first.
-  
-  if (awaitingNextModule) {
-    
-//    Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_RIGHT");
-    
-    // Update message state
-    awaitingNextModule = false;
-    awaitingNextModuleConfirm = true;
-    
-    // Send ACK message to message.source to confirm linking operation
-    addBroadcast(REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
-//    addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
-    
-//    Serial.println("<< Sending REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
-  }
-}
-
-/**
- * "Right" module handle request for confirmation of "tap to another, as right" message.
- */
-boolean handleMessageRequestConfirmTapToAnotherAsRight (Message message) {
-  // NOTE: Received by the "right" module from the "left" module
-  
-//      unsigned long currentTime = millis();
-//      if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
-//        awaitingNextModuleConfirm = false;
-//      }
-    
-  // Send ACK message to message.source to confirm linking operation (if not yet done)
-  if (awaitingPreviousModuleConfirm) {
-  
-    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
-
-    awaitingPreviousModule = false;
-    awaitingPreviousModuleConfirm = false;
-    
-    addPreviousModule (message.source);
-    // TODO: addPreviousModule(message.source, SEQUENCE_ID);
-    
-    // Add module to sequence
-    isSequenced = true;
-    setSequenceColor(0, 255, 0); // Set the color of the sequence
-    
-    // Update the module's color
-    if (isSequenced) {
-      setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-    } else {
-      setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-    }
-    //setModuleColor(255, 255, 255);
-    //setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-    
-    
-//    addBroadcast(CONFIRM_GESTURE_TAP_AS_RIGHT);
-    addMessage(message.source, CONFIRM_GESTURE_TAP_AS_RIGHT);
-
-    Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_RIGHT");
-  }
-}
-
-/**
- * "Left" module handle confirmation of "tap to another, as left" message.
- */
-boolean handleMessageConfirmTapToAnotherAsRight (Message message) {
-  Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_RIGHT");
-  
-  // TODO: Sequence the modules!
-}
-
-/**
- * Handle "at rest, on table" gesture.
- */
-boolean handleGestureAtRest() {
-  setColor(0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
-  
-  addBroadcast(ANNOUNCE_GESTURE_AT_REST);
-}
-
-/**
- * Handle "at rest, in hand" gesture.
- */
-//#define COMPOSITION_MODE_SEQUENCE 0
-//#define COMPOSITION_MODE_MAP 1
-//int compositionMode = false;
-//unsigned long compositionModeStartTime = 0;
-
-boolean handleGestureSwing() {
-//  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-
-  // Blink the lights
-  blinkLight(3);
-
-  // Update the module's color
-  if (isSequenced) {
-    setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-  } else {
-    setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-  }
-  
-  addBroadcast(ANNOUNCE_GESTURE_SWING);
-}
-
-///**
-// * Handle "at rest, in hand" gesture.
-// */
-//boolean handleGestureAtRestInHand() {
-////  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-//
-//  // Update the module's color
-//  if (isSequenced) {
-//    setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-//  } else {
-//    setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-//  }
-//  
-//  addBroadcast(ANNOUNCE_GESTURE_AT_REST_IN_HAND);
-//}
-
-/**
- * Current (i.e., "left") module handle "tap to another, as left" gesture.
- */
-boolean handleGestureTapToAnotherAsLeft() {
-  //setColor(255, 0, 0);
-  // Blink the lights five times
-//  blinkLight(5);
-  startBlinkLight();
-  
-//  if (!awaitingPreviousModule) {
-//    awaitingNextModule = true;
-//    awaitingNextModuleConfirm = true;
-//    awaitingNextModuleStartTime = millis();
-//  }
-
-//  if (!awaitingNextModule) {
-//    awaitingPreviousModule = true;
-//    awaitingPreviousModuleConfirm = true;
-//    awaitingPreviousModuleStartTime = millis();
-//  }
-
-  awaitingNextModule = true;
-  awaitingNextModuleConfirm = true;
-  awaitingNextModuleStartTime = millis();
-  
-  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_LEFT);
-  Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_LEFT");
-}
-
-/**
- * Current (i.e., "right") module handle "tap to another, as right" gesture.
- */
-boolean handleGestureTapToAnotherAsRight() {
-//  setColor(255, 0, 0);
-  // Blink the lights five times
-//  blinkLight(5);
-  startBlinkLight();
-  
-  // Send to all linked devices
-//      for (int i = 0; i < 1; i++) {
-//          // Set the destination address
-//          interface.setupMessage(next[i]);
-//  
-//          // Package the data payload for transmission
-//          interface.addData(1, (byte) 0x1F); // TYPE_INT8
-//          interface.sendMessage(); // Send data OTA
-//  
-//          // Wait for confirmation
-//          // delayUntilConfirmation();
-//      }
- 
-//  if (!awaitingNextModule) {
-//    awaitingPreviousModule = true;
-//    awaitingPreviousModuleConfirm = true;
-//    awaitingPreviousModuleStartTime = millis();
-//  }
-
-//  if (!awaitingPreviousModule) {
-//    awaitingNextModule = true;
-//    awaitingNextModuleConfirm = true;
-//    awaitingNextModuleStartTime = millis();
-//  }
-
-  awaitingPreviousModule = true;
-  awaitingPreviousModuleConfirm = true;
-  awaitingPreviousModuleStartTime = millis();
-
-  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_RIGHT);
-  Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_RIGHT");
-}
-
-/**
- * Handle "shake" gesture.
- */
-boolean handleGestureShake() {
-//  setColor(255, 0, 0);
-  
-  // TODO: Message next modules, say this module is leaving the sequence
-  // TODO: Message previous module, say this module is leaving the sequence
-  
-  // HACK: Move this! This should be more robust, likely!
-  // TODO: Make this map to the other module only when it is already sequenced!
-  if (outputPinRemote == true) {
-    
-    // Revert output port to local module
-    outputPinRemote = false;
-    
-  } else {
-    
-    // Stop blinking to cancel behavior shaping (i.e., cool the hot potato)
-    // TODO: Stop blinking when successfully linked, too!
-    stopBlinkLight ();
-  
-    // Unsequence modules
-    isSequenced = false;
-    if (isSequenced) {
-      setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-    } else {
-      setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-    }
-    
-    // TODO: Send messages to adjacent modules so they can adapt to the change!
-//    addBroadcast(ANNOUNCE_GESTURE_SHAKE);
-    
-    removePreviousModules();
-    removeNextModules();
-    
-  }
-  
-  addBroadcast(ANNOUNCE_GESTURE_SHAKE);
-}
-
-/**
- * Handle "tilt left" gesture.
- */
-boolean handleGestureTiltLeft() {
-  setColor(0, 0, 255);
-  
-  addBroadcast(ANNOUNCE_GESTURE_TILT_LEFT);
-}
-
-/**
- * Handle "tilt right" gesture.
- */
-boolean handleGestureTiltRight() {
-  setColor(0, 255, 0);
-  
-  addBroadcast(ANNOUNCE_GESTURE_TILT_RIGHT);
-}
-
-/**
- * Handle "tilt forward" gesture.
- */
-boolean handleGestureTiltForward() {
-  setColor(0, 255, 0);
-  
-  addBroadcast(ANNOUNCE_GESTURE_TILT_FORWARD);
-}
-
-/**
- * Handle "tilt backward" gesture.
- */
-boolean handleGestureTiltBackward() {
-  setColor(0, 255, 0);
-  
-  addBroadcast(ANNOUNCE_GESTURE_TILT_BACKWARD);
 }
