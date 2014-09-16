@@ -1,7 +1,7 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#define MESH_DEVICE_ADDRESS 0x0001 // The device of the mesh networking radio
+#define MESH_DEVICE_ADDRESS 0x0002 // The device of the mesh networking radio
 
 #if defined(MESH_DEVICE_ADDRESS)
   #if MESH_DEVICE_ADDRESS == 0x0000
@@ -698,6 +698,17 @@ boolean receiveMeshData() {
 // Handle messages received over mesh networks
 //
 
+#define ANNOUNCE_FOUNDATION 30 // Introduce self (i.e., the "foundation's" communication hardware to neighbors in mesh)
+// ANNOUNCE_CONNECTING
+#define ANNOUNCE_CONNECTED 31 // 
+#define ANNOUNCE_ACTIVE 32 // Message to periodically notify neighbors of the device's foundation (i.e., it is physically present on a device with a physical address and can be communited to)
+// ANNOUNCE_DISCONNECTING
+#define ANNOUNCE_DISCONNECTED 33
+//#define ANNOUNCE_OFF 34
+
+// TODO: Write code to periodically notify neighbors of device's existence. This is used by neighbors to update their tables of neighbors (and their connections).
+// TODO: When priodically announcing existence, if encounter an address collision, check UUIDs and re-negotiate an IP address.
+
 #define ANNOUNCE_GESTURE_AT_REST 1
 //#define ANNOUNCE_GESTURE_AT_REST_ON_TABLE 1
 //#define ANNOUNCE_GESTURE_AT_REST_IN_HAND 2
@@ -743,6 +754,16 @@ boolean hasSwung = false;
 int lastSwingAddress = -1; // TODO: Rename to lastReceivedSwingSource
 unsigned long lastReceivedSwingTime = 0L;
 unsigned long lastReceivedSwingTimeout = 5000;
+
+// TODO: Move this into Looper engine so can edit in web browser. Possibly store it in EEPROM (as well as in cloud).
+unsigned long lastSentActive = 0L;
+unsigned long lastSentActiveTimeout = 30000L; // Broadcast heartbeat every 30 seconds
+
+boolean handleMessageActive (Message message) {
+  Serial.println (">> Received ANNOUNCE_ACTIVE");
+  
+  // TODO: Make sure that a "neighbor" with the source address of the message is in this module's table of neighbors!
+}
 
 boolean handleMessageSwing (Message message) {
   

@@ -12,6 +12,7 @@
 
 */
 
+#include <EEPROM.h>
 #include <Wire.h>
 #include <SoftwareSerial.h>
 #include <RadioBlock.h>
@@ -42,16 +43,81 @@
 //                     | |    
 //                     |_|    
 
-void setup() {
+#define EEPROM_SIZE 512
+boolean clearEeprom () {
+  // write a 0 to all bytes of the EEPROM
+  for (int i = 0; i < EEPROM_SIZE; i++) {
+    EEPROM.write(i, 0);
+  }
+}
+
+
+// Foundation State:
+boolean hasFoundationUuid = false;
+
+#define UUID_SIZE 36
+int foundationUuidSignatureMemoryAddress = 0;
+int foundationUuidMemoryAddress = foundationUuidSignatureMemoryAddress + 1;
+char foundationUuid[UUID_SIZE];
+boolean setupFoundation () {
+  // Check if UUID has been written to EEPROM, and if so, read it into RAM (and load it into the Looper engine).
+  // If not, generate a UUID into memory
   
-  setupLooper(); // Setup the Looper engine.
+  // Read the UUID signature byte. If it is equal to '!', then assume a UUID has been written.
+  byte foundationUuidSignatureByte = EEPROM.read (foundationUuidSignatureMemoryAddress);
+
+  // Check if the UUID signature byte (i.e., '!') has been written to memory.
+  if (foundationUuidSignatureByte != '!') {
+    // The UUID is not present in EEPROM, so generate one and write it to EEPROM before proceeding.
+  
+    // Version 4 UUID: https://en.wikipedia.org/wiki/Universally_unique_identifier
+//    char generatedFoundationUuid[] = "c6ade405-3b5d-4783-8d2e-ac53d429a857"; // Module 1
+    char generatedFoundationUuid[] = "d9c95b97-fbcc-484f-bc61-2572c4a00d9c"; // Module 2
+//    char generatedFoundationUuid[] = "cad165c7-2238-4455-9f85-7f025a9ddb6f"; // Module 3
+//    char generatedFoundationUuid[] = "5f29d296-d444-49e5-8988-5b0bd71b3dcc"; // Module 4
+//    char generatedFoundationUuid[] = "118b8b18-a851-49fa-aef9-b8f5b18da90d"; // Module 5
+    // TODO: char* generateFoundationUuid ()
+    
+    // Write UUID signature to EEPROM
+    EEPROM.write (foundationUuidSignatureMemoryAddress, '!'); // Write foundation UUID signature (i.e., the '!' symbol)
+  
+    // Write UUID to EEPROM
+    int i = 0;
+    for (int address = foundationUuidMemoryAddress; address < (foundationUuidMemoryAddress + UUID_SIZE); address++) {
+      EEPROM.write (address, generatedFoundationUuid[i]);
+      i++;
+    }
+    
+  }
+  
+  // Read UUID from EEPROM
+  int i = 0;
+  for (int address = foundationUuidMemoryAddress; address < (foundationUuidMemoryAddress + UUID_SIZE); address++) {
+    foundationUuid[i] = EEPROM.read (address);
+    i++;
+  }
+  
+  Serial.print ("Foundation UUID: "); for (int i = 0; i < UUID_SIZE; i++) { Serial.print ((char) foundationUuid[i]); } Serial.print ("\n");
+  
+}
+
+void setup () {
+  
+  delay (2000);
+  
+  if (hasFoundationUuid == false) {
+    setupFoundation ();
+    hasFoundationUuid = true;
+  } // The layer on which the "platform" depends
+  
+  setupLooper (); // Setup the Looper engine.
   
 //  setupPlatform(); // Setup Pixel's reflection (i.e., it's virtual machine)
-  setupPorts(); // Setup pin mode for I/O
-  setupLight(); // Setup the Pixel's color
+  setupPorts (); // Setup pin mode for I/O
+  setupLight (); // Setup the Pixel's color
   
   // Initialize pseudorandom number generator
-  randomSeed(analogRead(0));
+  randomSeed (analogRead (0));
   
   // TODO: Read device GUID from EEPROM if it exists, otherwise generate one, store it in EEPROM, and read it.
 
@@ -64,7 +130,7 @@ void setup() {
 //#elif MESH_DEVICE_ADDRESS == 0x0002
 //  setModuleColor(255, 255, 0);
 //#endif
-  setModuleColor(255, 255, 255);
+  setModuleColor (255, 255, 255);
   // setModuleColor(205, 205, 205); // Set the module's default color
   
   // Assign the module a unique color
@@ -75,31 +141,33 @@ void setup() {
 //  fadeOff();
   
   // Setup mesh networking peripherals (i.e., RadioBlocks)
-  setupCommunication();
+  setupCommunication ();
   
   //
   // Setup serial communication (for debugging)
   //
   
-  Serial.begin(9600);
-  Serial.println(F("Pixel Firmware"));
+  Serial.begin (9600);
+  Serial.println (F("Pixel Firmware"));
   
-  setupPlatform(); // Setup Pixel's reflection (i.e., it's virtual machine)
+  setupPlatform (); // Setup Pixel's reflection (i.e., it's virtual machine)
   
   // Setup physical orientation sensing peripherals (i.e., IMU)
-  setupOrientationSensing();
+  setupOrientationSensing ();
   
-  setupGestureSensing();
+  setupGestureSensing ();
   
-  // Send message to slave to reboot
-//  int SLAVE_DEVICE_ADDRESS = 2;
-  char buf[8];
-  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
-  Wire.write("reboot  ");
-  Wire.endTransmission();    // stop transmitting
+  // TODO: Send message to slave to reboot (on boot, to keep them in sync)
+////  int SLAVE_DEVICE_ADDRESS = 2;
+//  char buf[8];
+//  Wire.beginTransmission (SLAVE_DEVICE_ADDRESS); // transmit to device #4
+//  Wire.write("reboot  ");
+//  Wire.endTransmission ();    // stop transmitting
   
   // Flash RGB LEDs
-  blinkLight(3);
+  blinkLight (3);
+  
+//  Serial.print ("Foundation UUID: "); for (int i = 0; i < UUID_SIZE; i++) { Serial.print ((char) foundationUuid[i]); } Serial.print ("\n");
 }
 
 //   _                   
@@ -113,7 +181,13 @@ void setup() {
 
 boolean hasGestureProcessed = false;
 
-void loop() {
+void loop () {
+  
+  // TODO: Broadcast the foundation's default device address (upon boot)
+  
+  // TODO: Negotiate a unique dynamic mesh address
+ 
+  // TODO: Broadcast the platform's dynamic mesh address (once per 30 seconds or so)
   
   Perform_Light_Behavior ();
   
@@ -177,7 +251,7 @@ void loop() {
 //    Serial.println();
 //  }
 
-  // Change color/light if neededse
+  // Change color/light if needed
   if (crossfadeStep < 256) {
     applyColor();
   }
@@ -209,6 +283,13 @@ void loop() {
       // Reset the timer
       lastSwingTime = 0L;
     }
+  }
+  
+  // Broadcast message notifying other modules that this module is still active (i.e., broadcast this module's "heartbeat")
+  currentTime = millis ();
+  if (currentTime - lastSentActive >= lastSentActiveTimeout) {
+    addBroadcast (ANNOUNCE_ACTIVE);
+    lastSentActive = millis ();
   }
   
   
@@ -345,15 +426,20 @@ void loop() {
   if (incomingMessageQueueSize > 0) {
     Message message = dequeueIncomingMeshMessage();
     
-    Serial.print("Received ");
+    Serial.print ("Received ");
+    
     // Sent by "left" module:
-    if (message.message == ANNOUNCE_GESTURE_SWING) {
-      Serial.print("ANNOUNCE_GESTURE_SWING");
+    if (message.message == ANNOUNCE_ACTIVE) {
+      Serial.print ("ANNOUNCE_ACTIVE");
     }
     
-    else if (message.message == ANNOUNCE_GESTURE_TAP) {
+    else if (message.message == ANNOUNCE_GESTURE_SWING) {
+      Serial.print("ANNOUNCE_GESTURE_SWING");
+    } else if (message.message == ANNOUNCE_GESTURE_TAP) {
       Serial.print("ANNOUNCE_GESTURE_TAP");
-    } else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) {
+    }
+    
+    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) {
       Serial.print("ANNOUNCE_GESTURE_TAP_AS_LEFT");
     } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) {
       Serial.print("REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
@@ -384,7 +470,11 @@ void loop() {
     // Process received messages
     //
 
-    if (message.message == ANNOUNCE_GESTURE_SWING) {
+    if (message.message == ANNOUNCE_ACTIVE) {
+      handleMessageActive (message);
+    }
+    
+    else if (message.message == ANNOUNCE_GESTURE_SWING) {
       handleMessageSwing (message);
     } else if (message.message == ANNOUNCE_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
       handleMessageTap (message);
