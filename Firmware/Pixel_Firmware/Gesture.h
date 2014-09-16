@@ -165,7 +165,7 @@ int classifyGestureFromTransitions() {
 }
 
 // Temporary/Need to refractor
-boolean hasSwung = false;
+//boolean hasSwung = false;
 
 /**
  * Handle "at rest, on table" gesture.
@@ -175,6 +175,9 @@ boolean handleGestureAtRest() {
   
   addBroadcast(ANNOUNCE_GESTURE_AT_REST);
 }
+
+unsigned long lastSwingTime = 0L;
+unsigned long lastSwingTimeout = 5000; // i.e., the time for which a response to a swing can be received
 
 /**
  * Handle "at rest, in hand" gesture.
@@ -191,6 +194,8 @@ boolean handleGestureSwing() {
 //  blinkLight(3);
   startBlinkLight();
   hasSwung = true;
+  
+  lastSwingTime = millis ();
 
   // Update the module's color
   if (isSequenced) {
@@ -219,8 +224,30 @@ boolean handleGestureSwing() {
 //}
 
 boolean handleGestureTap() {
-  stopBlinkLight();
-  hasSwung = false;
+  
+  if (hasSwung) {
+  
+//    stopBlinkLight();
+//    hasSwung = false;
+//  
+////  awaitingNextModule = true;
+////  awaitingNextModuleConfirm = true;
+////  awaitingNextModuleStartTime = millis();
+//  
+////    addBroadcast(ANNOUNCE_GESTURE_HOT_TAP);
+////    Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP");
+    
+  } else {
+    
+    // When the module is tapped, and if it has received an ANNOUNCE_GESTURE_SWING from a neighbor very recently, respond to the neighbor (that sent the "swing" message) and notify all other neighbors that this module is responding to the swing and to remove it from their memory of "recently swung" neighbors.
+    if (lastSwingAddress != -1) {
+      
+      addBroadcast (ANNOUNCE_GESTURE_TAP);
+      Serial.println ("^ Broadcasting ANNOUNCE_GESTURE_TAP");
+      
+    }
+    
+  }
 }
 
 /**
@@ -315,6 +342,8 @@ boolean handleGestureShake() {
     // Stop blinking to cancel behavior shaping (i.e., cool the hot potato)
     // TODO: Stop blinking when successfully linked, too!
     stopBlinkLight ();
+    hasSwung = false;
+    // TODO: Cancel "pairing request"
   
     // Unsequence modules
     isSequenced = false;

@@ -52,6 +52,8 @@ void setup() {
   
   // Initialize pseudorandom number generator
   randomSeed(analogRead(0));
+  
+  // TODO: Read device GUID from EEPROM if it exists, otherwise generate one, store it in EEPROM, and read it.
 
   // Initialize module's color
   //setModuleColor(random(256), random(256), random(256)); // Set the module's default color
@@ -184,6 +186,33 @@ void loop() {
   // Get data from mesh network
   //
   
+  unsigned long currentTime = millis ();
+  
+  // Update gesture/mesh communication timers
+  // TODO: Add this to Looper's timer!
+  if (lastSwingAddress != -1) {
+    if (currentTime - lastReceivedSwingTime > lastReceivedSwingTimeout) {
+      lastSwingAddress = -1;
+    }
+  }
+  
+  // Update gesture/mesh communication timers
+  // TODO: Add this to Looper's timer!
+  if (hasSwung == true) {
+    currentTime = millis ();
+    if (currentTime - lastSwingTime > lastSwingTimeout) {
+      
+      // Cancel swing gesture
+      stopBlinkLight();
+      hasSwung = false;
+      
+      // Reset the timer
+      lastSwingTime = 0L;
+    }
+  }
+  
+  
+  // Check for mesh data and receive it if present
   boolean hasReceivedMeshData = false;
   hasReceivedMeshData = receiveMeshData();
   
@@ -243,9 +272,9 @@ void loop() {
 //      }
 
       if (classifiedGestureIndex == 2 || classifiedGestureIndex == 3) { // If hasn't yet swung, then ignore tap gestures
-        if (!hasSwung) {
-          classifiedGestureIndex = 0;
-        }
+//        if (!hasSwung) {
+//          classifiedGestureIndex = 0;
+//        }
       } else if (classifiedGestureIndex == 1) { // If has swung, don't allow another swing if already swung (no effect)
         if (hasSwung) {
           classifiedGestureIndex = previousClassifiedGestureIndex;
@@ -288,9 +317,11 @@ void loop() {
       } else if (classifiedGestureIndex == 1) { // Check if gesture is "swing"
         handleGestureSwing();
       } else if (classifiedGestureIndex == 2) { // Check if gesture is "tap to another, as left"
-        handleGestureTap(); // handleGestureTapToAnotherAsLeft();
+        handleGestureTap();
+        // handleGestureTapToAnotherAsLeft();
       } else if (classifiedGestureIndex == 3) { // Check if gesture is "tap to another, as right"
-        handleGestureTap(); // handleGestureTapToAnotherAsRight();
+        handleGestureTap();
+        // handleGestureTapToAnotherAsRight();
       } else if (classifiedGestureIndex == 4) { // Check if gesture is "shake"
         handleGestureShake();
       } else if (classifiedGestureIndex == 5) { // Check if gesture is "tilt left"
@@ -316,7 +347,13 @@ void loop() {
     
     Serial.print("Received ");
     // Sent by "left" module:
-    if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) {
+    if (message.message == ANNOUNCE_GESTURE_SWING) {
+      Serial.print("ANNOUNCE_GESTURE_SWING");
+    }
+    
+    else if (message.message == ANNOUNCE_GESTURE_TAP) {
+      Serial.print("ANNOUNCE_GESTURE_TAP");
+    } else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) {
       Serial.print("ANNOUNCE_GESTURE_TAP_AS_LEFT");
     } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) {
       Serial.print("REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
@@ -347,7 +384,17 @@ void loop() {
     // Process received messages
     //
 
-    if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) { // From "left" module. "Left" module announces that it was tapped to another module as the left module [Sequence: Sequencing request (i.e., linking) confirmation, from "right" module]
+    if (message.message == ANNOUNCE_GESTURE_SWING) {
+      handleMessageSwing (message);
+    } else if (message.message == ANNOUNCE_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
+      handleMessageTap (message);
+    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
+      handleMessageRequestConfirmTap (message);
+    } else if (message.message == CONFIRM_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
+      handleMessageConfirmTap (message);
+    }
+    
+    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) { // From "left" module. "Left" module announces that it was tapped to another module as the left module [Sequence: Sequencing request (i.e., linking) confirmation, from "right" module]
       handleMessageTapToAnotherAsLeft(message);
     } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT) { // From "left" module. "Left" module requests "right" module to confirm that it received "ANNOUNCE_GESTURE_TAP_AS_LEFT"
        handleMessageRequestConfirmTapToAnotherAsLeft(message);
@@ -410,7 +457,7 @@ void loop() {
   // Send outgoing messages (e.g., this module's updated gesture)
   //
   
-  unsigned long currentTime = millis();
+  currentTime = millis();
   if (currentTime - lastMessageSendTime > RADIOBLOCK_PACKET_WRITE_TIMEOUT) {
   
     // Process mesh message queue  

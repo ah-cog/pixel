@@ -1,7 +1,7 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#define MESH_DEVICE_ADDRESS 0x0002 // The device of the mesh networking radio
+#define MESH_DEVICE_ADDRESS 0x0001 // The device of the mesh networking radio
 
 #if defined(MESH_DEVICE_ADDRESS)
   #if MESH_DEVICE_ADDRESS == 0x0000
@@ -33,7 +33,7 @@
 #define SEQUENCE_REQUEST_TIMEOUT 1000
 
 // The module's pins 1, 2, 3, and 4 are connected to pins 5V, GND, 8, and 7.
-RadioBlockSerialInterface interface = RadioBlockSerialInterface(RADIOBLOCK_POWER_PIN, RADIOBLOCK_GROUND_PIN, RADIOBLOCK_RX_PIN, RADIOBLOCK_TX_PIN);
+RadioBlockSerialInterface interface = RadioBlockSerialInterface (RADIOBLOCK_POWER_PIN, RADIOBLOCK_GROUND_PIN, RADIOBLOCK_RX_PIN, RADIOBLOCK_TX_PIN);
 
 /**
  * Initialize mesh networking peripheral.
@@ -76,9 +76,11 @@ boolean setupCommunication() {
 #define TYPE_16BYTES	13
 #define TYPE_ASCII	14
 
+//! Mesh message structure
+//!
 struct Message {
-  int source;
-  int message;
+  int source; // The address of the message's sender
+  int message; // The received message's data payload
 };
 
 // Mesh incoming message queue
@@ -701,7 +703,11 @@ boolean receiveMeshData() {
 //#define ANNOUNCE_GESTURE_AT_REST_IN_HAND 2
 //#define ANNOUNCE_GESTURE_PICK_UP 3
 //#define ANNOUNCE_GESTURE_PLACE_DOWN 4
-#define ANNOUNCE_GESTURE_SWING 2
+#define ANNOUNCE_GESTURE_SWING 2 // TODO: When received, place module in "respond to swung module" mode
+
+#define ANNOUNCE_GESTURE_TAP 20 // 9
+#define REQUEST_CONFIRM_GESTURE_TAP 21 // 9
+#define CONFIRM_GESTURE_TAP 22 // 9
 
 #define ANNOUNCE_GESTURE_TAP_AS_LEFT 3 // 8
 #define ANNOUNCE_GESTURE_TAP_AS_RIGHT 4 // 9
@@ -719,6 +725,7 @@ boolean receiveMeshData() {
 #define CONFIRM_GESTURE_TAP_AS_LEFT 15
 #define CONFIRM_GESTURE_TAP_AS_RIGHT 16
 
+// Module state:
 boolean awaitingNextModule = false;
 boolean awaitingPreviousModule = false;
 boolean awaitingNextModuleConfirm = false;
@@ -726,11 +733,78 @@ boolean awaitingPreviousModuleConfirm = false;
 unsigned long awaitingNextModuleStartTime = 0;
 unsigned long awaitingPreviousModuleStartTime = 0;
 
-// Sequence:
+// Sequence state:
 boolean isSequenced = false; // Does the module belong to a sequence?
 boolean isActive = false; // Is the module the currently active module in the sequence
 
 boolean outputPinRemote = false; // Flag indicating whether the output port is on this module or another module
+
+boolean hasSwung = false;
+int lastSwingAddress = -1; // TODO: Rename to lastReceivedSwingSource
+unsigned long lastReceivedSwingTime = 0L;
+unsigned long lastReceivedSwingTimeout = 5000;
+
+boolean handleMessageSwing (Message message) {
+  
+  // TODO: Place module in "respond to swung module" mode.
+  
+  Serial.println (">> Received ANNOUNCE_GESTURE_SWING");
+  
+  if (message.source != MESH_DEVICE_ADDRESS) {
+    
+    lastSwingAddress = message.source;
+    
+    // TODO: Set lastSwingAddressStartTime and check for a timeout (after which a received "tap" message will no longer be allowed to pair)
+    lastReceivedSwingTime = millis ();
+    
+  }
+}
+
+//! Event handler for the "tap" announcement (i.e., broadcast) message.
+//!
+boolean handleMessageTap (Message message) {
+  
+  // Handler code for the module that initiated the "swing"
+  if (hasSwung) {
+    
+    // Check of the received message was within the time limit
+    
+    Serial.println (">> Received ANNOUNCE_GESTURE_TAP");
+    
+    // Send ACK message to message.source to confirm linking operation
+    addBroadcast (REQUEST_CONFIRM_GESTURE_TAP);
+  }
+  
+}
+
+//! Event handler for the "request confirm tap" message.
+//!
+boolean handleMessageRequestConfirmTap (Message message) {
+  
+//  if (hasSwung) { // if this is the module that was swung
+    // TODO: 
+    Serial.println (">> Received REQUEST_CONFIRM_GESTURE_TAP");
+    addMessage (message.source, CONFIRM_GESTURE_TAP);
+//  }
+  
+}
+
+//! Event handler for the "confirm tap" message.
+//!
+boolean handleMessageConfirmTap (Message message) {
+  
+  if (hasSwung) { // if this is the module that was swung
+    // TODO: 
+//    addMessage (message.source, CONFIRM_GESTURE_TAP);
+
+    // TODO: Set the module as "next"
+    Serial.println (">> Received CONFIRM_GESTURE_TAP");
+    
+    stopBlinkLight();
+    hasSwung = false;
+  }
+  
+}
 
 /**
  * "Right" module handle "tap to another, as left" message.
