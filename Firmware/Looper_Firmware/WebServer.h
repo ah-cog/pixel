@@ -175,10 +175,10 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
 //              String key = getValue(split, '=', 0);
 //              String value = getValue(split, '=', 1);
 
-              String idParameter = String(httpRequestParameters[0]);
-              int id = getValue(idParameter, '=', 1).toInt();
+              String uuidParameter = String(httpRequestParameters[0]);
+              int uuid = getValue(uuidParameter, '=', 1).toInt();
               
-              Behavior* behavior = Get_Behavior (id);
+              Behavior* behavior = Get_Behavior (uuid);
               
               // Send a standard HTTP response header
               if (behavior != NULL) {
@@ -332,7 +332,8 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 
                 // Propagate behaviorCreate_Transformation
 //                Transformation* transformation = Create_Transformation (String("create behavior output 5 digital on"));
-                Transformation* transformation = Create_Transformation (String("create behavior output ") + String (pin) + " " + String (signal) + " " + String (data));
+                // TODO: Update Create_Transformation to accept JSON (and consider using a remote reference to the local UUID rather than recreating the same UUID).
+                Transformation* transformation = Create_Transformation (String("create behavior output ") + String((*behavior).uid) + " " + String (pin) + " " + String (signal) + " " + String (data));
                 Queue_Transformation (propagator, transformation);
                 
 //                Propagate_Behavior_Transformation (CREATE, BEHAVIOR);
@@ -366,7 +367,7 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Update_Behavior_Sequence (behavior, sequence);
                 
                 // Propagate behavior
-                Transformation* transformation = Create_Transformation (String("create behavior input ") + String (pin) + " " + String (signal));
+                Transformation* transformation = Create_Transformation (String("create behavior input ") + String((*behavior).uid) + " " + String (pin) + " " + String (signal));
 //                Transformation* transformation = Create_Transformation (String("create behavior input 15"));
                 Queue_Transformation (propagator, transformation);
                 
@@ -398,8 +399,44 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 Update_Behavior_Sequence (behavior, sequence);
                 
                 // Propagate behavior
-                Transformation* transformation = Create_Transformation (String("create behavior delay ") + String(milliseconds));
+                Transformation* transformation = Create_Transformation (String("create behavior delay ") + String((*behavior).uid) + " " + String(milliseconds));
                 Queue_Transformation (propagator, transformation);
+                
+              } else if (type.compareTo ("sound") == 0) {
+                
+                Serial.println ("Creating sound behavior.");
+
+                String noteParameter = String(httpRequestParameters[1]);
+                int note = getValue (noteParameter, '=', 1).toInt ();
+                
+                String durationParameter = String(httpRequestParameters[2]);
+                int duration = getValue(durationParameter, '=', 1).toInt ();
+                
+                behavior = Create_Sound_Behavior (substrate, note, duration);
+                Sequence* sequence = (*substrate).sequences;
+                Update_Behavior_Sequence (behavior, sequence);
+                
+                Serial.print((*behavior).uid); Serial.print("\n");
+                
+                // Propagate behavior
+                Transformation* transformation = Create_Transformation (String("create behavior sound ") + String((*behavior).uid) + " " + String (note) + " " + String (duration));
+                Serial.print ("Initialized Transformation "); Serial.print ((*transformation).data); Serial.print ("\n");
+//                Transformation* transformation = Create_Transformation (String("create behavior input 15"));
+                Queue_Transformation (propagator, transformation);
+                
+//                Serial.println("Test:");
+//                Serial.println((*behavior).type);
+//                Output* output = Get_Output_Behavior (behavior);
+//                Serial.println((*output).pin);
+//                Serial.println((*output).signal);
+//                Serial.println((*output).data);
+//                behavior = createBehavior(substrate, type, pin, signal, data);
+//                behavior = Behavior_createOutput(
+
+                  // TODO: Remove this! Only call it when the behavior is added to the loop in Looper (and relayed via HTTP requests)
+                  // Add the behavior to the loop
+//                  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//                  Add_Behavior_To_Sequence (sequence, behavior);
                 
               }
               
@@ -554,11 +591,11 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             if (strcmp (httpRequestAddress, "/behavior") == 0) {
 
               // Parse request's URI parameters
-              String idParameter = String(httpRequestParameters[0]); // "hi this is a split test";
-              int id = getValue(idParameter, '=', 1).toInt();
+              String uuidParameter = String (httpRequestParameters[0]); // "hi this is a split test";
+              int uuid = getValue (uuidParameter, '=', 1).toInt();
               
               // Process request
-              boolean isDeleted = Delete_Behavior (id);
+              boolean isDeleted = Delete_Behavior (uuid);
               
               // Respond to request. Send a standard HTTP response header.
               if (isDeleted) {
@@ -632,11 +669,47 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
             if (strcmp (httpRequestAddress, "/behavior") == 0) {
 
                // Parse request's URI parameters
-              String idParameter = String(httpRequestParameters[0]); // "hi this is a split test";
-              int id = getValue(idParameter, '=', 1).toInt();
+              String uuidParameter = String (httpRequestParameters[0]); // "hi this is a split test";
+              int uuid = getValue (uuidParameter, '=', 1).toInt();
               
               // Process request
-              Behavior* behavior = Update_Behavior (id);
+              // Behavior* behavior = Update_Behavior (uuid);
+              Behavior* behavior = Get_Behavior (uuid);
+              
+              if ((*behavior).type == BEHAVIOR_TYPE_SOUND) {
+                
+                Serial.println ("Updating sound behavior.");
+
+                String noteParameter = String(httpRequestParameters[1]);
+                int note = getValue (noteParameter, '=', 1).toInt ();
+                
+                String durationParameter = String(httpRequestParameters[2]);
+                int duration = getValue(durationParameter, '=', 1).toInt ();
+                
+                behavior = Create_Sound_Behavior (substrate, note, duration);
+                Sequence* sequence = (*substrate).sequences;
+                Update_Behavior_Sequence (behavior, sequence);
+                
+                // Propagate behavior
+                Transformation* transformation = Create_Transformation (String("update behavior ") + String (uuid) + " " + String (note) + " " + String (duration));
+//                Transformation* transformation = Create_Transformation (String("create behavior input 15"));
+                Queue_Transformation (propagator, transformation);
+                
+//                Serial.println("Test:");
+//                Serial.println((*behavior).type);
+//                Output* output = Get_Output_Behavior (behavior);
+//                Serial.println((*output).pin);
+//                Serial.println((*output).signal);
+//                Serial.println((*output).data);
+//                behavior = createBehavior(substrate, type, pin, signal, data);
+//                behavior = Behavior_createOutput(
+
+                  // TODO: Remove this! Only call it when the behavior is added to the loop in Looper (and relayed via HTTP requests)
+                  // Add the behavior to the loop
+//                  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//                  Add_Behavior_To_Sequence (sequence, behavior);
+                
+              }
               
               // Respond to request. Send a standard HTTP response header.
               if (behavior != NULL) {

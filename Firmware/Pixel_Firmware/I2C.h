@@ -229,19 +229,22 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
           
         } else if (second.compareTo ("behavior") == 0) {
           
-          // TODO: create behavior
           String behaviorType = getValue (split, ' ', 2);
+          
+          // Get the propagated UUID
+          int behaviorUuid = getValue (split, ' ', 3).toInt (); // TODO: Move/Remove this! Come up with a better way to do this!
           
           Serial.println (behaviorType);
           
           if (behaviorType.compareTo ("input") == 0) {
         
             // Parse parameters
-            int pin = getValue (split, ' ', 3).toInt();
-            String signal = getValue (split, ' ', 4);
+            int pin = getValue (split, ' ', 4).toInt();
+            String signal = getValue (split, ' ', 5);
             
             // Create behavior and add it to the behavior substrate
             Behavior* behavior = Create_Input_Behavior (substrate, pin, signal);
+            (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
             Sequence* sequence = (*substrate).sequences;
             Update_Behavior_Sequence (behavior, sequence);
             
@@ -250,12 +253,13 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
           } else if (behaviorType.compareTo ("output") == 0) {
         
             // Parse parameters
-            int pin = getValue (split, ' ', 3).toInt();
-            String signal = getValue (split, ' ', 4);
-            String data = getValue (split, ' ', 5);
+            int pin = getValue (split, ' ', 4).toInt();
+            String signal = getValue (split, ' ', 5);
+            String data = getValue (split, ' ', 6);
             
             // Create behavior and add it to the behavior substrate
             Behavior* behavior = Create_Output_Behavior (substrate, pin, signal, data);
+            (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
             Sequence* sequence = (*substrate).sequences;
             Update_Behavior_Sequence (behavior, sequence);
             
@@ -264,10 +268,27 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
           } else if (behaviorType.compareTo ("delay") == 0) {
         
             // Parse parameters
-            int milliseconds = getValue (split, ' ', 3).toInt();
+            int milliseconds = getValue (split, ' ', 4).toInt();
             
             // Create behavior and add it to the behavior substrate
             Behavior* behavior = Create_Delay_Behavior (substrate, milliseconds);
+            (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
+            Sequence* sequence = (*substrate).sequences;
+            Update_Behavior_Sequence (behavior, sequence);
+            
+            // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+            
+          } else if (behaviorType.compareTo ("sound") == 0) {
+        
+            // Parse parameters
+            int note = getValue (split, ' ', 4).toInt();
+            int duration = getValue (split, ' ', 5).toInt();
+//            String signal = getValue (split, ' ', 4);
+//            String data = getValue (split, ' ', 5);
+            
+            // Create behavior and add it to the behavior substrate
+            Behavior* behavior = Create_Sound_Behavior (substrate, note, duration);
+            (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
             Sequence* sequence = (*substrate).sequences;
             Update_Behavior_Sequence (behavior, sequence);
             
@@ -290,6 +311,55 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
 //          // TODO: Substrate
 //        }
         
+      } else if (first.compareTo ("update") == 0) {
+        
+        String second = getValue (split, ' ', 1);
+        Serial.println (second);
+        
+        if (second.compareTo ("substrate") == 0) {
+          // TODO: create substrate
+          
+          String uid = getValue (split, ' ', 2);
+          
+          // TODO: Create the substrate with the specified UID.
+          
+        } else if (second.compareTo ("behavior") == 0) {
+          
+          // TODO: create behavior
+          int uuid = getValue (split, ' ', 2).toInt ();
+          
+          Serial.println (uuid);
+          
+          Behavior* behavior = Get_Behavior (uuid);
+          Serial.print ("found behavior: "); Serial.print ((int) behavior); Serial.print ("\n");
+          Sound* sound = Get_Sound_Behavior (behavior);
+              
+          if ((*behavior).type == BEHAVIOR_TYPE_SOUND) {
+            
+            int note = getValue (split, ' ', 3).toInt();
+            int duration = getValue (split, ' ', 4).toInt();
+            
+            // TODO: Check for validity
+            
+            (*sound).note = note;
+            (*sound).duration = duration;
+          }
+          
+//          if (behaviorType.compareTo ("input") == 0) {
+//        
+//            // Parse parameters
+//            int pin = getValue (split, ' ', 3).toInt();
+//            String signal = getValue (split, ' ', 4);
+//            
+//            // Create behavior and add it to the behavior substrate
+//            Behavior* behavior = Create_Input_Behavior (substrate, pin, signal);
+//            Sequence* sequence = (*substrate).sequences;
+//            Update_Behavior_Sequence (behavior, sequence);
+//            
+//            // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+//            
+//          }
+        }
       }
       
     }

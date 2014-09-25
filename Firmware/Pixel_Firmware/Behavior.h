@@ -47,6 +47,9 @@
 #define BEHAVIOR_TYPE_OUTPUT 2
 #define BEHAVIOR_TYPE_DELAY  3
 
+#define BEHAVIOR_TYPE_SOUND  4 // TODO: Make this a "user defined" behavior in Looper
+#define BEHAVIOR_TYPE_MOTION  5 // TODO: Make this a "user defined" behavior in Looper
+
 int behaviorCount = 0;
 
 // Generates unique behavior ID
@@ -173,6 +176,31 @@ struct Delay {
   // Temporary variables (TODO: Consider moving these elsewhere, such as into a "schema" or similar structure.)
   unsigned long startTime;
   unsigned long currentTime;
+};
+
+
+
+
+// TODO: Make the following defined WITHIN Looper
+
+
+struct Sound {
+  Behavior* behavior;
+  
+  int note;
+  int duration;
+};
+
+struct Motion {
+  Behavior* behavior;
+  
+  int position;
+  
+  int lenMicroSecondsOfPeriod; // = 25 * 1000; // 25 milliseconds (ms)
+  int lenMicroSecondsOfPulse; // = 1 * 1000; // 1 ms is 0 degrees
+  int first; // = 0.4 * 1000; //0.5ms is 0 degrees in HS-422 servo
+  int end; // = 2.3 * 1000; // 3.7 * 1000;
+  int increment; // = 0.01 * 1000;
 };
 
 #endif

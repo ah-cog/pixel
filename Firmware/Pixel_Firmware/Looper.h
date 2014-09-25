@@ -558,7 +558,7 @@ Output* Get_Output_Behavior (Behavior* behavior) {
   return ((Output*) (*behavior).schema);
 }
 
-//! Creates an Output
+//! Creates an Input
 //!
 Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal) {
   
@@ -696,6 +696,78 @@ Delay* Get_Delay_Behavior (Behavior* behavior) {
   return ((Delay*) (*behavior).schema);
 }
 
+//! Creates a Sound
+//!
+Behavior* Create_Sound_Behavior (Substrate* substrate, int note, int duration) {
+  
+  Behavior* behavior = NULL;
+  
+  Serial.println("Create_Sound_Behavior");
+  
+  if (substrate != NULL) {
+    
+    Serial.println (note);
+    Serial.println (duration);
+    
+    // Parse and validate parameters
+//    int signal2 = 0;
+//    if (signal.compareTo ("digital") == 0) {
+//      signal2 = SIGNAL_DIGITAL;
+//    } else if (signal.compareTo ("analog") == 0) {
+//      signal2 = SIGNAL_ANALOG;
+//    } else {
+//      return NULL;
+//    }
+    
+//    Serial.println("Parsed signal");
+    
+    Serial.println("CREATING SOUND BEHAVIOR");
+    
+    // Create the Output schema for Behavior
+    Sound* sound   = (Sound*) malloc (sizeof (Sound));
+    (*sound).note     = note;
+    (*sound).duration = duration;
+    
+    // Create the Behavior
+    behavior = Create_Behavior (substrate);
+    (*behavior).type   = BEHAVIOR_TYPE_SOUND;
+    (*behavior).schema = (void *) sound;
+    
+    // Associate the created Output schema with the corresponding created Behavior
+    (*sound).behavior = behavior;
+    
+    // Parse behavior schema parameters
+    Serial.println (note);
+    Serial.println (duration);
+//    Serial.println(data);
+    
+//    // Set up the behavior schema
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* input = (Input*) malloc(sizeof(Input));
+//      (*behavior).schema = input;
+//    } else {
+//      // TODO: Handle schema creation for other behavior types
+//    }
+    
+//    Serial.println((int)(*behavior).schema);
+    
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* in = (Input*) (*behavior).schema;
+//    }
+    
+    // Add the behavior to the loop
+//    Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//    sequence_addBehavior(sequence, behavior);
+    
+  }
+  
+  return behavior;
+}
+
+Sound* Get_Sound_Behavior (Behavior* behavior) {
+  return ((Sound*) (*behavior).schema);
+}
+
 // TODO: Consider: Behavior* Create_Behavior (String type, void* schema), at least internally to this method... called by the method as part of the process.
 Behavior* Create_Behavior (Substrate* substrate) {
   
@@ -759,6 +831,8 @@ Behavior* Get_Behavior (int uid) {
       Behavior* soughtBehavior = (*currentSequence).behavior;
       while (soughtBehavior != NULL) {
         Serial.println("Searching behavior");
+        
+        Serial.println ((*soughtBehavior).uid);
         
         // Return the behavior if it has been found
         if ((*soughtBehavior).uid == uid) {
@@ -1005,7 +1079,43 @@ boolean Perform_Behavior (Performer* performer) {
         }
         
         // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-      } else if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
+      } else if ((*behavior).type == BEHAVIOR_TYPE_SOUND) {
+        Sound* sound = (Sound*) (*behavior).schema;
+        
+        Serial.print ("Sound "); Serial.print ((*sound).note); Serial.print ("\n");
+        Serial.print ("\tDuration: "); Serial.print ((*sound).duration); Serial.print ("\n");
+        
+        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+        //Play_Note (NOTE_C6, 250);
+        Play_Note ((*sound).note, (*sound).duration);
+        
+        
+//        Channel* channel = Get_Channel (platform, (*input).pin);
+////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
+//        Get_Channel_Value (channel);
+////        Propagate_Channel_Value (channel);
+        
+      } else if ((*behavior).type == BEHAVIOR_TYPE_MOTION) {
+        Motion* motion = (Motion*) (*behavior).schema;
+        
+        Serial.print ("Motion "); Serial.print ("\n");
+        Serial.print ("\tEnd: "); Serial.print ((*motion).first); Serial.print ("\n");
+        Serial.print ("\tEnd: "); Serial.print ((*motion).end); Serial.print ("\n");
+        
+        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+        //Play_Note (NOTE_C6, 250);
+        //Sweep_Motion ((*motion).first, (*motion).end, (*motion).increment, (*motion).lenMicroSecondsOfPeriod, (*motion).lenMicroSecondsOfPulse);
+        Move_Motion ((*motion).position);
+        
+        
+//        Channel* channel = Get_Channel (platform, (*input).pin);
+////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
+//        Get_Channel_Value (channel);
+////        Propagate_Channel_Value (channel);
+        
+      }
+      
+      else if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
         
         // TODO: Call device-specific routine (retreived from cloud to change the device itself).
         

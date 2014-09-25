@@ -15,7 +15,13 @@
   #endif
 #endif
 
-#define BROADCAST_ADDRESS NEIGHBOR_ADDRESS // 0xFFFF
+//#define BROADCAST_ADDRESS NEIGHBOR_ADDRESS // 0xFFFF
+#define BROADCAST_ADDRESS 0xFFFF
+//#define MESH_ADDRESS_MINIMUM 0x0001
+//#define MESH_ADDRESS_MAXIMUM 0x0004
+//#define MESH_ADDRESS_MAXIMUM 0xFFFD
+//#define MESH_PANID_MINIMUM 0x0000
+//#define MESH_PANID_MAXIMUM 0xFFFE
  
 #define RADIOBLOCK_POWER_PIN -1
 #define RADIOBLOCK_GROUND_PIN -1
@@ -55,9 +61,9 @@ boolean setupCommunication() {
   interface.setLED(true);  delay(200);
   interface.setLED(false);
   
-  interface.setChannel(15);
-  interface.setPanID(0xBAAD);
-  interface.setAddress(MESH_DEVICE_ADDRESS);
+  interface.setChannel (15);
+  interface.setPanID (0xBAAD);
+  interface.setAddress (MESH_DEVICE_ADDRESS);
 }
 
 // These #define's are copied from the RadioBlock.cpp file
@@ -90,7 +96,7 @@ Message meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY];
 int incomingMessageQueueSize = 0;
 
 // Mesh outgoing message queue
-#define MESSAGE_QUEUE_CAPACITY 20
+#define MESSAGE_QUEUE_CAPACITY 80
 Message messageQueue[MESSAGE_QUEUE_CAPACITY];
 int messageQueueSize = 0;
 unsigned long lastMessageSendTime = 0;
@@ -317,19 +323,24 @@ Message dequeueIncomingMeshMessage() {
 /**
  * Push a message onto the queue of messages to be processed and sent via the mesh network.
  */
-boolean addBroadcast(int message) {
+boolean addBroadcast (int message) {
+  
   if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)
     //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
     messageQueue[messageQueueSize].source = BROADCAST_ADDRESS; // Set "broadcast address"
     messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
     messageQueueSize++; // Increment the message count
+    
+    return true;
   }
+  
+  return false;
 }
 
 /**
  * Push a message onto the queue of messages to be processed and sent via the mesh network.
  */
-boolean addMessage(int source, int message) {
+boolean queueMessage(int source, int message) {
   if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)  
     //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
     messageQueue[messageQueueSize].source = source;
@@ -362,43 +373,100 @@ Message dequeueOutgoingMessage() {
 /**
  * Sends the top message on the mesh's message queue.
  */
-boolean sendMessage() {
+boolean sendMessage () {
   if (messageQueueSize > 0) {
     
     // Get the next message from the front of the queue
-    Message message = dequeueOutgoingMessage();
+    Message message = dequeueOutgoingMessage ();
     
     //
     // Actually send the message
     //
     
-    // Set up the destination address of the message
     if (message.source == BROADCAST_ADDRESS) {
-      // TODO: Broadcast here, not just send to "neighbor"... might need to iterat through the addresses manually!
-      interface.setupMessage(NEIGHBOR_ADDRESS);
+      
+//      for (int address = MESH_ADDRESS_MINIMUM; address <= MESH_ADDRESS_MAXIMUM; address++) {
+      
+        // Set up the destination address of the message
+        interface.setupMessage (NEIGHBOR_ADDRESS); // Set the address of the recipient
+        
+        Serial.print("Sending message: ");
+        Serial.print(message.message);
+        Serial.print(" to ");
+        Serial.print(NEIGHBOR_ADDRESS);
+        Serial.print("\n");
+                
+        // Package the data payload for transmission
+        interface.addData(1, (unsigned char) message.message); // TYPE_UINT8
+    
+        // e.g., How to assemble data packets for sending with RadioBlocks
+        // interface.addData(1, (unsigned char) 0x13); // TYPE_UINT8
+        // interface.addData(1, (char) 0x14); // TYPE_INT8
+        // interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
+        // interface.addData(1, (short) 0xABCD); // TYPE_INT16
+        // interface.addData(14, (unsigned long) 0xDDDDCCAA); // TYPE_UINT32
+        // interface.addData(9, (long) 0xFF03CCAA); // TYPE_INT32
+         
+        // Send data OTA (over the air)
+        interface.sendMessage ();
+        
+//      }
+      
     } else {
-      interface.setupMessage(message.source); // Set the address of the recipient
+    
+      // Set up the destination address of the message
+      interface.setupMessage (message.source); // Set the address of the recipient
+      
+      Serial.print("Sending message: ");
+      Serial.print(message.message);
+      Serial.print(" to ");
+      Serial.print(message.source);
+      Serial.print("\n");
+              
+      // Package the data payload for transmission
+      interface.addData(1, (unsigned char) message.message); // TYPE_UINT8
+  
+      // e.g., How to assemble data packets for sending with RadioBlocks
+      // interface.addData(1, (unsigned char) 0x13); // TYPE_UINT8
+      // interface.addData(1, (char) 0x14); // TYPE_INT8
+      // interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
+      // interface.addData(1, (short) 0xABCD); // TYPE_INT16
+      // interface.addData(14, (unsigned long) 0xDDDDCCAA); // TYPE_UINT32
+      // interface.addData(9, (long) 0xFF03CCAA); // TYPE_INT32
+       
+      // Send data OTA (over the air)
+      interface.sendMessage ();
+      
     }
     
-    Serial.print("Sending message: ");
-    Serial.print(message.message);
-    Serial.print(" to ");
-    Serial.print(message.source);
-    Serial.print("\n");
-            
-    // Package the data payload for transmission
-    interface.addData(1, (unsigned char) message.message); // TYPE_UINT8
-
-    // e.g., How to assemble data packets for sending with RadioBlocks
-    // interface.addData(1, (unsigned char) 0x13); // TYPE_UINT8
-    // interface.addData(1, (char) 0x14); // TYPE_INT8
-    // interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
-    // interface.addData(1, (short) 0xABCD); // TYPE_INT16
-    // interface.addData(14, (unsigned long) 0xDDDDCCAA); // TYPE_UINT32
-    // interface.addData(9, (long) 0xFF03CCAA); // TYPE_INT32
-     
-    // Send data OTA (over the air)
-    interface.sendMessage();
+//     // Set up the destination address of the message
+//    if (message.source == BROADCAST_ADDRESS) {
+//      // TODO: Broadcast here, not just send to "neighbor"... might need to iterat through the addresses manually!
+//      interface.setupMessage (NEIGHBOR_ADDRESS);
+////      interface.setupMessage (BROADCAST_ADDRESS);
+//    } else {
+//      interface.setupMessage (message.source); // Set the address of the recipient
+//    }
+//    
+//    Serial.print("Sending message: ");
+//    Serial.print(message.message);
+//    Serial.print(" to ");
+//    Serial.print(message.source);
+//    Serial.print("\n");
+//            
+//    // Package the data payload for transmission
+//    interface.addData(1, (unsigned char) message.message); // TYPE_UINT8
+//
+//    // e.g., How to assemble data packets for sending with RadioBlocks
+//    // interface.addData(1, (unsigned char) 0x13); // TYPE_UINT8
+//    // interface.addData(1, (char) 0x14); // TYPE_INT8
+//    // interface.addData(3, (unsigned short int) 0xFFFD); // TYPE_UINT16
+//    // interface.addData(1, (short) 0xABCD); // TYPE_INT16
+//    // interface.addData(14, (unsigned long) 0xDDDDCCAA); // TYPE_UINT32
+//    // interface.addData(9, (long) 0xFF03CCAA); // TYPE_INT32
+//     
+//    // Send data OTA (over the air)
+//    interface.sendMessage ();
   }
 }
 
@@ -716,8 +784,8 @@ boolean receiveMeshData() {
 //#define ANNOUNCE_GESTURE_PLACE_DOWN 4
 #define ANNOUNCE_GESTURE_SWING 2 // TODO: When received, place module in "respond to swung module" mode
 
-#define ANNOUNCE_GESTURE_TAP 20 // 9
-#define REQUEST_CONFIRM_GESTURE_TAP 21 // 9
+#define ANNOUNCE_GESTURE_TAP 23 // 9
+#define REQUEST_CONFIRM_GESTURE_TAP 24 // 9
 #define CONFIRM_GESTURE_TAP 22 // 9
 
 #define ANNOUNCE_GESTURE_TAP_AS_LEFT 3 // 8
@@ -775,10 +843,44 @@ boolean handleMessageSwing (Message message) {
     
     lastSwingAddress = message.source;
     
+    // Check if the module is a previous module
+//    boolean hasPrevious = hasPreviousModule (message.source);
+//    if (hasPrevious) {
+//      setColor(255, 0, 0);
+//    } else {
+//      setColor(0, 255, 0);
+//    }
+    
     // TODO: Set lastSwingAddressStartTime and check for a timeout (after which a received "tap" message will no longer be allowed to pair)
     lastReceivedSwingTime = millis ();
     
   }
+}
+
+boolean handleMessageShake (Message message) {
+  
+  // TODO: Place module in "respond to swung module" mode.
+  
+  Serial.println (">> Received ANNOUNCE_GESTURE_SHAKE");
+  
+  setColor(255, 255, 255);
+  
+//  if (message.source != MESH_DEVICE_ADDRESS) {
+//    
+//    lastSwingAddress = message.source;
+//    
+//    // Check if the module is a previous module
+//    boolean hasPrevious = hasPreviousModule (message.source);
+//    if (hasPrevious) {
+//      setColor(255, 0, 0);
+//    } else {
+//      setColor(0, 255, 0);
+//    }
+//    
+//    // TODO: Set lastSwingAddressStartTime and check for a timeout (after which a received "tap" message will no longer be allowed to pair)
+//    lastReceivedSwingTime = millis ();
+//    
+//  }
 }
 
 //! Event handler for the "tap" announcement (i.e., broadcast) message.
@@ -787,6 +889,29 @@ boolean handleMessageTap (Message message) {
   
   // Handler code for the module that initiated the "swing"
   if (hasSwung) {
+    
+    // HACK: Move this! This should be more robust, likely!
+    // TODO: Make this map to the other module only when it is already sequenced!
+    if (outputPinRemote == true) {
+      outputPinRemote = false;
+//      removeNextModule(message.source);
+      removePreviousModules();
+      removeNextModules();
+    } else {
+      outputPinRemote = true;
+      addNextModule(message.source);
+    }
+    
+    setColor(0, 0, 0);
+    
+    
+  
+//    Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_LEFT");
+    
+//    addNextModule(message.source);
+    
+    
+    
     
     // Check of the received message was within the time limit
     
@@ -802,10 +927,13 @@ boolean handleMessageTap (Message message) {
 //!
 boolean handleMessageRequestConfirmTap (Message message) {
   
+  addPreviousModule (message.source);
+    // TODO: addPreviousModule(message.source, SEQUENCE_ID);
+  
 //  if (hasSwung) { // if this is the module that was swung
     // TODO: 
     Serial.println (">> Received REQUEST_CONFIRM_GESTURE_TAP");
-    addMessage (message.source, CONFIRM_GESTURE_TAP);
+    queueMessage (message.source, CONFIRM_GESTURE_TAP);
 //  }
   
 }
@@ -864,7 +992,7 @@ boolean handleMessageRequestConfirmTapToAnotherAsLeft(Message message) {
     Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
   
 //    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
-    addMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
+    queueMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
     
     // HACK: Move this! This should be more robust, likely!
     // TODO: Make this map to the other module only when it is already sequenced!
@@ -891,7 +1019,7 @@ boolean handleMessageRequestConfirmTapToAnotherAsLeft(Message message) {
     //setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
     
 //    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
-    addMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
+    queueMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
 
     Serial.println("<< Sending ");
   }
@@ -965,7 +1093,7 @@ boolean handleMessageRequestConfirmTapToAnotherAsRight (Message message) {
     
     
 //    addBroadcast(CONFIRM_GESTURE_TAP_AS_RIGHT);
-    addMessage(message.source, CONFIRM_GESTURE_TAP_AS_RIGHT);
+    queueMessage(message.source, CONFIRM_GESTURE_TAP_AS_RIGHT);
 
     Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_RIGHT");
   }

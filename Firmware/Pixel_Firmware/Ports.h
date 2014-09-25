@@ -1,7 +1,7 @@
 #ifndef PORTS_H
 #define PORTS_H
 
-#define MODULE_INPUT_PIN A1
+#define MODULE_INPUT_PIN A9 // A1
 #define MODULE_OUTPUT_PIN 5
 
 #define TOUCH_SAMPLES (5000)   // maximum number of separate readings to take
@@ -88,7 +88,7 @@ void Get_Input_Port_Continuous () {
   touchInputMean = mean;
 }
 
-void getInputPort() {
+void getInputPort () {
   int t1;
   long tStart;  // starting time
   long datSum;  // reset our accumulated sum of input values to zero

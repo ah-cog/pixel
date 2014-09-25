@@ -151,6 +151,35 @@ int classifyGestureFromTransitions() {
         
         // Calculate the gesture's deviation from the gesture signature
         int gestureDeviation = getGestureDeviation(gestureSignatureIndex);
+//        int gestureInstability = getGestureInstability(gestureSignatureIndex);
+
+        // Check if the sample's deviation
+        if (minimumDeviationIndex == -1 || (gestureDeviation /*+ gestureInstability*/) < minimumDeviation) {
+          minimumDeviationIndex = gestureSignatureIndex;
+          minimumDeviation = gestureDeviation /*+ gestureInstability*/;
+        }
+    }
+  }
+
+  return minimumDeviationIndex;
+}
+
+/**
+ * Classify the gesture. Choose the gesture that has a "signature" time series that best  
+ * matches the recent window of live data.
+ */
+int classifyGestureFromTransitionsWithInstability () {
+  int minimumDeviationIndex = -1;
+  int minimumDeviation = MAX_INTEGER_VALUE;
+  
+  for (int i = 0; i < GESTURE_COUNT; i++) {
+    
+      int gestureSignatureIndex = gestureTransitions[classifiedGestureIndex][i]; // Get index of possible gesture
+      
+      if (gestureSignatureIndex != -1) { // Make sure the transition is valid before continuing
+        
+        // Calculate the gesture's deviation from the gesture signature
+        int gestureDeviation = getGestureDeviation(gestureSignatureIndex);
         int gestureInstability = getGestureInstability(gestureSignatureIndex);
 
         // Check if the sample's deviation
@@ -332,34 +361,36 @@ boolean handleGestureShake() {
   
   // HACK: Move this! This should be more robust, likely!
   // TODO: Make this map to the other module only when it is already sequenced!
-  if (outputPinRemote == true) {
+//  if (outputPinRemote == true) {
+//    
+//    // Revert output port to local module
+//    outputPinRemote = false;
+//    
+//  } else {
     
-    // Revert output port to local module
-    outputPinRemote = false;
+    if (hasSwung) {
+      // Stop blinking to cancel behavior shaping (i.e., cool the hot potato)
+      // TODO: Stop blinking when successfully linked, too!
+      stopBlinkLight ();
+      hasSwung = false;
+      // TODO: Cancel "pairing request"
     
-  } else {
-    
-    // Stop blinking to cancel behavior shaping (i.e., cool the hot potato)
-    // TODO: Stop blinking when successfully linked, too!
-    stopBlinkLight ();
-    hasSwung = false;
-    // TODO: Cancel "pairing request"
-  
-    // Unsequence modules
-    isSequenced = false;
-    if (isSequenced) {
-      setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-    } else {
-      setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+//      // Unsequence modules
+//      isSequenced = false;
+//      if (isSequenced) {
+//        setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+//      } else {
+//        setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+//      }
+      
+      // TODO: Send messages to adjacent modules so they can adapt to the change!
+  //    addBroadcast(ANNOUNCE_GESTURE_SHAKE);
+      
+//      removePreviousModules();
+//      removeNextModules();
     }
     
-    // TODO: Send messages to adjacent modules so they can adapt to the change!
-//    addBroadcast(ANNOUNCE_GESTURE_SHAKE);
-    
-    removePreviousModules();
-    removeNextModules();
-    
-  }
+//  }
   
   addBroadcast(ANNOUNCE_GESTURE_SHAKE);
 }

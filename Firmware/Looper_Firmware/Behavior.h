@@ -47,6 +47,8 @@
 #define BEHAVIOR_TYPE_OUTPUT 2
 #define BEHAVIOR_TYPE_DELAY  3
 
+#define BEHAVIOR_TYPE_SOUND  4 // TODO: Make this a "user defined" behavior in Looper
+
 int behaviorCount = 0;
 
 // Generates unique behavior ID
@@ -169,6 +171,19 @@ struct Delay {
   Behavior* behavior;
   
   int milliseconds;
+};
+
+
+
+
+// TODO: Make the following defined WITHIN Looper
+
+
+struct Sound {
+  Behavior* behavior;
+  
+  int note;
+  int duration;
 };
 
 #endif

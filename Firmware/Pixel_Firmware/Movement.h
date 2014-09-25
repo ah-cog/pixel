@@ -127,6 +127,29 @@ void storeData() {
   }
   
   // Push latest accelerometer data point onto the end of the array
+  gestureCandidate[0][gestureCandidateSize] = AN[0]; // gyro x
+  gestureCandidate[1][gestureCandidateSize] = AN[1]; // gyro y
+  gestureCandidate[2][gestureCandidateSize] = AN[2]; // gyro z
+  
+  // Increment gesture candidate size (if less than the maximum possible)
+  if (gestureCandidateSize < (GESTURE_CANDIDATE_SIZE - 1)) {
+    // Increment gesture candidate size
+    gestureCandidateSize = gestureCandidateSize + 1;
+  }
+}
+
+void storeDataAccelerometer() {
+  
+  // Shift points left by one
+  if (gestureCandidateSize >= (GESTURE_CANDIDATE_SIZE - 1)) {
+    for (int axis = 0; axis < AXIS_COUNT; axis++) {
+      for (int point = 0; point < GESTURE_CANDIDATE_SIZE - 1; point++) {
+        gestureCandidate[axis][point] = gestureCandidate[axis][point + 1]; // Shift point left by one
+      }
+    }
+  }
+  
+  // Push latest accelerometer data point onto the end of the array
   gestureCandidate[0][gestureCandidateSize] = AN[3]; // accelerometer x
   gestureCandidate[1][gestureCandidateSize] = AN[4]; // accelerometer y
   gestureCandidate[2][gestureCandidateSize] = AN[5]; // accelerometer z

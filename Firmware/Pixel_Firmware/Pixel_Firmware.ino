@@ -20,6 +20,8 @@
 
 #include <Adafruit_NeoPixel.h>
 #include "Light.h"
+#include "Sound.h"
+#include "Motion.h"
 
 #include "Gesture.h"
 #include "Movement.h"
@@ -72,8 +74,8 @@ boolean setupFoundation () {
   
     // Version 4 UUID: https://en.wikipedia.org/wiki/Universally_unique_identifier
 //    char generatedFoundationUuid[] = "c6ade405-3b5d-4783-8d2e-ac53d429a857"; // Module 1
-    char generatedFoundationUuid[] = "d9c95b97-fbcc-484f-bc61-2572c4a00d9c"; // Module 2
-//    char generatedFoundationUuid[] = "cad165c7-2238-4455-9f85-7f025a9ddb6f"; // Module 3
+//    char generatedFoundationUuid[] = "d9c95b97-fbcc-484f-bc61-2572c4a00d9c"; // Module 2
+    char generatedFoundationUuid[] = "cad165c7-2238-4455-9f85-7f025a9ddb6f"; // Module 3
 //    char generatedFoundationUuid[] = "5f29d296-d444-49e5-8988-5b0bd71b3dcc"; // Module 4
 //    char generatedFoundationUuid[] = "118b8b18-a851-49fa-aef9-b8f5b18da90d"; // Module 5
     // TODO: char* generateFoundationUuid ()
@@ -102,8 +104,6 @@ boolean setupFoundation () {
 }
 
 void setup () {
-  
-  delay (2000);
   
   if (hasFoundationUuid == false) {
     setupFoundation ();
@@ -163,9 +163,14 @@ void setup () {
 //  Wire.beginTransmission (SLAVE_DEVICE_ADDRESS); // transmit to device #4
 //  Wire.write("reboot  ");
 //  Wire.endTransmission ();    // stop transmitting
+
+  setupSound ();
   
   // Flash RGB LEDs
   blinkLight (3);
+  
+  
+  Move_Motion (0.5 * 1000);
   
 //  Serial.print ("Foundation UUID: "); for (int i = 0; i < UUID_SIZE; i++) { Serial.print ((char) foundationUuid[i]); } Serial.print ("\n");
 }
@@ -207,7 +212,7 @@ void loop () {
       Propagate_Channel_Value (moduleOutputChannel);
     } else {
       // Output port is on a different module than this one!
-      addMessage (NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
+      queueMessage (NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
     }
 //    delay(500);
   } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
@@ -218,7 +223,7 @@ void loop () {
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
       Propagate_Channel_Value (moduleOutputChannel);
     } else {
-      addMessage (NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
+      queueMessage (NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
     }
 //    delay(500);
   }
@@ -352,10 +357,19 @@ void loop () {
 //        classifiedGestureIndex = 1;
 //      }
 
-      if (classifiedGestureIndex == 2 || classifiedGestureIndex == 3) { // If hasn't yet swung, then ignore tap gestures
-//        if (!hasSwung) {
-//          classifiedGestureIndex = 0;
-//        }
+      if (classifiedGestureIndex == 4) { // Ignore shake gesture if not yet swung
+        // TODO: Check if has a "remote output", and if so, then DO NOT ignore the swing gesture.
+        if (hasSwung == false) {
+          if (outputPinRemote == true) {
+//            classifiedGestureIndex = 4; // Set "shake" to "at rest"
+          } else {
+            classifiedGestureIndex = 1; // Change "shake" to "swing" (since they're similar enough for this to make sense)
+          }
+        }
+      } else if (classifiedGestureIndex == 2 || classifiedGestureIndex == 3) { // If hasn't yet swung, then ignore tap gestures
+        if (lastSwingAddress == -1) {
+          classifiedGestureIndex = 0; // Set to "at rest"
+        }
       } else if (classifiedGestureIndex == 1) { // If has swung, don't allow another swing if already swung (no effect)
         if (hasSwung) {
           classifiedGestureIndex = previousClassifiedGestureIndex;
@@ -456,6 +470,12 @@ void loop () {
       Serial.print("CONFIRM_GESTURE_TAP_AS_RIGHT");
     }
     
+    else if (message.message == ACTIVATE_MODULE_OUTPUT) {
+      Serial.print("ACTIVATE_MODULE_OUTPUT");
+    } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
+      Serial.print("DEACTIVATE_MODULE_OUTPUT");
+    }
+    
     else {
       Serial.print(message.message);
     }
@@ -476,6 +496,8 @@ void loop () {
     
     else if (message.message == ANNOUNCE_GESTURE_SWING) {
       handleMessageSwing (message);
+    } else if (message.message == ANNOUNCE_GESTURE_SHAKE) {
+      handleMessageShake (message);
     } else if (message.message == ANNOUNCE_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
       handleMessageTap (message);
     } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.

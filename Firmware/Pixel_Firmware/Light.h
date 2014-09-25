@@ -67,7 +67,7 @@ boolean Perform_Light_Behavior () {
   
   // Check for a generative blink behavior on the front of the queue
   if (currentLightBehavior == GENERATE_LIGHT_BEHAVIOR_BLINK_100MS) {
-    Serial.println ("GENERATE_LIGHT_BEHAVIOR_BLINK_100MS");
+//    Serial.println ("GENERATE_LIGHT_BEHAVIOR_BLINK_100MS");
     
     // Queue blink behavior
     queueLightBehavior (GENERATE_LIGHT_BEHAVIOR_BLINK_100MS);
@@ -181,7 +181,7 @@ boolean Perform_Light_Behavior () {
  * Push a message onto the queue of messages to be processed and sent via the mesh network.
  */
 boolean queueLightBehavior(int behavior) {
-  Serial.print ("queueLightBehavior "); Serial.print (behavior); Serial.print ("\n");
+//  Serial.print ("queueLightBehavior "); Serial.print (behavior); Serial.print ("\n");
   // TODO: Add message to queue... and use sendMessage to send the messages...
   
   if (lightBehaviorQueueSize < LIGHT_BEHAVIOR_QUEUE_CAPACITY) {
@@ -382,14 +382,14 @@ void blinkLight(int count) {
 //! Make the light blink until it is manually stopped.
 //!
 void startBlinkLight () {
-  Serial.println ("startBlinkLight");
+//  Serial.println ("startBlinkLight");
   queueLightBehavior(GENERATE_LIGHT_BEHAVIOR_BLINK_100MS);
 }
 
 //! Make the light stop blinking.
 //!
 boolean stopBlinkLight () {
-  Serial.println ("stopBlinkLight");
+//  Serial.println ("stopBlinkLight");
   // TODO: 
   
 //  lightBehaviorQueue

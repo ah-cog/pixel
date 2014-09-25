@@ -690,6 +690,78 @@ Delay* Get_Delay_Behavior (Behavior* behavior) {
   return ((Delay*) (*behavior).schema);
 }
 
+//! Creates a Sound
+//!
+Behavior* Create_Sound_Behavior (Substrate* substrate, int note, int duration) {
+  
+  Behavior* behavior = NULL;
+  
+  Serial.println("Create_Sound_Behavior");
+  
+  if (substrate != NULL) {
+    
+    Serial.println (note);
+    Serial.println (duration);
+    
+    // Parse and validate parameters
+//    int signal2 = 0;
+//    if (signal.compareTo ("digital") == 0) {
+//      signal2 = SIGNAL_DIGITAL;
+//    } else if (signal.compareTo ("analog") == 0) {
+//      signal2 = SIGNAL_ANALOG;
+//    } else {
+//      return NULL;
+//    }
+    
+//    Serial.println("Parsed signal");
+    
+    Serial.println("CREATING SOUND BEHAVIOR");
+    
+    // Create the Output schema for Behavior
+    Sound* sound   = (Sound*) malloc (sizeof (Sound));
+    (*sound).note     = note;
+    (*sound).duration = duration;
+    
+    // Create the Behavior
+    behavior = Create_Behavior (substrate);
+    (*behavior).type   = BEHAVIOR_TYPE_SOUND;
+    (*behavior).schema = (void *) sound;
+    
+    // Associate the created Output schema with the corresponding created Behavior
+    (*sound).behavior = behavior;
+    
+    // Parse behavior schema parameters
+    Serial.println (note);
+    Serial.println (duration);
+//    Serial.println(data);
+    
+//    // Set up the behavior schema
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* input = (Input*) malloc(sizeof(Input));
+//      (*behavior).schema = input;
+//    } else {
+//      // TODO: Handle schema creation for other behavior types
+//    }
+    
+//    Serial.println((int)(*behavior).schema);
+    
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* in = (Input*) (*behavior).schema;
+//    }
+    
+    // Add the behavior to the loop
+//    Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//    sequence_addBehavior(sequence, behavior);
+    
+  }
+  
+  return behavior;
+}
+
+Sound* Get_Sound_Behavior (Behavior* behavior) {
+  return ((Sound*) (*behavior).schema);
+}
+
 // TODO: Consider: Behavior* Create_Behavior (String type, void* schema), at least internally to this method... called by the method as part of the process.
 Behavior* Create_Behavior (Substrate* substrate) {
   
@@ -734,7 +806,7 @@ Behavior* Create_Behavior (Substrate* substrate) {
 /**
  * Returns a pointer to behavior node at specified index.
  */
-Behavior* Get_Behavior (int uid) {
+Behavior* Get_Behavior (int uuid) {
     
   // Get pointer to behavior node at specified index
   Behavior* behavior = NULL;
@@ -755,7 +827,7 @@ Behavior* Get_Behavior (int uid) {
         Serial.println("Searching behavior");
         
         // Return the behavior if it has been found
-        if ((*soughtBehavior).uid == uid) {
+        if ((*soughtBehavior).uid == uuid) {
           return soughtBehavior;
         }
         
@@ -770,7 +842,7 @@ Behavior* Get_Behavior (int uid) {
   return behavior;
 }
 
-Behavior* Update_Behavior (int uid) {
+Behavior* Update_Behavior (int uuid) {
     
   // Get pointer to behavior node at specified index
   Behavior* behavior = NULL;
@@ -789,7 +861,7 @@ Behavior* Update_Behavior (int uid) {
         Serial.println("Searching behavior");
         
         // Return the behavior if it has been found
-        if ((*soughtBehavior).uid == uid) {
+        if ((*soughtBehavior).uid == uuid) {
           
           // TODO: Update the behavior
           
@@ -807,7 +879,9 @@ Behavior* Update_Behavior (int uid) {
   return behavior;
 }
 
-boolean Delete_Behavior (int uid) {
+boolean Delete_Behavior (int uuid) {
+  Serial.println ("Delete_Behavior");
+  Serial.println (uuid);
     
   // Get pointer to behavior node at specified index
   Behavior* behavior = NULL;
@@ -826,7 +900,7 @@ boolean Delete_Behavior (int uid) {
         Serial.println("Searching behavior");
         
         // Return the behavior if it has been found
-        if ((*soughtBehavior).uid == uid) {
+        if ((*soughtBehavior).uid == uuid) {
           
           Serial.println("Deleting behavior");
           
