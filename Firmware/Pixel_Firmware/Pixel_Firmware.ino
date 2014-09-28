@@ -19,6 +19,7 @@
 #include <SPI.h>
 
 #include <Adafruit_NeoPixel.h>
+#include "Platform.h"
 #include "Light.h"
 #include "Sound.h"
 #include "Motion.h"
@@ -112,6 +113,7 @@ void setup () {
   
   setupLooper (); // Setup the Looper engine.
   
+  setupPlatformUuid ();
 //  setupPlatform(); // Setup Pixel's reflection (i.e., it's virtual machine)
   setupPorts (); // Setup pin mode for I/O
   setupLight (); // Setup the Pixel's color
@@ -142,6 +144,7 @@ void setup () {
   
   // Setup mesh networking peripherals (i.e., RadioBlocks)
   setupCommunication ();
+  setupCommunication2 ();
   
   //
   // Setup serial communication (for debugging)
@@ -187,6 +190,127 @@ void setup () {
 boolean hasGestureProcessed = false;
 
 void loop () {
+  
+  if (hasPlatformUuid) {
+
+    // Broadcast device's address (UUID)
+    unsigned long currentTime = millis ();
+    if (currentTime - lastBroadcastTime > broadcastTimeout) {
+      
+      if (isReading == false) {
+        isWriting = true;
+      
+        // MESH_SERIAL.write ('!');
+//        String data = String ("{ uuid: ") + String (platformUuid) + String (" , type: 'keep-alive' }");
+//        const int serialBufferSize = 64;
+//        char charData[serialBufferSize];
+//        data.toCharArray (charData, serialBufferSize);
+        
+        int bytesSent = 0;
+        String data = "";
+        if (classifiedGestureIndex != previousClassifiedGestureIndex) {
+          data = String ("{ uuid: ") + String (platformUuid) + String (" , gesture: ") + String (gestureName[classifiedGestureIndex]) + String (" }");
+          const int serialBufferSize = 64;
+          char charData[serialBufferSize];
+          data.toCharArray (charData, serialBufferSize);
+          bytesSent = MESH_SERIAL.write (charData);
+        }
+        
+//        Serial.println (charData);
+        
+//        int bytesSent = MESH_SERIAL.write (charData);
+//        Serial.print ("sent "); Serial.print (bytesSent); Serial.print (" bytes\n\n");
+        
+        lastBroadcastTime = millis ();
+        
+        if (bytesSent >= data.length ()) {
+          isWriting = false;
+        }
+      }
+    }
+    
+//    // Relay data received via the serial console over mesh
+//    // TODO: (?) Remove this, eventually!
+//    if (Serial.available() > 0) {
+//      incomingByte = Serial.read ();
+//      // Serial.print("USB received: ");
+//      // Serial.println(incomingByte, DEC);
+//      // HWSERIAL.print("USB received:");
+//      MESH_SERIAL.print ((char) incomingByte);
+//      MESH_SERIAL.flush ();
+//      /* Serial2.print ((char) incomingByte); */
+//    }
+    
+    // Receive any data received over the mesh network.
+    if (isWriting == false) {
+      if (MESH_SERIAL.available () > 0) {
+        isReading = true;
+        
+        int incomingByte = MESH_SERIAL.read ();
+        // Serial.print("UART received: ");
+//        Serial.print ((char) incomingByte);
+        
+        if (incomingByte == '}') {
+          
+          // Terminate the buffer
+          serialBuffer[serialBufferSize] = incomingByte;
+          serialBufferSize = (serialBufferSize + 1) % SERIAL_BUFFER_LIMIT;
+          serialBuffer[serialBufferSize] = '\0';
+          
+          // TODO: Terminate the buffer and return it for parsing!
+          String uuidParameter = String (serialBuffer);
+          int neighborUuid = getValue(uuidParameter, ' ', 2).toInt ();
+          
+          boolean hasNeighbor = false;
+          for (int i = 0; i < neighborCount; i++) {
+            if (neighbors[i] == neighborUuid) {
+              hasNeighbor = true;
+              break;
+            }
+          }
+          if (hasNeighbor == false) {
+            neighbors[neighborCount] = neighborUuid;
+            neighborCount++;
+            Serial.print ("Added neighbor "); Serial.print (neighborCount); Serial.print (": "); Serial.print (neighborUuid); Serial.print ("\n");
+          }
+          
+          // TODO: Check timestamps when last received a broadcast, and ping those not reached for a long time, and remove them if needed.
+          
+          serialBufferSize = 0;
+          
+          Serial.println (neighborUuid);
+          
+        } else {
+          
+          serialBuffer[serialBufferSize] = incomingByte;
+          serialBufferSize = (serialBufferSize + 1) % SERIAL_BUFFER_LIMIT;
+          
+        }
+        // Serial2.print ((char) incomingByte);
+        // HWSERIAL.print("UART received:");
+        // HWSERIAL.println(incomingByte, DEC);
+        
+        // TODO: Buffer the data received over mesh until the message is completely received.
+        
+        isReading = false;
+      }
+    }
+    
+    /*
+    if (Serial2.available () > 0) {
+      incomingByte = Serial2.read();
+      // Serial.print("UART received: ");
+      Serial.print ((char) incomingByte);
+      // HWSERIAL.print ((char) incomingByte);
+      // HWSERIAL.print("UART received:");
+      // HWSERIAL.println(incomingByte, DEC);
+    }
+    */
+  }
+  
+  
+  
+  
   
   // TODO: Broadcast the foundation's default device address (upon boot)
   
@@ -300,7 +424,7 @@ void loop () {
   
   // Check for mesh data and receive it if present
   boolean hasReceivedMeshData = false;
-  hasReceivedMeshData = receiveMeshData();
+//  hasReceivedMeshData = receiveMeshData();
   
   //
   // Sense gesture (and phsyical orientation, generally)

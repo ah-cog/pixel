@@ -83,6 +83,35 @@ struct Channel {
 Platform* Create_Platform ();
 Channel* Create_Channel (Platform* platform, int address);
 
+long platformUuid = 0L;
+boolean hasPlatformUuid = false;
+
+long getPlatformUuid () {
+  const int maximumNumber = 300;
+  long randomNumber = random (maximumNumber);
+  return randomNumber;
+}
+
+boolean setupPlatformUuid () {
+  
+  // Get the device UUID used for communication over the local mesh network.
+  while (hasPlatformUuid == false) {
+    
+    platformUuid = getPlatformUuid (); // Assing the device UUID
+    
+    // Check if a valid UUID has been assigned to the platform
+    if (platformUuid != 0L) {
+      hasPlatformUuid = true;
+      
+      Serial.println (platformUuid);
+      
+      return false;
+    }
+  }
+  
+  return false;
+}
+
 Platform* platform = NULL;
 void setupPlatform () {
   

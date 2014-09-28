@@ -1,6 +1,56 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
+#define MESH_SERIAL Serial1
+
+boolean setupCommunication () {
+  
+//  delay(1000);
+  
+  MESH_SERIAL.begin (9600);
+  
+//  // Flash the LED a few times to tell that the module is live
+//  interface.setLED(true);  delay(200);
+//  interface.setLED(false); delay(200);
+//  interface.setLED(true);  delay(200);
+//  interface.setLED(false); delay(200);
+//  interface.setLED(true);  delay(200);
+//  interface.setLED(false);
+//  
+//  interface.setChannel (15);
+//  interface.setPanID (0xBAAD);
+//  interface.setAddress (MESH_DEVICE_ADDRESS);
+
+  randomSeed (analogRead (1));
+}
+
+#define SERIAL_BUFFER_LIMIT 64
+int serialBufferSize = 0;
+char serialBuffer[SERIAL_BUFFER_LIMIT];
+
+unsigned long lastBroadcastTime = 0L;
+unsigned long broadcastTimeout = 1000L;
+
+#define NEIGHBOR_LIMIT 50
+int neighborCount = 0;
+int neighbors[NEIGHBOR_LIMIT];
+
+boolean isReading = false;
+boolean isWriting = false;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define MESH_DEVICE_ADDRESS 0x0002 // The device of the mesh networking radio
 
 #if defined(MESH_DEVICE_ADDRESS)
@@ -44,7 +94,7 @@ RadioBlockSerialInterface interface = RadioBlockSerialInterface (RADIOBLOCK_POWE
 /**
  * Initialize mesh networking peripheral.
  */
-boolean setupCommunication() {
+boolean setupCommunication2 () {
   
 //  delay(1000);
   
@@ -373,7 +423,7 @@ Message dequeueOutgoingMessage() {
 /**
  * Sends the top message on the mesh's message queue.
  */
-boolean sendMessage () {
+boolean sendMessage2 () {
   if (messageQueueSize > 0) {
     
     // Get the next message from the front of the queue
@@ -467,6 +517,49 @@ boolean sendMessage () {
 //     
 //    // Send data OTA (over the air)
 //    interface.sendMessage ();
+  }
+}
+
+/**
+ * Sends the top message on the mesh's message queue.
+ */
+boolean sendMessage () {
+  if (messageQueueSize > 0) {
+    
+    // Get the next message from the front of the queue
+    Message message = dequeueOutgoingMessage ();
+    
+    //
+    // Actually send the message
+    //
+    
+    if (isReading == false) {
+        isWriting = true;
+      
+        // MESH_SERIAL.write ('!');
+//        String data = String ("{ uuid: ") + String (platformUuid) + String (" , type: 'keep-alive' }");
+//        const int serialBufferSize = 64;
+//        char charData[serialBufferSize];
+//        data.toCharArray (charData, serialBufferSize);
+        
+        int bytesSent = 0;
+        String data = String ("{ to: ") + String (message.source) + String (", from: ") + String (platformUuid) + String (" , data: ") + String (message.message) + String (" }");
+        const int serialBufferSize = 64;
+        char charData[serialBufferSize];
+        data.toCharArray (charData, serialBufferSize);
+        bytesSent = MESH_SERIAL.write (charData);
+        
+//        Serial.println (charData);
+        
+//        int bytesSent = MESH_SERIAL.write (charData);
+//        Serial.print ("sent "); Serial.print (bytesSent); Serial.print (" bytes\n\n");
+        
+        lastBroadcastTime = millis ();
+        
+        if (bytesSent >= data.length ()) {
+          isWriting = false;
+        }
+      }
   }
 }
 
