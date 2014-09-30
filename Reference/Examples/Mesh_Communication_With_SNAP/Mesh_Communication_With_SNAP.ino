@@ -71,7 +71,8 @@ void loop () {
         isWriting = true;
       
         // MESH_SERIAL.write ('!');
-        String data = String ("{ uuid: ") + String (platformUuid) + String (" , type: 'keep-alive' }");
+        // String data = String ("{ uuid: ") + String (platformUuid) + String (" , type: 'keep-alive' }");
+        String data = String ("{ from: ") + String (platformUuid) + String (" , to: ") + String (platformUuid) + String (" , data: ") + String (random (0, 10)) + String (" }");
 //        Serial.println (data);
         const int serialBufferSize = 64;
         char charData[serialBufferSize];

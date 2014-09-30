@@ -15,10 +15,11 @@
 #include <EEPROM.h>
 #include <Wire.h>
 #include <SoftwareSerial.h>
-#include <RadioBlock.h>
+//#include <RadioBlock.h>
 #include <SPI.h>
 
 #include <Adafruit_NeoPixel.h>
+#include "Utilities.h"
 #include "Platform.h"
 #include "Light.h"
 #include "Sound.h"
@@ -106,6 +107,8 @@ boolean setupFoundation () {
 
 void setup () {
   
+    setupCommunication ();
+  
   if (hasFoundationUuid == false) {
     setupFoundation ();
     hasFoundationUuid = true;
@@ -143,14 +146,14 @@ void setup () {
 //  fadeOff();
   
   // Setup mesh networking peripherals (i.e., RadioBlocks)
-  setupCommunication ();
-  setupCommunication2 ();
+//  setupCommunication ();
+//  setupCommunication2 ();
   
   //
   // Setup serial communication (for debugging)
   //
   
-  Serial.begin (9600);
+  Serial.begin (9600); 
   Serial.println (F("Pixel Firmware"));
   
   setupPlatform (); // Setup Pixel's reflection (i.e., it's virtual machine)
@@ -190,123 +193,45 @@ void setup () {
 boolean hasGestureProcessed = false;
 
 void loop () {
-  
-  if (hasPlatformUuid) {
-
-    // Broadcast device's address (UUID)
-    unsigned long currentTime = millis ();
-    if (currentTime - lastBroadcastTime > broadcastTimeout) {
-      
-      if (isReading == false) {
-        isWriting = true;
-      
-        // MESH_SERIAL.write ('!');
-//        String data = String ("{ uuid: ") + String (platformUuid) + String (" , type: 'keep-alive' }");
-//        const int serialBufferSize = 64;
-//        char charData[serialBufferSize];
-//        data.toCharArray (charData, serialBufferSize);
-        
-        int bytesSent = 0;
-        String data = "";
-        if (classifiedGestureIndex != previousClassifiedGestureIndex) {
-          data = String ("{ uuid: ") + String (platformUuid) + String (" , gesture: ") + String (gestureName[classifiedGestureIndex]) + String (" }");
-          const int serialBufferSize = 64;
-          char charData[serialBufferSize];
-          data.toCharArray (charData, serialBufferSize);
-          bytesSent = MESH_SERIAL.write (charData);
-        }
-        
-//        Serial.println (charData);
-        
-//        int bytesSent = MESH_SERIAL.write (charData);
-//        Serial.print ("sent "); Serial.print (bytesSent); Serial.print (" bytes\n\n");
-        
-        lastBroadcastTime = millis ();
-        
-        if (bytesSent >= data.length ()) {
-          isWriting = false;
-        }
-      }
-    }
-    
-//    // Relay data received via the serial console over mesh
-//    // TODO: (?) Remove this, eventually!
-//    if (Serial.available() > 0) {
-//      incomingByte = Serial.read ();
-//      // Serial.print("USB received: ");
-//      // Serial.println(incomingByte, DEC);
-//      // HWSERIAL.print("USB received:");
-//      MESH_SERIAL.print ((char) incomingByte);
-//      MESH_SERIAL.flush ();
-//      /* Serial2.print ((char) incomingByte); */
+//  
+//  if (hasPlatformUuid) {
+//
+//    // Broadcast device's address (UUID)
+//    unsigned long currentTime = millis ();
+//    if (currentTime - lastBroadcastTime > broadcastTimeout) {
+//      
+////      if (isReading == false) {
+////        isWriting = true;
+//      
+//        // MESH_SERIAL.write ('!');
+////        String data = String ("{ uuid: ") + String (platformUuid) + String (" , type: 'keep-alive' }");
+////        const int serialBufferSize = 64;
+////        char charData[serialBufferSize];
+////        data.toCharArray (charData, serialBufferSize);
+//        
+//        int bytesSent = 0;
+//        String data = "";
+//        if (classifiedGestureIndex != previousClassifiedGestureIndex) {
+//          data = String ("{ uuid: ") + String (platformUuid) + String (" , gesture: ") + String (gestureName[classifiedGestureIndex]) + String (" }");
+//          const int serialBufferSize = 64;
+//          char charData[serialBufferSize];
+//          data.toCharArray (charData, serialBufferSize);
+//          bytesSent = MESH_SERIAL.write (charData);
+//        }
+//        
+////        Serial.println (charData);
+//        
+////        int bytesSent = MESH_SERIAL.write (charData);
+////        Serial.print ("sent "); Serial.print (bytesSent); Serial.print (" bytes\n\n");
+//        
+//        lastBroadcastTime = millis ();
+//        
+////        if (bytesSent >= data.length ()) {
+////          isWriting = false;
+////        }
+////      }
 //    }
-    
-    // Receive any data received over the mesh network.
-    if (isWriting == false) {
-      if (MESH_SERIAL.available () > 0) {
-        isReading = true;
-        
-        int incomingByte = MESH_SERIAL.read ();
-        // Serial.print("UART received: ");
-//        Serial.print ((char) incomingByte);
-        
-        if (incomingByte == '}') {
-          
-          // Terminate the buffer
-          serialBuffer[serialBufferSize] = incomingByte;
-          serialBufferSize = (serialBufferSize + 1) % SERIAL_BUFFER_LIMIT;
-          serialBuffer[serialBufferSize] = '\0';
-          
-          // TODO: Terminate the buffer and return it for parsing!
-          String uuidParameter = String (serialBuffer);
-          int neighborUuid = getValue(uuidParameter, ' ', 2).toInt ();
-          
-          boolean hasNeighbor = false;
-          for (int i = 0; i < neighborCount; i++) {
-            if (neighbors[i] == neighborUuid) {
-              hasNeighbor = true;
-              break;
-            }
-          }
-          if (hasNeighbor == false) {
-            neighbors[neighborCount] = neighborUuid;
-            neighborCount++;
-            Serial.print ("Added neighbor "); Serial.print (neighborCount); Serial.print (": "); Serial.print (neighborUuid); Serial.print ("\n");
-          }
-          
-          // TODO: Check timestamps when last received a broadcast, and ping those not reached for a long time, and remove them if needed.
-          
-          serialBufferSize = 0;
-          
-          Serial.println (neighborUuid);
-          
-        } else {
-          
-          serialBuffer[serialBufferSize] = incomingByte;
-          serialBufferSize = (serialBufferSize + 1) % SERIAL_BUFFER_LIMIT;
-          
-        }
-        // Serial2.print ((char) incomingByte);
-        // HWSERIAL.print("UART received:");
-        // HWSERIAL.println(incomingByte, DEC);
-        
-        // TODO: Buffer the data received over mesh until the message is completely received.
-        
-        isReading = false;
-      }
-    }
-    
-    /*
-    if (Serial2.available () > 0) {
-      incomingByte = Serial2.read();
-      // Serial.print("UART received: ");
-      Serial.print ((char) incomingByte);
-      // HWSERIAL.print ((char) incomingByte);
-      // HWSERIAL.print("UART received:");
-      // HWSERIAL.println(incomingByte, DEC);
-    }
-    */
-  }
+//  }
   
   
   
@@ -336,7 +261,7 @@ void loop () {
       Propagate_Channel_Value (moduleOutputChannel);
     } else {
       // Output port is on a different module than this one!
-      queueMessage (NEIGHBOR_ADDRESS, ACTIVATE_MODULE_OUTPUT);
+      queueMessage (BROADCAST_ADDRESS, ACTIVATE_MODULE_OUTPUT);
     }
 //    delay(500);
   } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
@@ -347,7 +272,7 @@ void loop () {
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
       Propagate_Channel_Value (moduleOutputChannel);
     } else {
-      queueMessage (NEIGHBOR_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
+      queueMessage (BROADCAST_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
     }
 //    delay(500);
   }
@@ -424,7 +349,7 @@ void loop () {
   
   // Check for mesh data and receive it if present
   boolean hasReceivedMeshData = false;
-//  hasReceivedMeshData = receiveMeshData();
+  hasReceivedMeshData = receiveMeshData();
   
   //
   // Sense gesture (and phsyical orientation, generally)
@@ -694,7 +619,7 @@ void loop () {
   //
   
   currentTime = millis();
-  if (currentTime - lastMessageSendTime > RADIOBLOCK_PACKET_WRITE_TIMEOUT) {
+  if (currentTime - lastMessageSendTime > PACKET_WRITE_TIMEOUT) {
   
     // Process mesh message queue  
     if (messageQueueSize > 0) {
