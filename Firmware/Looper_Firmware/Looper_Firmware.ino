@@ -27,6 +27,8 @@ Authors: Michael Gubbels
 //       over I2C upon request.
 
 void setup () {
+  
+  delay (3000);
 
   Serial.begin(9600); // Start serial for output
   Serial.println(F("Looper Firmware"));

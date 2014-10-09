@@ -15,10 +15,10 @@
 #define ADAFRUIT_CC3000_CS    10
 // Use hardware SPI for the remaining pins
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
-Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV8); // you can change this clock speed
+Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV4); // you can change this clock speed
 
-#define WLAN_SSID "Hackerspace" // Cannot be longer than 32 characters!
-#define WLAN_PASS "MakingIsFun!"
+#define WLAN_SSID "deadhau5" // Cannot be longer than 32 characters!
+#define WLAN_PASS "deadhau5!8002"
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
 #define WLAN_SECURITY WLAN_SEC_WPA2
 
@@ -28,7 +28,9 @@ Adafruit_CC3000_Server httpServer(LISTEN_PORT);
 
 void setup(void) {
   
-  Serial.begin(115200);
+  delay (3000);
+  
+  Serial.begin(9600);
 //  while (!Serial); // Hack
   Serial.println(F("Hello, CC3000!\n")); 
 

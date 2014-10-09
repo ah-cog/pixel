@@ -126,19 +126,16 @@ int melody[] = { NOTE_C6, NOTE_C6, NOTE_C6, NOTE_C6 };
 // note durations: 4 = quarter note, 8 = eighth note, etc.:
 int noteDurations[] = { 4, 8, 4, 4 };
 
-void Play_Melody ();
-void Play_Note ();
-void Stop_Sound ();
+void playMelody ();
 
 boolean setupSound () {
   
-//  playMelody ();
-  Stop_Sound ();
+  playMelody ();
   
   return true;
 }
 
-void Play_Melody () {
+void playMelody () {
   
   // iterate over the notes of the melody:
   //for (int thisNote = 0; thisNote < 8; thisNote++) {
@@ -162,7 +159,6 @@ void Play_Melody () {
 // TODO: Make the prameters of this call correspond to an envelope filter like those in keyboards.
 void Play_Note (int note, int duration) {
 //void playNote (int note) {
-  pinMode (SPEAKER_OUT_PIN, OUTPUT);
   
   // to calculate the note duration, take one second 
   // divided by the note type.
@@ -177,11 +173,6 @@ void Play_Note (int note, int duration) {
   delay (duration);
   // stop the tone playing:
   noTone (SPEAKER_OUT_PIN);
-}
-
-void Stop_Sound () {
-  noTone (SPEAKER_OUT_PIN);
-  pinMode (SPEAKER_OUT_PIN, INPUT);
 }
 
 #endif

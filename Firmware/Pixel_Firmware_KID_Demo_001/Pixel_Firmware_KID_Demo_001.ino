@@ -15,6 +15,7 @@
 #include <EEPROM.h>
 #include <Wire.h>
 #include <SoftwareSerial.h>
+#include <RadioBlock.h>
 #include <SPI.h>
 
 #include <Adafruit_NeoPixel.h>
@@ -30,16 +31,6 @@
 #include "Looper.h"
 #include "I2C.h"
 #include "Ports.h"
-
-
-
-#define DEVICE_SERIAL Serial3
-
-boolean setupBridge () {
-  DEVICE_SERIAL.begin (115200);
-}
-
-
 
 /**
  * Module configuration
@@ -116,12 +107,10 @@ boolean setupFoundation () {
 
 void setup () {
   
-    setupCommunication ();
-  
-  if (hasFoundationUuid == false) {
-    setupFoundation ();
-    hasFoundationUuid = true;
-  } // The layer on which the "platform" depends
+//  if (hasFoundationUuid == false) {
+//    setupFoundation ();
+//    hasFoundationUuid = true;
+//  } // The layer on which the "platform" depends
   
   setupLooper (); // Setup the Looper engine.
   
@@ -155,14 +144,12 @@ void setup () {
 //  fadeOff();
   
   // Setup mesh networking peripherals (i.e., RadioBlocks)
-//  setupCommunication ();
+  setupCommunication ();
 //  setupCommunication2 ();
   
   //
   // Setup serial communication (for debugging)
   //
-  
-  delay (2000);
   
   Serial.begin (9600); 
   Serial.println (F("Pixel Firmware"));
