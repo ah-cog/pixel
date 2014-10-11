@@ -333,8 +333,9 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
                 // Propagate behaviorCreate_Transformation
 //                Transformation* transformation = Create_Transformation (String("create behavior output 5 digital on"));
                 // TODO: Update Create_Transformation to accept JSON (and consider using a remote reference to the local UUID rather than recreating the same UUID).
-                Transformation* transformation = Create_Transformation (String("create behavior output ") + String((*behavior).uid) + " " + String (pin) + " " + String (signal) + " " + String (data));
+                Transformation* transformation = Create_Transformation (String ("create behavior output ") + String((*behavior).uid) + " " + String (pin) + " " + String (signal) + " " + String (data));
                 Queue_Transformation (propagator, transformation);
+                // TODO: Propagate behavior over serial syncronously, waiting for response to return to client!1
                 
 //                Propagate_Behavior_Transformation (CREATE, BEHAVIOR);
                 

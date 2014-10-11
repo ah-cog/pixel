@@ -1295,14 +1295,18 @@ Transformation* Dequeue_Transformation (Propagator* propagator) {
   
 }
 
+#define DEVICE_SERIAL Serial3
+
 #define NO_CHANNEL 0
 #define I2C_CHANNEL 1
+#define SERIAL_CHANNEL 2
 // TODO: #define VISUAL_CHANNEL 2
 // TODO: #define AURAL_CHANNEL 2
 // TODO: #define TEXTUAL_CHANNEL 3
 
 //! Propagate the next message in the queue on the specified channel.
 //!
+//boolean Propagate (Propagator* propagator, int channel, boolean syncronous) {
 boolean Propagate (Propagator* propagator, int channel) {
   
   Serial.println ("Propagate");
@@ -1357,6 +1361,88 @@ boolean Propagate (Propagator* propagator, int channel) {
             if ((*transformation).position >= (*transformation).size) {
               Serial.println ("\tlast byte");
               Wire.write (")"); // Conclude transformation description
+              sentByteCount++;
+              
+              // Dequeue the transformation since it's been completely propagated
+              Dequeue_Transformation (propagator);
+              
+              // Free the transformation from memory (once sent via I2C)
+              Delete_Transformation (transformation);
+              
+              return true;
+            }
+          }
+          
+        }
+      }
+      
+      // Dequeue the next description to be sent by the specified propagator
+//      Transformation* transformation = Dequeue_Transformation (propagator);
+      
+      // TODO: Break up dequeued string to be sent into 32 byte segments, then queue them in the I2C outgoing data buffer.
+
+//      // Transmit data over via the I2C protocol
+//      Wire.write ("("); // Start transformation description
+//      Wire.write ((*transformation).data); // Write the serialized data
+//      Wire.write (")"); // Conclude transformation description
+//      
+//      // Free the transformation from memory (once sent via I2C)
+//      Delete_Transformation (transformation);
+      
+//      return true;
+      
+    } else if (channel == SERIAL_CHANNEL) {
+      
+      // "(create input behavior 38472934)" // Pass on the parentheticized "secret"
+      
+      // Create buffer for storing the bytes to be sent (over I2C)
+      const int AVAILABLE_BUFFER_BYTES = 32; // TODO: Increase this for serial
+      int sentByteCount = 0; // i.e., the number of bytes sent so far (during this call to Propagate)
+//      char buffer[AVAILABLE_BUFFER_BYTES];
+      
+      // Get the next behavior transformation description to be sent by the specified propagator (but don't yet dequeue it)
+      Transformation* transformation = Get_Transformation (propagator);
+      
+      // Check if the transformation has data yet to be propagated (and if so, propagate the next data).
+      if ((*transformation).position <= (*transformation).size) {
+        
+        while (sentByteCount < AVAILABLE_BUFFER_BYTES) {
+          
+          // Send the next character of the behavior transformation description string.
+          if (sentByteCount < AVAILABLE_BUFFER_BYTES) {
+            
+            // Check if this is the beginning of the transformation description being sent (i.e., the first byte of data)
+            if ((*transformation).position == 0) {
+              Serial.println ("\tfirst byte");
+//              Wire.write ("("); // Start transformation description
+              DEVICE_SERIAL.write ("(");
+              sentByteCount++;
+            }
+          }
+           
+          // Send the next character in the transformation description string.
+          if (sentByteCount < AVAILABLE_BUFFER_BYTES) { 
+            // Check if the current character index is within the transformation string's bounds.
+            if ((*transformation).position < (*transformation).size) {
+              //Wire.write ((*transformation).data[((*transformation).position)]);
+              DEVICE_SERIAL.write ((*transformation).data[((*transformation).position)]);
+              (*transformation).position = (*transformation).position + 1; // Increment the position of the next character to be propagated.
+              sentByteCount++; // Count the byte as propagated (i.e., sent over the I2C channel).
+              Serial.print ("\tbyte"); Serial.print (sentByteCount); Serial.print ("(position: "); Serial.print ((*transformation).position); Serial.print (")\n");
+            }
+            
+//          else {
+//            Wire.write ("\n")
+//          }
+//          sentByteCount++; // Count the byte as propagated (i.e., sent over the I2C channel).
+          }
+          
+          // Check if this is the end of the transformation description being sent (i.e., the last byte of data)
+          if (sentByteCount < AVAILABLE_BUFFER_BYTES) {
+            if ((*transformation).position >= (*transformation).size) {
+              Serial.println ("\tlast byte");
+              //Wire.write (")"); // Conclude transformation description
+              DEVICE_SERIAL.write (")");
               sentByteCount++;
               
               // Dequeue the transformation since it's been completely propagated

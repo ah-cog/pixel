@@ -31,16 +31,6 @@
 #include "I2C.h"
 #include "Ports.h"
 
-
-
-#define DEVICE_SERIAL Serial3
-
-boolean setupBridge () {
-  DEVICE_SERIAL.begin (115200);
-}
-
-
-
 /**
  * Module configuration
  */
@@ -117,6 +107,7 @@ boolean setupFoundation () {
 void setup () {
   
     setupCommunication ();
+    setupBridge ();
   
   if (hasFoundationUuid == false) {
     setupFoundation ();
@@ -248,6 +239,9 @@ void loop () {
   
   
   
+  
+  
+  
   // TODO: Broadcast the foundation's default device address (upon boot)
   
   // TODO: Negotiate a unique dynamic mesh address
@@ -291,7 +285,8 @@ void loop () {
   // TODO: Send updated state of THIS board (master) to the OTHER board (slave) for caching.
   
   // Get behavior updates from slave
-  Get_Behavior_Transformations ();
+//  Get_Behavior_Transformations ();
+  Get_Behavior_Transformations_Serial ();
   
   // Perform behavior step in the interpreter (Evaluate)
   // TODO: Transform_Behavior (i.e., the Behavior Transformer does this, akin to interpreting an instruction/command)

@@ -26,9 +26,17 @@ Authors: Michael Gubbels
 //       changes to (1) make to Looper, and (2) to queue for sending to the other device 
 //       over I2C upon request.
 
+#define DEVICE_SERIAL Serial3
+
+boolean setupBridge () {
+  DEVICE_SERIAL.begin (115200);
+}
+
 void setup () {
   
   delay (3000);
+  
+  setupBridge ();
 
   Serial.begin(9600); // Start serial for output
   Serial.println(F("Looper Firmware"));
@@ -61,10 +69,26 @@ void setupDeviceCommunication() {
 void loop () {
     
   // Try to get a client which is connected.
-  Adafruit_CC3000_ClientRef client = httpServer.available();
+  Adafruit_CC3000_ClientRef client = httpServer.available ();
   
   if (client) {
     handleClientConnection (client);
+  }
+  
+  if (propagator != NULL) {
+    
+//    Serial.println ((int) (*propagator).transformation);
+    
+    if ((*propagator).transformation != NULL) {
+      
+      Propagate (propagator, SERIAL_CHANNEL);
+  //    Delete_Propagator (propagator);
+    }
+    
+  } else {
+    
+//    Wire.write('\0'); // Send NULL symbol (i.e., ASCII code 0)
+    
   }
   
 //  // Create behavior substrate
@@ -213,31 +237,7 @@ void i2cRequestHandler () {
     Wire.write('\0'); // Send NULL symbol (i.e., ASCII code 0)
     
   }
-
-
-
   
-//  char buf[6]; // "-2147483648\0"
-//  
-//  if (behaviorTransformationCount > 0) {
-//    
-//    //Serial.print("behaviorTransformationCount = "); Serial.print(behaviorTransformationCount); Serial.println();
-//
-//    // Send status
-//    Wire.write ("1 ");
-//
-//    // Send serialized behavior
-//    Wire.write (itoa(behaviorTransformations[0].index, buf, 10)); Wire.write (" ");
-//    Wire.write (itoa(behaviorTransformations[0].operation, buf, 10)); Wire.write (" ");
-//    Wire.write (itoa(behaviorTransformations[0].pin, buf, 10));       Wire.write (" ");
-//    // Wire.write (itoa(behaviorTransformations[0].type, buf, 10));      Wire.write (" ");
-//    Wire.write (itoa(behaviorTransformations[0].mode, buf, 10));      Wire.write (" ");
-//    Wire.write (itoa(behaviorTransformations[0].value, buf, 10));     Wire.write (" ");
-//    
-//    // Remove the behavior from the processing queue once it's been sent over I2C
-//    removeBehaviorTransformation (0);
-//  } else {
-//    // Send status
-//    Wire.write ("0 ");
-//  }
 }
+
+
