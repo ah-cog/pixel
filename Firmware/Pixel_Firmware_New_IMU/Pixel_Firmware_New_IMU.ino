@@ -106,9 +106,9 @@ boolean setupFoundation () {
 
 void setup () {
   
-  delay (2000);
+//  delay (2000);
   
-  Serial.println ("Pixel!");
+//  Serial.println ("Pixel!");
   
   // Initialize pseudorandom number generator
   randomSeed (analogRead (0));
@@ -231,10 +231,10 @@ void loop () {
 //        int bytesSent = MESH_SERIAL.write (charData);
 //        Serial.print ("sent "); Serial.print (bytesSent); Serial.print (" bytes\n\n");
         
-        lastBroadcastTime = millis ();
+        lastBroadcastTime = millis ();  
         
 //        if (bytesSent >= data.length ()) {
-//          isWriting = false;
+//          isWriting = false;s
 //        }
 //      }
     }
@@ -260,7 +260,7 @@ void loop () {
   // Get module's input
   Get_Input_Port_Continuous (); // getInputPort(); // syncInputPort()
   
-  //Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
+//  Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
   
   if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
     if (outputPinRemote == false) {
@@ -269,8 +269,10 @@ void loop () {
       Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
       Propagate_Channel_Value (moduleOutputChannel);
+      blinkLight (1);
     } else {
       // Output port is on a different module than this one!
+      blinkLight (2);
       queueMessage (BROADCAST_ADDRESS, ACTIVATE_MODULE_OUTPUT);
     }
 //    delay(500);
@@ -328,7 +330,7 @@ void loop () {
   unsigned long currentTime = millis ();
   
   // Update gesture/mesh communication timers
-  // TODO: Add this to Looper's timer!
+  // TODO: Add this to Looper's timers!
   if (lastSwingAddress != -1) {
     if (currentTime - lastReceivedSwingTime > lastReceivedSwingTimeout) {
       lastSwingAddress = -1;

@@ -117,7 +117,6 @@ This example code is in the public domain.
 // #include "pitches.h"
 
 #define SPEAKER_OUT_PIN A8
-
 // notes in the melody:
 
 //int melody[] = { NOTE_C4, NOTE_G3,NOTE_G3, NOTE_A3, NOTE_G3,0, NOTE_B3, NOTE_C4 };
@@ -132,7 +131,7 @@ void Stop_Sound ();
 
 boolean setupSound () {
   
-  Play_Melody ();
+//  Play_Melody ();
   Stop_Sound ();
   
   return true;

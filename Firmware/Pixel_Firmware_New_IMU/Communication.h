@@ -622,7 +622,7 @@ boolean receiveMeshData () {
         Serial.print (">> (from: "); Serial.print (fromParameter); Serial.print (", ");
         Serial.print ("to: "); Serial.print (toParameter); Serial.print (", ");
         Serial.print ("data: "); Serial.print (dataParam); Serial.print (")\n\n");
-//        queueIncomingMeshMessage (fromParameter, dataParam);
+        queueIncomingMeshMessage (fromParameter, dataParam);
         
         serialBufferSize = 0;
         
@@ -1024,7 +1024,7 @@ boolean handleMessageSwing (Message message) {
   Serial.println (">> Received ANNOUNCE_GESTURE_SWING");
   
 //  if (message.source != MESH_DEVICE_ADDRESS) {
-  if (message.source != platformUuid) {
+//  if (message.source != platformUuid) { // TODO: Restore this! Removed for FutureMakers demo
     
     lastSwingAddress = message.source;
     
@@ -1093,6 +1093,7 @@ boolean handleMessageTap (Message message) {
   
 //    Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_LEFT");
     
+    // TODO: REMOVE THIS!!
 //    addNextModule(message.source);
     
     

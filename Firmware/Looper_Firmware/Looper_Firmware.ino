@@ -29,35 +29,33 @@ Authors: Michael Gubbels
 #define DEVICE_SERIAL Serial3
 
 boolean setupBridge () {
-  DEVICE_SERIAL.begin (115200);
+  DEVICE_SERIAL.begin (9600);
 }
 
 void setup () {
   
-  delay (3000);
-  
   setupBridge ();
 
-  Serial.begin(9600); // Start serial for output
-  Serial.println(F("Looper Firmware"));
+  Serial.begin (9600); // Start serial for output
+  Serial.println (F ("Looper Firmware"));
   
-  setupLooper();
+  setupLooper ();
 //  Propagation* transformation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
 //  Queue_Propagation (propagator, transformation);
   
   // Setup Wi-Fi and web server
-  setupWebServer();
+  setupWebServer ();
   
   // Setup I2C communication for device-device communication
-  setupDeviceCommunication();
+  setupDeviceCommunication ();
 }
 
 //! Set up I2C communication for device-device communication.
 //!
-void setupDeviceCommunication() {
-  Wire.begin(I2C_DEVICE_ADDRESS); // Join I2C bus with the device's address
-  Wire.onReceive(i2cReceiveHandler);   // Register event handler to receive data from the master I2C device
-  Wire.onRequest(i2cRequestHandler);   // Event handler to respond to a request for data from the I2C master device
+void setupDeviceCommunication () {
+  Wire.begin (I2C_DEVICE_ADDRESS); // Join I2C bus with the device's address
+  Wire.onReceive (i2cReceiveHandler);   // Register event handler to receive data from the master I2C device
+  Wire.onRequest (i2cRequestHandler);   // Event handler to respond to a request for data from the I2C master device
   
   // Send reboot message to master device
 //  insertBehavior(0, 30, 0, 0, 0, 0);
