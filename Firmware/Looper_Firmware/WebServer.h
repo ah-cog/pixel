@@ -14,16 +14,16 @@
 #define ADAFRUIT_CC3000_VBAT 3  // Note: Can be assigned to any pin.
 #define ADAFRUIT_CC3000_CS   10 // Note: Can be assigned to any pin.
 // Use the hardware SPI pins for the remaining connections to the Wi-Fi module (e.g., On an UNO, SCK = 13, MISO = 12, and MOSI = 11).
-Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV4); // you can change this clock speed
+Adafruit_CC3000 cc3000 = Adafruit_CC3000 (ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV4); // you can change this clock speed
 
-#define WLAN_SSID "Pixel" // Cannot be longer than 32 characters!
-#define WLAN_PASS "redgreenblue"
+#define WLAN_SSID "deadhau5" // Cannot be longer than 32 characters!
+#define WLAN_PASS "deadhau5!8002"
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
 #define WLAN_SECURITY WLAN_SEC_WPA2
 
 #define LISTEN_PORT 80 // What TCP port to listen on for connections.  The echo protocol uses port 7.
 
-Adafruit_CC3000_Server httpServer(LISTEN_PORT);
+Adafruit_CC3000_Server httpServer (LISTEN_PORT);
 
 /**
  * Data structures
@@ -40,80 +40,88 @@ int httpRequestParameterCount = 0;
 /**
  * Function declarations (i.e., function signatures)
  */
+ 
+uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
 
 // Adafruit CC3000 Breakout Board
-boolean setupWebServer();
-boolean handleClientConnection(Adafruit_CC3000_ClientRef& client);
-uint16_t checkFirmwareVersion(void);
+boolean setupWebServer ();
+boolean handleClientConnection (Adafruit_CC3000_ClientRef& client);
+uint16_t checkFirmwareVersion (void);
 boolean displayConnectionDetails (void);
+String Get_IP_Address (uint32_t ip);
 
 // HTTP Request Handlers
-boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client);
+boolean handleDefaultHttpRequest (Adafruit_CC3000_ClientRef& client);
 
 // Utilities
-String getValue(String data, char separator, int index);
+String getValue (String data, char separator, int index);
 
 /**
  * Function definitions
  */
 
-boolean setupWebServer() {
+boolean setupWebServer () {
   
   /* Initialise the module */
-  Serial.println(F("\nInitializing Wi-Fi."));
-  if (!cc3000.begin()) {
-    Serial.println(F("Couldn't begin()! Check your wiring?"));
-    while(1) {
-      Serial.println(F("Couldn't begin()! Check your wiring?"));
+  Serial.println (F ("\nInitializing Wi-Fi."));
+  if (!cc3000.begin ()) {
+    Serial.println (F ("Couldn't begin()! Check your wiring?"));
+    while (1) {
+      Serial.println (F ("Couldn't begin()! Check your wiring?"));
     };
   }
   
-  Serial.println(F("\Connecting... "));
-  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
-    Serial.println(F("Failed!"));
-    while(1);
+  Serial.println (F ("\Connecting... "));
+  if (!cc3000.connectToAP (WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
+    Serial.println (F ("Failed!"));
+    while (1);
   }
    
-  Serial.println(F("Connected!"));
+  Serial.println (F ("Connected!"));
   
   
-  uint16_t firmware = checkFirmwareVersion();
+  uint16_t firmware = checkFirmwareVersion ();
   if (firmware < 0x113) {
-    Serial.println(F("Wrong firmware version!"));
-    for(;;);
+    Serial.println (F ("Wrong firmware version!"));
+    for (;;);
   } 
   
 //  displayMACAddress();
   
-  Serial.println(F("Request DHCP"));
+  Serial.println(F("Requesting address over DHCP."));
   while (!cc3000.checkDHCP()) {
-    delay(100); // ToDo: Insert a DHCP timeout!
+    delay (100); // ToDo: Insert a DHCP timeout!
 //    Serial.println("DHCP Timeout");
   }
 
   /* Display the IP address DNS, Gateway, etc. */  
-  while (! displayConnectionDetails()) {
-    delay(1000);
+  while (! displayConnectionDetails ()) {
+    delay (1000);
   }
+  
+  String ip = Get_IP_Address (ipAddress);
+  Serial.println (ip);
+  Transformation* transformation = Create_Transformation (String ("create behavior memory ip ") + String (ip));
+  Queue_Transformation (propagator, transformation);
 
   //
   // You can safely remove this to save some flash memory!
   //
-  Serial.println(F("\r\nNOTE: This sketch may cause problems with other sketches"));
-  Serial.println(F("since the .disconnect() function is never called, so the"));
-  Serial.println(F("AP may refuse connection requests from the CC3000 until a"));
-  Serial.println(F("timeout period passes.  This is normal behaviour since"));
-  Serial.println(F("there isn't an obvious moment to disconnect with a server.\r\n"));
+  // Serial.println (F ("\r\nNOTE: This sketch may cause problems with other sketches"));
+  // Serial.println (F ("since the .disconnect() function is never called, so the"));
+  // Serial.println (F ("AP may refuse connection requests from the CC3000 until a"));
+  // Serial.println (F ("timeout period passes.  This is normal behaviour since"));
+  // Serial.println (F ("there isn't an obvious moment to disconnect with a server.\r\n"));
   
   // Start listening for connections
-  httpServer.begin();
+  httpServer.begin ();
   
-  Serial.println(F("Listening for connections..."));
+  Serial.println (F ("Listening for connections..."));
 }
 
-boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
+boolean handleClientConnection (Adafruit_CC3000_ClientRef& client) {
   
-  Serial.println("Status: New client connected.");
+  Serial.println ("Status: New client connected.");
     
     bi = 0; // Reset the HTTP request buffer
     int httpRequestLineCount = 0;
@@ -132,9 +140,9 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
     char* httpRequestAddress = NULL;
     char* httpRequestParameterString = NULL;
     
-    while (client.connected()) {
-      if (client.available()) {
-        char c = client.read();
+    while (client.connected ()) {
+      if (client.available ()) {
+        char c = client.read ();
         // Serial.write(c);
         
         // Buffer the first line of the received HTTP request
@@ -155,20 +163,20 @@ boolean handleClientConnection(Adafruit_CC3000_ClientRef& client) {
         
         if (hasReceivedRequest) {
           
-          Serial.println(httpRequestMethod);
+          Serial.println (httpRequestMethod);
           
           if (strcmp (httpRequestMethod, "GET") == 0) {
             
             if (strcmp (httpRequestAddress, "/") == 0) {
               
-              handleDefaultHttpRequest(client);
+              handleDefaultHttpRequest (client);
               break;
               
             } else if (strcmp (httpRequestAddress, "/behavior") == 0) {
               
-              Serial.println("PARAMETERS:");
+              Serial.println ("PARAMETERS:");
 //              Serial.println(httpRequestParameters[0]);
-              Serial.println(httpRequestParameters[0]);
+              Serial.println (httpRequestParameters[0]);
 //              Serial.println(httpRequestParameters[4]);
               
               // Split parameters by '='
@@ -983,9 +991,9 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
 // Tries to read the IP address and other connection details
 //
 boolean displayConnectionDetails (void) {
-  uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
+//  uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
   
-  if(!cc3000.getIPAddress(&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
+  if(!cc3000.getIPAddress (&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
     Serial.println(F("Unable to retrieve the IP Address!\r\n"));
     return false;
   } else {
@@ -997,6 +1005,18 @@ boolean displayConnectionDetails (void) {
     Serial.println();
     return true;
   }
+}
+
+String Get_IP_Address (uint32_t ip) {
+  String ipAddress = "";
+  ipAddress = ipAddress + String((uint8_t)(ip >> 24));
+  ipAddress = ipAddress + String('.');
+  ipAddress = ipAddress + String((uint8_t)(ip >> 16));
+  ipAddress = ipAddress + String('.');
+  ipAddress = ipAddress + String((uint8_t)(ip >> 8));
+  ipAddress = ipAddress + String('.');
+  ipAddress = ipAddress + String((uint8_t)(ip));  
+  return ipAddress;
 }
 
 uint16_t checkFirmwareVersion(void)

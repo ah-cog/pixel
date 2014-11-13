@@ -5,7 +5,7 @@ Authors: Michael Gubbels
 
 // Notes for Teensy 3.1 (i.e., heuristics to get the CC3000 module working, based on experience):
 // - Set "Board" to Teensy 3.1
-// - Set "CPU Speed" to 24 MHz
+// - Set "CPU Speed" to 24 MHz or 48 MHz (96 MHz doesn't seem to work)
 // - Set clock to SPI_CLOCK_DIV8 (SPI_CLOCK_DIV2 also worked, but not too reliably)
 //
 // Notes about Adafruit CC3000 Breakout Board:
@@ -17,8 +17,6 @@ Authors: Michael Gubbels
 #include "VirtualDevice.h"
 #include "WebServer.h"
 
-#define I2C_DEVICE_ADDRESS 2
-
 // TODO: Implement list of changes to make to send to the Master (which executes gestural and the behavior code for the module)
 // - TODO: Include status: "new", "sending", "sent", "confirmed" (after which, they're deleted)
 
@@ -29,7 +27,7 @@ Authors: Michael Gubbels
 #define DEVICE_SERIAL Serial3
 
 boolean setupBridge () {
-  DEVICE_SERIAL.begin (9600);
+  DEVICE_SERIAL.begin (115200);
 }
 
 void setup () {
@@ -45,20 +43,6 @@ void setup () {
   
   // Setup Wi-Fi and web server
   setupWebServer ();
-  
-  // Setup I2C communication for device-device communication
-  setupDeviceCommunication ();
-}
-
-//! Set up I2C communication for device-device communication.
-//!
-void setupDeviceCommunication () {
-  Wire.begin (I2C_DEVICE_ADDRESS); // Join I2C bus with the device's address
-  Wire.onReceive (i2cReceiveHandler);   // Register event handler to receive data from the master I2C device
-  Wire.onRequest (i2cRequestHandler);   // Event handler to respond to a request for data from the I2C master device
-  
-  // Send reboot message to master device
-//  insertBehavior(0, 30, 0, 0, 0, 0);
 }
 
 /**
@@ -73,20 +57,13 @@ void loop () {
     handleClientConnection (client);
   }
   
+  // Propagate data to the main device
   if (propagator != NULL) {
-    
 //    Serial.println ((int) (*propagator).transformation);
-    
     if ((*propagator).transformation != NULL) {
-      
       Propagate (propagator, SERIAL_CHANNEL);
   //    Delete_Propagator (propagator);
     }
-    
-  } else {
-    
-//    Wire.write('\0'); // Send NULL symbol (i.e., ASCII code 0)
-    
   }
   
 //  // Create behavior substrate
@@ -135,107 +112,3 @@ void loop () {
   
 //  while (true);
 }
-
-#define I2C_BUFFER_BYTE_SIZE 32
-char i2cBuffer[I2C_BUFFER_BYTE_SIZE];
-int i2cBufferSize = 0;
-boolean hasMessage = false;
-
-/**
- * function that executes whenever data is received from master
- * this function is registered as an event, see setup()
- */
-void i2cReceiveHandler (int howMany) {
-  
-//  Serial.println("Receiving");
-  
-  while (Wire.available () > 0) { // loop through all but the last
-    char c = Wire.read (); // receive byte as a character
-//    Serial.print (c); // print the character
-    
-    i2cBuffer[i2cBufferSize] = c; // Buffer the character
-    i2cBufferSize++; // Increment the buffer size
-  }
-  i2cBuffer[i2cBufferSize] = NULL; // Terminate the string
-//  Serial.println();
-  
-  // Parse received pin value
-  String split     = String(i2cBuffer);
-  String operation = getValue(split, ' ', 0);
-  
-  // Handle operation
-  if (operation.compareTo("reboot") == 0) {
-    
-    _reboot_Teensyduino_();
-//    while(1) { /* NOTE: This is an infinite loop! */ }
-    
-  } else {
-    
-    int pin          = getValue(split, ' ', 1).toInt();
-    int value        = getValue(split, ' ', 2).toInt();
-    
-    // Update virtual device state
-    // virtualPin[pin].value = value;
-    setPinValue(pin, value);
-    
-    /*
-    Serial.print("PIN ");
-    Serial.print(pin);
-    Serial.print(" = ");
-    Serial.print(value);
-    virtualPin[pin].value = value;
-    // TODO: Update other state info for pin (or other state)
-  //  Serial.print(pin);
-    Serial.println();
-    */
-    
-    i2cBufferSize = 0;
-    
-    
-    // TODO: Parse the message
-    // TODO: Handle initial processing for message
-    // TODO: Add to incoming I2C message queue (to process)
-    // TODO: (elsewhere) Process messages one by one, in order
-    
-  }
-}
-
-/**
- * function that executes whenever data is requested by master
- * this function is registered as an event, see setup()
- */
-void i2cRequestHandler () {
-  
-//  if ((*propagator).queueSize > 0) {
-  
-//  Propagator* propagator = Create_Propagator ();
-//  Propagation* transformation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
-//  String data = Get_Propagation_Data (transformation);
-//  Serial.println (data);
-//  Queue_Propagation (propagator, transformation);
-
-//  Propagation* transformation = Create_Propagation ("create substrate 55ff68064"); // 55ff68064989495329092587
-//  Queue_Propagation (propagator, transformation);
-
-//  Serial.println ("i2cRequestHandler");
-//  Serial.println ((int) propagator);
-  
-  if (propagator != NULL) {
-    
-//    Serial.println ((int) (*propagator).transformation);
-    
-    if ((*propagator).transformation != NULL) {
-      
-      Propagate (propagator, I2C_CHANNEL);
-  //    Delete_Propagator (propagator);
-    }
-    
-  } else {
-    
-    Wire.write('\0'); // Send NULL symbol (i.e., ASCII code 0)
-    
-  }
-  
-}
-
-

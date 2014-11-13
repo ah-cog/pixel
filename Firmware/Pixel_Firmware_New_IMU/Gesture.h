@@ -221,7 +221,7 @@ boolean handleGestureSwing() {
 
   // Blink the lights
 //  blinkLight(3);
-  startBlinkLight();
+  Start_Blink_Light ();
   hasSwung = true;
   
   lastSwingTime = millis ();
@@ -287,8 +287,8 @@ boolean handleGestureTap() {
 boolean handleGestureTapToAnotherAsLeft() {
   //setColor(255, 0, 0);
   // Blink the lights five times
-  blinkLight(5);
-  startBlinkLight();
+  Blink_Light (5);
+  Start_Blink_Light ();
   
 //  if (!awaitingPreviousModule) {
 //    awaitingNextModule = true;
@@ -373,7 +373,7 @@ boolean handleGestureShake() {
     if (hasSwung) {
       // Stop blinking to cancel behavior shaping (i.e., cool the hot potato)
       // TODO: Stop blinking when successfully linked, too!
-      stopBlinkLight ();
+      Stop_Blink_Light ();
       hasSwung = false;
       // TODO: Cancel "pairing request"
     

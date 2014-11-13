@@ -59,7 +59,7 @@ void applyColor (int applicationMethod);
 boolean queueLightBehavior(int behavior);
 int dequeueLightBehavior ();
 
-void blinkLight (int count);
+void Blink_Light (int count);
 void ledOn ();
 void ledOff ();
 
@@ -369,7 +369,7 @@ void applyColor(int applicationMethod) {
 /**
  * Blinks the lights the specified number of times.
  */
-void blinkLight(int count) {
+void Blink_Light (int count) {
   for (int i = 0; i < count; i++) {
     queueLightBehavior(LIGHT_BEHAVIOR_ON); queueLightBehavior(LIGHT_BEHAVIOR_DELAY_100MS);
     queueLightBehavior(LIGHT_BEHAVIOR_OFF);
@@ -381,14 +381,14 @@ void blinkLight(int count) {
 
 //! Make the light blink until it is manually stopped.
 //!
-void startBlinkLight () {
+void Start_Blink_Light () {
 //  Serial.println ("startBlinkLight");
   queueLightBehavior(GENERATE_LIGHT_BEHAVIOR_BLINK_100MS);
 }
 
 //! Make the light stop blinking.
 //!
-boolean stopBlinkLight () {
+boolean Stop_Blink_Light () {
 //  Serial.println ("stopBlinkLight");
   // TODO: 
   
@@ -408,41 +408,41 @@ boolean stopBlinkLight () {
 /**
  * Applies the current target color using the current color application method.
  */
-void applyColor() {
+void Light_Apply_Color () {
   applyColor(colorApplicationMethod);
 }
 
-void ledOn() {
+void Light_On () {
   queueLightBehavior(LIGHT_BEHAVIOR_ON);
 }
 
-void ledOff() {
+void Light_Off () {
   queueLightBehavior(LIGHT_BEHAVIOR_OFF);
 }
 
-void fadeOn() {
+void Light_Fade_On () {
 //  ledOff();
   while (ledColor[0] > 0 && ledColor[1] > 0 && ledColor[2] > 0) {
     if (ledColor[0] > 0) ledColor[0] -= 10;
     if (ledColor[1] > 0) ledColor[1] -= 10;
     if (ledColor[2] > 0) ledColor[2] -= 10;
-    applyColor();
+    Light_Apply_Color ();
     delay(30);
   }
 }
 
-void fadeOff() {
+void Light_Fade_Off () {
   while (ledColor[0] < 255 && ledColor[1] < 255 && ledColor[2] < 255) {
     if (ledColor[0] < 255) ledColor[0] += 10;
     if (ledColor[1] < 255) ledColor[1] += 10;
     if (ledColor[2] < 255) ledColor[2] += 10;
-    applyColor();
+    Light_Apply_Color ();
     delay(45);
   }
   ledColor[0] = 255;
   ledColor[1] = 255;
   ledColor[2] = 255;
-  applyColor();
+  Light_Apply_Color ();
 }
 
 #endif

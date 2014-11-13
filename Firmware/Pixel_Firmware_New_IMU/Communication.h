@@ -390,7 +390,7 @@ boolean addBroadcast (int message) {
 /**
  * Push a message onto the queue of messages to be processed and sent via the mesh network.
  */
-boolean queueMessage (int source, int message) {
+boolean Queue_Message (int source, int message) {
   if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)  
     //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
     messageQueue[messageQueueSize].source = source;
@@ -570,6 +570,8 @@ boolean sendMessage () {
 }
 
 boolean receiveMeshData () {
+  
+//  Serial.println ("receiveMeshData");
   
   // Receive any data received over the mesh network.
 //  if (isWriting == false) {
@@ -1024,7 +1026,7 @@ boolean handleMessageSwing (Message message) {
   Serial.println (">> Received ANNOUNCE_GESTURE_SWING");
   
 //  if (message.source != MESH_DEVICE_ADDRESS) {
-//  if (message.source != platformUuid) { // TODO: Restore this! Removed for FutureMakers demo
+  if (message.source != platformUuid) { // TODO: Restore this! Removed for FutureMakers demo
     
     lastSwingAddress = message.source;
     
@@ -1119,7 +1121,7 @@ boolean handleMessageRequestConfirmTap (Message message) {
 //  if (hasSwung) { // if this is the module that was swung
     // TODO: 
     Serial.println (">> Received REQUEST_CONFIRM_GESTURE_TAP");
-    queueMessage (message.source, CONFIRM_GESTURE_TAP);
+    Queue_Message (message.source, CONFIRM_GESTURE_TAP);
 //  }
   
 }
@@ -1135,7 +1137,7 @@ boolean handleMessageConfirmTap (Message message) {
     // TODO: Set the module as "next"
     Serial.println (">> Received CONFIRM_GESTURE_TAP");
     
-    stopBlinkLight();
+    Stop_Blink_Light ();
     hasSwung = false;
   }
   
@@ -1178,7 +1180,7 @@ boolean handleMessageRequestConfirmTapToAnotherAsLeft(Message message) {
     Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
   
 //    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
-    queueMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
+    Queue_Message (message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
     
     // HACK: Move this! This should be more robust, likely!
     // TODO: Make this map to the other module only when it is already sequenced!
@@ -1205,7 +1207,7 @@ boolean handleMessageRequestConfirmTapToAnotherAsLeft(Message message) {
     //setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
     
 //    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
-    queueMessage(message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
+    Queue_Message (message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
 
     Serial.println("<< Sending ");
   }
@@ -1279,7 +1281,7 @@ boolean handleMessageRequestConfirmTapToAnotherAsRight (Message message) {
     
     
 //    addBroadcast(CONFIRM_GESTURE_TAP_AS_RIGHT);
-    queueMessage(message.source, CONFIRM_GESTURE_TAP_AS_RIGHT);
+    Queue_Message (message.source, CONFIRM_GESTURE_TAP_AS_RIGHT);
 
     Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_RIGHT");
   }

@@ -17,6 +17,8 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
+String ipAddress = "unassigned";
+
 #include <Adafruit_NeoPixel.h>
 #include "Utilities.h"
 #include "Platform.h"
@@ -53,6 +55,7 @@ boolean clearEeprom () {
     EEPROM.write(i, 0);
   }
 }
+
 
 
 // Foundation State:s
@@ -102,6 +105,41 @@ boolean setupFoundation () {
   
   Serial.print ("Foundation UUID: "); for (int i = 0; i < UUID_SIZE; i++) { Serial.print ((char) foundationUuid[i]); } Serial.print ("\n");
   
+}
+
+char terminalBuffer[64] = { 0 };
+int terminalBufferSize = 0;
+
+void Get_Terminal () {
+  
+//  terminalBufferSize = 0;
+
+  // Read data on serial terminal (if any)
+  while (Serial.available () > 0) {
+
+    int incomingByte = Serial.read (); // receive a byte as character
+    char c = (char) incomingByte;
+    
+    if (c == '\n') {
+      terminalBuffer[terminalBufferSize] = '\0'; // Terminate console message buffer
+      
+      // Create a String from the terminal buffer
+      String consoleMessage = String (terminalBuffer);
+      
+      // Parse the message
+      if (consoleMessage.compareTo ("ip") == 0) {
+        Serial.println (ipAddress);
+      }
+      
+      terminalBufferSize = 0;
+      
+      break;
+    }
+    
+    // Copy byte into message buffer
+    terminalBuffer[terminalBufferSize] = c;
+    terminalBufferSize++;
+  }
 }
 
 void setup () {
@@ -160,7 +198,7 @@ void setup () {
   delay (2000);
   
   Serial.begin (9600); 
-  Serial.println (F("Pixel Firmware"));
+  Serial.println (F ("Pixel Firmware"));
   
   setupPlatform (); // Setup Pixel's reflection (i.e., it's virtual machine)
   
@@ -179,7 +217,7 @@ void setup () {
   setupSound ();
   
   // Flash RGB LEDs
-  blinkLight (3);
+  Blink_Light (3);
   
   
   Move_Motion (0.5 * 1000);
@@ -199,6 +237,8 @@ void setup () {
 boolean hasGestureProcessed = false;
 
 void loop () {
+  
+  Get_Terminal ();
   
   if (hasPlatformUuid) {
 
@@ -269,11 +309,11 @@ void loop () {
       Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
       Propagate_Channel_Value (moduleOutputChannel);
-      blinkLight (1);
+      Blink_Light (1);
     } else {
       // Output port is on a different module than this one!
-      blinkLight (2);
-      queueMessage (BROADCAST_ADDRESS, ACTIVATE_MODULE_OUTPUT);
+      Blink_Light (2);
+      Queue_Message (BROADCAST_ADDRESS, ACTIVATE_MODULE_OUTPUT);
     }
 //    delay(500);
   } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
@@ -284,7 +324,7 @@ void loop () {
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
       Propagate_Channel_Value (moduleOutputChannel);
     } else {
-      queueMessage (BROADCAST_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
+      Queue_Message (BROADCAST_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
     }
 //    delay(500);
   }
@@ -292,8 +332,7 @@ void loop () {
   // TODO: Send updated state of THIS board (master) to the OTHER board (slave) for caching.
   
   // Get behavior updates from slave
-//  Get_Behavior_Transformations ();
-  Get_Behavior_Transformations_Serial ();
+  Get_Behavior_Transformations ();
   
   // Perform behavior step in the interpreter (Evaluate)
   // TODO: Transform_Behavior (i.e., the Behavior Transformer does this, akin to interpreting an instruction/command)
@@ -320,7 +359,7 @@ void loop () {
 
   // Change color/light if needed
   if (crossfadeStep < 256) {
-    applyColor();
+    Light_Apply_Color ();
   }
   
   //
@@ -344,7 +383,7 @@ void loop () {
     if (currentTime - lastSwingTime > lastSwingTimeout) {
       
       // Cancel swing gesture
-      stopBlinkLight();
+      Stop_Blink_Light ();
       hasSwung = false;
       
       // Reset the timer
