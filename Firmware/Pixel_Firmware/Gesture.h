@@ -200,9 +200,9 @@ int classifyGestureFromTransitionsWithInstability () {
  * Handle "at rest, on table" gesture.
  */
 boolean handleGestureAtRest() {
-  setColor(0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
+  Update_Color (0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
   
-  addBroadcast(ANNOUNCE_GESTURE_AT_REST);
+  Queue_Broadcast (ANNOUNCE_GESTURE_AT_REST);
 }
 
 unsigned long lastSwingTime = 0L;
@@ -228,12 +228,12 @@ boolean handleGestureSwing() {
 
   // Update the module's color
   if (isSequenced) {
-    setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+    Update_Color (sequenceColor[0], sequenceColor[1], sequenceColor[2]);
   } else {
-    setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+    Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
   }
   
-  addBroadcast(ANNOUNCE_GESTURE_SWING);
+  Queue_Broadcast (ANNOUNCE_GESTURE_SWING);
 }
 
 ///**
@@ -273,7 +273,7 @@ boolean handleGestureTap() {
     // When the module is tapped, and if it has received an ANNOUNCE_GESTURE_SWING from a neighbor very recently, respond to the neighbor (that sent the "swing" message) and notify all other neighbors that this module is responding to the swing and to remove it from their memory of "recently swung" neighbors.
     if (lastSwingAddress != -1) {
       
-      addBroadcast (ANNOUNCE_GESTURE_TAP);
+      Queue_Broadcast (ANNOUNCE_GESTURE_TAP);
       Serial.println ("^ Broadcasting ANNOUNCE_GESTURE_TAP");
       
     }
@@ -306,7 +306,7 @@ boolean handleGestureTapToAnotherAsLeft() {
   awaitingNextModuleConfirm = true;
   awaitingNextModuleStartTime = millis();
   
-  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_LEFT);
+  Queue_Broadcast (ANNOUNCE_GESTURE_TAP_AS_LEFT);
   Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_LEFT");
 }
 
@@ -348,7 +348,7 @@ boolean handleGestureTapToAnotherAsRight() {
   awaitingPreviousModuleConfirm = true;
   awaitingPreviousModuleStartTime = millis();
 
-  addBroadcast(ANNOUNCE_GESTURE_TAP_AS_RIGHT);
+  Queue_Broadcast (ANNOUNCE_GESTURE_TAP_AS_RIGHT);
   Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_RIGHT");
 }
 
@@ -394,43 +394,43 @@ boolean handleGestureShake() {
     
 //  }
   
-  addBroadcast(ANNOUNCE_GESTURE_SHAKE);
+  Queue_Broadcast (ANNOUNCE_GESTURE_SHAKE);
 }
 
 /**
  * Handle "tilt left" gesture.
  */
 boolean handleGestureTiltLeft() {
-  setColor(0, 0, 255);
+  Update_Color (0, 0, 255);
   
-  addBroadcast(ANNOUNCE_GESTURE_TILT_LEFT);
+  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_LEFT);
 }
 
 /**
  * Handle "tilt right" gesture.
  */
 boolean handleGestureTiltRight() {
-  setColor(0, 255, 0);
+  Update_Color (0, 255, 0);
   
-  addBroadcast(ANNOUNCE_GESTURE_TILT_RIGHT);
+  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_RIGHT);
 }
 
 /**
  * Handle "tilt forward" gesture.
  */
 boolean handleGestureTiltForward() {
-  setColor(0, 255, 0);
+  Update_Color (0, 255, 0);
   
-  addBroadcast(ANNOUNCE_GESTURE_TILT_FORWARD);
+  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_FORWARD);
 }
 
 /**
  * Handle "tilt backward" gesture.
  */
 boolean handleGestureTiltBackward() {
-  setColor(0, 255, 0);
+  Update_Color (0, 255, 0);
   
-  addBroadcast(ANNOUNCE_GESTURE_TILT_BACKWARD);
+  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_BACKWARD);
 }
 
 #endif

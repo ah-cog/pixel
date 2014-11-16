@@ -34,7 +34,7 @@ void setup () {
   
   setupBridge ();
 
-  Serial.begin (9600); // Start serial for output
+  Serial.begin (115200); // Start serial for output
   Serial.println (F ("Looper Firmware"));
   
   setupLooper ();
@@ -54,7 +54,7 @@ void loop () {
   Adafruit_CC3000_ClientRef client = httpServer.available ();
   
   if (client) {
-    handleClientConnection (client);
+    handleClientConnection (celient);
   }
   
   // Propagate data to the main device
