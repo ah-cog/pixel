@@ -202,7 +202,8 @@ int classifyGestureFromTransitionsWithInstability () {
 boolean Handle_Gesture_At_Rest () {
   Update_Color (0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
   
-  Queue_Broadcast (ANNOUNCE_GESTURE_AT_REST);
+//  Queue_Broadcast (ANNOUNCE_GESTURE_AT_REST);
+  Queue_Broadcast ("fyi gesture at rest");
 }
 
 unsigned long lastSwingTime = 0L;
@@ -233,7 +234,8 @@ boolean Handle_Gesture_Swing () {
     Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
   }
   
-  Queue_Broadcast (ANNOUNCE_GESTURE_SWING);
+//  Queue_Broadcast (ANNOUNCE_GESTURE_SWING);
+  Queue_Broadcast ("fyi gesture swing");
 }
 
 ///**
@@ -273,7 +275,8 @@ boolean Handle_Gesture_Tap () {
     // When the module is tapped, and if it has received an ANNOUNCE_GESTURE_SWING from a neighbor very recently, respond to the neighbor (that sent the "swing" message) and notify all other neighbors that this module is responding to the swing and to remove it from their memory of "recently swung" neighbors.
     if (lastSwingAddress != -1) {
       
-      Queue_Broadcast (ANNOUNCE_GESTURE_TAP);
+//      Queue_Broadcast (ANNOUNCE_GESTURE_TAP);
+      Queue_Broadcast ("fyi gesture tap");
       Serial.println ("^ Broadcasting ANNOUNCE_GESTURE_TAP");
       
     }
@@ -306,7 +309,8 @@ boolean Handle_Gesture_Tap_As_Left () {
   awaitingNextModuleConfirm = true;
   awaitingNextModuleStartTime = millis();
   
-  Queue_Broadcast (ANNOUNCE_GESTURE_TAP_AS_LEFT);
+  // Queue_Broadcast (ANNOUNCE_GESTURE_TAP_AS_LEFT);
+  Queue_Broadcast ("fyi gesture tap as left");
   Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_LEFT");
 }
 
@@ -348,7 +352,8 @@ boolean Handle_Gesture_Tap_As_Right () {
   awaitingPreviousModuleConfirm = true;
   awaitingPreviousModuleStartTime = millis();
 
-  Queue_Broadcast (ANNOUNCE_GESTURE_TAP_AS_RIGHT);
+  // Queue_Broadcast (ANNOUNCE_GESTURE_TAP_AS_RIGHT);
+  Queue_Broadcast ("fyi gesture tap as right");
   Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_RIGHT");
 }
 
@@ -394,7 +399,8 @@ boolean Handle_Gesture_Shake () {
     
 //  }
   
-  Queue_Broadcast (ANNOUNCE_GESTURE_SHAKE);
+//  Queue_Broadcast (ANNOUNCE_GESTURE_SHAKE);
+  Queue_Broadcast ("fyi gesture shake");
 }
 
 /**
@@ -403,7 +409,8 @@ boolean Handle_Gesture_Shake () {
 boolean Handle_Gesture_Tilt_Left () {
   Update_Color (0, 0, 255);
   
-  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_LEFT);
+//  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_LEFT);
+  Queue_Broadcast ("fyi gesture tilt left");
 }
 
 /**
@@ -412,7 +419,8 @@ boolean Handle_Gesture_Tilt_Left () {
 boolean Handle_Gesture_Tilt_Right () {
   Update_Color (0, 255, 0);
   
-  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_RIGHT);
+//  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_RIGHT);
+  Queue_Broadcast ("fyi gesture tilt right");
 }
 
 /**
@@ -421,7 +429,8 @@ boolean Handle_Gesture_Tilt_Right () {
 boolean Handle_Gesture_Tilt_Forward () {
   Update_Color (0, 255, 0);
   
-  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_FORWARD);
+//  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_FORWARD);
+  Queue_Broadcast ("fyi gesture tilt forward");
 }
 
 /**
@@ -430,7 +439,8 @@ boolean Handle_Gesture_Tilt_Forward () {
 boolean Handle_Gesture_Tilt_Backward () {
   Update_Color (0, 255, 0);
   
-  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_BACKWARD);
+//  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_BACKWARD);
+  Queue_Broadcast ("fyi gesture tilt backward");
 }
 
 #endif

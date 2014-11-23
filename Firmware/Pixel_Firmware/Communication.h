@@ -28,10 +28,235 @@ int neighbors[NEIGHBOR_LIMIT];
 
 //! Mesh message structure
 //!
+//struct Message {
+//  int source; // The address of the message's sender
+//  int message; // The received message's data payload
+//};
+
+//! Message (i.e., Message) to propagate.
+//!
+//! TODO: Rename to Transformation
 struct Message {
-  int source; // The address of the message's sender
-  int message; // The received message's data payload
+  char* content;
+  int size;
+  
+  int source;
+  int destination;
+  
+  Message* previous;
+  Message* next;
 };
+
+Message* outgoingMessages = NULL; // outgoing message queue
+Message* incomingMessages = NULL; // incoming message queue
+
+//! Create message (i.e., a behavior transformation).
+//!
+Message* Create_Message (int source, int destination, String content) {
+  
+  Serial.println ("Create_Message");
+  Serial.print ("data = "); Serial.print (content); Serial.print ("\n");
+  
+  // Create substrate
+  Message* message = (Message*) malloc (sizeof (Message));
+  
+  Serial.println ("Allocated Message.");
+  
+  // Initialize transformation
+  // (*transformation).size = PROPAGATION_SIZE;
+  //(*transformation).size = data.length() + 1; // NOTE: Add 1 to the length to account for the '\0' character.
+  (*message).size = content.length (); // NOTE: Add 1 to the length to account for the '\0' character.
+//  (*message).position = 0;
+  //(*transformation).data = (char*) malloc (PROPAGATION_SIZE * sizeof (char));
+  (*message).content = (char*) malloc (((*message).size + 1) * sizeof (char));
+  //data.toCharArray ((*transformation).data, PROPAGATION_SIZE);
+  content.toCharArray ((*message).content, ((*message).size + 1));
+  
+  (*message).previous = NULL;
+  (*message).next = NULL;
+  
+  Serial.print ("Initialized Message "); Serial.print ((int) message); Serial.print ("\n");
+  
+  // Return sequence
+  return message;
+  
+}
+
+//! Frees the message from dynamic memory.
+//!
+boolean Delete_Message (Message* message) {
+  
+  Serial.println ("Delete_Message");
+  
+  if (message != NULL) {
+    
+    // Free the data payload
+    if ((*message).content != NULL) {
+      free ((*message).content);
+    }
+    
+    // Free the message object
+    free (message);
+    
+  }
+  
+}
+
+//! Queue the outgoing message.
+//!
+Message* Queue_Outgoing_Message (Message* message) {
+  
+  Serial.println ("Queue_Outgoing_Message");
+  
+  if (outgoingMessages == NULL) {
+    
+    // Push to the top of the stack (as the first element)
+    outgoingMessages = message;
+    
+    // Set up the forward and back links
+    (*message).previous = NULL;
+    (*message).next     = NULL;
+    
+  } else {
+    
+    // Get the last message in the queue
+    Message* lastMessage = outgoingMessages;
+    while ((*lastMessage).next != NULL) {
+      Serial.print ("\tnext");
+      lastMessage = (*lastMessage).next;
+    }
+    
+    // Push to the last position in the queue
+    // i.e., add to [ m0, m1, ..., mn ] at m(n + 1) as in [ m0, m1, ..., mn, m(n + 1) ]
+    (*lastMessage).next = message;
+    
+    // Set up the backward and forward queue links
+    (*message).previous = lastMessage;
+    (*message).next = NULL;
+    
+  }
+  
+  // Return message
+  return message;
+  
+}
+
+//! Dequeue the next outgoing message.
+//!
+Message* Dequeue_Outgoing_Message () {
+  
+  Serial.println ("Dequeue_Outgoing_Message");
+  
+  Message* message = NULL;
+  
+  if (outgoingMessages != NULL) {
+    
+    // Get the transformation at the front of the propagator's queue
+    message = outgoingMessages;
+    
+    // Update the message queue. Set the message following the dequeued message as the front of the queue.
+    outgoingMessages = (*message).next;
+    
+    // Dissociate the dequeued message. Update the backward and forward links of the dequeued message.
+    (*message).next = NULL;
+    (*message).previous = NULL;
+    
+  }
+  
+  return message;
+  
+}
+
+//! Queue the incoming message.
+//!
+Message* Queue_Incoming_Message (Message* message) {
+  
+  Serial.println ("Queue_Incoming_Message");
+  
+  if (incomingMessages == NULL) {
+    
+    // Push to the top of the stack (as the first element)
+    incomingMessages = message;
+    
+    // Set up the forward and back links
+    (*message).previous = NULL;
+    (*message).next     = NULL;
+    
+  } else {
+    
+    // Get the last message in the queue
+    Message* lastMessage = incomingMessages;
+    while ((*lastMessage).next != NULL) {
+      Serial.print ("\tnext");
+      lastMessage = (*lastMessage).next;
+    }
+    
+    // Push to the last position in the queue
+    // i.e., add to [ m0, m1, ..., mn ] at m(n + 1) as in [ m0, m1, ..., mn, m(n + 1) ]
+    (*lastMessage).next = message;
+    
+    // Set up the backward and forward queue links
+    (*message).previous = lastMessage;
+    (*message).next = NULL;
+    
+  }
+  
+  // Return message
+  return message;
+  
+}
+
+//! Dequeue the next incoming message.
+//!
+Message* Dequeue_Incoming_Message () {
+  
+  Serial.println ("Dequeue_Incoming_Message");
+  
+  Message* message = NULL;
+  
+  if (incomingMessages != NULL) {
+    
+    // Get the transformation at the front of the propagator's queue
+    message = incomingMessages;
+    
+    // Update the message queue. Set the message following the dequeued message as the front of the queue.
+    incomingMessages = (*message).next;
+    
+    // Dissociate the dequeued message. Update the backward and forward links of the dequeued message.
+    (*message).next = NULL;
+    (*message).previous = NULL;
+    
+  }
+  
+  return message;
+  
+}
+
+//! Push a message onto the queue of messages to be processed and sent via the mesh network.
+//!
+boolean Queue_Broadcast (String content) {
+  Serial.println ("Queue_Broadcast");
+
+  Message* message = Create_Message (BROADCAST_ADDRESS, platformUuid, content);
+  Queue_Outgoing_Message (message);
+  
+  return true;
+}
+
+//! Push a message onto the queue of messages to be processed and sent via the mesh network.
+//!
+boolean Queue_Message (int destination, String content) {
+  Serial.println ("Queue_Message");
+
+  Message* message = Create_Message (destination, platformUuid, content);
+  Queue_Outgoing_Message (message);
+  
+  return true;
+}
+
+
+
+
 
 // Mesh incoming message queue
 #define MESH_INCOMING_QUEUE_CAPACITY 20
@@ -288,101 +513,168 @@ int Get_Output_Module_Count () {
 
 //----------
 
-//! Push a message onto the queue of messages to be processed and sent via the mesh network.
-//!
-boolean Queue_Incoming_Mesh_Message (int source, int message) {
-  // TODO: Add message to queue... and use sendMessage to send the messages...
-  
-  if (incomingMessageQueueSize < MESH_INCOMING_QUEUE_CAPACITY) {
-    // Add message to queue
-    meshIncomingMessages[incomingMessageQueueSize].source = source;
-    meshIncomingMessages[incomingMessageQueueSize].message = message; // Add message to the back of the queue
-    incomingMessageQueueSize++; // Increment the message count
-  }
-  
-//  Serial.print("queueing message (size: ");
-//  Serial.print(messageQueueSize);
-//  Serial.print(")\n");
-}
+////! Push a message onto the queue of messages to be processed and sent via the mesh network.
+////!
+//boolean Queue_Incoming_Mesh_Message (int source, int message) {
+//  // TODO: Add message to queue... and use sendMessage to send the messages...
+//  
+//  if (incomingMessageQueueSize < MESH_INCOMING_QUEUE_CAPACITY) {
+//    // Add message to queue
+//    meshIncomingMessages[incomingMessageQueueSize].source = source;
+//    meshIncomingMessages[incomingMessageQueueSize].message = message; // Add message to the back of the queue
+//    incomingMessageQueueSize++; // Increment the message count
+//  }
+//  
+////  Serial.print("queueing message (size: ");
+////  Serial.print(messageQueueSize);
+////  Serial.print(")\n");
+//}
 
-/**
- * Sends the top message on the mesh's message queue.
- */
-Message Dequeue_Incoming_Mesh_Message () {
-  
-  if (incomingMessageQueueSize > 0) {
-    
-    // Get the next message from the front of the queue
-    //unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
-    Message message = { meshIncomingMessages[0].source, meshIncomingMessages[0].message }; // Get message on front of queue
-    incomingMessageQueueSize--;
-    
-    // Shift the remaining messages forward one position in the queue
-    for (int i = 0; i < MESH_INCOMING_QUEUE_CAPACITY - 1; i++) {
-      meshIncomingMessages[i].source = meshIncomingMessages[i + 1].source;
-      meshIncomingMessages[i].message = meshIncomingMessages[i + 1].message;
-    }
-    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
-    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
-    
-    return message;
-  }
-}
-
-//! Push a message onto the queue of messages to be processed and sent via the mesh network.
-//!
-boolean Queue_Broadcast (int message) {
-  
-  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)
-    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
-    messageQueue[messageQueueSize].source = BROADCAST_ADDRESS; // Set "broadcast address"
-    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
-    messageQueueSize++; // Increment the message count
-    
-    return true;
-  }
-  
-  return false;
-}
+///**
+// * Sends the top message on the mesh's message queue.
+// */
+//Message Dequeue_Incoming_Mesh_Message () {
+//  
+//  if (incomingMessageQueueSize > 0) {
+//    
+//    // Get the next message from the front of the queue
+//    //unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
+//    Message message = { meshIncomingMessages[0].source, meshIncomingMessages[0].message }; // Get message on front of queue
+//    incomingMessageQueueSize--;
+//    
+//    // Shift the remaining messages forward one position in the queue
+//    for (int i = 0; i < MESH_INCOMING_QUEUE_CAPACITY - 1; i++) {
+//      meshIncomingMessages[i].source = meshIncomingMessages[i + 1].source;
+//      meshIncomingMessages[i].message = meshIncomingMessages[i + 1].message;
+//    }
+//    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
+//    meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
+//    
+//    return message;
+//  }
+//}
 
 //! Push a message onto the queue of messages to be processed and sent via the mesh network.
 //!
-boolean Queue_Message (int source, int message) {
-  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)  
-    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
-    messageQueue[messageQueueSize].source = source;
-    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
-    messageQueueSize++; // Increment the message count
-  }
-}
+//boolean Queue_Broadcast (int message) {
+//  
+//  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)
+//    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
+//    messageQueue[messageQueueSize].source = BROADCAST_ADDRESS; // Set "broadcast address"
+//    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
+//    messageQueueSize++; // Increment the message count
+//    
+//    return true;
+//  }
+//  
+//  return false;
+//}
+//boolean Queue_Broadcast (String message) {
+//  
+//  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)
+//    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
+//    messageQueue[messageQueueSize].source = BROADCAST_ADDRESS; // Set "broadcast address"
+//    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
+//    messageQueueSize++; // Increment the message count
+//    
+//    return true;
+//  }
+//  
+//  return false;
+//}
+
+//! Push a message onto the queue of messages to be processed and sent via the mesh network.
+//!
+//boolean Queue_Message (int source, int message) {
+//  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)  
+//    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
+//    messageQueue[messageQueueSize].source = source;
+//    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
+//    messageQueueSize++; // Increment the message count
+//  }
+//}
+//boolean Queue_Message (int source, String message) {
+//  if (messageQueueSize < MESSAGE_QUEUE_CAPACITY) { // Check if message queue is full (if so, don't add the message)  
+//    //messageQueue[messageQueueSize] = message; // Add message to the back of the queue
+//    messageQueue[messageQueueSize].source = source;
+//    messageQueue[messageQueueSize].message = message; // Add message to the back of the queue
+//    messageQueueSize++; // Increment the message count
+//  }
+//}
 
 //! Dequeues outgoing message.
 //!
-Message Dequeue_Outgoing_Message () {
-  
-  if (messageQueueSize > 0) {
-    
-    // Get the next message from the front of the queue
-    //unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
-    Message message = { messageQueue[0].source, messageQueue[0].message }; // Get message on front of queue
-    messageQueueSize--;
-    
-    // Shift the remaining messages forward one position in the queue
-    for (int i = 0; i < MESSAGE_QUEUE_CAPACITY - 1; i++) {
-      messageQueue[i].source = messageQueue[i + 1].source;
-      messageQueue[i].message = messageQueue[i + 1].message;
-    }
-    messageQueue[MESSAGE_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
-    messageQueue[MESSAGE_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
-    
-    return message;
-  }
-}
+//Message Dequeue_Outgoing_Message () {
+//  
+//  if (messageQueueSize > 0) {
+//    
+//    // Get the next message from the front of the queue
+//    //unsigned short int message = meshIncomingMessages[0].message; // Get message on front of queue
+//    Message message = { messageQueue[0].source, messageQueue[0].message }; // Get message on front of queue
+//    messageQueueSize--;
+//    
+//    // Shift the remaining messages forward one position in the queue
+//    for (int i = 0; i < MESSAGE_QUEUE_CAPACITY - 1; i++) {
+//      messageQueue[i].source = messageQueue[i + 1].source;
+//      messageQueue[i].message = messageQueue[i + 1].message;
+//    }
+//    messageQueue[MESSAGE_QUEUE_CAPACITY - 1].source = -1; // Set last message to "noop"
+//    messageQueue[MESSAGE_QUEUE_CAPACITY - 1].message = -1; // Set last message to "noop"
+//    
+//    return message;
+//  }
+//}
 
 //! Sends the top message on the mesh's message queue.
 //!
-boolean Send_Message () {
-  if (messageQueueSize > 0) {
+//boolean Send_Message () {
+//  if (messageQueueSize > 0) {
+//    
+////    // Get the next message from the front of the queue
+////    Message message = dequeueOutgoingMessage ();
+//    
+//    //
+//    // Actually send the message
+//    //
+//    
+////    if (isReading == false) {
+////        isWriting = true;
+//        
+////        Serial.println ("sendMessage");
+//        
+//        // Get the next message from the front of the queue
+//        Message* message = Dequeue_Outgoing_Message ();
+//      
+//        // MESH_SERIAL.write ('!');
+////        String data = String ("{ uuid: ") + String (platformUuid) + String (" , type: 'keep-alive' }");
+////        const int serialBufferSize = 64;
+////        char charData[serialBufferSize];
+////        data.toCharArray (charData, serialBufferSize);
+//        
+//        int bytesSent = 0;
+////        String data = String ("{ to: ") + String (message.source) + String (", from: ") + String (platformUuid) + String (" , data: ") + String (message.message) + String (" }");
+//        String data = String ("(") + String (message.source) + String (", ") + String (platformUuid) + String (", ") + String (message.message) + String (")");
+//        const int serialBufferSize = 64;
+//        char charData[serialBufferSize];
+//        data.toCharArray (charData, serialBufferSize);
+//        bytesSent = MESH_SERIAL.write (charData);
+//        
+////        Serial.println (charData);
+//        
+////        int bytesSent = MESH_SERIAL.write (charData);
+////        Serial.print ("sent "); Serial.print (bytesSent); Serial.print (" bytes\n\n");
+//        
+//        lastBroadcastTime = millis ();
+//        
+////        if (bytesSent >= data.length ()) {
+////          isWriting = false;
+////        }
+////      }
+//  }
+//}
+
+boolean Release_Message () { // boolean Send_Message () {
+  if (outgoingMessages != NULL) {
     
 //    // Get the next message from the front of the queue
 //    Message message = dequeueOutgoingMessage ();
@@ -397,7 +689,7 @@ boolean Send_Message () {
 //        Serial.println ("sendMessage");
         
         // Get the next message from the front of the queue
-        Message message = Dequeue_Outgoing_Message ();
+        Message* message = Dequeue_Outgoing_Message ();
       
         // MESH_SERIAL.write ('!');
 //        String data = String ("{ uuid: ") + String (platformUuid) + String (" , type: 'keep-alive' }");
@@ -407,7 +699,7 @@ boolean Send_Message () {
         
         int bytesSent = 0;
 //        String data = String ("{ to: ") + String (message.source) + String (", from: ") + String (platformUuid) + String (" , data: ") + String (message.message) + String (" }");
-        String data = String ("(") + String (message.source) + String (", ") + String (platformUuid) + String (", ") + String (message.message) + String (")");
+        String data = String ("(") + String ((*message).source) + String (", ") + String (platformUuid) + String (", ") + String ((*message).content) + String (")");
         const int serialBufferSize = 64;
         char charData[serialBufferSize];
         data.toCharArray (charData, serialBufferSize);
@@ -420,6 +712,8 @@ boolean Send_Message () {
         
         lastBroadcastTime = millis ();
         
+        Delete_Message (message);
+        
 //        if (bytesSent >= data.length ()) {
 //          isWriting = false;
 //        }
@@ -431,7 +725,8 @@ boolean Send_Message () {
 
 //! Collects any available messages on the mesh.
 //!
-boolean Collect_Mesh_Messages () {
+//boolean Collect_Mesh_Messages () {
+boolean Capture_Messages () {
   
 //  Serial.println ("Collect_Mesh_Messages");
   
@@ -482,11 +777,13 @@ boolean Collect_Mesh_Messages () {
         // TODO: Check timestamps when last received a broadcast, and ping those not reached for a long time, and remove them if needed.
         
         // Add incoming data to the incoming data queue (i.e., messages to be processed)
-        int dataParam = dataParameter.toInt ();
+        // int dataParam = dataParameter.toInt ();
         Serial.print (">> (from: "); Serial.print (fromParameter); Serial.print (", ");
         Serial.print ("to: "); Serial.print (toParameter); Serial.print (", ");
-        Serial.print ("data: "); Serial.print (dataParam); Serial.print (")\n\n");
-        Queue_Incoming_Mesh_Message (fromParameter, dataParam);
+        Serial.print ("data: "); Serial.print (dataParameter); Serial.print (")\n\n");
+        //Queue_Incoming_Mesh_Message (fromParameter, dataParam);
+        Message* message = Create_Message (toParameter, fromParameter, dataParameter);
+        Queue_Incoming_Message (message);
         
         serialBufferSize = 0;
         
@@ -609,7 +906,11 @@ boolean Handle_Message_Tap (Message message) {
     Serial.println (">> Received ANNOUNCE_GESTURE_TAP");
     
     // Send ACK message to message.source to confirm linking operation
-    Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP);
+//    Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP);
+    // Queue_Broadcast ("request confirm gesture tap");
+    Queue_Broadcast ("fyi tap");
+    // Queue_Broadcast (String ("send \"confirm gesture tap\" to ") + String (platformUuid));
+    // Queue_Broadcast (String ("send confirmation");
   }
   
 }
@@ -624,7 +925,9 @@ boolean Handle_Message_Request_Confirm_Tap (Message message) {
 //  if (hasSwung) { // if this is the module that was swung
     // TODO: 
     Serial.println (">> Received REQUEST_CONFIRM_GESTURE_TAP");
-    Queue_Message (message.source, CONFIRM_GESTURE_TAP);
+    //Queue_Message (message.source, CONFIRM_GESTURE_TAP);
+    // TODO: Make this message send immediately!
+    Queue_Message (message.destination, "fyi got tap");
 //  }
   
 }
@@ -659,7 +962,8 @@ boolean Handle_Message_Tap_To_Another_As_Left (Message message) {
       
       // Send ACK message to message.source to confirm linking operation
 //      addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
-      Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
+//      Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
+      Queue_Broadcast ("fyi confirm gesture tap as left");
       
 //      Serial.println("<< Sending REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
     }
@@ -740,7 +1044,8 @@ boolean Handle_Message_Tap_To_Another_As_Right (Message message) {
     awaitingNextModuleConfirm = true;
     
     // Send ACK message to message.source to confirm linking operation
-    Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
+    // Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
+    Queue_Broadcast ("fyi confirm gesture tap as right");
 //    addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT);
     
 //    Serial.println("<< Sending REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");

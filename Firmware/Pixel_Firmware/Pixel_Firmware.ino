@@ -273,7 +273,7 @@ void loop () {
   
   // Check for mesh data and receive it if present
   boolean hasReceivedMeshData = false;
-  hasReceivedMeshData = Collect_Mesh_Messages ();
+  hasReceivedMeshData = Capture_Messages ();
   
   //
   // Sense gesture (and phsyical orientation, generally)
@@ -410,103 +410,105 @@ void loop () {
   // Process incoming messages in queue (if any)
   //
   
-  if (incomingMessageQueueSize > 0) {
-    Message message = Dequeue_Incoming_Mesh_Message ();
+  if (incomingMessages != NULL) { // if (incomingMessageQueueSize > 0) {
+    Message* message = Dequeue_Incoming_Message ();
     
     Serial.print ("Received ");
     
-    // Sent by "left" module:
-    if (message.message == ANNOUNCE_ACTIVE) {
-      Serial.print ("ANNOUNCE_ACTIVE");
-    }
+    Serial.print ((*message).content);
     
-    else if (message.message == ANNOUNCE_GESTURE_SWING) {
-      Serial.print("ANNOUNCE_GESTURE_SWING");
-    } else if (message.message == ANNOUNCE_GESTURE_TAP) {
-      Serial.print("ANNOUNCE_GESTURE_TAP");
-    }
+//    // Sent by "left" module:
+//    if (message.message == ANNOUNCE_ACTIVE) {
+//      Serial.print ("ANNOUNCE_ACTIVE");
+//    }
+//    
+//    else if (message.message == ANNOUNCE_GESTURE_SWING) {
+//      Serial.print("ANNOUNCE_GESTURE_SWING");
+//    } else if (message.message == ANNOUNCE_GESTURE_TAP) {
+//      Serial.print("ANNOUNCE_GESTURE_TAP");
+//    }
+//    
+//    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) {
+//      Serial.print("ANNOUNCE_GESTURE_TAP_AS_LEFT");
+//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) {
+//      Serial.print("REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
+//    } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) {
+//      Serial.print("CONFIRM_GESTURE_TAP_AS_LEFT");
+//    }
+//    
+//    // Sent by "right" module:
+//    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_RIGHT) {
+//      Serial.print("ANNOUNCE_GESTURE_TAP_AS_RIGHT");
+//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT) {
+//      Serial.print("REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
+//    } else if (message.message == CONFIRM_GESTURE_TAP_AS_RIGHT) {
+//      Serial.print("CONFIRM_GESTURE_TAP_AS_RIGHT");
+//    }
+//    
+//    else if (message.message == ACTIVATE_MODULE_OUTPUT) {
+//      Serial.print("ACTIVATE_MODULE_OUTPUT");
+//    } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
+//      Serial.print("DEACTIVATE_MODULE_OUTPUT");
+//    }
+//    
+//    else {
+//      Serial.print(message.message);
+//    }
     
-    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) {
-      Serial.print("ANNOUNCE_GESTURE_TAP_AS_LEFT");
-    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) {
-      Serial.print("REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
-    } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) {
-      Serial.print("CONFIRM_GESTURE_TAP_AS_LEFT");
-    }
-    
-    // Sent by "right" module:
-    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_RIGHT) {
-      Serial.print("ANNOUNCE_GESTURE_TAP_AS_RIGHT");
-    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT) {
-      Serial.print("REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
-    } else if (message.message == CONFIRM_GESTURE_TAP_AS_RIGHT) {
-      Serial.print("CONFIRM_GESTURE_TAP_AS_RIGHT");
-    }
-    
-    else if (message.message == ACTIVATE_MODULE_OUTPUT) {
-      Serial.print("ACTIVATE_MODULE_OUTPUT");
-    } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
-      Serial.print("DEACTIVATE_MODULE_OUTPUT");
-    }
-    
-    else {
-      Serial.print(message.message);
-    }
-    
-    Serial.print(" from module ");
-    Serial.print(message.source);
-    Serial.print(" (of ");
-    Serial.print(incomingMessageQueueSize);
-    Serial.print(")\n");
+    Serial.print (" from module ");
+    Serial.print ((*message).source);
+//    Serial.print(" (of ");
+//    Serial.print(incomingMessageQueueSize);
+    Serial.print ("\n");
     
     //
     // Process received messages
     //
 
-    if (message.message == ANNOUNCE_ACTIVE) {
-      Handle_Message_Active (message);
-    }
-    
-    else if (message.message == ANNOUNCE_GESTURE_SWING) {
-      Handle_Message_Swing (message);
-    } else if (message.message == ANNOUNCE_GESTURE_SHAKE) {
-      Handle_Message_Shake (message);
-    } else if (message.message == ANNOUNCE_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
-      Handle_Message_Tap (message);
-    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
-      Handle_Message_Request_Confirm_Tap (message);
-    } else if (message.message == CONFIRM_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
-      Handle_Message_Confirm_Tap (message);
-    }
-    
-    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) { // From "left" module. "Left" module announces that it was tapped to another module as the left module [Sequence: Sequencing request (i.e., linking) confirmation, from "right" module]
-      Handle_Message_Tap_To_Another_As_Left (message);
-    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT) { // From "left" module. "Left" module requests "right" module to confirm that it received "ANNOUNCE_GESTURE_TAP_AS_LEFT"
-       Handle_Message_Request_Confirm_Tap_To_Another_As_Left (message);
-    } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) { // From "right" module (if it received the message from the "left" module). // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
-      Handle_Message_Confirm_Tap_To_Another_As_Left (message);
-    } else if (message.message == ANNOUNCE_GESTURE_TAP_AS_RIGHT) { // From "right" module. // Sequence: Sequencing request (i.e., linking) confirmation, from "left" module
-      Handle_Message_Tap_To_Another_As_Right (message);
-    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) { // From "right" module. // Sequence: Sequencing (i.e., linking) confirmation, from "left" module
-      Handle_Message_Request_Confirm_Tap_To_Another_As_Right (message);
-    } else if (message.message == CONFIRM_GESTURE_TAP_AS_RIGHT) { // From "left" module (if it received the messsage from the "right" module). // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
-      Handle_Message_Confirm_Tap_To_Another_As_Right (message);
-      // Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
-    
-    } else if (message.message == ACTIVATE_MODULE_OUTPUT) {
-      // ACTIVATE_MODULE_OUTPUT
-//      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
-//      syncPinValue(MODULE_OUTPUT_PIN);
-      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
-      Propagate_Channel_Value (moduleOutputChannel);
-    } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
-//      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
-//      syncPinValue(MODULE_OUTPUT_PIN);
-      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
-      Propagate_Channel_Value (moduleOutputChannel);
-    }
+//    if (message.message == ANNOUNCE_ACTIVE) {
+//      Handle_Message_Active (message);
+//    }
+//    
+//    else if (message.message == ANNOUNCE_GESTURE_SWING) {
+//      Handle_Message_Swing (message);
+//    } else if (message.message == ANNOUNCE_GESTURE_SHAKE) {
+//      Handle_Message_Shake (message);
+//    } else if (message.message == ANNOUNCE_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
+//      Handle_Message_Tap (message);
+//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
+//      Handle_Message_Request_Confirm_Tap (message);
+//    } else if (message.message == CONFIRM_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
+//      Handle_Message_Confirm_Tap (message);
+//    }
+//    
+//    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) { // From "left" module. "Left" module announces that it was tapped to another module as the left module [Sequence: Sequencing request (i.e., linking) confirmation, from "right" module]
+//      Handle_Message_Tap_To_Another_As_Left (message);
+//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT) { // From "left" module. "Left" module requests "right" module to confirm that it received "ANNOUNCE_GESTURE_TAP_AS_LEFT"
+//       Handle_Message_Request_Confirm_Tap_To_Another_As_Left (message);
+//    } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) { // From "right" module (if it received the message from the "left" module). // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
+//      Handle_Message_Confirm_Tap_To_Another_As_Left (message);
+//    } else if (message.message == ANNOUNCE_GESTURE_TAP_AS_RIGHT) { // From "right" module. // Sequence: Sequencing request (i.e., linking) confirmation, from "left" module
+//      Handle_Message_Tap_To_Another_As_Right (message);
+//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) { // From "right" module. // Sequence: Sequencing (i.e., linking) confirmation, from "left" module
+//      Handle_Message_Request_Confirm_Tap_To_Another_As_Right (message);
+//    } else if (message.message == CONFIRM_GESTURE_TAP_AS_RIGHT) { // From "left" module (if it received the messsage from the "right" module). // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
+//      Handle_Message_Confirm_Tap_To_Another_As_Right (message);
+//      // Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
+//    
+//    } else if (message.message == ACTIVATE_MODULE_OUTPUT) {
+//      // ACTIVATE_MODULE_OUTPUT
+////      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+////      syncPinValue(MODULE_OUTPUT_PIN);
+//      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
+//      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
+//      Propagate_Channel_Value (moduleOutputChannel);
+//    } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
+////      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+////      syncPinValue(MODULE_OUTPUT_PIN);
+//      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
+//      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
+//      Propagate_Channel_Value (moduleOutputChannel);
+//    }
   }
   
   //
@@ -537,12 +539,12 @@ void loop () {
   // Send outgoing messages (e.g., this module's updated gesture)
   //
   
-  currentTime = millis();
+  currentTime = millis ();
   if (currentTime - lastMessageSendTime > PACKET_WRITE_TIMEOUT) {
   
     // Process mesh message queue  
-    if (messageQueueSize > 0) {
-      Send_Message ();
+    if (outgoingMessages != NULL) { // if (messageQueueSize > 0) {
+      Release_Message ();
     }
     
     // Update the time that a message was most-recently dispatched
