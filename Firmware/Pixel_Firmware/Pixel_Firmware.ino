@@ -33,6 +33,9 @@ String ipAddress = "unassigned";
 #include "I2C.h"
 #include "Ports.h"
 
+#include "Foundation.h" // i.e., the kernel
+#include "Language.h" // i.e., the shell
+
 /**
  * Module configuration
  */
@@ -46,210 +49,6 @@ String ipAddress = "unassigned";
 //                     | |    
 //                     |_|    
 
-#define EEPROM_SIZE 512
-boolean clearEeprom () {
-  // write a 0 to all bytes of the EEPROM
-  for (int i = 0; i < EEPROM_SIZE; i++) {
-    EEPROM.write(i, 0);
-  }
-}
-
-#define RESTART_ADDR       0xE000ED0C
-#define READ_RESTART()     (*(volatile uint32_t *)RESTART_ADDR)
-#define WRITE_RESTART(val) ((*(volatile uint32_t *)RESTART_ADDR) = (val))
-
-boolean Restart () {
-  // 0000101111110100000000000000100
-  // Assert [2]SYSRESETREQ
-  WRITE_RESTART(0x5FA0004);
-}
-
-
-// Foundation State:s
-boolean hasFoundationUuid = false;
-
-#define UUID_SIZE 36
-int foundationUuidSignatureMemoryAddress = 0;
-int foundationUuidMemoryAddress = foundationUuidSignatureMemoryAddress + 1;
-char foundationUuid[UUID_SIZE];
-boolean setupFoundation () {
-  // Check if UUID has been written to EEPROM, and if so, read it into RAM (and load it into the Looper engine).
-  // If not, generate a UUID into memory
-  
-  // Read the UUID signature byte. If it is equal to '!', then assume a UUID has been written.
-  byte foundationUuidSignatureByte = EEPROM.read (foundationUuidSignatureMemoryAddress);
-
-  // Check if the UUID signature byte (i.e., '!') has been written to memory.
-  if (foundationUuidSignatureByte != '!') {
-    // The UUID is not present in EEPROM, so generate one and write it to EEPROM before proceeding.
-  
-    // Version 4 UUID: https://en.wikipedia.org/wiki/Universally_unique_identifier
-//    char generatedFoundationUuid[] = "c6ade405-3b5d-4783-8d2e-ac53d429a857"; // Module 1
-//    char generatedFoundationUuid[] = "d9c95b97-fbcc-484f-bc61-2572c4a00d9c"; // Module 2
-    char generatedFoundationUuid[] = "cad165c7-2238-4455-9f85-7f025a9ddb6f"; // Module 3
-//    char generatedFoundationUuid[] = "5f29d296-d444-49e5-8988-5b0bd71b3dcc"; // Module 4
-//    char generatedFoundationUuid[] = "118b8b18-a851-49fa-aef9-b8f5b18da90d"; // Module 5
-    // TODO: char* generateFoundationUuid ()
-    
-    // Write UUID signature to EEPROM
-    EEPROM.write (foundationUuidSignatureMemoryAddress, '!'); // Write foundation UUID signature (i.e., the '!' symbol)
-  
-    // Write UUID to EEPROM
-    int i = 0;
-    for (int address = foundationUuidMemoryAddress; address < (foundationUuidMemoryAddress + UUID_SIZE); address++) {
-      EEPROM.write (address, generatedFoundationUuid[i]);
-      i++;
-    }
-    
-  }
-  
-  // Read UUID from EEPROM
-  int i = 0;
-  for (int address = foundationUuidMemoryAddress; address < (foundationUuidMemoryAddress + UUID_SIZE); address++) {
-    foundationUuid[i] = EEPROM.read (address);
-    i++;
-  }
-  
-  Serial.print ("Foundation UUID: "); for (int i = 0; i < UUID_SIZE; i++) { Serial.print ((char) foundationUuid[i]); } Serial.print ("\n");
-  
-}
-
-
-void Perform_Shell_Behavior (String consoleMessage);
-
-String previousConsoleInput = "";
-char consoleBuffer[64] = { 0 };
-int consoleBufferSize = 0;
-
-/**
- * This is the basic shell for the device.
- */
-void Get_Console () {
-  
-//  terminalBufferSize = 0;
-
-  // Read data on serial terminal (if any)
-  while (Serial.available () > 0) {
-
-    int incomingByte = Serial.read (); // receive a byte as character
-    char c = (char) incomingByte;
-    
-    if (c == '\n') {
-      consoleBuffer[consoleBufferSize] = '\0'; // Terminate console message buffer
-      
-      // Create a String from the terminal buffer
-      String consoleMessage = String (consoleBuffer);
-      
-      if (consoleMessage.length () == 0) {
-        consoleMessage = previousConsoleInput;
-      } else {
-        
-        previousConsoleInput = consoleMessage;
-        
-        // TODO: Don't separate "shell" behavior from other behaviors!
-        Perform_Shell_Behavior (consoleMessage);
-        
-        consoleBufferSize = 0;
-      }
-      
-      break;
-    }
-    
-    // Copy byte into message buffer
-    consoleBuffer[consoleBufferSize] = c;
-    consoleBufferSize++;
-  }
-}
-
-// TODO: Make this callable remotely from other nodes...
-// TODO: Add command to set default module (e.g., "enter"), and return to the current module (e.g., "exit")
-void Perform_Shell_Behavior (String message) {
-  
-  // Echo the message
-  Serial.print ("> ");
-  Serial.print (message);
-  Serial.print ("\n");
-  
-  // Parse and process the message
-  if (message.compareTo ("ip") == 0) {
-    Serial.println (ipAddress);
-    
-  } else if (message.compareTo ("status") == 0) {
-    Serial.println (platformUuid);
-    
-  } else if (message.compareTo ("neighbors") == 0) {
-    for (int i = 0; i < neighborCount; i++) {
-      Serial.print (i);
-      Serial.print ("\t");
-      Serial.print (neighbors[i]);
-      Serial.print ("\n");
-    }
-    
-  } else if (message.compareTo ("outputs") == 0) {
-    for (int i = 0; i < nextModuleCount; i++) {
-      Serial.print (i);
-      Serial.print ("\t");
-      Serial.print (nextModules[i]);
-      Serial.print ("\n");
-    }
-    
-  } else if (message.compareTo ("inupts") == 0) {
-    for (int i = 0; i < previousModuleCount; i++) {
-      Serial.print (i);
-      Serial.print ("\t");
-      Serial.print (previousModules[i]);
-      Serial.print ("\n");
-    }
-    
-  } else if (message.compareTo ("color") == 0) {
-    Update_Input_Color (random (256), random (256), random (256));
-    Update_Output_Color (random (256), random (256), random (256));
-    Serial.println ("Randomizing colors.");
-    delay (1000);
-    
-  } else if (message.compareTo ("sound") == 0) {
-    Play_Note (NOTE_C6, 1000);
-//          delay (1000);
-//          Stop_Sound ();
-
-  } else if (message.compareTo ("ping") == 0) {
-    
-    // TODO: Broadcast ping to all other devices on mesh, requesting them to report their address.
-    
-    // TODO: Add TCP/IP ping for Wi-Fi, too!
-    
-  } else if (message.compareTo ("enter") == 0) {
-    
-    // e.g., "enter neighbor 34"
-    
-  } else if (message.compareTo ("exit") == 0) {
-    
-    // e.g., "exit"
-    
-  } else if (message.compareTo ("remember") == 0) {
-    
-    // TODO: Add (key, value) pair to memory
-    
-  } else if (message.compareTo ("recall") == 0) {
-    
-    // TODO: Recall (key, value) pair by key
-    
-  } else if (message.compareTo ("propagate") == 0) {
-    
-    // TODO: Prefix command with "propagate" to broadcast
-    
-  } else if (message.compareTo ("reboot") == 0) {
-    
-    Serial.println ("BBL.");
-    Restart ();
-    
-  } else {
-    
-    Serial.println ("That doesn't do anything.");
-    
-  }
-}
-
 void setup () {
   
 //  delay (2000);
@@ -259,8 +58,8 @@ void setup () {
   // Initialize pseudorandom number generator
   randomSeed (analogRead (0));
   
-    setupCommunication ();
-    setupBridge ();
+  setupCommunication ();
+  setupBridge ();
   
   if (hasFoundationUuid == false) {
     setupFoundation ();
@@ -282,18 +81,6 @@ void setup () {
   
   // Assign the module a unique color
   Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-
-  // Fade on the module to let people know it's alive!
-//  fadeOn();
-//  fadeOff();
-  
-  // Setup mesh networking peripherals (i.e., RadioBlocks)
-//  setupCommunication ();
-//  setupCommunication2 ();
-  
-  //
-  // Setup serial communication (for debugging)
-  //
   
   delay (2000);
   
@@ -333,7 +120,8 @@ void loop () {
   
   Get_Console ();
   
-  if (hasPlatformUuid) {
+  // Broadcast Presence
+  if (hasPlatformUuid) { 
 
     // Broadcast device's address (UUID)
     unsigned long currentTime = millis ();
@@ -342,7 +130,6 @@ void loop () {
 //      if (isReading == false) {
 //        isWriting = true;
 
-      
         // MESH_SERIAL.write ('!');
 //        String data = String ("{ uuid: ") + String (platformUuid) + String (" , type: 'keep-alive' }");
 //        const int serialBufferSize = 64;
@@ -364,21 +151,14 @@ void loop () {
 //        int bytesSent = MESH_SERIAL.write (charData);
 //        Serial.print ("sent "); Serial.print (bytesSent); Serial.print (" bytes\n\n");
         
-        lastBroadcastTime = millis ();  
+        lastBroadcastTime = millis ();
         
 //        if (bytesSent >= data.length ()) {
-//          isWriting = false;s
+//          isWriting = false;
 //        }
 //      }
     }
   }
-  
-  
-  
-  
-  
-  
-  
   
   // TODO: Broadcast the foundation's default device address (upon boot)
   
@@ -391,11 +171,10 @@ void loop () {
   lastInputValue = touchInputMean;
   
   // Get module's input
-  Get_Input_Port_Continuous (); // getInputPort(); // syncInputPort()
+  Get_Input_Port_Continuous ();  
+  // Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
   
-//  Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
-  
-  if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"  
+  if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
     if (outputPinRemote == false) {
       // Output port is on this module!
       //Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
@@ -502,7 +281,7 @@ void loop () {
   
   boolean hasGestureChanged = false;
   if (senseOrientation ()) {
-    storeData();
+    storeData ();
     
     // Classify live gesture sample
     unsigned long currentTime = millis();
@@ -602,25 +381,25 @@ void loop () {
       
       // Handle gesture
       if (classifiedGestureIndex == 0) { // Check if gesture is "at rest"
-        handleGestureAtRest();
+        Handle_Gesture_At_Rest ();
       } else if (classifiedGestureIndex == 1) { // Check if gesture is "swing"
-        handleGestureSwing();
+        Handle_Gesture_Swing ();
       } else if (classifiedGestureIndex == 2) { // Check if gesture is "tap to another, as left"
-        handleGestureTap();
-        // handleGestureTapToAnotherAsLeft();
+        Handle_Gesture_Tap ();
+        // Handle_Gesture_Tap_As_Left ();
       } else if (classifiedGestureIndex == 3) { // Check if gesture is "tap to another, as right"
-        handleGestureTap();
-        // handleGestureTapToAnotherAsRight();
+        Handle_Gesture_Tap ();
+        // Handle_Gesture_Tap_As_Right ();
       } else if (classifiedGestureIndex == 4) { // Check if gesture is "shake"
-        handleGestureShake();
+        Handle_Gesture_Shake ();
       } else if (classifiedGestureIndex == 5) { // Check if gesture is "tilt left"
-        handleGestureTiltLeft();
+        Handle_Gesture_Tilt_Left ();
       } else if (classifiedGestureIndex == 6) { // Check if gesture is "tilt right"
-        handleGestureTiltRight();
+        Handle_Gesture_Tilt_Right ();
       } else if (classifiedGestureIndex == 7) { // Check if gesture is "tilt forward"
-        handleGestureTiltForward();
+        Handle_Gesture_Tilt_Forward ();
       } else if (classifiedGestureIndex == 8) { // Check if gesture is "tilt backward"
-        handleGestureTiltBackward();
+        Handle_Gesture_Tilt_Backward ();
       }
       
       hasGestureProcessed = true; // Set flag indicating gesture has been processed
@@ -728,11 +507,6 @@ void loop () {
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
       Propagate_Channel_Value (moduleOutputChannel);
     }
-    
-    // TODO: ANNOUNCE_GESTURE_SHAKE
-    
-    // TODO: Deactivate module (because it's passing a sequence iterator forward)
-    // TODO: Module announces removal from sequence (previous and next)
   }
   
   //
@@ -741,9 +515,9 @@ void loop () {
   
   //if (awaitingNextModuleConfirm) {
   if (awaitingNextModule) {
-    unsigned long currentTime = millis();
+    unsigned long currentTime = millis ();
     if (currentTime - awaitingNextModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
-      Serial.println("awaitingNextModule reset");
+      Serial.println ("awaitingNextModule reset");
       awaitingNextModule = false;
       awaitingNextModuleConfirm = false;
     }
@@ -751,9 +525,9 @@ void loop () {
   
   //if (awaitingPreviousModuleConfirm) {
   if (awaitingPreviousModule) {
-    unsigned long currentTime = millis();
+    unsigned long currentTime = millis ();
     if (currentTime - awaitingPreviousModuleStartTime > SEQUENCE_REQUEST_TIMEOUT) {
-      Serial.println("awaitingPreviousModule reset");
+      Serial.println ("awaitingPreviousModule reset");
       awaitingPreviousModule = false;
       awaitingPreviousModuleConfirm = false;
     }

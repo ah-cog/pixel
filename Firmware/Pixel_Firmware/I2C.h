@@ -21,24 +21,16 @@ int i2cMessageBufferSize = 0;
 
 #define SLAVE_DEVICE_ADDRESS 2 // Slave device address
 
-//String getValue (String data, char separator, int index);
-//int getValueCount (String data, char separator);
-
-// TODO: Move this to "Ports.h"
-//void sendToSlave(char* text) {
-//  // Send character string to slave device
-//  Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4
-//  Wire.write(text);
-//  Wire.endTransmission();    // stop transmitting
-//}
-
-// TODO: Move this to "Ports.h"
+//! Propagates channel values to machine's transclusions.
+//!
+//! TODO: Move this to "Ports.h"
 void Propagate_Channel_Value (Channel* channel) {
 //void syncPinValue(int pin) {
 
   // Get the most recent pin value
   int pinValue = Get_Current_Channel_Value (channel);
   
+  // TODO: Conditionally propagate only on ports on which machine transclusions exist.
   // Update the state (on slave board for Looper)
   char buf[8];
   Wire.beginTransmission(SLAVE_DEVICE_ADDRESS); // transmit to device #4

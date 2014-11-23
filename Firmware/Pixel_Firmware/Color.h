@@ -21,7 +21,9 @@ int crossfadeStep = 0;
 
 int defaultModuleColor[3] = { 255, 255, 255 }; // The color associated with the module
 int sequenceColor[3] = { 255, 255, 255 }; // The desired color of the LED
-int targetColor[3] = { 255, 255, 255 }; // The desired color of the LED
+//int targetColor[3] = { 255, 255, 255 }; // The desired color of the LED
+int targetInputColor[3] = { 255, 255, 255 }; // The desired color of the LED
+int targetOutputColor[3] = { 255, 255, 255 }; // The desired color of the LED
 int ledColor[3] = { 255, 255, 255 }; // The current actual color of the LED
 
 // Parameter 1 = number of pixels in strip
@@ -214,11 +216,40 @@ int dequeueLightBehavior() {
   return -1;
 }
 
+void Apply_Input_Color (uint32_t c, uint8_t wait);
+void Apply_Output_Color (uint32_t c, uint8_t wait);
+
 //! Update the module's input and output color.
 //!
-void Apply_Color (uint32_t c, uint8_t wait) {
-  for (uint16_t i = 0; i < strip.numPixels (); i++) {
-      strip.setPixelColor (i, c);
+void Apply_Color (uint8_t wait) {
+//  for (uint16_t i = 0; i < strip.numPixels (); i++) {
+//      strip.setPixelColor (i, c);
+//      strip.show ();
+//      delay (wait);
+//  }
+  Apply_Input_Color (strip.Color (targetInputColor[0], targetInputColor[1], targetInputColor[2]), wait);
+  Apply_Output_Color (strip.Color (targetOutputColor[0], targetOutputColor[1], targetOutputColor[2]), wait);
+}
+
+//! Update the module's input and output color.
+//!
+void Apply_Input_Color (uint32_t c, uint8_t wait) {
+//  uint32_t c = strip.Color (red, green, blue);
+//  uint8_t wait = COLOR_MIX_DELAY;
+  if (strip.numPixels () > 0 && strip.numPixels () <= 2) {
+      strip.setPixelColor (0, c);
+      strip.show ();
+      delay (wait);
+  }
+}
+
+//! Update the module's input and output color.
+//!
+void Apply_Output_Color (uint32_t c, uint8_t wait) {
+//  uint32_t c = strip.Color (red, green, blue);
+//  uint8_t wait = COLOR_MIX_DELAY;
+  if (strip.numPixels () > 0 && strip.numPixels () <= 2) {
+      strip.setPixelColor (1, c);
       strip.show ();
       delay (wait);
   }
@@ -227,25 +258,33 @@ void Apply_Color (uint32_t c, uint8_t wait) {
 //! Update the module's input color.
 //!
 void Update_Input_Color (int red, int green, int blue) {
-  uint32_t c = strip.Color (red, green, blue);
-  uint8_t wait = COLOR_MIX_DELAY;
-  if (strip.numPixels () > 0 && strip.numPixels () <= 2) {
-      strip.setPixelColor (0, c);
-      strip.show ();
-      delay (wait);
+  
+  // Update input color
+  targetInputColor[0] = red;
+  targetInputColor[1] = green;
+  targetInputColor[2] = blue;
+  
+  // Reset color applyer
+  if (colorApplicationMethod == COLOR_APPLICATION_MODE_CROSSFADE) {
+    crossfadeStep = 0;
   }
+  
 }
 
 //! Update the module's output color.
 //!
 void Update_Output_Color (int red, int green, int blue) {
-  uint32_t c = strip.Color (red, green, blue);
-  uint8_t wait = COLOR_MIX_DELAY;
-  if (strip.numPixels () > 0 && strip.numPixels () <= 2) {
-      strip.setPixelColor (1, c);
-      strip.show ();
-      delay (wait);
+  
+  // Update output color
+  targetOutputColor[0] = red;
+  targetOutputColor[1] = green;
+  targetOutputColor[2] = blue;
+  
+  // Reset color applyer
+  if (colorApplicationMethod == COLOR_APPLICATION_MODE_CROSSFADE) {
+    crossfadeStep = 0;
   }
+  
 }
 
 //! Initializes the module's color
@@ -274,13 +313,22 @@ void setSequenceColor (int red, int green, int blue) {
 //! Sets the desired color of the module
 //!
 void Update_Color (int red, int green, int blue) {
-  targetColor[0] = red;
-  targetColor[1] = green;
-  targetColor[2] = blue;
   
+  // Update input color
+  targetInputColor[0] = red;
+  targetInputColor[1] = green;
+  targetInputColor[2] = blue;
+  
+  // Update output color
+  targetOutputColor[0] = red;
+  targetOutputColor[1] = green;
+  targetOutputColor[2] = blue;
+  
+  // Reset color applyer
   if (colorApplicationMethod == COLOR_APPLICATION_MODE_CROSSFADE) {
     crossfadeStep = 0;
   }
+  
 }
 
 //! Sets the color of the module to it's default color
@@ -291,7 +339,7 @@ void Update_Module_Color () {
 
 //! Performs one step of crossfading the LED's current color to the specified color
 //!
-void crossfadeColorStep(int red, int green, int blue) {
+void crossfadeColorStep (int red, int green, int blue) {
   //for (int i = 0; i <= 255; i++) {
   if (crossfadeStep <= 255) {
     
@@ -308,7 +356,8 @@ void crossfadeColorStep(int red, int green, int blue) {
     if (crossfadeStep >= blue - ledColor[2] && ledColor[2] > blue) {
       nextBlue = ledColor[2] - crossfadeStep;
     }
-    Apply_Color (strip.Color (nextRed, nextGreen, nextBlue), COLOR_MIX_DELAY); // Red
+    // TODO: Apply_Color (strip.Color (nextRed, nextGreen, nextBlue), COLOR_MIX_DELAY, strip.Color (nextRed, nextGreen, nextBlue), COLOR_MIX_DELAY); // Red
+    Apply_Color (COLOR_MIX_DELAY); // Red
     
     //delay(10);
     //}
@@ -324,7 +373,7 @@ void crossfadeColorStep(int red, int green, int blue) {
     if (crossfadeStep >= ledColor[2] - blue && ledColor[2] < blue) {
       nextBlue = ledColor[2] - crossfadeStep;
     }
-    Apply_Color (strip.Color(nextRed, nextGreen, nextBlue), COLOR_MIX_DELAY); // Red
+    Apply_Color (COLOR_MIX_DELAY); // Red
 //    delay(5); // delay(10);
     
     crossfadeStep++;
@@ -333,7 +382,7 @@ void crossfadeColorStep(int red, int green, int blue) {
   }
   
   if (crossfadeStep == 255) {
-    Apply_Color (strip.Color (red, green, blue), COLOR_MIX_DELAY); // Red
+    Apply_Color (COLOR_MIX_DELAY); // Red
     
     ledColor[0] = red;
     ledColor[1] = green;
@@ -345,17 +394,21 @@ void crossfadeColorStep(int red, int green, int blue) {
 
 //! Performs one step of crossfading the LED's current color to the current target co
 //!
-void crossfadeColorStep() {
-  crossfadeColorStep(targetColor[0], targetColor[1], targetColor[2]);
+void crossfadeColorStep () {
+  //crossfadeColorStep (targetColor[0], targetColor[1], targetColor[2]);
+  crossfadeColorStep (targetInputColor[0], targetInputColor[1], targetInputColor[2]);
 }
 
 //! Gradually transition from the current color to the specified color.
 //!
-void crossfadeColor(int red, int green, int blue) {
+void crossfadeColor (int red, int green, int blue) {
   
-  targetColor[0] = red; // abs(red - 255);
-  targetColor[1] = green; // abs(green - 255);
-  targetColor[2] = blue; // abs(blue - 255);
+//  targetColor[0] = red; // abs(red - 255);
+//  targetColor[1] = green; // abs(green - 255);
+//  targetColor[2] = blue; // abs(blue - 255);
+  targetInputColor[0] = red; // abs(red - 255);
+  targetInputColor[1] = green; // abs(green - 255);
+  targetInputColor[2] = blue; // abs(blue - 255);
   
   crossfadeStep = 0;
   
@@ -368,12 +421,16 @@ void applyColor (int applicationMethod) {
   if (applicationMethod == COLORING_MODE_CUT) {
     
     // Update LED color buffer
-    ledColor[0] = targetColor[0];
-    ledColor[1] = targetColor[1];
-    ledColor[2] = targetColor[2];
+//    ledColor[0] = targetColor[0];
+//    ledColor[1] = targetColor[1];
+//    ledColor[2] = targetColor[2];
+    ledColor[0] = targetInputColor[0];
+    ledColor[1] = targetInputColor[1];
+    ledColor[2] = targetInputColor[2];
     
     // Write values to pins
-    Apply_Color (strip.Color(ledColor[0], ledColor[1], ledColor[2]), COLOR_MIX_DELAY); // Red
+//    Apply_Color (strip.Color(ledColor[0], ledColor[1], ledColor[2]), COLOR_MIX_DELAY); // Red
+    Apply_Color (COLOR_MIX_DELAY); // Red
     
   } else if (applicationMethod == COLOR_APPLICATION_MODE_CROSSFADE) {
     if (crossfadeStep < 256) {
@@ -424,15 +481,15 @@ boolean Stop_Blink_Light () {
  * Applies the current target color using the current color application method.
  */
 void Light_Apply_Color () {
-  applyColor(colorApplicationMethod);
+  applyColor (colorApplicationMethod);
 }
 
 void Light_On () {
-  queueLightBehavior(LIGHT_BEHAVIOR_ON);
+  queueLightBehavior (LIGHT_BEHAVIOR_ON);
 }
 
 void Light_Off () {
-  queueLightBehavior(LIGHT_BEHAVIOR_OFF);
+  queueLightBehavior (LIGHT_BEHAVIOR_OFF);
 }
 
 void Light_Fade_On () {

@@ -199,7 +199,7 @@ int classifyGestureFromTransitionsWithInstability () {
 /**
  * Handle "at rest, on table" gesture.
  */
-boolean handleGestureAtRest() {
+boolean Handle_Gesture_At_Rest () {
   Update_Color (0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
   
   Queue_Broadcast (ANNOUNCE_GESTURE_AT_REST);
@@ -216,7 +216,7 @@ unsigned long lastSwingTimeout = 5000; // i.e., the time for which a response to
 //int compositionMode = false;
 //unsigned long compositionModeStartTime = 0;
 
-boolean handleGestureSwing() {
+boolean Handle_Gesture_Swing () {
 //  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
 
   // Blink the lights
@@ -252,7 +252,7 @@ boolean handleGestureSwing() {
 //  addBroadcast(ANNOUNCE_GESTURE_AT_REST_IN_HAND);
 //}
 
-boolean handleGestureTap() {
+boolean Handle_Gesture_Tap () {
   
   Serial.println ("handleGestureTap");
   
@@ -284,7 +284,7 @@ boolean handleGestureTap() {
 /**
  * Current (i.e., "left") module handle "tap to another, as left" gesture.
  */
-boolean handleGestureTapToAnotherAsLeft() {
+boolean Handle_Gesture_Tap_As_Left () {
   //setColor(255, 0, 0);
   // Blink the lights five times
   Blink_Light (5);
@@ -313,7 +313,7 @@ boolean handleGestureTapToAnotherAsLeft() {
 /**
  * Current (i.e., "right") module handle "tap to another, as right" gesture.
  */
-boolean handleGestureTapToAnotherAsRight() {
+boolean Handle_Gesture_Tap_As_Right () {
 //  setColor(255, 0, 0);
   // Blink the lights five times
 //  blinkLight(5);
@@ -355,7 +355,7 @@ boolean handleGestureTapToAnotherAsRight() {
 /**
  * Handle "shake" gesture.
  */
-boolean handleGestureShake() {
+boolean Handle_Gesture_Shake () {
 //  setColor(255, 0, 0);
   
   // TODO: Message next modules, say this module is leaving the sequence
@@ -400,7 +400,7 @@ boolean handleGestureShake() {
 /**
  * Handle "tilt left" gesture.
  */
-boolean handleGestureTiltLeft() {
+boolean Handle_Gesture_Tilt_Left () {
   Update_Color (0, 0, 255);
   
   Queue_Broadcast (ANNOUNCE_GESTURE_TILT_LEFT);
@@ -409,7 +409,7 @@ boolean handleGestureTiltLeft() {
 /**
  * Handle "tilt right" gesture.
  */
-boolean handleGestureTiltRight() {
+boolean Handle_Gesture_Tilt_Right () {
   Update_Color (0, 255, 0);
   
   Queue_Broadcast (ANNOUNCE_GESTURE_TILT_RIGHT);
@@ -418,7 +418,7 @@ boolean handleGestureTiltRight() {
 /**
  * Handle "tilt forward" gesture.
  */
-boolean handleGestureTiltForward() {
+boolean Handle_Gesture_Tilt_Forward () {
   Update_Color (0, 255, 0);
   
   Queue_Broadcast (ANNOUNCE_GESTURE_TILT_FORWARD);
@@ -427,7 +427,7 @@ boolean handleGestureTiltForward() {
 /**
  * Handle "tilt backward" gesture.
  */
-boolean handleGestureTiltBackward() {
+boolean Handle_Gesture_Tilt_Backward () {
   Update_Color (0, 255, 0);
   
   Queue_Broadcast (ANNOUNCE_GESTURE_TILT_BACKWARD);
