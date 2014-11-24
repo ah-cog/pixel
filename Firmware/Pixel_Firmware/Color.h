@@ -41,6 +41,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_OUTPUT_PIN, NEO_GRB +
 int lightBehaviorQueue[LIGHT_BEHAVIOR_QUEUE_CAPACITY]; // 0 = off, 1 = on, 2 = delay 50 ms, 3 = delay 100 ms, 4 = delay 150 ms, 5 = delay 200 ms
 int lightBehaviorQueueSize = 0;
 
+// TODO: Define these on the "shell" as behaviors to replace hard-coded versions and to make malleable for users!
 #define LIGHT_BEHAVIOR_NONE 7
 #define LIGHT_BEHAVIOR_OFF 0
 #define LIGHT_BEHAVIOR_ON 1
