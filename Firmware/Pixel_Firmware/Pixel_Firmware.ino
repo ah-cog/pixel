@@ -25,6 +25,7 @@ String ipAddress = "unassigned";
 #include "Color.h"
 #include "Sound.h"
 #include "Motion.h"
+#include "Memory.h"
 
 #include "Gesture.h"
 #include "Movement.h"

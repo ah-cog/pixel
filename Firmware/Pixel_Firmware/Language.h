@@ -103,8 +103,6 @@ void Interpret_Message (Message* message) {
       
     } else if (strncmp ((*message).content, "started sharing", (*message).size) == 0) {  
       
-      Serial.println ("STARTING SHARING?");
-      
       int address = (*message).source;
       perspectiveAddress = address;
       
@@ -114,14 +112,14 @@ void Interpret_Message (Message* message) {
     
     }
     
-    else if (strncmp ((*message).content, "announce gesture swing", (*message).size) == 0) {
-      Serial.print ("announce gesture swing");
+    else if (strncmp ((*message).content, "notice gesture swing", (*message).size) == 0) {
+      Serial.print ("notice gesture swing");
       Handle_Message_Swing (message);
-    } else if (strncmp ((*message).content, "announce gesture shake", (*message).size) == 0) {
-      Serial.print ("announce gesture shake");
+    } else if (strncmp ((*message).content, "notice gesture shake", (*message).size) == 0) {
+      Serial.print ("notice gesture shake");
       Handle_Message_Shake (message);
-    } else if (strncmp ((*message).content, "announce gesture tap", (*message).size) == 0) {
-      Serial.print ("announce gesture tap");
+    } else if (strncmp ((*message).content, "notice gesture tap", (*message).size) == 0) {
+      Serial.print ("notice gesture tap");
       Handle_Message_Tap (message);
     }
     
@@ -135,6 +133,11 @@ void Interpret_Message (Message* message) {
       Serial.print ("confirm gesture tap as left");
       Handle_Message_Confirm_Tap_To_Another_As_Left (message);
     }
+    
+//    else if (strncmp ((*message).content, "notice gesture tap", (*message).size) == 0) {
+//      Serial.print ("notice gesture tap");
+//      Handle_Message_Tap_To_Another_As_Right (message);
+//    }
     
     else if (strncmp ((*message).content, "announce gesture tap as right", (*message).size) == 0) {
       Serial.print ("announce gesture tap as right");
@@ -528,9 +531,59 @@ void Perform_Shell_Behavior (String message) {
 //    Serial.print (perspectiveAddress);
 //    Serial.print (".");
     
-  } else if (firstWord.compareTo ("remember") == 0) {
+  } else if (firstWord.compareTo ("remember") == 0) { // i.e., learn, store, remember
     
-    // TODO: Add (key, value) pair to memory
+    // Add (key, value) pair to memory
+    String trigger = getValue (message, ' ', 1);
+    String content = getValue (message, ' ', 2);
+    
+    // Send module to remote module to set up its "observerAddress"
+    Memory* memory = Create_Memory (trigger, content);
+    Append_Memory (memory);
+    
+  } else if (firstWord.compareTo ("forget") == 0) { // i.e., remember, recall, load
+    
+    // Add (key, value) pair to memory
+    String trigger = getValue (message, ' ', 1);
+    
+    // Send module to remote module to set up its "observerAddress"
+    const int triggerBufferSize = 64;
+    char triggerChar[triggerBufferSize];
+    trigger.toCharArray (triggerChar, triggerBufferSize);
+    Memory* memory = Remove_Memory (triggerChar);
+    
+    if (memory != NULL) {
+      Serial.print ("Deleting memory ");
+      Serial.print ((*memory).trigger);
+      Serial.print (" -> ");
+      Serial.print ((*memory).content);
+      Serial.print ("\n");
+    }
+    
+    Delete_Memory (memory);
+    
+  } else if (firstWord.compareTo ("recall") == 0) {
+    
+    // TODO: Recall (key, value) pair by key
+    // Add (key, value) pair to memory
+    String trigger = getValue (message, ' ', 1);
+    
+    // Send module to remote module to set up its "observerAddress"
+    const int triggerBufferSize = 64;
+    char triggerChar[triggerBufferSize];
+    trigger.toCharArray (triggerChar, triggerBufferSize);
+    Memory* memory = Get_Memory (triggerChar);
+    
+    if (memory != NULL) {
+      Serial.print ((*memory).trigger);
+      Serial.print (" -> ");
+      Serial.print ((*memory).content);
+      Serial.print ("\n");
+    }
+    
+  } else if (firstWord.compareTo ("generalize") == 0) { // generalize upon memory/KB (using FOL or similar kinds of techniques), and verify with other people that inferrences are correct
+    
+    // TODO: Prefix command with "propagate" to broadcast
     
   } else if (firstWord.compareTo ("subscribe") == 0) { // this is the same as mirror? or is subscribe only subscribing from behavior changes from now on?
     
@@ -539,10 +592,6 @@ void Perform_Shell_Behavior (String message) {
   } else if (firstWord.compareTo ("unsubscribe") == 0) {
     
     // TODO: Add (key, value) pair to memory
-    
-  } else if (firstWord.compareTo ("recall") == 0) {
-    
-    // TODO: Recall (key, value) pair by key
     
   } else if (firstWord.compareTo ("propagate") == 0) {
     
