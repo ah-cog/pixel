@@ -38,6 +38,10 @@ char* nouns[975] = { "account", "achiever", "acoustics", "act", "action", "activ
 
 String name = "module"; // TODO: Move this to Foundation/Platform (next to the UUID)
 
+// TODO: Create Perspective or Focus class
+int perspectiveAddress = -1; // i.e., the module to which commands will be sent by default (initially, this is set to the module connected via USB)
+int observerAddress = -1; // i.e., the module from which commands are being sent, to which responses should be sent
+
 #include "Foundation.h" // i.e., the kernel
 #include "Language.h" // i.e., the shell
 
@@ -97,6 +101,10 @@ void setup () {
   
   setupPlatformUuid ();
 //  setupPlatform(); // Setup Pixel's reflection (i.e., it's virtual machine)
+
+  // Set up defualt perspective
+  perspectiveAddress = platformUuid;
+
   setupPorts (); // Setup pin mode for I/O
   setupColor (); // Setup the Pixel's color
   
