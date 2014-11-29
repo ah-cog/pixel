@@ -14,6 +14,10 @@ boolean clearEeprom () {
 #define WRITE_RESTART(val) ((*(volatile uint32_t *)RESTART_ADDR) = (val))
 
 boolean Restart () {
+  
+  // TODO: Send pre-Restart Direct_Message (flush all direct messages whenever this is called)
+  // Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice arrival");
+  
   // 0000101111110100000000000000100
   // Assert [2]SYSRESETREQ
   WRITE_RESTART(0x5FA0004);

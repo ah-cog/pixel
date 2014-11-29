@@ -204,7 +204,7 @@ boolean Handle_Gesture_At_Rest () {
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_AT_REST);
 //  Queue_Broadcast ("fyi gesture at rest");
-    Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture at rest");
+    Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture at rest");
 }
 
 unsigned long lastSwingTime = 0L;
@@ -221,22 +221,29 @@ unsigned long lastSwingTimeout = 5000; // i.e., the time for which a response to
 boolean Handle_Gesture_Swing () {
 //  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
 
-  // Blink the lights
-//  blinkLight(3);
-  Start_Blink_Light ();
-  hasSwung = true;
-  
-  lastSwingTime = millis ();
+  // TODO: Swing multiple times to change colors.
 
-  // Update the module's color
-  if (isSequenced) {
-    Update_Color (sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-  } else {
-    Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+  if (hasSwung != true) {
+    // Blink the lights
+  //  blinkLight(3);
+    Start_Blink_Light ();
+    hasSwung = true;
+    
+    lastSwingTime = millis ();
+  
+    // Update the module's color
+    if (isSequenced) {
+      Update_Color (sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+    } else {
+      Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+    }
+    
+  //  Queue_Broadcast (ANNOUNCE_GESTURE_SWING);
+    Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture swing");
+    
   }
   
-//  Queue_Broadcast (ANNOUNCE_GESTURE_SWING);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture swing");
+  return true;
 }
 
 ///**
@@ -277,7 +284,7 @@ boolean Handle_Gesture_Tap () {
     if (lastSwingAddress != -1) {
       
 //      Queue_Broadcast (ANNOUNCE_GESTURE_TAP);
-      Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture tap");
+      Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tap");
       Serial.println ("^ Broadcasting ANNOUNCE_GESTURE_TAP");
       
     }
@@ -311,7 +318,7 @@ boolean Handle_Gesture_Tap_As_Left () {
   awaitingNextModuleStartTime = millis();
   
   // Queue_Broadcast (ANNOUNCE_GESTURE_TAP_AS_LEFT);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture tap as left");
+  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tap as left");
   Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_LEFT");
 }
 
@@ -354,7 +361,7 @@ boolean Handle_Gesture_Tap_As_Right () {
   awaitingPreviousModuleStartTime = millis();
 
   // Queue_Broadcast (ANNOUNCE_GESTURE_TAP_AS_RIGHT);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture tap as right");
+  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tap as right");
   Serial.println("^ Broadcasting ANNOUNCE_GESTURE_TAP_AS_RIGHT");
 }
 
@@ -401,7 +408,7 @@ boolean Handle_Gesture_Shake () {
 //  }
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_SHAKE);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture shake");
+  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture shake");
 }
 
 /**
@@ -411,7 +418,7 @@ boolean Handle_Gesture_Tilt_Left () {
   Update_Color (0, 0, 255);
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_LEFT);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture tilt left");
+  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt left");
 }
 
 /**
@@ -421,7 +428,7 @@ boolean Handle_Gesture_Tilt_Right () {
   Update_Color (0, 255, 0);
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_RIGHT);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture tilt right");
+  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt right");
 }
 
 /**
@@ -431,7 +438,7 @@ boolean Handle_Gesture_Tilt_Forward () {
   Update_Color (0, 255, 0);
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_FORWARD);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture tilt forward");
+  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt forward");
 }
 
 /**
@@ -441,7 +448,7 @@ boolean Handle_Gesture_Tilt_Backward () {
   Update_Color (0, 255, 0);
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_BACKWARD);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce gesture tilt backward");
+  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt backward");
 }
 
 #endif

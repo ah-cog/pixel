@@ -53,8 +53,8 @@ void Get_Console () { // TODO: Capture_Serial_Channel
 
 void Interpret_Message (Message* message) {
   
-  Serial.println ((*message).source);
-  Serial.println ((*message).destination);
+//  Serial.println ((*message).source);
+//  Serial.println ((*message).destination);
   
   // Check if the message is from the local "serial" channel
   if ((*message).source == (*message).destination) { // TODO: Update this. Add concept of "channel" possibly. Or make EVERYTHING text based and virtual (THIS ONE!).
@@ -67,8 +67,8 @@ void Interpret_Message (Message* message) {
 
     // Check if the message is from the remote "mesh" channel
     
-    if (strncmp ((*message).content, "announce active", (*message).size) == 0) {  
-      Serial.print ("announce active");
+    if (strncmp ((*message).content, "notice presence", (*message).size) == 0) {  
+      Serial.print ("notice presence");
       
       Handle_Message_Active (message);
     }
@@ -123,7 +123,7 @@ void Interpret_Message (Message* message) {
       Handle_Message_Tap (message);
     }
     
-    else if (strncmp ((*message).content, "announce gesture tap as left", (*message).size) == 0) {
+    else if (strncmp ((*message).content, "notice gesture tap as left", (*message).size) == 0) {
       Serial.print ("announce gesture tap as left");
       Handle_Message_Tap_To_Another_As_Left (message);
     } else if (strncmp ((*message).content, "request confirm gesture tap as right", (*message).size) == 0) {
@@ -139,7 +139,7 @@ void Interpret_Message (Message* message) {
 //      Handle_Message_Tap_To_Another_As_Right (message);
 //    }
     
-    else if (strncmp ((*message).content, "announce gesture tap as right", (*message).size) == 0) {
+    else if (strncmp ((*message).content, "notice gesture tap as right", (*message).size) == 0) {
       Serial.print ("announce gesture tap as right");
       Handle_Message_Tap_To_Another_As_Right (message);
     } else if (strncmp ((*message).content, "request confirm gesture tap as left", (*message).size) == 0) {
@@ -158,8 +158,8 @@ void Interpret_Message (Message* message) {
       Handle_Message_Confirm_Tap (message);
     } 
     
-    else if (strncmp ((*message).content, "activate module output", (*message).size) == 0) {
-      Serial.print ("activate module output");
+    else if (strncmp ((*message).content, "turn output off", (*message).size) == 0) { // activate module output
+      Serial.print ("turn on output");
       
       // ACTIVATE_MODULE_OUTPUT
 //      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
@@ -167,8 +167,8 @@ void Interpret_Message (Message* message) {
       Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
       Propagate_Channel_Value (moduleOutputChannel);
-    } else if (strncmp ((*message).content, "deactivate module output", (*message).size) == 0) {
-      Serial.print ("deactivate module output");
+    } else if (strncmp ((*message).content, "turn output off", (*message).size) == 0) { // deactivate module output
+      Serial.print ("turn output off");
       
 //      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
 //      syncPinValue(MODULE_OUTPUT_PIN);
@@ -282,7 +282,7 @@ void Perform_Shell_Behavior (String message) {
   // "turn wifi on" and "turn wifi off"
   // "turn mesh on" and "turn mesh off"
   
-  else if (firstWord.compareTo ("turn") == 0) {
+  else if (firstWord.compareTo ("turn") == 0) { // i.e., switch, set
     
     String secondWord = getValue (message, ' ', 1);
     
@@ -307,7 +307,12 @@ void Perform_Shell_Behavior (String message) {
           Serial.println ("Turning input light off.");
           
         } 
-      } 
+        
+      } if (thirdWord.compareTo ("channel") == 0) { // TODO: Make this optional or less abstract (optionally)!
+        
+        // TODO: implement "on" and "off" and analog input and output
+        
+      }
       
     } else if (secondWord.compareTo ("output") == 0) {
       
@@ -362,7 +367,7 @@ void Perform_Shell_Behavior (String message) {
   // "change input color to 255,128,128"
   // "change output color to orange
   
-  else if (firstWord.compareTo ("change") == 0) {
+  else if (firstWord.compareTo ("change") == 0) { // i.e., update
     
     String secondWord = getValue (message, ' ', 1);
     
@@ -430,6 +435,13 @@ void Perform_Shell_Behavior (String message) {
     } 
   }
   
+  else if (firstWord.compareTo ("rename") == 0) {
+    
+    name = Generate_Name ();
+    Serial.println (name);
+    
+  }
+  
   // "change ..."
   // e.g.,
   // "change color to red"
@@ -448,7 +460,7 @@ void Perform_Shell_Behavior (String message) {
 //          delay (1000);
 //          Stop_Sound ();
 
-  } else if (firstWord.compareTo ("show") == 0) {
+  } else if (firstWord.compareTo ("show") == 0) { // i.e., echo, print, show, display
     
     String secondWord = getValue (message, ' ', 1);
     
@@ -464,6 +476,21 @@ void Perform_Shell_Behavior (String message) {
     } else if (secondWord.compareTo ("perspective") == 0) {
       
       Serial.println (perspectiveAddress);
+      
+    } else if (secondWord.compareTo ("channel") == 0) {
+      
+      String thirdWord = getValue (message, ' ', 2);
+      int channelAddress = thirdWord.toInt ();
+      
+      Channel* channel = Get_Channel (channelAddress);
+      
+      if (channel != NULL) {
+        Serial.print ("Channel ");
+        Serial.print (channelAddress);
+        Serial.print (" is ");
+        Serial.print ((*channel).value);
+        Serial.print (".\n");
+      }
       
     }
     
@@ -503,7 +530,7 @@ void Perform_Shell_Behavior (String message) {
       
     }
     
-  } else if (firstWord.compareTo ("enter") == 0) {
+  } else if (firstWord.compareTo ("enter") == 0) { // i.e., select
     
     // e.g., "enter neighbor 34"
     
@@ -518,7 +545,7 @@ void Perform_Shell_Behavior (String message) {
 //    Serial.print (perspectiveAddress);
 //    Serial.print (".");
     
-  } else if (firstWord.compareTo ("exit") == 0) {
+  } else if (firstWord.compareTo ("exit") == 0) { // i.e., leave
     
     // Send module to remote module to set up its "observerAddress"
     Message* outgoingMessage = Create_Message (platformUuid, perspectiveAddress, String ("stop sharing with ") + String (platformUuid));
@@ -593,6 +620,14 @@ void Perform_Shell_Behavior (String message) {
     
     // TODO: Add (key, value) pair to memory
     
+  } else if (firstWord.compareTo ("learn pattern") == 0) { // learn patterns (i.e., model a pattern) for gestures, sensor analog sensor patterns, etc.
+    
+    // TODO: Prefix command with "propagate" to broadcast
+    
+  } else if (firstWord.compareTo ("associate") == 0) { // associate observed input with outputs to create a "mapping" that updates the outputs to best match the inputs based on the mapping just created. consider allowing them to be named.
+    
+    // TODO: Prefix command with "propagate" to broadcast
+    
   } else if (firstWord.compareTo ("propagate") == 0) {
     
     // TODO: Prefix command with "propagate" to broadcast
@@ -610,6 +645,10 @@ void Perform_Shell_Behavior (String message) {
     // TODO: Prefix command with "propagate" to broadcast
     
   } else if (firstWord.compareTo ("pretend") == 0) { // enacts a simulated machine on this hardware while preserving the one currently on the device for easy reversion
+    
+    // TODO: Prefix command with "propagate" to broadcast
+    
+  } else if (firstWord.compareTo ("distribute") == 0) { // distributes the behaviors on all modules across all moduels after scheduling, to make the overall operation more efficient (i.e., the moduels coordinate and collaborate)
     
     // TODO: Prefix command with "propagate" to broadcast
     

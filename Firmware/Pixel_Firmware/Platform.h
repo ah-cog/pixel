@@ -124,6 +124,10 @@ void setupPlatform () {
     // Create a channel for the specified platform with the specified address
     Channel* channel = Create_Channel (platform, i);
   }
+  
+  Serial.print ("There are ");
+  Serial.print (PLATFORM_CHANNEL_COUNT);
+  Serial.print (" channels\n");
 }
 
 //! Create platform structures.
@@ -211,7 +215,7 @@ Channel* Create_Channel (Platform* platform, int address) {
   // Add the channel to the platform's list of channels
   if ((*platform).channels == NULL) {
     
-    Serial.println("First channel");
+//    Serial.println("First channel");
     (*platform).channels = channel;
     
   } else {
@@ -219,7 +223,7 @@ Channel* Create_Channel (Platform* platform, int address) {
     // Get the last channel on the platform
     Channel* lastChannel = (*platform).channels;
     while ((*lastChannel).next != NULL) {
-      Serial.println("Next channel");
+//      Serial.println("The next channel.");
       lastChannel = (*lastChannel).next;
     }
     
@@ -232,6 +236,18 @@ Channel* Create_Channel (Platform* platform, int address) {
   return channel;
   
 };
+
+Channel* Get_Channel (int address) {
+  // Get the last channel on the platform
+  Channel* channel = (*platform).channels;
+  while (channel != NULL) {
+    if ((*channel).address == address) {
+      return channel;
+    }
+    channel = (*channel).next;
+  }
+  return NULL;
+}
   
 void Update_Channel_Type (Channel* channel, int type) {
   Serial.println ("Update_Channel_Type");

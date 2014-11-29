@@ -67,32 +67,32 @@ int nextModuleCount = 0;
 // TODO: Write code to periodically notify neighbors of device's existence. This is used by neighbors to update their tables of neighbors (and their connections).
 // TODO: When priodically announcing existence, if encounter an address collision, check UUIDs and re-negotiate an IP address.
 
-#define ANNOUNCE_GESTURE_AT_REST 1
-//#define ANNOUNCE_GESTURE_AT_REST_ON_TABLE 1
-//#define ANNOUNCE_GESTURE_AT_REST_IN_HAND 2
-//#define ANNOUNCE_GESTURE_PICK_UP 3
-//#define ANNOUNCE_GESTURE_PLACE_DOWN 4
-#define ANNOUNCE_GESTURE_SWING 2 // TODO: When received, place module in "respond to swung module" mode
-
-#define ANNOUNCE_GESTURE_TAP 23 // 9
-#define REQUEST_CONFIRM_GESTURE_TAP 24 // 9
-#define CONFIRM_GESTURE_TAP 22 // 9
-
-#define ANNOUNCE_GESTURE_TAP_AS_LEFT 3 // 8
-#define ANNOUNCE_GESTURE_TAP_AS_RIGHT 4 // 9
-
-#define ANNOUNCE_GESTURE_SHAKE 5 // 7
-
-#define ANNOUNCE_GESTURE_TILT_LEFT 6 // 5
-#define ANNOUNCE_GESTURE_TILT_RIGHT 7 // 6
-#define ANNOUNCE_GESTURE_TILT_FORWARD 8
-#define ANNOUNCE_GESTURE_TILT_BACKWARD 9
-
-#define REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT 13
-#define REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT 14
-
-#define CONFIRM_GESTURE_TAP_AS_LEFT 15
-#define CONFIRM_GESTURE_TAP_AS_RIGHT 16
+//#define ANNOUNCE_GESTURE_AT_REST 1
+////#define ANNOUNCE_GESTURE_AT_REST_ON_TABLE 1
+////#define ANNOUNCE_GESTURE_AT_REST_IN_HAND 2
+////#define ANNOUNCE_GESTURE_PICK_UP 3
+////#define ANNOUNCE_GESTURE_PLACE_DOWN 4
+//#define ANNOUNCE_GESTURE_SWING 2 // TODO: When received, place module in "respond to swung module" mode
+//
+//#define ANNOUNCE_GESTURE_TAP 23 // 9
+//#define REQUEST_CONFIRM_GESTURE_TAP 24 // 9
+//#define CONFIRM_GESTURE_TAP 22 // 9
+//
+//#define ANNOUNCE_GESTURE_TAP_AS_LEFT 3 // 8
+//#define ANNOUNCE_GESTURE_TAP_AS_RIGHT 4 // 9
+//
+//#define ANNOUNCE_GESTURE_SHAKE 5 // 7
+//
+//#define ANNOUNCE_GESTURE_TILT_LEFT 6 // 5
+//#define ANNOUNCE_GESTURE_TILT_RIGHT 7 // 6
+//#define ANNOUNCE_GESTURE_TILT_FORWARD 8
+//#define ANNOUNCE_GESTURE_TILT_BACKWARD 9
+//
+//#define REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT 13
+//#define REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT 14
+//
+//#define CONFIRM_GESTURE_TAP_AS_LEFT 15
+//#define CONFIRM_GESTURE_TAP_AS_RIGHT 16
 
 // Module state:
 boolean awaitingNextModule = false;
@@ -126,6 +126,7 @@ struct Message {
   
   int source;
   int destination;
+  int channel; // what could this do? allow multiple channels that can be themselves programmed? like, they can be programmed to stretch time or warm signals?
   
   Message* previous;
   Message* next;
@@ -138,7 +139,7 @@ Message* incomingMessages = NULL; // incoming message queue
 //!
 Message* Create_Message (int source, int destination, String content) {
   
-  Serial.println ("Create_Message");
+//  Serial.println ("Create_Message");
   
   // Create substrate
   Message* message = (Message*) malloc (sizeof (Message));
@@ -168,7 +169,7 @@ Message* Create_Message (int source, int destination, String content) {
 //!
 boolean Delete_Message (Message* message) {
   
-  Serial.println ("Delete_Message");
+//  Serial.println ("Delete_Message");
   
   if (message != NULL) {
     
@@ -188,7 +189,7 @@ boolean Delete_Message (Message* message) {
 //!
 Message* Queue_Outgoing_Message (Message* message) {
   
-  Serial.println ("Queue_Outgoing_Message");
+//  Serial.println ("Queue_Outgoing_Message");
   
   if (outgoingMessages == NULL) {
     
@@ -227,7 +228,7 @@ Message* Queue_Outgoing_Message (Message* message) {
 //!
 Message* Dequeue_Outgoing_Message () {
   
-  Serial.println ("Dequeue_Outgoing_Message");
+//  Serial.println ("Dequeue_Outgoing_Message");
   
   Message* message = NULL;
   
@@ -253,7 +254,7 @@ Message* Dequeue_Outgoing_Message () {
 //!
 Message* Queue_Incoming_Message (Message* message) {
   
-  Serial.println ("Queue_Incoming_Message");
+//  Serial.println ("Queue_Incoming_Message");
   
   if (incomingMessages == NULL) {
     
@@ -294,7 +295,7 @@ Message* Queue_Incoming_Message (Message* message) {
 //!
 Message* Dequeue_Incoming_Message () {
   
-  Serial.println ("Dequeue_Incoming_Message");
+//  Serial.println ("Dequeue_Incoming_Message");
   
   Message* message = NULL;
   
@@ -330,7 +331,7 @@ Message* Dequeue_Incoming_Message () {
 //! Push a message onto the queue of messages to be processed and sent via the mesh network.
 //!
 boolean Queue_Message (int source, int destination, String content) {
-  Serial.println ("Queue_Message");
+//  Serial.println ("Queue_Message");
 
   Message* message = Create_Message (source, destination, content);
   Queue_Outgoing_Message (message);
@@ -341,7 +342,7 @@ boolean Queue_Message (int source, int destination, String content) {
 //! Actually release the message on the mesh network.
 //!
 boolean Release_Message () { // boolean Send_Message () {
-  Serial.println ("Release_Message");
+//  Serial.println ("Release_Message");
   
   if (outgoingMessages != NULL) { //! Check if there are any messages to be sent
         
@@ -351,7 +352,10 @@ boolean Release_Message () { // boolean Send_Message () {
     // Serialize the message (i.e., encode the message for radio transmission)
     // String encodedMessage = String ("{ to: ") + String ((*message).source) + String (" , from: ") + String (platformUuid) + String (" , content: ") + String ((*message).content) + String (" }");
     String encodedMessage = String ("(") + String ((*message).source) + String (",") + String ((*message).destination) + String (",") + String ((*message).content) + String (")");
-    Serial.println (encodedMessage);
+
+    Serial.print ("Sending message ");
+    Serial.print (encodedMessage);
+    Serial.print ("\n");
     
     // Transmit the message
     const int serialBufferSize = 64;
@@ -604,23 +608,76 @@ boolean Handle_Message_Swing (Message* message) {
   
   // TODO: Place module in "respond to swung module" mode.
   
-  Serial.println (">> Received ANNOUNCE_GESTURE_SWING");
+  Serial.println (">> Received Handle_Message_Swing");
   
-//  if (message.source != MESH_DEVICE_ADDRESS) {
-  if ((*message).source != platformUuid) { // TODO: Restore this! Removed for FutureMakers demo
+//  if (lastSwingAddress == -1) {
+  if (hasSwung) {
     
-    lastSwingAddress = (*message).source;
+    Serial.println ("Linking");
     
-    // Check if the module is a previous module
-//    boolean hasPrevious = hasPreviousModule (message.source);
-//    if (hasPrevious) {
-//      setColor(255, 0, 0);
-//    } else {
-//      setColor(0, 255, 0);
+    // Handler code for the module that initiated the "swing"
+//    if (hasSwung) {
+      
+      // HACK: Move this! This should be more robust, likely!
+      // TODO: Make this map to the other module only when it is already sequenced!
+      if (outputPinRemote == true) {
+        outputPinRemote = false;
+  //      removeNextModule(message.source);
+        Remove_Input_Modules ();
+        Remove_Output_Modules ();
+      } else {
+        outputPinRemote = true;
+        Add_Output_Module ((*message).source);
+      }
+      
+      Update_Color (0, 0, 0);
+      
+      // TODO: Message ("change color to <link color>");
+      
+      
+    
+  //    Serial.println("<< Sending CONFIRM_GESTURE_TAP_AS_LEFT");
+      
+      // TODO: REMOVE THIS!!
+  //    addNextModule(message.source);
+      
+      
+      
+      Play_Note (1000, 1000);
+      
+      // Check of the received message was within the time limit
+      
+      // Send ACK message to message.source to confirm linking operation
+  //    Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP);
+      // Queue_Broadcast ("request confirm gesture tap");
+  //    Queue_Broadcast ("fyi tap");
+      Queue_Message (platformUuid, (*message).source, "observe notice gesture swing");
+      // Queue_Broadcast (String ("send \"confirm gesture tap\" to ") + String (platformUuid));
+      // Queue_Broadcast (String ("send confirmation");
 //    }
     
-    // TODO: Set lastSwingAddressStartTime and check for a timeout (after which a received "tap" message will no longer be allowed to pair)
-    lastReceivedSwingTime = millis ();
+  } 
+  
+  else { // i.e., not swung
+    
+    Serial.println ("Waiting for link");
+    
+    if ((*message).source != platformUuid) { // TODO: Restore this! Removed for FutureMakers demo
+      
+      lastSwingAddress = (*message).source;
+      
+      // Check if the module is a previous module
+  //    boolean hasPrevious = hasPreviousModule (message.source);
+  //    if (hasPrevious) {
+  //      setColor(255, 0, 0);
+  //    } else {
+  //      setColor(0, 255, 0);
+  //    }
+      
+      // TODO: Set lastSwingAddressStartTime and check for a timeout (after which a received "tap" message will no longer be allowed to pair)
+      lastReceivedSwingTime = millis ();
+      
+    }
     
   }
 }

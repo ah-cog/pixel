@@ -45,7 +45,7 @@ void setupInertialMeasurementUnit() {
  */
 boolean setupOrientationSensing() {
 
-  Serial.println("Turning on orientation sensor...");
+  Serial.println("Orientation sensors are active");
   setupInertialMeasurementUnit();
 
   // delay(1500);
@@ -72,7 +72,7 @@ boolean setupOrientationSensing() {
 
   AN_OFFSET[5] -= GRAVITY * SENSOR_SIGN[5];
 
-  Serial.print("Offset: ");
+  Serial.print("The offset is ");
   for (int y = 0; y < 6; y++) {
     Serial.print(AN_OFFSET[y]);
     Serial.print(" ");

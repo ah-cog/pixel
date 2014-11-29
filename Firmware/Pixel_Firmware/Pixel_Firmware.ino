@@ -9,6 +9,8 @@
    
    - George Bernard Shaw
      Man and Superman (1903) "Maxims for Revolutionists"
+     
+   - Don't focus on difference. Focus on diversity.
 
 */
 
@@ -123,9 +125,9 @@ void setup () {
   
   // hello
   Serial.begin (115200); 
-  Serial.println (F ("Pixel Firmware"));
+  Serial.println (F ("This is Pixel"));
   
-  Serial.print ("My name is ");
+  Serial.print ("Module name is ");
   Serial.print (name);
   Serial.print ("\n");
   
@@ -188,7 +190,7 @@ void loop () {
 //          char charData[serialBufferSize];
 //          data.toCharArray (charData, serialBufferSize);
 //          bytesSent = MESH_SERIAL.write (charData);
-          Queue_Message (platformUuid, BROADCAST_ADDRESS, "@all poof");
+          Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice appearance");
         }
         
 //        Serial.println (charData);
@@ -231,7 +233,7 @@ void loop () {
       // Output port is on a different module than this one!
       Blink_Light (2);
 //      Queue_Message (BROADCAST_ADDRESS, ACTIVATE_MODULE_OUTPUT);
-      Queue_Message (platformUuid, BROADCAST_ADDRESS, String ("@all ") + String ("activate output"));
+      Queue_Message (platformUuid, BROADCAST_ADDRESS, String ("turn output on"));
     }
 //    delay(500);
   } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
@@ -243,7 +245,7 @@ void loop () {
       Propagate_Channel_Value (moduleOutputChannel);
     } else {
 //      Queue_Message (BROADCAST_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
-      Queue_Message (platformUuid, BROADCAST_ADDRESS, String ("@all ") + String ("deactivate output"));
+      Queue_Message (platformUuid, BROADCAST_ADDRESS, String ("turn output off"));
     }
 //    delay(500);
   }
@@ -314,7 +316,7 @@ void loop () {
   currentTime = millis ();
   if (currentTime - lastSentActive >= lastSentActiveTimeout) {
     //Queue_Broadcast (ANNOUNCE_ACTIVE);
-    Queue_Message (platformUuid, BROADCAST_ADDRESS, "announce active");
+    Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice presence");
     lastSentActive = millis ();
   }
   
