@@ -200,7 +200,8 @@ int classifyGestureFromTransitionsWithInstability () {
  * Handle "at rest, on table" gesture.
  */
 boolean Handle_Gesture_At_Rest () {
-  Update_Color (0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
+  // TODO: Replace the following line, but keep the idea. Reduce brightness (to save power). But keep the same color!
+  // Update_Color (0.3 * defaultModuleColor[0], 0.3 * defaultModuleColor[1], 0.3 * defaultModuleColor[2]);
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_AT_REST);
 //  Queue_Broadcast ("fyi gesture at rest");
@@ -221,24 +222,34 @@ unsigned long lastSwingTimeout = 5000; // i.e., the time for which a response to
 boolean Handle_Gesture_Swing () {
 //  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
 
-  // TODO: Swing multiple times to change colors.
+  // TODO: Swing multiple times to change color.
 
-  if (hasSwung != true) {
-    // Blink the lights
-  //  blinkLight(3);
-    Start_Blink_Light ();
-    hasSwung = true;
+  if (hasSwung == false) {
     
-    lastSwingTime = millis ();
-  
-    // Update the module's color
-    if (isSequenced) {
-      Update_Color (sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+    if (lastSwingAddress != -1) { // i.e., another module has been swung
+    
+      Stop_Blink_Light ();
+    
     } else {
-      Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+    
+      // Blink the lights
+    //  blinkLight(3);
+      Start_Blink_Light ();
+      hasSwung = true;
+      
+      lastSwingTime = millis ();
+    
+  //    // Update the module's color
+  //    if (isSequenced) {
+  //      Update_Color (sequenceColor[0], sequenceColor[1], sequenceColor[2]);
+  //    } else {
+  //      Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+  //    }
+      
+    //  Queue_Broadcast (ANNOUNCE_GESTURE_SWING);
+      
     }
     
-  //  Queue_Broadcast (ANNOUNCE_GESTURE_SWING);
     Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture swing");
     
   }
@@ -415,7 +426,7 @@ boolean Handle_Gesture_Shake () {
  * Handle "tilt left" gesture.
  */
 boolean Handle_Gesture_Tilt_Left () {
-  Update_Color (0, 0, 255);
+//  Update_Color (0, 0, 255);
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_LEFT);
   Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt left");
@@ -425,7 +436,7 @@ boolean Handle_Gesture_Tilt_Left () {
  * Handle "tilt right" gesture.
  */
 boolean Handle_Gesture_Tilt_Right () {
-  Update_Color (0, 255, 0);
+//  Update_Color (0, 255, 0);
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_RIGHT);
   Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt right");
@@ -435,7 +446,7 @@ boolean Handle_Gesture_Tilt_Right () {
  * Handle "tilt forward" gesture.
  */
 boolean Handle_Gesture_Tilt_Forward () {
-  Update_Color (0, 255, 0);
+//  Update_Color (0, 255, 0);
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_FORWARD);
   Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt forward");
@@ -445,7 +456,7 @@ boolean Handle_Gesture_Tilt_Forward () {
  * Handle "tilt backward" gesture.
  */
 boolean Handle_Gesture_Tilt_Backward () {
-  Update_Color (0, 255, 0);
+//  Update_Color (0, 255, 0);
   
 //  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_BACKWARD);
   Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt backward");

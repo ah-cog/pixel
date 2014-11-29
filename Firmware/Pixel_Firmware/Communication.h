@@ -17,6 +17,7 @@ unsigned long lastBroadcastTime = -1000L - 1; // 0L;
 #define NEIGHBOR_LIMIT 10
 int neighborCount = 0;
 int neighbors[NEIGHBOR_LIMIT];
+unsigned long neighborAge[NEIGHBOR_LIMIT]; // i.e., the time last received a message from the neighbor
 
 #define BROADCAST_ADDRESS 0xFFFF
 
@@ -115,7 +116,9 @@ unsigned long lastReceivedSwingTimeout = 5000;
 
 // TODO: Move this into Looper engine so can edit in web browser. Possibly store it in EEPROM (as well as in cloud).
 unsigned long lastSentActive = 0L;
-unsigned long lastSentActiveTimeout = 30000L; // Broadcast heartbeat every 30 seconds
+
+// TODO: Dynamically adjust frequency, depending on the module's use
+unsigned long lastSentActiveTimeout = 1000L; // 30000L; // Broadcast heartbeat every 30 seconds
 
 //! Message (i.e., Message) to propagate.
 //!
@@ -334,7 +337,11 @@ boolean Queue_Message (int source, int destination, String content) {
 //  Serial.println ("Queue_Message");
 
   Message* message = Create_Message (source, destination, content);
-  Queue_Outgoing_Message (message);
+  if (destination == platformUuid) {
+    Queue_Incoming_Message (message);
+  } else {
+    Queue_Outgoing_Message (message);
+  }
   
   return true;
 }
@@ -395,7 +402,7 @@ boolean Capture_Messages () {
         
       // TODO: Terminate the buffer and return it for parsing!
       String encodedMessage = String (serialBuffer).substring (1, serialBufferSize - 1);
-      Serial.println (encodedMessage);
+//      Serial.println (encodedMessage);
 
       // Parse tuple encoded as follows "{ <to>, <from>, <message> }".
       // TODO: Turn this into a Lisp format.
@@ -413,6 +420,7 @@ boolean Capture_Messages () {
       }
       if (hasNeighbor == false) {
         neighbors[neighborCount] = source;
+        neighborAge[neighborCount] = millis ();
         neighborCount++;
         Serial.print ("Added neighbor "); Serial.print (neighborCount); Serial.print (": "); Serial.print (source); Serial.print ("\n");
       }
@@ -421,9 +429,9 @@ boolean Capture_Messages () {
       
       // Add incoming data to the incoming data queue (i.e., messages to be processed)
       // int dataParam = dataParameter.toInt ();
-      Serial.print (">> (source: "); Serial.print (source); Serial.print (", ");
-      Serial.print ("destination: "); Serial.print (destination); Serial.print (", ");
-      Serial.print ("content: "); Serial.print (content); Serial.print (")\n\n");
+//      Serial.print (">> (source: "); Serial.print (source); Serial.print (", ");
+//      Serial.print ("destination: "); Serial.print (destination); Serial.print (", ");
+//      Serial.print ("content: "); Serial.print (content); Serial.print (")\n\n");
       
       Message* message = Create_Message (source, destination, content);
       Queue_Incoming_Message (message);
@@ -599,7 +607,7 @@ int Get_Output_Module_Count () {
 }
 
 boolean Handle_Message_Active (Message* message) {
-  Serial.println (">> Received ANNOUNCE_ACTIVE");
+//  Serial.println (">> Received ANNOUNCE_ACTIVE");
   
   // TODO: Make sure that a "neighbor" with the source address of the message is in this module's table of neighbors!
 }
@@ -630,9 +638,20 @@ boolean Handle_Message_Swing (Message* message) {
         Add_Output_Module ((*message).source);
       }
       
-      Update_Color (0, 0, 0);
+//      Queue_Message (platformUuid, (*message).source, "activate output when ");
+      
+//      Update_Color (0, 0, 0);
       
       // TODO: Message ("change color to <link color>");
+      
+      Stop_Blink_Light ();
+      
+      int red = random (256);
+      int green = random (256);
+      int blue = random (256);
+      Queue_Message (platformUuid, (*message).source, String ("change input color to ") + String (red) + String (" ") + String (green) + String (" ") + String (blue));
+      
+      Queue_Message (platformUuid, platformUuid, String ("change output color to ") + String (red) + String (" ") + String (green) + String (" ") + String (blue));
       
       
     
@@ -641,17 +660,13 @@ boolean Handle_Message_Swing (Message* message) {
       // TODO: REMOVE THIS!!
   //    addNextModule(message.source);
       
-      
-      
-      Play_Note (1000, 1000);
-      
       // Check of the received message was within the time limit
       
       // Send ACK message to message.source to confirm linking operation
   //    Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP);
       // Queue_Broadcast ("request confirm gesture tap");
   //    Queue_Broadcast ("fyi tap");
-      Queue_Message (platformUuid, (*message).source, "observe notice gesture swing");
+//      Queue_Message (platformUuid, (*message).source, "observe notice gesture swing");
       // Queue_Broadcast (String ("send \"confirm gesture tap\" to ") + String (platformUuid));
       // Queue_Broadcast (String ("send confirmation");
 //    }
@@ -686,7 +701,7 @@ boolean Handle_Message_Shake (Message* message) {
   
   // TODO: Place module in "respond to swung module" mode.
   
-  Serial.println (">> Received ANNOUNCE_GESTURE_SHAKE");
+//  Serial.println (">> Received ANNOUNCE_GESTURE_SHAKE");
   
   Update_Color (255, 255, 255);
   
@@ -741,7 +756,7 @@ boolean Handle_Message_Tap (Message* message) {
     
     // Check of the received message was within the time limit
     
-    Serial.println (">> Received ANNOUNCE_GESTURE_TAP");
+//    Serial.println (">> Received ANNOUNCE_GESTURE_TAP");
     
     // Send ACK message to message.source to confirm linking operation
 //    Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP);
@@ -763,7 +778,7 @@ boolean Handle_Message_Request_Confirm_Tap (Message* message) {
   
 //  if (hasSwung) { // if this is the module that was swung
     // TODO: 
-    Serial.println (">> Received REQUEST_CONFIRM_GESTURE_TAP");
+//    Serial.println (">> Received REQUEST_CONFIRM_GESTURE_TAP");
     //Queue_Message (message.source, CONFIRM_GESTURE_TAP);
     // TODO: Make this message send immediately!
     Queue_Message (platformUuid, (*message).source, "fyi got tap");
@@ -780,7 +795,7 @@ boolean Handle_Message_Confirm_Tap (Message* message) {
 //    addMessage (message.source, CONFIRM_GESTURE_TAP);
 
     // TODO: Set the module as "next"
-    Serial.println (">> Received CONFIRM_GESTURE_TAP");
+//    Serial.println (">> Received CONFIRM_GESTURE_TAP");
     
     Stop_Blink_Light ();
     hasSwung = false;
@@ -822,7 +837,7 @@ boolean Handle_Message_Request_Confirm_Tap_To_Another_As_Left (Message* message)
     awaitingNextModule = false;
     awaitingNextModuleConfirm = false; // awaitingNextModuleConfirm = true;
     
-    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
+//    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
   
 //    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
 //    Queue_Message (message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
@@ -904,7 +919,7 @@ boolean Handle_Message_Request_Confirm_Tap_To_Another_As_Right (Message* message
   // Send ACK message to message.source to confirm linking operation (if not yet done)
   if (awaitingPreviousModuleConfirm) {
   
-    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
+//    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
 
     awaitingPreviousModule = false;
     awaitingPreviousModuleConfirm = false;

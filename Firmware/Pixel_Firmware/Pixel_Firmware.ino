@@ -118,7 +118,7 @@ void setup () {
   Update_Module_Color (255, 255, 255);
   
   // assign the module a color uniquely
-  Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
+//  Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
   
   // let the machine hardware stabilize
   delay (2000);
@@ -320,6 +320,26 @@ void loop () {
     lastSentActive = millis ();
   }
   
+  // Remove_Neighbor
+  // Removes any neighbors that have left the network.
+  // TODO: Update this to use a linked list?
+  currentTime = millis ();
+  for (int i = 0; i < neighborCount; i++) {
+
+    if (currentTime - neighborAge[i] > 5000) {
+      
+      Serial.println ("Removing neighbor.");
+      
+      // Remove the module from the set
+      for (int j = i; j < neighborCount - 1; j++) {
+        neighbors[j] = neighbors[j + 1];
+        neighborAge[j] = neighborAge[j + 1];
+      }
+      neighborCount--;
+        
+    }
+  }
+  
   
   // Check for mesh data and receive it if present
   boolean hasReceivedMeshData = false;
@@ -466,53 +486,15 @@ void loop () {
     
     
     
-    Serial.print ("Received ");
+//    Serial.print ("Received ");
     
     Interpret_Message (message);
     
-//    // Sent by "left" module:
-//    if (message.message == ANNOUNCE_ACTIVE) {
-//      Serial.print ("ANNOUNCE_ACTIVE");
-//    }
-//    
-//    else if (message.message == ANNOUNCE_GESTURE_SWING) {
-//      Serial.print("ANNOUNCE_GESTURE_SWING");
-//    } else if (message.message == ANNOUNCE_GESTURE_TAP) {
-//      Serial.print("ANNOUNCE_GESTURE_TAP");
-//    }
-//    
-//    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) {
-//      Serial.print("ANNOUNCE_GESTURE_TAP_AS_LEFT");
-//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) {
-//      Serial.print("REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
-//    } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) {
-//      Serial.print("CONFIRM_GESTURE_TAP_AS_LEFT");
-//    }
-//    
-//    // Sent by "right" module:
-//    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_RIGHT) {
-//      Serial.print("ANNOUNCE_GESTURE_TAP_AS_RIGHT");
-//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT) {
-//      Serial.print("REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
-//    } else if (message.message == CONFIRM_GESTURE_TAP_AS_RIGHT) {
-//      Serial.print("CONFIRM_GESTURE_TAP_AS_RIGHT");
-//    }
-//    
-//    else if (message.message == ACTIVATE_MODULE_OUTPUT) {
-//      Serial.print("ACTIVATE_MODULE_OUTPUT");
-//    } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
-//      Serial.print("DEACTIVATE_MODULE_OUTPUT");
-//    }
-//    
-//    else {
-//      Serial.print(message.message);
-//    }
-    
-    Serial.print (" from module ");
-    Serial.print ((*message).source);
-//    Serial.print(" (of ");
-//    Serial.print(incomingMessageQueueSize);
-    Serial.print ("\n");
+//    Serial.print (" from module ");
+//    Serial.print ((*message).source);
+////    Serial.print(" (of ");
+////    Serial.print(incomingMessageQueueSize);
+//    Serial.print ("\n");
     
     //
     // Process received messages

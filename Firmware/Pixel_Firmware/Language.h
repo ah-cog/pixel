@@ -68,13 +68,13 @@ void Interpret_Message (Message* message) {
     // Check if the message is from the remote "mesh" channel
     
     if (strncmp ((*message).content, "notice presence", (*message).size) == 0) {  
-      Serial.print ("notice presence");
+      Serial.println ("notice presence");
       
       Handle_Message_Active (message);
     }
     
     else if (strncmp ((*message).content, "ping", (*message).size) == 0) {  
-      Serial.print ("ping");
+      Serial.println ("ping");
       
       // TODO: Send module to remote module to set up its "observerAddress"
       Message* outgoingMessage = Create_Message (platformUuid, perspectiveAddress, String ("pong"));
@@ -82,7 +82,7 @@ void Interpret_Message (Message* message) {
       
     } else if (strncmp ((*message).content, "pong", (*message).size) == 0) {  
       
-      Serial.print ("pong");
+      Serial.println ("pong");
       
       // TODO: Send module to remote module to set up its "observerAddress"
       Message* outgoingMessage = Create_Message (platformUuid, perspectiveAddress, String ("pong"));
@@ -93,7 +93,7 @@ void Interpret_Message (Message* message) {
       
       String fourthWord = getValue ((*message).content, ' ', 3);
       
-      Serial.print (String ("starting to share with ") + String (fourthWord) + String ("."));
+      Serial.println (String ("starting to share with ") + String (fourthWord) + String ("."));
       
       observerAddress = fourthWord.toInt ();
       
@@ -108,29 +108,29 @@ void Interpret_Message (Message* message) {
       
       Serial.print ("Entered module ");
       Serial.print (perspectiveAddress);
-      Serial.print (".");
+      Serial.print (".\n");
     
     }
     
     else if (strncmp ((*message).content, "notice gesture swing", (*message).size) == 0) {
-      Serial.print ("notice gesture swing");
+      Serial.println ("notice gesture swing");
       Handle_Message_Swing (message);
     } else if (strncmp ((*message).content, "notice gesture shake", (*message).size) == 0) {
-      Serial.print ("notice gesture shake");
+      Serial.println ("notice gesture shake");
       Handle_Message_Shake (message);
     } else if (strncmp ((*message).content, "notice gesture tap", (*message).size) == 0) {
-      Serial.print ("notice gesture tap");
+      Serial.println ("notice gesture tap");
       Handle_Message_Tap (message);
     }
     
     else if (strncmp ((*message).content, "notice gesture tap as left", (*message).size) == 0) {
-      Serial.print ("announce gesture tap as left");
+      Serial.println ("announce gesture tap as left");
       Handle_Message_Tap_To_Another_As_Left (message);
     } else if (strncmp ((*message).content, "request confirm gesture tap as right", (*message).size) == 0) {
-      Serial.print ("request confirm gesture tap as right");
+      Serial.println ("request confirm gesture tap as right");
       Handle_Message_Request_Confirm_Tap_To_Another_As_Right (message);
     } else if (strncmp ((*message).content, "confirm gesture tap as left", (*message).size) == 0) {
-      Serial.print ("confirm gesture tap as left");
+      Serial.println ("confirm gesture tap as left");
       Handle_Message_Confirm_Tap_To_Another_As_Left (message);
     }
     
@@ -140,26 +140,26 @@ void Interpret_Message (Message* message) {
 //    }
     
     else if (strncmp ((*message).content, "notice gesture tap as right", (*message).size) == 0) {
-      Serial.print ("announce gesture tap as right");
+      Serial.println ("announce gesture tap as right");
       Handle_Message_Tap_To_Another_As_Right (message);
     } else if (strncmp ((*message).content, "request confirm gesture tap as left", (*message).size) == 0) {
-      Serial.print ("request confirm gesture tap as left");
+      Serial.println ("request confirm gesture tap as left");
       Handle_Message_Request_Confirm_Tap_To_Another_As_Left (message);
     } else if (strncmp ((*message).content, "confirm gesture tap as right", (*message).size) == 0) {
-      Serial.print ("confirm gesture tap as right");
+      Serial.println ("confirm gesture tap as right");
       Handle_Message_Confirm_Tap_To_Another_As_Right (message);
     }
     
     else if (strncmp ((*message).content, "request confirm gesture tap", (*message).size) == 0) {
-      Serial.print ("request confirm gesture tap");
+      Serial.println ("request confirm gesture tap");
       Handle_Message_Request_Confirm_Tap (message);
     } else if (strncmp ((*message).content, "request confirm gesture tap", (*message).size) == 0) {
-      Serial.print ("confirm gesture tap");
+      Serial.println ("confirm gesture tap");
       Handle_Message_Confirm_Tap (message);
     } 
     
     else if (strncmp ((*message).content, "turn output off", (*message).size) == 0) { // activate module output
-      Serial.print ("turn on output");
+      Serial.println ("turn on output");
       
       // ACTIVATE_MODULE_OUTPUT
 //      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
@@ -168,7 +168,7 @@ void Interpret_Message (Message* message) {
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
       Propagate_Channel_Value (moduleOutputChannel);
     } else if (strncmp ((*message).content, "turn output off", (*message).size) == 0) { // deactivate module output
-      Serial.print ("turn output off");
+      Serial.println ("turn output off");
       
 //      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
 //      syncPinValue(MODULE_OUTPUT_PIN);
@@ -490,6 +490,32 @@ void Perform_Shell_Behavior (String message) {
         Serial.print (" is ");
         Serial.print ((*channel).value);
         Serial.print (".\n");
+      }
+      
+    } else if (secondWord.compareTo ("input") == 0) {
+      
+      String thirdWord = getValue (message, ' ', 2);
+      
+      if (thirdWord.compareTo ("color") == 0) {
+        Serial.print (targetInputColor[0]);
+        Serial.print (" ");
+        Serial.print (targetInputColor[1]);
+        Serial.print (" ");
+        Serial.print (targetInputColor[2]);
+        Serial.print (" ");
+      }
+      
+    } else if (secondWord.compareTo ("output") == 0) {
+      
+      String thirdWord = getValue (message, ' ', 2);
+      
+      if (thirdWord.compareTo ("color") == 0) {
+        Serial.print (targetOutputColor[0]);
+        Serial.print (" ");
+        Serial.print (targetOutputColor[1]);
+        Serial.print (" ");
+        Serial.print (targetOutputColor[2]);
+        Serial.print (" ");
       }
       
     }
