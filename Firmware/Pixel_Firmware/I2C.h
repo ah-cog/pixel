@@ -4,6 +4,8 @@
 #include "Behavior.h"
 #include "Platform.h"
 
+void Interpret_Message (Message* message); // start the "interpretive dance": transformation/message => interpret => behavior
+
 #define I2C_MESSAGE_BYTE_SIZE 30
 #define BUFFER_SIZE_I2C 32
 
@@ -686,6 +688,13 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
 //            
 //          }
         }
+        
+      } else {
+        
+        String remoteMessage = String (behaviorDescriptionBuffer);
+        Message* message = Create_Message (platformUuid, platformUuid, remoteMessage);
+        Interpret_Message (message);
+        
       }
       
     }

@@ -182,7 +182,7 @@ boolean Perform_Light_Behavior () {
       }
       
     } else if (currentLightBehavior == LIGHT_BEHAVIOR_DELAY_150MS) {
-      
+        
       unsigned long currentTime = millis();
       if (currentTime > (currentLightBehaviorStepStartTime + 150)) {
         currentLightBehavior = -1; // Reset the current behavior to indicate it's done

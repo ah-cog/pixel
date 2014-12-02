@@ -29,6 +29,8 @@ String ipAddress = "unassigned";
 #include "Motion.h"
 #include "Memory.h"
 
+#include "Language.h" // i.e., the shell
+
 #include "Gesture.h"
 #include "Movement.h"
 #include "Communication.h"
@@ -46,7 +48,7 @@ int perspectiveAddress = -1; // i.e., the module to which commands will be sent 
 int observerAddress = -1; // i.e., the module from which commands are being sent, to which responses should be sent
 
 #include "Foundation.h" // i.e., the kernel
-#include "Language.h" // i.e., the shell
+//#include "Language.h" // i.e., the shell
 
 String Generate_Name () {
   String name = String (adverbs[random(331)]) + "-" + String (nouns[random(975)]);

@@ -16,8 +16,8 @@
 // Use the hardware SPI pins for the remaining connections to the Wi-Fi module (e.g., On an UNO, SCK = 13, MISO = 12, and MOSI = 11).
 Adafruit_CC3000 cc3000 = Adafruit_CC3000 (ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV4); // you can change this clock speed
 
-#define WLAN_SSID "deadhau5" // Cannot be longer than 32 characters!
-#define WLAN_PASS "deadhau5!8002"
+#define WLAN_SSID "DEADHAU5" // Cannot be longer than 32 characters!
+#define WLAN_PASS "DEADHAU5!8002"
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
 #define WLAN_SECURITY WLAN_SEC_WPA2
 
@@ -315,7 +315,64 @@ boolean handleClientConnection (Adafruit_CC3000_ClientRef& client) {
             
           } else if (strcmp (httpRequestMethod, "POST") == 0) {
             
-            if (strcmp (httpRequestAddress, "/behavior") == 0) {
+            // TODO: Add the following for relaying to other modules:
+            //       if (strcmp (httpRequestAddress, "/[<module-name> or <module-address>]/message") == 0) {
+            
+            if (strcmp (httpRequestAddress, "/message") == 0) {
+              
+              // e.g., POST /message?content=blah
+              String messageParameter = String (httpRequestParameters[0]);
+              String message = getValue (messageParameter, '=', 1);
+              
+              // Process message
+              message = String ("(") + message.replace ("%20", " ") + String (")");
+              
+              Serial.print ("Received message: ");
+              Serial.print (message);
+              Serial.print ("\n");
+              
+              // Relay information to the primary board
+              const int triggerBufferSize = 64;
+              char messageChar[triggerBufferSize];
+              message.toCharArray (messageChar, triggerBufferSize);
+              DEVICE_SERIAL.write (messageChar);
+              
+              // Send a standard HTTP response header
+              client.println("HTTP/1.1 200 OK");
+              client.println("Access-Control-Allow-Origin: *");
+              client.println("Access-Control-Expose-Headers: Location");
+              client.println("Content-Type: text/html");
+              client.println("Connection: close");
+              
+              break;
+              
+//              Behavior* behavior = NULL;
+//              
+//              if (type.compareTo("output") == 0) {
+//                
+//                Serial.println("Creating output behavior.");
+//
+//                String pinParameter = String(httpRequestParameters[1]);
+//                int pin = getValue(pinParameter, '=', 1).toInt();
+//                
+//                String signalParameter = String(httpRequestParameters[2]);
+//                String signal = getValue(signalParameter, '=', 1);
+//                
+//                String dataParameter = String(httpRequestParameters[3]);
+//                String data = getValue(dataParameter, '=', 1);
+//                
+//                behavior = Create_Output_Behavior (substrate, pin, signal, data);
+//                Sequence* sequence = (*substrate).sequences;
+//                Update_Behavior_Sequence (behavior, sequence);
+//                
+//                // Propagate behaviorCreate_Transformation
+////                Transformation* transformation = Create_Transformation (String("create behavior output 5 digital on"));
+//                // TODO: Update Create_Transformation to accept JSON (and consider using a remote reference to the local UUID rather than recreating the same UUID).
+//                Transformation* transformation = Create_Transformation (String ("create behavior output ") + String((*behavior).uid) + " " + String (pin) + " " + String (signal) + " " + String (data));
+//                Queue_Transformation (propagator, transformation);
+//                // TODO: Propagate behavior over serial syncronously, waiting for response to return to client!
+                
+            } else if (strcmp (httpRequestAddress, "/behavior") == 0) {
               
               String typeParameter = String(httpRequestParameters[0]);
               String type = getValue(typeParameter, '=', 1);

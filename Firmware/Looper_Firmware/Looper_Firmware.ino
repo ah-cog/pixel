@@ -54,7 +54,7 @@ void loop () {
   Adafruit_CC3000_ClientRef client = httpServer.available ();
   
   if (client) {
-    handleClientConnection (celient);
+    handleClientConnection (client);
   }
   
   // Propagate data to the main device
