@@ -2,7 +2,6 @@
 #define WEB_SERVER_H
 
 #include "Looper.h"
-#include "BehaviorTransformation.h"
 
 //#include <Adafruit_CC3000.h>
 //#include <SPI.h>
@@ -260,7 +259,7 @@ boolean handleClientConnection (Adafruit_CC3000_ClientRef& client) {
               // Response data
               client.println("{");
               client.println("\tpin: {");
-              client.print("\t\t{ number: "); client.print(pin); client.print(", value: "); client.print(virtualPin[pin].value); client.print(" }"); client.println();
+//              client.print("\t\t{ number: "); client.print(pin); client.print(", value: "); client.print(virtualPin[pin].value); client.print(" }"); client.println();
               client.println("\t}");
               client.println("}");
               
@@ -282,10 +281,10 @@ boolean handleClientConnection (Adafruit_CC3000_ClientRef& client) {
               // Response data
               client.println("{");
               client.println("\tpins: [");
-              for (int i = 0; i < VIRTUAL_PIN_COUNT - 1; i++) {
-                client.print("\t\t{ number: "); client.print(i); client.print(", value: "); client.print(virtualPin[i].value); client.print(" },"); client.println();
-              }
-              client.print("\t\t{ number: "); client.print(VIRTUAL_PIN_COUNT - 1); client.print(", value: "); client.print(virtualPin[VIRTUAL_PIN_COUNT - 1].value); client.print(" }"); client.println();
+//              for (int i = 0; i < VIRTUAL_PIN_COUNT - 1; i++) {
+//                client.print("\t\t{ number: "); client.print(i); client.print(", value: "); client.print(virtualPin[i].value); client.print(" },"); client.println();
+//              }
+//              client.print("\t\t{ number: "); client.print(VIRTUAL_PIN_COUNT - 1); client.print(", value: "); client.print(virtualPin[VIRTUAL_PIN_COUNT - 1].value); client.print(" }"); client.println();
               client.println("\t]");
               client.println("}");
               

@@ -11,7 +11,6 @@
 //#define BEHAVIOR_REBOOT 20
 //#define STATUS_WIFI_CONNECTED 30
 
-
 // Behavior Transformations
 #define CREATE 1
 #define GET 2
@@ -173,11 +172,7 @@ struct Delay {
   int milliseconds;
 };
 
-
-
-
 // TODO: Make the following defined WITHIN Looper
-
 
 struct Sound {
   Behavior* behavior;
