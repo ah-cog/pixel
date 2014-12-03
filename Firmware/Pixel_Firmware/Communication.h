@@ -27,17 +27,7 @@ unsigned long neighborAge[NEIGHBOR_LIMIT]; // i.e., the time last received a mes
 
 #define SEQUENCE_REQUEST_TIMEOUT 1000
 
-// Mesh incoming message queue
-//#define MESH_INCOMING_QUEUE_CAPACITY 20
-////unsigned short int meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY] = { 0 };
-//Message meshIncomingMessages[MESH_INCOMING_QUEUE_CAPACITY];
-//int incomingMessageQueueSize = 0;
-
-// Mesh outgoing message queue
-//#define MESSAGE_QUEUE_CAPACITY 80
-//Message* messageQueue[MESSAGE_QUEUE_CAPACITY];
-//int messageQueueSize = 0;
-unsigned long lastMessageSendTime = 0;
+unsigned long lastMessageSendTime = 0; // Time at which the previously-sent message was sent.
 
 // Previous modules in sequence
 #define PREVIOUS_MODULE_CAPACITY 20
@@ -49,51 +39,9 @@ int previousModuleCount = 0;
 unsigned short int nextModules[NEXT_MODULE_CAPACITY] = { 0 };
 int nextModuleCount = 0;
 
-
-
 //
 // Handle messages received over mesh networks
 //
-
-//#define ANNOUNCE_POOF 30 // i.e., "Poof" into existence.
-//#define SAY_POOF 30 // i.e., "Poof" into existence.
-//#define ANNOUNCE_FOUNDATION 31 // Introduce self (i.e., the "foundation's" communication hardware to neighbors in mesh)
-// ANNOUNCE_CONNECTING
-//#define ANNOUNCE_CONNECTED 32 // 
-//#define ANNOUNCE_ACTIVE 33 // Message to periodically notify neighbors of the device's foundation (i.e., it is physically present on a device with a physical address and can be communited to)
-// ANNOUNCE_DISCONNECTING
-//#define ANNOUNCE_DISCONNECTED 34
-//#define ANNOUNCE_OFF 34
-
-// TODO: Write code to periodically notify neighbors of device's existence. This is used by neighbors to update their tables of neighbors (and their connections).
-// TODO: When priodically announcing existence, if encounter an address collision, check UUIDs and re-negotiate an IP address.
-
-//#define ANNOUNCE_GESTURE_AT_REST 1
-////#define ANNOUNCE_GESTURE_AT_REST_ON_TABLE 1
-////#define ANNOUNCE_GESTURE_AT_REST_IN_HAND 2
-////#define ANNOUNCE_GESTURE_PICK_UP 3
-////#define ANNOUNCE_GESTURE_PLACE_DOWN 4
-//#define ANNOUNCE_GESTURE_SWING 2 // TODO: When received, place module in "respond to swung module" mode
-//
-//#define ANNOUNCE_GESTURE_TAP 23 // 9
-//#define REQUEST_CONFIRM_GESTURE_TAP 24 // 9
-//#define CONFIRM_GESTURE_TAP 22 // 9
-//
-//#define ANNOUNCE_GESTURE_TAP_AS_LEFT 3 // 8
-//#define ANNOUNCE_GESTURE_TAP_AS_RIGHT 4 // 9
-//
-//#define ANNOUNCE_GESTURE_SHAKE 5 // 7
-//
-//#define ANNOUNCE_GESTURE_TILT_LEFT 6 // 5
-//#define ANNOUNCE_GESTURE_TILT_RIGHT 7 // 6
-//#define ANNOUNCE_GESTURE_TILT_FORWARD 8
-//#define ANNOUNCE_GESTURE_TILT_BACKWARD 9
-//
-//#define REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT 13
-//#define REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT 14
-//
-//#define CONFIRM_GESTURE_TAP_AS_LEFT 15
-//#define CONFIRM_GESTURE_TAP_AS_RIGHT 16
 
 // Module state:
 boolean awaitingNextModule = false;
@@ -360,9 +308,9 @@ boolean Release_Message () { // boolean Send_Message () {
     // String encodedMessage = String ("{ to: ") + String ((*message).source) + String (" , from: ") + String (platformUuid) + String (" , content: ") + String ((*message).content) + String (" }");
     String encodedMessage = String ("(") + String ((*message).source) + String (",") + String ((*message).destination) + String (",") + String ((*message).content) + String (")");
 
-    Serial.print ("Sending message ");
-    Serial.print (encodedMessage);
-    Serial.print ("\n");
+//    Serial.print ("Sending message ");
+//    Serial.print (encodedMessage);
+//    Serial.print ("\n");
     
     // Transmit the message
     const int serialBufferSize = 64;
