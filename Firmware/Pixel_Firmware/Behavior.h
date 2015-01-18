@@ -11,7 +11,6 @@
 //#define BEHAVIOR_REBOOT 20
 //#define STATUS_WIFI_CONNECTED 30
 
-
 // Behavior Transformations
 #define CREATE 1
 #define GET 2
@@ -50,24 +49,24 @@
 #define BEHAVIOR_TYPE_SOUND  4 // TODO: Make this a "user defined" behavior in Looper
 #define BEHAVIOR_TYPE_MOTION  5 // TODO: Make this a "user defined" behavior in Looper
 
-int behaviorCount = 0;
-
-// Generates unique behavior ID
-int generateBehaviorIdentifier() {
-  int behaviorIdentifier = behaviorCount;
-  behaviorCount++;
-  return behaviorIdentifier;
-}
-
 struct Substrate;
 struct Sequence;
-//struct Dot;
+//struct Point; // or "Dot"
 //struct Line;
 struct Loop;
 struct Behavior;
 struct Input;
 struct Output;
 struct Delay;
+
+int behaviorCount = 0;
+
+// Generates unique behavior ID
+int Generate_Behavior_Identifier () {
+  int behaviorIdentifier = behaviorCount;
+  behaviorCount++;
+  return behaviorIdentifier;
+}
 
 // The "behavioral substrate" which provides an unconstrained context for behaviors.
 struct Substrate {
@@ -110,7 +109,7 @@ struct Loop {
 //  boolean singleton; // set to false
 //};
 
-//struct Dot {
+//struct Point { // or "Dot"
 //  boolean continuous;
 //  boolean singleton;
 //};
@@ -121,6 +120,9 @@ struct Behavior {
   int uid; // The behavior's unique ID (uid will recur on other modules since it's just a counter associated with behaviors added)
   int type; // i.e., digital or analog
   void* schema; // The schema for the specific behavior type (e.g., for the "set pin" behavior)
+  
+  // Activation conditions
+  
   
   Substrate* substrate; // The substrate containing the behavior
   
@@ -168,6 +170,9 @@ struct Output {
   int data;
 };
 
+//! \struct Delay
+//! The definition of the Delay structure.
+//!
 struct Delay {
   Behavior* behavior;
   
@@ -178,11 +183,7 @@ struct Delay {
   unsigned long currentTime;
 };
 
-
-
-
-// TODO: Make the following defined WITHIN Looper
-
+// TODO: Make the following defined WITHIN Looper (and the above)
 
 struct Sound {
   Behavior* behavior;

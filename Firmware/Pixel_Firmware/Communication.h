@@ -362,7 +362,8 @@ boolean Capture_Messages () {
       boolean hasNeighbor = false;
       for (int i = 0; i < neighborCount; i++) {
         if (neighbors[i] == source) {
-          hasNeighbor = true;
+          hasNeighbor = true; // TODO: Delete this!
+          neighborAge[i] = millis ();
           break;
         }
       }

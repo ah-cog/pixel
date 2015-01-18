@@ -86,7 +86,9 @@ Channel* Create_Channel (Platform* platform, int address);
 long platformUuid = 0L;
 boolean hasPlatformUuid = false;
 
-long getPlatformUuid () {
+Platform* platform = NULL;
+
+long Generate_Platform_Uuid () {
   const int maximumNumber = 1000L;
   long randomNumber = random (maximumNumber);
   return randomNumber;
@@ -97,7 +99,7 @@ boolean setupPlatformUuid () {
   // Get the device UUID used for communication over the local mesh network.
   while (hasPlatformUuid == false) {
     
-    platformUuid = getPlatformUuid (); // Assing the device UUID
+    platformUuid = Generate_Platform_Uuid (); // Assing the device UUID
     
     // Check if a valid UUID has been assigned to the platform
     if (platformUuid != 0L) {
@@ -112,7 +114,6 @@ boolean setupPlatformUuid () {
   return false;
 }
 
-Platform* platform = NULL;
 void setupPlatform () {
   
   // Create the platform
@@ -288,7 +289,7 @@ void Update_Channel_Mode (Channel* channel, int mode) {
 }
 
 int Get_Channel_Mode (Channel* channel) {
-  Serial.println ("Get_Channel_mode");
+  Serial.println ("Get_Channel_Mode");
   
   if (channel != NULL) {
     (*channel).isUpdated = true; // TODO: Propagate this change to the platform associated with the channel.
@@ -317,8 +318,10 @@ void Update_Channel_Value (Channel* channel, int value) {
   // TODO: Return "none" if channel not found (if specified channel is NULL)
 }
 
+//! Gets the "current" value on the specified channel.
+//!
 int Get_Current_Channel_Value (Channel* channel) {
-  Serial.println ("Get_Current_Pin_Value");
+  Serial.println ("Get_Current_Channel_Value");
   
   if (channel != NULL) {
     
@@ -333,8 +336,7 @@ int Get_Current_Channel_Value (Channel* channel) {
 //! Gets the value on the specified channel.
 //!
 int Get_Channel_Value (Channel* channel) {
-//int Get_Pin_Value (Channel* channel) {
-  Serial.println ("Get_Pin_Value");
+  Serial.println ("Get_Channel_Value");
   
   if (channel != NULL) {
     
@@ -349,7 +351,5 @@ int Get_Channel_Value (Channel* channel) {
   }
   // TODO: Return "none" if channel not found (if specified channel is NULL)
 }
-
-
 
 #endif

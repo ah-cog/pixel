@@ -42,11 +42,13 @@ char* nouns[975] = { "account", "achiever", "acoustics", "act", "action", "activ
 String name = "module"; // TODO: Move this to Foundation/Platform (next to the UUID)
 
 // TODO: Create Perspective or Focus class
-int perspectiveAddress = -1; // i.e., the module to which commands will be sent by default (initially, this is set to the module connected via USB)
-int observerAddress = -1; // i.e., the module from which commands are being sent, to which responses should be sent
+int messageTargetModule = -1; // i.e., the module to which commands will be sent by default (initially, this is set to the module connected via USB)
+int messageSourceModule = -1; // i.e., the module from which commands are being sent, to which responses should be sent
 
 #include "Foundation.h" // i.e., the kernel
 #include "Language.h" // i.e., the shell
+
+boolean hasGestureProcessed = false;
 
 String Generate_Name () {
   String name = String (adverbs[random(331)]) + "-" + String (nouns[random(975)]);
@@ -76,15 +78,6 @@ String Generate_Name () {
  * Module configuration
  */
 
-//            _               
-//           | |              
-//   ___  ___| |_ _   _ _ __  
-//  / __|/ _ \ __| | | | '_ \ 
-//  \__ \  __/ |_| |_| | |_) |
-//  |___/\___|\__|\__,_| .__/ 
-//                     | |    
-//                     |_|    
-
 void setup () {
   
   // set up the pseudorandom number generator
@@ -106,7 +99,7 @@ void setup () {
 //  setupPlatform(); // Setup Pixel's reflection (i.e., it's virtual machine)
 
   // Set up defualt perspective
-  perspectiveAddress = platformUuid;
+  messageTargetModule = platformUuid;
 
   setupPorts (); // Setup pin mode for I/O
   setupColor (); // Setup the Pixel's color
@@ -115,7 +108,7 @@ void setup () {
 
   // update the module's color
   //setModuleColor(random(256), random(256), random(256)); // Set the module's default color
-  Update_Module_Color (255, 255, 255);
+  Update_Module_Color (32, 32, 32);
   
   // assign the module a color uniquely
 //  Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
@@ -149,17 +142,6 @@ void setup () {
   
 //  Serial.print ("Foundation UUID: "); for (int i = 0; i < UUID_SIZE; i++) { Serial.print ((char) foundationUuid[i]); } Serial.print ("\n");
 }
-
-//   _                   
-//  | |                  
-//  | | ___   ___  _ __  
-//  | |/ _ \ / _ \| '_ \ 
-//  | | (_) | (_) | |_) |
-//  |_|\___/ \___/| .__/ 
-//                | |    
-//                |_|    
-
-boolean hasGestureProcessed = false;
 
 void loop () {
   
@@ -272,10 +254,10 @@ void loop () {
 //    Serial.println();
 //  }
 //  
-//  if (getNextModuleCount()) {
-//    Serial.print("Next modules: ");
-//    Serial.print(getNextModuleCount());
-//    Serial.println();
+//  if (getNextModuleCount ()) {
+//    Serial.print ("Next modules: ");
+//    Serial.print (getNextModuleCount());
+//    Serial.println ();
 //  }
 
   // Change color/light if needed
@@ -463,13 +445,13 @@ void loop () {
       } else if (classifiedGestureIndex == 4) { // Check if gesture is "shake"
         Handle_Gesture_Shake ();
       } else if (classifiedGestureIndex == 5) { // Check if gesture is "tilt left"
-        Handle_Gesture_Tilt_Left ();
+//        Handle_Gesture_Tilt_Left ();
       } else if (classifiedGestureIndex == 6) { // Check if gesture is "tilt right"
-        Handle_Gesture_Tilt_Right ();
+//        Handle_Gesture_Tilt_Right ();
       } else if (classifiedGestureIndex == 7) { // Check if gesture is "tilt forward"
-        Handle_Gesture_Tilt_Forward ();
+//        Handle_Gesture_Tilt_Forward ();
       } else if (classifiedGestureIndex == 8) { // Check if gesture is "tilt backward"
-        Handle_Gesture_Tilt_Backward ();
+//        Handle_Gesture_Tilt_Backward ();
       }
       
       hasGestureProcessed = true; // Set flag indicating gesture has been processed
@@ -482,9 +464,8 @@ void loop () {
   
   if (incomingMessages != NULL) { //! Check if there are any received messages to be processed
     
+    // Get the next message on the queue of incoming messages
     Message* message = Dequeue_Incoming_Message ();
-    
-    
     
 //    Serial.print ("Received ");
     

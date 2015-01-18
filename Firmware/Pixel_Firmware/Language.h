@@ -34,9 +34,14 @@ void Get_Console () { // TODO: Capture_Serial_Channel
         
         previousConsoleInput = consoleMessage;
         
+        // Prints the address of the module where the message is to be delivered
+//        Serial.print ("messageTargetModule: ");
+//        Serial.print (messageTargetModule);
+//        Serial.print ("\n");
+        
 //        // TODO: Don't separate "shell" behavior from other behaviors!
 //        Perform_Shell_Behavior (consoleMessage);
-        Message* message = Create_Message (platformUuid, perspectiveAddress, consoleMessage);
+        Message* message = Create_Message (platformUuid, messageTargetModule, consoleMessage);
         Interpret_Message (message);
         
         consoleBufferSize = 0;
@@ -62,6 +67,8 @@ void Interpret_Message (Message* message) {
     // TODO: Don't separate "shell" behavior from other behaviors!
     Perform_Shell_Behavior ((*message).content);
     
+    Delete_Message (message);
+    
   //} else if (((*message).source != platformUuid) && ((*message).destination == platformUuid || (*message).destination == BROADCAST_ADDRESS)) { // TODO: Update this, too! (see previous "if" comment)
   } else if ((*message).source != platformUuid) { // TODO: Update this, too! (see previous "if" comment)
 
@@ -71,46 +78,70 @@ void Interpret_Message (Message* message) {
       Serial.println ("notice presence");
       
       Handle_Message_Active (message);
-    }
-    
-    else if (strncmp ((*message).content, "ping", (*message).size) == 0) {  
+      
+    } else if (strncmp ((*message).content, "ping", (*message).size) == 0) {  
       Serial.println ("ping");
       
-      // TODO: Send module to remote module to set up its "observerAddress"
-      Message* outgoingMessage = Create_Message (platformUuid, perspectiveAddress, String ("pong"));
+      // TODO: Send module to remote module to set up its "messageSourceModule"
+      Message* outgoingMessage = Create_Message (platformUuid, messageTargetModule, String ("pong"));
       Queue_Outgoing_Message (outgoingMessage);
       
     } else if (strncmp ((*message).content, "pong", (*message).size) == 0) {  
       
       Serial.println ("pong");
       
-      // TODO: Send module to remote module to set up its "observerAddress"
-      Message* outgoingMessage = Create_Message (platformUuid, perspectiveAddress, String ("pong"));
+      // TODO: Send module to remote module to set up its "messageSourceModule"
+      Message* outgoingMessage = Create_Message (platformUuid, messageTargetModule, String ("pong"));
       Queue_Outgoing_Message (outgoingMessage);
-    }
-    
-    else if (strncmp ((*message).content, "start sharing with", 18 /* (*message).size */) == 0) {  
+      
+    } else if (strncmp ((*message).content, "start sharing with", 18 /* (*message).size */) == 0) {  
       
       String fourthWord = getValue ((*message).content, ' ', 3);
       
       Serial.println (String ("starting to share with ") + String (fourthWord) + String ("."));
       
-      observerAddress = fourthWord.toInt ();
+      messageSourceModule = fourthWord.toInt ();
       
-      // TODO: Send module to remote module to set up its "observerAddress"
-      Message* outgoingMessage = Create_Message (platformUuid, observerAddress, String ("started sharing"));
+      // TODO: Send module to remote module to set up its "messageSourceModule"
+      Message* outgoingMessage = Create_Message (platformUuid, messageSourceModule, String ("started sharing"));
       Queue_Outgoing_Message (outgoingMessage);
       
     } else if (strncmp ((*message).content, "started sharing", (*message).size) == 0) {  
       
       int address = (*message).source;
-      perspectiveAddress = address;
+      messageTargetModule = address;
       
       Serial.print ("Entered module ");
-      Serial.print (perspectiveAddress);
+      Serial.print (messageTargetModule);
       Serial.print (".\n");
     
-    }
+    } else if (strncmp ((*message).content, "stopped sharing with", 17 /* (*message).size */) == 0) {  
+      // NOTE: This is received by the module connected to serial from which other modules are being accessed (i.e., the source module)
+      
+      String fourthWord = getValue ((*message).content, ' ', 3);
+      
+      Serial.println (String ("stopped sharing with ") + String (fourthWord) + String ("."));
+      
+      messageTargetModule = platformUuid;
+      
+      Serial.print ("changing target to: "); Serial.print (messageTargetModule); Serial.print ("\n");
+      //messageTargetModule = fourthWord.toInt ();
+      
+      // TODO: Send module to remote module to set up its "messageSourceModule"
+//      Message* outgoingMessage = Create_Message (platformUuid, messageSourceModule, String ("started sharing"));
+//      Queue_Outgoing_Message (outgoingMessage);
+      
+    } 
+//    else if (strncmp ((*message).content, "started sharing", (*message).size) == 0) {  
+//      
+//      int address = (*message).source;
+//      messageTargetModule = address;
+//      
+//      Serial.print ("Entered module ");
+//      Serial.print (messageTargetModule);
+//      Serial.print (".\n");
+//    
+//    }
     
     else if (strncmp ((*message).content, "notice gesture swing", (*message).size) == 0) {
       Serial.println ("notice gesture swing");
@@ -182,9 +213,13 @@ void Interpret_Message (Message* message) {
       Perform_Shell_Behavior ((*message).content);
     }
     
+    Delete_Message (message);
+    
+  } else { // i.e., the message is to be sent to another module (a remote destination)
+    
+    Queue_Outgoing_Message (message);
+    
   }
-
-  Delete_Message (message);
   
 }
 
@@ -328,6 +363,16 @@ void Perform_Shell_Behavior (String message) {
 //        } else if (first.compareTo ("dot")) {
 //          // TODO: Substrate
 //        }
+    
+  } else if (first.compareTo ("print") == 0) {
+    
+    int messageIndex = message.indexOf (' ');
+    
+    if (messageIndex != -1) {
+      String messageString = message.substring (messageIndex + 1);
+      // TODO: Print where the message was from!
+      Serial.print (messageString); Serial.print ("\n");
+    }
     
   } else if (first.compareTo ("update") == 0) {
     
@@ -613,7 +658,13 @@ void Perform_Shell_Behavior (String message) {
       Update_Input_Color (red, green, blue);
       Update_Output_Color (red, green, blue);
       
-      Serial.println ("Changing output color.");
+      // TODO: Rather than printing locally, send local messages through the incoming message queue. Everything should pass through that so it can all be processed at a higher level.
+      if (messageSourceModule == -1) { // print the message locally since it was not issued by way of another module
+        Serial.println ("Changing output color.");
+      } else {
+        Message* messageReply = Create_Message (platformUuid, messageSourceModule, String ("print Changing output color."));
+        Queue_Outgoing_Message (messageReply);
+      }
       
     } 
   }
@@ -658,7 +709,7 @@ void Perform_Shell_Behavior (String message) {
       
     } else if (secondWord.compareTo ("perspective") == 0) {
       
-      Serial.println (perspectiveAddress);
+      Serial.println (messageTargetModule);
       
     } else if (secondWord.compareTo ("channel") == 0) {
       
@@ -718,7 +769,7 @@ void Perform_Shell_Behavior (String message) {
         destination = getValue (message, ' ', 1).toInt ();
       }
       
-      // TODO: Send module to remote module to set up its "observerAddress"
+      // TODO: Send module to remote module to set up its "messageSourceModule"
       Message* outgoingMessage = Create_Message (platformUuid, destination, String ("ping"));
       Queue_Outgoing_Message (outgoingMessage);
       
@@ -731,7 +782,7 @@ void Perform_Shell_Behavior (String message) {
     //! Broadcast
     else {
       
-      // TODO: Send module to remote module to set up its "observerAddress"
+      // TODO: Send module to remote module to set up its "messageSourceModule"
       Message* outgoingMessage = Create_Message (platformUuid, destination, String ("ping"));
       Queue_Outgoing_Message (outgoingMessage);
       
@@ -744,27 +795,28 @@ void Perform_Shell_Behavior (String message) {
     // e.g., "enter neighbor 34"
     
     int address = getValue (message, ' ', 1).toInt ();
-//    perspectiveAddress = address;
+//    messageTargetModule = address;
     
-    // TODO: Send module to remote module to set up its "observerAddress"
+    // TODO: Send module to remote module to set up its "messageSourceModule"
     Message* outgoingMessage = Create_Message (platformUuid, address, String ("start sharing with ") + String (platformUuid));
     Queue_Outgoing_Message (outgoingMessage);
     
-//    Serial.print ("Entering module ");
-//    Serial.print (perspectiveAddress);
-//    Serial.print (".");
+    Serial.print ("Entering module ");
+    Serial.print (messageTargetModule);
+    Serial.print (".");
     
   } else if (firstWord.compareTo ("exit") == 0) { // i.e., leave
+    // NOTE: This is received on the entered "remote" module
     
-    // Send module to remote module to set up its "observerAddress"
-    Message* outgoingMessage = Create_Message (platformUuid, perspectiveAddress, String ("stop sharing with ") + String (platformUuid));
+    // Send module to remote module to set up its "messageSourceModule"
+    Message* outgoingMessage = Create_Message (platformUuid, messageSourceModule, String ("stopped sharing with ") + String (platformUuid));
     Queue_Outgoing_Message (outgoingMessage);
     
     // e.g., "exit"
-    perspectiveAddress = platformUuid;
+    messageSourceModule = -1;
     
 //    Serial.print ("Exited module ");
-//    Serial.print (perspectiveAddress);
+//    Serial.print (messageTargetModule);
 //    Serial.print (".");
     
   } else if (firstWord.compareTo ("remember") == 0) { // i.e., learn, store, remember
@@ -773,7 +825,7 @@ void Perform_Shell_Behavior (String message) {
     String trigger = getValue (message, ' ', 1);
     String content = getValue (message, ' ', 2);
     
-    // Send module to remote module to set up its "observerAddress"
+    // Send module to remote module to set up its "messageSourceModule"
     Memory* memory = Create_Memory (trigger, content);
     Append_Memory (memory);
     
@@ -782,7 +834,7 @@ void Perform_Shell_Behavior (String message) {
     // Add (key, value) pair to memory
     String trigger = getValue (message, ' ', 1);
     
-    // Send module to remote module to set up its "observerAddress"
+    // Send module to remote module to set up its "messageSourceModule"
     const int triggerBufferSize = 64;
     char triggerChar[triggerBufferSize];
     trigger.toCharArray (triggerChar, triggerBufferSize);
@@ -804,7 +856,7 @@ void Perform_Shell_Behavior (String message) {
     // Add (key, value) pair to memory
     String trigger = getValue (message, ' ', 1);
     
-    // Send module to remote module to set up its "observerAddress"
+    // Send module to remote module to set up its "messageSourceModule"
     const int triggerBufferSize = 64;
     char triggerChar[triggerBufferSize];
     trigger.toCharArray (triggerChar, triggerBufferSize);

@@ -14,7 +14,7 @@ Authors: Michael Gubbels
 #include <Wire.h>
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
-#include "VirtualDevice.h"
+//#include "VirtualDevice.h"
 #include "WebServer.h"
 
 // TODO: Implement list of changes to make to send to the Master (which executes gestural and the behavior code for the module)

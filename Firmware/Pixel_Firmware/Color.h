@@ -28,6 +28,9 @@ int inputColor[3] = { 255, 255, 255 }; // The desired color of the LED
 int outputColor[3] = { 255, 255, 255 }; // The desired color of the LED
 int ledColor[3] = { 255, 255, 255 }; // The current actual color of the LED
 
+float inputBrightness = 0.125;
+float outputBrightness = 0.125;
+
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = pin number (most are valid)
 // Parameter 3 = pixel type flags, add together as needed:
@@ -262,8 +265,8 @@ void Apply_Color (uint8_t wait) {
 //      strip.show ();
 //      delay (wait);
 //  }
-  Apply_Input_Color (strip.Color (inputColor[0], inputColor[1], inputColor[2]), wait);
-  Apply_Output_Color (strip.Color (outputColor[0], outputColor[1], outputColor[2]), wait);
+  Apply_Input_Color (strip.Color (inputBrightness * inputColor[0], inputBrightness * inputColor[1], inputBrightness * inputColor[2]), wait);
+  Apply_Output_Color (strip.Color (outputBrightness * outputColor[0], outputBrightness * outputColor[1], outputBrightness * outputColor[2]), wait);
 }
 
 //! Update the module's input and output color.

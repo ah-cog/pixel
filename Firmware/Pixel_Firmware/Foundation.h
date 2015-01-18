@@ -2,10 +2,11 @@
 #define FOUNDATION_H
 
 #define EEPROM_SIZE 512
-boolean clearEeprom () {
+
+boolean Clear_Eeprom () {
   // write a 0 to all bytes of the EEPROM
   for (int i = 0; i < EEPROM_SIZE; i++) {
-    EEPROM.write(i, 0);
+    EEPROM.write (i, 0);
   }
 }
 
@@ -23,13 +24,14 @@ boolean Restart () {
   WRITE_RESTART(0x5FA0004);
 }
 
-// Foundation State:s
+// Foundation State:
 boolean hasFoundationUuid = false;
 
 #define UUID_SIZE 36
 int foundationUuidSignatureMemoryAddress = 0;
 int foundationUuidMemoryAddress = foundationUuidSignatureMemoryAddress + 1;
 char foundationUuid[UUID_SIZE];
+
 boolean setupFoundation () {
   // Check if UUID has been written to EEPROM, and if so, read it into RAM (and load it into the Looper engine).
   // If not, generate a UUID into memory
@@ -68,6 +70,7 @@ boolean setupFoundation () {
     i++;
   }
   
+  // Print the foundation's UUID
   Serial.print ("Foundation UUID: "); for (int i = 0; i < UUID_SIZE; i++) { Serial.print ((char) foundationUuid[i]); } Serial.print ("\n");
   
 }

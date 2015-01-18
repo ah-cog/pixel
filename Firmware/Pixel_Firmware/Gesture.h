@@ -44,7 +44,7 @@ int previousClassifiedGestureFrequency[GESTURE_COUNT];
 /**
  * Sets up gesture sensing.
  */
-void setupGestureSensing() {
+void setupGestureSensing () {
   for (int i = 0; i < PREVIOUS_CLASSIFIED_GESTURE_COUNT; i++) {
     previousClassifiedGestures[i] = -1;
   }
@@ -59,7 +59,7 @@ void setupGestureSensing() {
 /**
  * Calculate the deviation of the live gesture sample and the signature gesture sample along only one axis (x, y, or z).
  */
-int getGestureAxisDeviation(int gestureSignatureIndex, int axis) { // (int gestureSample[GESTURE_SIGNATURE_SIZE], int gestureCandidate[GESTURE_SIGNATURE_SIZE]) {
+int getGestureAxisDeviation (int gestureSignatureIndex, int axis) { // (int gestureSample[GESTURE_SIGNATURE_SIZE], int gestureCandidate[GESTURE_SIGNATURE_SIZE]) {
   
   int delta = 0; // sum of difference between average x curve and most-recent x data
   
@@ -83,7 +83,7 @@ int getGestureAxisDeviation(int gestureSignatureIndex, int axis) { // (int gestu
 /**
  * Calculates the deviation between the sampled live gesture and the gesture signature sample.
  */
-int getGestureDeviation(int classifiedGestureIndex) {
+int getGestureDeviation (int classifiedGestureIndex) {
   int deltaTotal = 0;
     
   // Compare the difference between the average sample for each axis and the live sample
@@ -98,7 +98,7 @@ int getGestureDeviation(int classifiedGestureIndex) {
 /**
  * Relative instability. How relative is the live sample in comparison to a gesture's signature sample?
  */
-int getGestureAxisInstability(int gestureSignatureIndex, int axis) { // (int gestureSample[GESTURE_SIGNATURE_SIZE], int gestureCandidate[GESTURE_SIGNATURE_SIZE]) {
+int getGestureAxisInstability (int gestureSignatureIndex, int axis) { // (int gestureSample[GESTURE_SIGNATURE_SIZE], int gestureCandidate[GESTURE_SIGNATURE_SIZE]) {
   
   int relativeInstability = 0; // sum of difference between average x curve and most-recent x data
   
@@ -123,7 +123,7 @@ int getGestureAxisInstability(int gestureSignatureIndex, int axis) { // (int ges
 /**
  * Calculates the deviation between the sampled live gesture and the gesture signature sample.
  */
-int getGestureInstability(int classifiedGestureIndex) {
+int getGestureInstability (int classifiedGestureIndex) {
   int instabilityTotal = 0;
     
   // Compare the difference between the average sample for each axis and the live sample
@@ -139,7 +139,7 @@ int getGestureInstability(int classifiedGestureIndex) {
  * Classify the gesture. Choose the gesture that has a "signature" time series that best  
  * matches the recent window of live data.
  */
-int classifyGestureFromTransitions() {
+int classifyGestureFromTransitions () {
   int minimumDeviationIndex = -1;
   int minimumDeviation = MAX_INTEGER_VALUE;
   
@@ -256,22 +256,6 @@ boolean Handle_Gesture_Swing () {
   
   return true;
 }
-
-///**
-// * Handle "at rest, in hand" gesture.
-// */
-//boolean handleGestureAtRestInHand() {
-////  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-//
-//  // Update the module's color
-//  if (isSequenced) {
-//    setColor(sequenceColor[0], sequenceColor[1], sequenceColor[2]);
-//  } else {
-//    setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
-//  }
-//  
-//  addBroadcast(ANNOUNCE_GESTURE_AT_REST_IN_HAND);
-//}
 
 boolean Handle_Gesture_Tap () {
   
@@ -422,44 +406,44 @@ boolean Handle_Gesture_Shake () {
   Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture shake");
 }
 
-/**
- * Handle "tilt left" gesture.
- */
-boolean Handle_Gesture_Tilt_Left () {
-//  Update_Color (0, 0, 255);
-  
-//  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_LEFT);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt left");
-}
+///**
+// * Handle "tilt left" gesture.
+// */
+//boolean Handle_Gesture_Tilt_Left () {
+////  Update_Color (0, 0, 255);
+//  
+////  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_LEFT);
+//  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt left");
+//}
 
-/**
- * Handle "tilt right" gesture.
- */
-boolean Handle_Gesture_Tilt_Right () {
-//  Update_Color (0, 255, 0);
-  
-//  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_RIGHT);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt right");
-}
+///**
+// * Handle "tilt right" gesture.
+// */
+//boolean Handle_Gesture_Tilt_Right () {
+////  Update_Color (0, 255, 0);
+//  
+////  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_RIGHT);
+//  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt right");
+//}
 
-/**
- * Handle "tilt forward" gesture.
- */
-boolean Handle_Gesture_Tilt_Forward () {
-//  Update_Color (0, 255, 0);
-  
-//  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_FORWARD);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt forward");
-}
+///**
+// * Handle "tilt forward" gesture.
+// */
+//boolean Handle_Gesture_Tilt_Forward () {
+////  Update_Color (0, 255, 0);
+//  
+////  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_FORWARD);
+//  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt forward");
+//}
 
-/**
- * Handle "tilt backward" gesture.
- */
-boolean Handle_Gesture_Tilt_Backward () {
-//  Update_Color (0, 255, 0);
-  
-//  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_BACKWARD);
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt backward");
-}
+///**
+// * Handle "tilt backward" gesture.
+// */
+//boolean Handle_Gesture_Tilt_Backward () {
+////  Update_Color (0, 255, 0);
+//  
+////  Queue_Broadcast (ANNOUNCE_GESTURE_TILT_BACKWARD);
+//  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture tilt backward");
+//}
 
 #endif
