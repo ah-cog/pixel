@@ -2,6 +2,10 @@
 #define MEMORY_H
 
 // TODO: Update this to store blobs that can be keys associated with any number (including zero) other blobs. The memory is a list of "memory nodes" that point to other memories, creating a (directed?) graph.
+// TODO: Add function to check if has memory
+// TODO: Add memory "categories" (e.g., for the modules that have focus) and relations/properties (e.g., "module M [has] focus")
+//       - accessible from both firmware and higher level (or maybe not firmware?)
+// (TODO: in Language.h, add "give focus" and "has focus" commands)
 
 struct Memory {
   char* trigger;

@@ -946,6 +946,13 @@ boolean Delete_Behavior (int uid) {
 
 //! Behavior Performer
 //!
+//! The "behavior performer" is something like a program counter. It is what 
+//! follows a path of behavior to its conclusion (if any). In a sense, it's like
+//! a game piece used in a board came. There can be multiple performers.
+//!
+//! Performs run according to their own time-scale. That is, one can perform 
+//! a sequence of actions faster than another.
+//!
 struct Performer {
   int uid;
   Substrate* substrate;
@@ -1056,9 +1063,10 @@ boolean Perform_Behavior (Performer* performer) {
       } else if ((*behavior).type == BEHAVIOR_TYPE_DELAY) {
         Delay* delay = (Delay*) (*behavior).schema;
         
-        Serial.print ("Delay "); Serial.print ((*delay).milliseconds); Serial.print ("\n");
-        Serial.print ("\tstartTime: "); Serial.print ((*delay).startTime); Serial.print ("\n");
-        Serial.print ("\tcurrentTime: "); Serial.print ((*delay).currentTime); Serial.print ("\n");
+        // TO DEBUG: Uncomment the following to monitor the timer
+        // Serial.print ("Delay "); Serial.print ((*delay).milliseconds); Serial.print ("\n");
+        // Serial.print ("\tstartTime: "); Serial.print ((*delay).startTime); Serial.print ("\n");
+        // Serial.print ("\tcurrentTime: "); Serial.print ((*delay).currentTime); Serial.print ("\n");
         
         // Update timers
         if ((*delay).startTime == 0) {

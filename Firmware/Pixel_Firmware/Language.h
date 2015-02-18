@@ -56,6 +56,9 @@ void Get_Console () { // TODO: Capture_Serial_Channel
   }
 }
 
+/**
+ * Message "multiplexor". This is where the messages from the serial terminal, serial from the secondary board (by way of Looper), and mesh messages are processed.
+ */
 void Interpret_Message (Message* message) {
   
 //  Serial.println ((*message).source);
@@ -78,6 +81,21 @@ void Interpret_Message (Message* message) {
       Serial.println ("notice presence");
       
       Handle_Message_Active (message);
+      
+    } else if (strncmp ((*message).content, "notice start focus", (*message).size) == 0) {  
+      
+      // Another module has focus, so remove focus from this module (if it has focus)
+      Serial.println ("notice start focus");
+      Stop_Focus ();
+      
+      // TODO: store the modules that have focus (TODO: on module sending "notice start focus", command this one to remember the sending module has focus, possibly along with others, so maybe push memory onto a stack)
+      
+    } else if (strncmp ((*message).content, "notice stop focus", (*message).size) == 0) {  
+      
+      // Another module has focus, so remove focus from this module (if it has focus)
+      Serial.println ("notice stop focus");
+      
+      // TODO: remove module from those known to have focus
       
     } else if (strncmp ((*message).content, "ping", (*message).size) == 0) {  
       Serial.println ("ping");
@@ -270,8 +288,8 @@ void Perform_Shell_Behavior (String message) {
       if (behaviorType.compareTo ("input") == 0) {
     
         // Parse parameters
-        int pin = getValue (split, ' ', 4).toInt();
-        String signal = getValue (split, ' ', 5);
+        int pin = getValue (split, ' ', 3).toInt();
+        String signal = getValue (split, ' ', 4);
         
         // Create behavior and add it to the behavior substrate
         Behavior* behavior = Create_Input_Behavior (substrate, pin, signal);
@@ -284,9 +302,9 @@ void Perform_Shell_Behavior (String message) {
       } else if (behaviorType.compareTo ("output") == 0) {
     
         // Parse parameters
-        int pin = getValue (split, ' ', 4).toInt();
-        String signal = getValue (split, ' ', 5);
-        String data = getValue (split, ' ', 6);
+        int pin = getValue (split, ' ', 3).toInt();
+        String signal = getValue (split, ' ', 4);
+        String data = getValue (split, ' ', 5);
         
         // Create behavior and add it to the behavior substrate
         Behavior* behavior = Create_Output_Behavior (substrate, pin, signal, data);
@@ -299,7 +317,7 @@ void Perform_Shell_Behavior (String message) {
       } else if (behaviorType.compareTo ("delay") == 0) {
     
         // Parse parameters
-        int milliseconds = getValue (split, ' ', 4).toInt();
+        int milliseconds = getValue (split, ' ', 3).toInt();
         
         // Create behavior and add it to the behavior substrate
         Behavior* behavior = Create_Delay_Behavior (substrate, milliseconds);
@@ -312,8 +330,8 @@ void Perform_Shell_Behavior (String message) {
       } else if (behaviorType.compareTo ("sound") == 0) {
     
         // Parse parameters
-        int note = getValue (split, ' ', 4).toInt();
-        int duration = getValue (split, ' ', 5).toInt();
+        int note = getValue (split, ' ', 3).toInt();
+        int duration = getValue (split, ' ', 4).toInt();
 //            String signal = getValue (split, ' ', 4);
 //            String data = getValue (split, ' ', 5);
         
@@ -645,18 +663,60 @@ void Perform_Shell_Behavior (String message) {
       }
       
     } else if (secondWord.compareTo ("color") == 0) {
+      // TODO: Handle colors specified such as "reddish bluish", "light green", etc.
+      // TODO: Handle color transformations that are conversational such as "make the color lighter", "add more green", "make the color softer", "make the color less bright"
       
       String thirdWord = getValue (message, ' ', 2); // i.e., "to" or the color
       
       // "change input color (to) [color]"
+      // 
+      // [color] can be 0,0,255
+      // [color] can be blue
       
-      // Parse the color
-      int red   = getValue (message, ' ', 3).toInt ();
-      int green = getValue (message, ' ', 4).toInt ();
-      int blue  = getValue (message, ' ', 5).toInt ();
+      // Isolate and extract the color chunk
+      String color = getValue (message, ' ', 3);
       
-      Update_Input_Color (red, green, blue);
-      Update_Output_Color (red, green, blue);
+      // Parse the color chunk according to its format
+      if (color.compareTo ("red") == 0) {
+        int red   = 255;
+        int green = 0;
+        int blue  = 0;
+        
+        Update_Input_Color (red, green, blue);
+        Update_Output_Color (red, green, blue);
+        
+      } else if (color.compareTo ("green") == 0) {
+        int red   = 0;
+        int green = 255;
+        int blue  = 0;
+        
+        Update_Input_Color (red, green, blue);
+        Update_Output_Color (red, green, blue);
+        
+      } else if (color.compareTo ("blue") == 0) {
+        int red   = 0;
+        int green = 0;
+        int blue  = 255;
+        
+        Update_Input_Color (red, green, blue);
+        Update_Output_Color (red, green, blue);
+        
+      } else if (color.compareTo ("yellow") == 0) {
+        int red   = 255;
+        int green = 255;
+        int blue  = 0;
+        
+        Update_Input_Color (red, green, blue);
+        Update_Output_Color (red, green, blue);
+        
+      } else if (color.indexOf (",") != -1) {
+        int red   = getValue (color, ',', 0).toInt ();
+        int green = getValue (color, ',', 1).toInt ();
+        int blue  = getValue (color, ',', 2).toInt ();
+        
+        Update_Input_Color (red, green, blue);
+        Update_Output_Color (red, green, blue);
+      }
       
       // TODO: Rather than printing locally, send local messages through the incoming message queue. Everything should pass through that so it can all be processed at a higher level.
       if (messageSourceModule == -1) { // print the message locally since it was not issued by way of another module

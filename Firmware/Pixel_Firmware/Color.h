@@ -62,6 +62,19 @@ unsigned long currentLightBehaviorStartTime = 0;
 int currentLightBehaviorStep = 0;
 unsigned long currentLightBehaviorStepStartTime = 0;
 
+void Update_Brightness (float brightness) {
+  inputBrightness = brightness;
+  outputBrightness = brightness;
+}
+
+void Update_Input_Brightness (float brightness) {
+  inputBrightness = brightness;
+}
+
+void Update_Output_Brightness (float brightness) {
+  outputBrightness = brightness;
+}
+
 void Update_Color (int red, int green, int blue);
 void Update_Input_Color (int red, int green, int blue);
 void Update_Output_Color (int red, int green, int blue);

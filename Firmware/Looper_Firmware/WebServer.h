@@ -15,8 +15,8 @@
 // Use the hardware SPI pins for the remaining connections to the Wi-Fi module (e.g., On an UNO, SCK = 13, MISO = 12, and MOSI = 11).
 Adafruit_CC3000 cc3000 = Adafruit_CC3000 (ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV4); // you can change this clock speed
 
-#define WLAN_SSID "DEADHAU5" // Cannot be longer than 32 characters!
-#define WLAN_PASS "DEADHAU5!8002"
+#define WLAN_SSID "shell-2.4GHz" // Cannot be longer than 32 characters!
+#define WLAN_PASS "technologydrive"
 // Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
 #define WLAN_SECURITY WLAN_SEC_WPA2
 
