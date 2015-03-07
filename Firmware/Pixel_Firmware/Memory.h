@@ -184,7 +184,7 @@ Memory* Get_Memory (char* trigger) {
 //!
 void Print_Memory () {
   
-  Serial.println ("Print_Memory");
+//  Serial.println ("Print_Memory");
   
   Memory* memory = memories;
   

@@ -676,6 +676,8 @@ boolean Handle_Message_Shake (Message* message) {
 //!
 boolean Handle_Message_Tap (Message* message) {
   
+  Serial.println (">> Received ANNOUNCE_GESTURE_TAP");
+  
   // Handler code for the module that initiated the "swing"
   if (hasSwung) {
     
@@ -686,12 +688,16 @@ boolean Handle_Message_Tap (Message* message) {
 //      removeNextModule(message.source);
       Remove_Input_Modules ();
       Remove_Output_Modules ();
+      Update_Color (255, 255, 255);
+      Queue_Message (platformUuid, (*message).source, "change color to white"); // Set remote color
     } else {
       outputPinRemote = true;
       Add_Output_Module ((*message).source);
+      Update_Color (0, 0, 255); // Set local color
+      Queue_Message (platformUuid, (*message).source, "change color to blue"); // Set remote color
     }
     
-    Update_Color (0, 0, 0);
+//    Update_Color (255, 255, 255);
     
     
   
@@ -705,7 +711,7 @@ boolean Handle_Message_Tap (Message* message) {
     
     // Check of the received message was within the time limit
     
-//    Serial.println (">> Received ANNOUNCE_GESTURE_TAP");
+    Serial.println (">> Received ANNOUNCE_GESTURE_TAP");
     
     // Send ACK message to message.source to confirm linking operation
 //    Queue_Broadcast (REQUEST_CONFIRM_GESTURE_TAP);
@@ -727,7 +733,7 @@ boolean Handle_Message_Request_Confirm_Tap (Message* message) {
   
 //  if (hasSwung) { // if this is the module that was swung
     // TODO: 
-//    Serial.println (">> Received REQUEST_CONFIRM_GESTURE_TAP");
+    Serial.println (">> Received REQUEST_CONFIRM_GESTURE_TAP");
     //Queue_Message (message.source, CONFIRM_GESTURE_TAP);
     // TODO: Make this message send immediately!
     Queue_Message (platformUuid, (*message).source, "fyi got tap");
@@ -744,7 +750,7 @@ boolean Handle_Message_Confirm_Tap (Message* message) {
 //    addMessage (message.source, CONFIRM_GESTURE_TAP);
 
     // TODO: Set the module as "next"
-//    Serial.println (">> Received CONFIRM_GESTURE_TAP");
+    Serial.println (">> Received CONFIRM_GESTURE_TAP");
     
     Stop_Blink_Light ();
     hasSwung = false;
@@ -760,7 +766,7 @@ boolean Handle_Message_Tap_To_Another_As_Left (Message* message) {
       awaitingPreviousModule = false;
       awaitingPreviousModuleConfirm = true;
       
-//      Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_LEFT");
+      Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_LEFT");
       
       // Send ACK message to message.source to confirm linking operation
 //      addMessage(message.source, REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT);
@@ -786,7 +792,7 @@ boolean Handle_Message_Request_Confirm_Tap_To_Another_As_Left (Message* message)
     awaitingNextModule = false;
     awaitingNextModuleConfirm = false; // awaitingNextModuleConfirm = true;
     
-//    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
+    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT");
   
 //    addBroadcast(CONFIRM_GESTURE_TAP_AS_LEFT);
 //    Queue_Message (message.source, CONFIRM_GESTURE_TAP_AS_LEFT);
@@ -839,7 +845,7 @@ boolean Handle_Message_Tap_To_Another_As_Right (Message* message) {
   
   if (awaitingNextModule) {
     
-//    Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_RIGHT");
+    Serial.println(">> Received ANNOUNCE_GESTURE_TAP_AS_RIGHT");
     
     // Update message state
     awaitingNextModule = false;
@@ -868,7 +874,7 @@ boolean Handle_Message_Request_Confirm_Tap_To_Another_As_Right (Message* message
   // Send ACK message to message.source to confirm linking operation (if not yet done)
   if (awaitingPreviousModuleConfirm) {
   
-//    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
+    Serial.println(">> Received REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT");
 
     awaitingPreviousModule = false;
     awaitingPreviousModuleConfirm = false;

@@ -100,8 +100,15 @@ boolean setupWebServer () {
   
   String ip = Get_IP_Address (ipAddress);
   Serial.println (ip);
-  Transformation* transformation = Create_Transformation (String ("create behavior memory ip ") + String (ip));
-  Queue_Transformation (propagator, transformation);
+//  Transformation* transformation = Create_Transformation (String ("create behavior memory ip ") + String (ip));
+//  Queue_Transformation (propagator, transformation);
+  String ipString = String ("create behavior memory ip ") + String (ip);
+  
+  // Relay information to the primary board
+  const int triggerBufferSize = 64;
+  char messageChar[triggerBufferSize];
+  ipString.toCharArray (messageChar, triggerBufferSize);
+  DEVICE_SERIAL.write (messageChar);
 
   //
   // You can safely remove this to save some flash memory!
@@ -171,132 +178,6 @@ boolean handleClientConnection (Adafruit_CC3000_ClientRef& client) {
               handleDefaultHttpRequest (client);
               break;
               
-            } else if (strcmp (httpRequestAddress, "/behavior") == 0) {
-              
-              Serial.println ("PARAMETERS:");
-//              Serial.println(httpRequestParameters[0]);
-              Serial.println (httpRequestParameters[0]);
-//              Serial.println(httpRequestParameters[4]);
-              
-              // Split parameters by '='
-//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
-//              String key = getValue(split, '=', 0);
-//              String value = getValue(split, '=', 1);
-
-              String uuidParameter = String(httpRequestParameters[0]);
-              int uuid = getValue(uuidParameter, '=', 1).toInt();
-              
-              Behavior* behavior = Get_Behavior (uuid);
-              
-              // Send a standard HTTP response header
-              if (behavior != NULL) {
-                client.println("HTTP/1.1 200 OK");
-              } else {
-                client.println("HTTP/1.1 404 Not Found");
-              }
-              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Content-Type: application/json");
-              client.println("Connection: close");
-              client.println();
-              
-              // Response data
-              // NOTE: Add response data here.
-              // e.g., client.println("<html><body>Example Page</body></html>");
-              
-              break;
-              
-            } else if (strcmp (httpRequestAddress, "/pin") == 0) {
-              
-              Serial.println("PARAMETERS:");
-//              Serial.println(httpRequestParameters[0]);
-              Serial.println(httpRequestParameters[1]);
-//              Serial.println(httpRequestParameters[4]);
-              
-              // Split parameters by '='
-//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
-//              String key = getValue(split, '=', 0);
-//              String value = getValue(split, '=', 1);
-
-              String pinParameter = String(httpRequestParameters[1]); // "hi this is a split test";
-              int pin = getValue(pinParameter, '=', 1).toInt();
-              
-//              String operationParameter = String(httpRequestParameters[1]); // "hi this is a split test";
-//              int operation = getValue(operationParameter, '=', 1).toInt();
-//              
-//              String valueParameter = String(httpRequestParameters[4]); // "hi this is a split test";
-//              int value = getValue(valueParameter, '=', 1).toInt();
-              
-//              Serial.println("PIN/OPERATION/VALUE:");
-//              Serial.println(pin);
-//              Serial.println(operation);
-//              Serial.println(value);
-              
-//              // TODO: Parse parameters from HTTP request
-//              int pin = String(httpRequestParameters[0]).toInt();
-//              int value = String(httpRequestParameters[4]).toInt();
-//              
-//              Serial.print("pin = ");
-//              Serial.print(pin);
-//              Serial.print("\n");
-//              
-//              Serial.print("value = ");
-//              Serial.print(value);
-//              Serial.print("\n");
-              
-              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-//              insertBehavior(0, operation, pin, 0, 1, value);
-
-//              client.println("pin 13 = ");
-//              client.println(pin);
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Content-Type: application/json");
-              client.println("Connection: close");
-              client.println();
-              
-              // Response data
-              client.println("{");
-              client.println("\tpin: {");
-//              client.print("\t\t{ number: "); client.print(pin); client.print(", value: "); client.print(virtualPin[pin].value); client.print(" }"); client.println();
-              client.println("\t}");
-              client.println("}");
-              
-              // Write newline at end of response
-              // TODO: Remove this newline character in responses?
-              client.println();
-              
-              break;
-              
-            } else if (strcmp (httpRequestAddress, "/pins") == 0) {
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Content-Type: application/json");
-              client.println("Connection: close");
-              client.println();
-              
-              // Response data
-              client.println("{");
-              client.println("\tpins: [");
-//              for (int i = 0; i < VIRTUAL_PIN_COUNT - 1; i++) {
-//                client.print("\t\t{ number: "); client.print(i); client.print(", value: "); client.print(virtualPin[i].value); client.print(" },"); client.println();
-//              }
-//              client.print("\t\t{ number: "); client.print(VIRTUAL_PIN_COUNT - 1); client.print(", value: "); client.print(virtualPin[VIRTUAL_PIN_COUNT - 1].value); client.print(" }"); client.println();
-              client.println("\t]");
-              client.println("}");
-              
-              // Write newline at end of response
-              // TODO: Remove this newline character in responses?
-              client.println();
-              
-              // TODO: flush
-              // TODO: close
-              
-              break;
-              
             } else {
               
               // TODO: Default, catch-all GET handler that scaffolds further action
@@ -344,513 +225,94 @@ boolean handleClientConnection (Adafruit_CC3000_ClientRef& client) {
               client.println("Connection: close");
               
               break;
-              
-//              Behavior* behavior = NULL;
-//              
-//              if (type.compareTo("output") == 0) {
-//                
-//                Serial.println("Creating output behavior.");
-//
-//                String pinParameter = String(httpRequestParameters[1]);
-//                int pin = getValue(pinParameter, '=', 1).toInt();
-//                
-//                String signalParameter = String(httpRequestParameters[2]);
-//                String signal = getValue(signalParameter, '=', 1);
-//                
-//                String dataParameter = String(httpRequestParameters[3]);
-//                String data = getValue(dataParameter, '=', 1);
-//                
-//                behavior = Create_Output_Behavior (substrate, pin, signal, data);
-//                Sequence* sequence = (*substrate).sequences;
-//                Update_Behavior_Sequence (behavior, sequence);
-//                
-//                // Propagate behaviorCreate_Transformation
-////                Transformation* transformation = Create_Transformation (String("create behavior output 5 digital on"));
-//                // TODO: Update Create_Transformation to accept JSON (and consider using a remote reference to the local UUID rather than recreating the same UUID).
-//                Transformation* transformation = Create_Transformation (String ("create behavior output ") + String((*behavior).uid) + " " + String (pin) + " " + String (signal) + " " + String (data));
-//                Queue_Transformation (propagator, transformation);
-//                // TODO: Propagate behavior over serial syncronously, waiting for response to return to client!
                 
-            } else if (strcmp (httpRequestAddress, "/behavior") == 0) {
-              
-              String typeParameter = String(httpRequestParameters[0]);
-              String type = getValue(typeParameter, '=', 1);
-              
-              Behavior* behavior = NULL;
-              
-              if (type.compareTo("output") == 0) {
-                
-                Serial.println("Creating output behavior.");
-
-                String pinParameter = String(httpRequestParameters[1]);
-                int pin = getValue(pinParameter, '=', 1).toInt();
-                
-                String signalParameter = String(httpRequestParameters[2]);
-                String signal = getValue(signalParameter, '=', 1);
-                
-                String dataParameter = String(httpRequestParameters[3]);
-                String data = getValue(dataParameter, '=', 1);
-                
-                behavior = Create_Output_Behavior (substrate, pin, signal, data);
-                Sequence* sequence = (*substrate).sequences;
-                Update_Behavior_Sequence (behavior, sequence);
-                
-                // Propagate behaviorCreate_Transformation
-//                Transformation* transformation = Create_Transformation (String("create behavior output 5 digital on"));
-                // TODO: Update Create_Transformation to accept JSON (and consider using a remote reference to the local UUID rather than recreating the same UUID).
-                Transformation* transformation = Create_Transformation (String ("create behavior output ") + String((*behavior).uid) + " " + String (pin) + " " + String (signal) + " " + String (data));
-                Queue_Transformation (propagator, transformation);
-                // TODO: Propagate behavior over serial syncronously, waiting for response to return to client!1
-                
-//                Propagate_Behavior_Transformation (CREATE, BEHAVIOR);
-                
-//                Serial.println("Test:");
-//                Serial.println((*behavior).type);
-//                Output* output = Get_Output_Behavior (behavior);
-//                Serial.println((*output).pin);
-//                Serial.println((*output).signal);
-//                Serial.println((*output).data);
-//                behavior = createBehavior(substrate, type, pin, signal, data);
-//                behavior = Behavior_createOutput(
-
-                  // TODO: Remove this! Only call it when the behavior is added to the loop in Looper (and relayed via HTTP requests)
-                  // Add the behavior to the loop
-//                  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
-//                  Add_Behavior_To_Sequence (sequence, behavior);
-                
-              } else if (type.compareTo("input") == 0) {
-                
-                Serial.println("Creating input behavior.");
-
-                String pinParameter = String(httpRequestParameters[1]);
-                int pin = getValue(pinParameter, '=', 1).toInt();
-                
-                String signalParameter = String(httpRequestParameters[2]);
-                String signal = getValue(signalParameter, '=', 1);
-                
-                behavior = Create_Input_Behavior (substrate, pin, signal);
-                Sequence* sequence = (*substrate).sequences;
-                Update_Behavior_Sequence (behavior, sequence);
-                
-                // Propagate behavior
-                Transformation* transformation = Create_Transformation (String("create behavior input ") + String((*behavior).uid) + " " + String (pin) + " " + String (signal));
-//                Transformation* transformation = Create_Transformation (String("create behavior input 15"));
-                Queue_Transformation (propagator, transformation);
-                
-//                Serial.println("Test:");
-//                Serial.println((*behavior).type);
-//                Output* output = Get_Output_Behavior (behavior);
-//                Serial.println((*output).pin);
-//                Serial.println((*output).signal);
-//                Serial.println((*output).data);
-//                behavior = createBehavior(substrate, type, pin, signal, data);
-//                behavior = Behavior_createOutput(
-
-                  // TODO: Remove this! Only call it when the behavior is added to the loop in Looper (and relayed via HTTP requests)
-                  // Add the behavior to the loop
-//                  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
-//                  Add_Behavior_To_Sequence (sequence, behavior);
-                
-              } else if (type.compareTo("delay") == 0) {
-                
-                Serial.println("Creating delay behavior.");
-
-                String millisecondsParameter = String(httpRequestParameters[1]);
-                int milliseconds = getValue(millisecondsParameter, '=', 1).toInt();
-                
-                Serial.println (milliseconds);
-                
-                behavior = Create_Delay_Behavior (substrate, milliseconds);
-                Sequence* sequence = (*substrate).sequences;
-                Update_Behavior_Sequence (behavior, sequence);
-                
-                // Propagate behavior
-                Transformation* transformation = Create_Transformation (String("create behavior delay ") + String((*behavior).uid) + " " + String(milliseconds));
-                Queue_Transformation (propagator, transformation);
-                
-              } else if (type.compareTo ("sound") == 0) {
-                
-                Serial.println ("Creating sound behavior.");
-
-                String noteParameter = String(httpRequestParameters[1]);
-                int note = getValue (noteParameter, '=', 1).toInt ();
-                
-                String durationParameter = String(httpRequestParameters[2]);
-                int duration = getValue(durationParameter, '=', 1).toInt ();
-                
-                behavior = Create_Sound_Behavior (substrate, note, duration);
-                Sequence* sequence = (*substrate).sequences;
-                Update_Behavior_Sequence (behavior, sequence);
-                
-                Serial.print((*behavior).uid); Serial.print("\n");
-                
-                // Propagate behavior
-                Transformation* transformation = Create_Transformation (String("create behavior sound ") + String((*behavior).uid) + " " + String (note) + " " + String (duration));
-                Serial.print ("Initialized Transformation "); Serial.print ((*transformation).data); Serial.print ("\n");
-//                Transformation* transformation = Create_Transformation (String("create behavior input 15"));
-                Queue_Transformation (propagator, transformation);
-                
-//                Serial.println("Test:");
-//                Serial.println((*behavior).type);
-//                Output* output = Get_Output_Behavior (behavior);
-//                Serial.println((*output).pin);
-//                Serial.println((*output).signal);
-//                Serial.println((*output).data);
-//                behavior = createBehavior(substrate, type, pin, signal, data);
-//                behavior = Behavior_createOutput(
-
-                  // TODO: Remove this! Only call it when the behavior is added to the loop in Looper (and relayed via HTTP requests)
-                  // Add the behavior to the loop
-//                  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
-//                  Add_Behavior_To_Sequence (sequence, behavior);
-                
-              }
-              
-              // Send a standard HTTP response header
-              if (behavior != NULL) {
-                client.println("HTTP/1.1 201 Created"); // client.println("HTTP/1.1 200 OK");
-              } else {
-                client.println("HTTP/1.1 400 Bad Request");
-              }
-              client.println("Access-Control-Allow-Origin: *");
-              client.println("Access-Control-Expose-Headers: Location");
-              client.println("Content-Type: text/html");
-              if (behavior != NULL) {
-                client.print("Location: /behavior/"); client.print((*behavior).uid); client.print("\n");
-              }
-              client.println("Connection: close");
-              
-              break;
-              
-            } else if (strcmp (httpRequestAddress, "/pin") == 0) {
-              
-              Serial.println("PARAMETERS:");
-              Serial.println(httpRequestParameters[0]);
-              Serial.println(httpRequestParameters[1]);
-              Serial.println(httpRequestParameters[2]);
-              Serial.println(httpRequestParameters[5]);
-              
-              // Split parameters by '='
-//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
-//              String key = getValue(split, '=', 0);
-//              String value = getValue(split, '=', 1);
-
-              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
-              int index = getValue(indexParameter, '=', 1).toInt();
-
-              String pinParameter = String(httpRequestParameters[1]); // "hi this is a split test";
-              int pin = getValue(pinParameter, '=', 1).toInt();
-              
-              String operationParameter = String(httpRequestParameters[2]); // "hi this is a split test";
-              int operation = getValue(operationParameter, '=', 1).toInt();
-              
-              String valueParameter = String(httpRequestParameters[5]); // "hi this is a split test";
-              int value = getValue(valueParameter, '=', 1).toInt();
-              
-              Serial.println("INDEX/PIN/OPERATION/VALUE:");
-              Serial.println(index);
-              Serial.println(pin);
-              Serial.println(operation);
-              Serial.println(value);
-              
-//              // TODO: Parse parameters from HTTP request
-//              int pin = String(httpRequestParameters[0]).toInt();
-//              int value = String(httpRequestParameters[4]).toInt();
-//              
-//              Serial.print("pin = ");
-//              Serial.print(pin);
-//              Serial.print("\n");
-//              
-//              Serial.print("value = ");
-//              Serial.print(value);
-//              Serial.print("\n");
-              
-              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-//              insertBehavior(index, operation, pin, 0, 1, value);
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              client.println();
-              
-              // TODO: flush
-              // TODO: close
-              
-              break;
-              
-            } else if (strcmp (httpRequestAddress, "/delay") == 0) {
-              
-              Serial.println("PARAMETERS:");
-              Serial.println(httpRequestParameters[0]);
-
-              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
-              int index = getValue(indexParameter, '=', 1).toInt();
-              
-              String millisecondsParameter = String(httpRequestParameters[1]); // e.g., "milliseconds=1000";
-              int milliseconds = getValue(millisecondsParameter, '=', 1).toInt();
-              
-              Serial.println("MILLISECONDS:");
-              Serial.println(milliseconds);
-              
-              // TODO: Only do this when /add-node is called (or whatever the URI will be)
-              //insertBehavior(0, 2, 1, 0, 1, milliseconds);
-//              insertBehavior(index, 2, 1, 0, 1, milliseconds);
-              
-              // TODO: Wait for master to create the node (so can return it's ID)
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              
-              // TODO: flush
-              // TODO: close
-              
-              break;
-              
-            } else if (strcmp (httpRequestAddress, "/erase") == 0) {
-              
-              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-//              insertBehavior(0, 3, 1, 0, 1, 0);
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              
-              break;
-              
-            } else if (strcmp (httpRequestAddress, "/reboot") == 0) {
-              
-              // TODO: Only do this when /add-node is called (or whatever the URI will be)
-//              insertBehavior(0, 20, 0, 0, 0, 0);
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              break;
-              
-            } else {
-              
-              // TODO: Default, catch-all GET handler that scaffolds further action
-              
-              // Send a standard 404 HTTP response header
-              client.println("HTTP/1.1 404 Not Found");
-              client.println("Access-Control-Allow-Origin: *");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");  // the connection will be closed after completion of the response
-              client.println();
-              
-              break;
-            } 
-            
-          }
-          
-          else if (strcmp (httpRequestMethod, "DELETE") == 0) {
-            
-            if (strcmp (httpRequestAddress, "/behavior") == 0) {
-
-              // Parse request's URI parameters
-              String uuidParameter = String (httpRequestParameters[0]); // "hi this is a split test";
-              int uuid = getValue (uuidParameter, '=', 1).toInt();
-              
-              // Process request
-              boolean isDeleted = Delete_Behavior (uuid);
-              
-              // Respond to request. Send a standard HTTP response header.
-              if (isDeleted) {
-                client.println("HTTP/1.1 200 OK");
-              } else {
-                client.println("HTTP/1.1 403 Forbidden");
-              }
-              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              client.println();
-              
-              break;
-              
             }
             
-          }
-          
-//          else if (strcmp (httpRequestMethod, "DELETE") == 0) {
-//            
-//            if (strcmp (httpRequestAddress, "/behavior") == 0) {
-//              
-//              Serial.println("PARAMETERS:");
-//              Serial.println(httpRequestParameters[0]);
-//              
-//              // Split parameters by '='
-////              String split = String(httpRequestParameters[0]); // "hi this is a split test";
-////              String key = getValue(split, '=', 0);
-////              String value = getValue(split, '=', 1);
+          } else if (strcmp (httpRequestMethod, "DELETE") == 0) {
+            
+//            if (strcmp (httpRequestAddress, "/path-to-resource") == 0) {
 //
-//              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
-//              int index = getValue(indexParameter, '=', 1).toInt();
+//              // Parse request's URI parameters
+//              String uuidParameter = String (httpRequestParameters[0]); // "hi this is a split test";
+//              int uuid = getValue (uuidParameter, '=', 1).toInt();
 //              
-//              int operation = 4; // BEHAVIOR_DELETE
+//              // Process request
+//              boolean isDeleted = Delete_Behavior (uuid);
 //              
-//              Serial.println("INDEX:");
-//              Serial.println(index);
-//              
-////              // TODO: Parse parameters from HTTP request
-////              int pin = String(httpRequestParameters[0]).toInt();
-////              int value = String(httpRequestParameters[4]).toInt();
-////              
-////              Serial.print("pin = ");
-////              Serial.print(pin);
-////              Serial.print("\n");
-////              
-////              Serial.print("value = ");
-////              Serial.print(value);
-////              Serial.print("\n");
-//              
-//              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-//              insertBehavior(index, operation, 0, 0, 0, 0);
-//              
-//              // Send a standard HTTP response header
-//              client.println("HTTP/1.1 200 OK");
+//              // Respond to request. Send a standard HTTP response header.
+//              if (isDeleted) {
+//                client.println("HTTP/1.1 200 OK");
+//              } else {
+//                client.println("HTTP/1.1 403 Forbidden");
+//              }
 //              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
 //              client.println("Content-Type: text/html");
 //              client.println("Connection: close");
 //              client.println();
 //              
-//              // TODO: flush
-//              // TODO: close
-//              
 //              break;
 //              
 //            }
-//            
-//          }
-          else if (strcmp (httpRequestMethod, "PUT") == 0) {
             
-            if (strcmp (httpRequestAddress, "/behavior") == 0) {
-
-               // Parse request's URI parameters
-              String uuidParameter = String (httpRequestParameters[0]); // "hi this is a split test";
-              int uuid = getValue (uuidParameter, '=', 1).toInt();
-              
-              // Process request
-              // Behavior* behavior = Update_Behavior (uuid);
-              Behavior* behavior = Get_Behavior (uuid);
-              
-              if ((*behavior).type == BEHAVIOR_TYPE_SOUND) {
-                
-                Serial.println ("Updating sound behavior.");
-
-                String noteParameter = String(httpRequestParameters[1]);
-                int note = getValue (noteParameter, '=', 1).toInt ();
-                
-                String durationParameter = String(httpRequestParameters[2]);
-                int duration = getValue(durationParameter, '=', 1).toInt ();
-                
-                behavior = Create_Sound_Behavior (substrate, note, duration);
-                Sequence* sequence = (*substrate).sequences;
-                Update_Behavior_Sequence (behavior, sequence);
-                
-                // Propagate behavior
-                Transformation* transformation = Create_Transformation (String("update behavior ") + String (uuid) + " " + String (note) + " " + String (duration));
-//                Transformation* transformation = Create_Transformation (String("create behavior input 15"));
-                Queue_Transformation (propagator, transformation);
-                
-//                Serial.println("Test:");
-//                Serial.println((*behavior).type);
-//                Output* output = Get_Output_Behavior (behavior);
-//                Serial.println((*output).pin);
-//                Serial.println((*output).signal);
-//                Serial.println((*output).data);
-//                behavior = createBehavior(substrate, type, pin, signal, data);
-//                behavior = Behavior_createOutput(
-
-                  // TODO: Remove this! Only call it when the behavior is added to the loop in Looper (and relayed via HTTP requests)
-                  // Add the behavior to the loop
-//                  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
-//                  Add_Behavior_To_Sequence (sequence, behavior);
-                
-              }
-              
-              // Respond to request. Send a standard HTTP response header.
-              if (behavior != NULL) {
-                client.println("HTTP/1.1 200 OK");
-              } else {
-                client.println("HTTP/1.1 404 Not Found");
-              }
-              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              client.println();
-              break;
-              
-            } else if (strcmp (httpRequestAddress, "/pin") == 0) {
-              
-              Serial.println("PARAMETERS:");
-              Serial.println(httpRequestParameters[0]);
-              Serial.println(httpRequestParameters[1]);
-              Serial.println(httpRequestParameters[2]);
-              Serial.println(httpRequestParameters[5]);
-              
-              // Split parameters by '='
-//              String split = String(httpRequestParameters[0]); // "hi this is a split test";
-//              String key = getValue(split, '=', 0);
-//              String value = getValue(split, '=', 1);
-
-              String indexParameter = String(httpRequestParameters[0]); // "hi this is a split test";
-              int index = getValue(indexParameter, '=', 1).toInt();
-
-              String pinParameter = String(httpRequestParameters[1]); // "hi this is a split test";
-              int pin = getValue(pinParameter, '=', 1).toInt();
-              
-//              String operationParameter = String(httpRequestParameters[2]); // "hi this is a split test";
-//              int operation = getValue(operationParameter, '=', 1).toInt();
-              
-              String valueParameter = String(httpRequestParameters[5]); // "hi this is a split test";
-              int value = getValue(valueParameter, '=', 1).toInt();
-              
-              Serial.println("INDEX/PIN/VALUE:");
-              Serial.println(index);
-              Serial.println(pin);
-//              Serial.println(operation);
-              Serial.println(value);
-              
-              int operation = 5; // BEHAVIOR_UPDATE
-              
-              //          // TODO: Only do this when /add-node is called (or whatever the URI will be)
-//              insertBehavior(index, operation, pin, 0, 1, value);
-              
-              // Send a standard HTTP response header
-              client.println("HTTP/1.1 200 OK");
-              client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
-              client.println("Content-Type: text/html");
-              client.println("Connection: close");
-              client.println();
-              break;
-              
-            }
+          } else if (strcmp (httpRequestMethod, "PUT") == 0) {
+            
+            // Example "PUT" request handler:
+            //
+            //  if (strcmp (httpRequestAddress, "/behavior") == 0) {
+            //  
+            //     // Parse request's URI parameters
+            //    String uuidParameter = String (httpRequestParameters[0]); // "hi this is a split test";
+            //    int uuid = getValue (uuidParameter, '=', 1).toInt();
+            //    
+            //    // Process request
+            //    // Behavior* behavior = Update_Behavior (uuid);
+            //    Behavior* behavior = Get_Behavior (uuid);
+            //    
+            //    if ((*behavior).type == BEHAVIOR_TYPE_SOUND) {
+            //      
+            //      Serial.println ("Updating sound behavior.");
+            //  
+            //      String noteParameter = String(httpRequestParameters[1]);
+            //      int note = getValue (noteParameter, '=', 1).toInt ();
+            //      
+            //      String durationParameter = String(httpRequestParameters[2]);
+            //      int duration = getValue(durationParameter, '=', 1).toInt ();
+            //      
+            //      behavior = Create_Sound_Behavior (substrate, note, duration);
+            //      Sequence* sequence = (*substrate).sequences;
+            //      Update_Behavior_Sequence (behavior, sequence);
+            //      
+            //      // Propagate behavior
+            //      Transformation* transformation = Create_Transformation (String("update behavior ") + String (uuid) + " " + String (note) + " " + String (duration));
+            //      Queue_Transformation (propagator, transformation);
+            //      
+            //    }
+            //    
+            //    // Respond to request. Send a standard HTTP response header.
+            //    if (behavior != NULL) {
+            //      client.println("HTTP/1.1 200 OK");
+            //    } else {
+            //      client.println("HTTP/1.1 404 Not Found");
+            //    }
+            //    client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
+            //    client.println("Content-Type: text/html");
+            //    client.println("Connection: close");
+            //    client.println();
+            //    break;
+            //    
+            //  }
             
           } else if (strcmp (httpRequestMethod, "OPTIONS") == 0) {
             
-//            if (strcmp (httpRequestAddress, "/pin") == 0) {
-              // client.println("HTTP/1.1 204 No Content");
               client.println("HTTP/1.1 200 OK");
               client.println("Access-Control-Allow-Origin: *"); // client.println("Access-Control-Allow-Origin: http://foo.com");
               client.println("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
               client.println("Access-Control-Allow-Headers: X-PINGOTHER"); // client.println("Access-Control-Allow-Headers: Content-Type");
               client.println("Access-Control-Max-Age: 1728000");
               client.println("Content-Length: 0");
-//              client.println("Keep-Alive: timeout=2, max=100");
-//              client.println("Connection: Keep-Alive");
               client.println("Content-Type: text/html");
               client.println();
               break;
-//            }
             
           } else { // Unrecognized HTTP request method (possibly an error, such as a malformed request)
               
@@ -1024,7 +486,7 @@ boolean handleClientConnection (Adafruit_CC3000_ClientRef& client) {
     Serial.println("client disonnected");
 }
 
-boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
+boolean handleDefaultHttpRequest (Adafruit_CC3000_ClientRef& client) {
   
   // Send a standard HTTP response header
   client.println("HTTP/1.1 200 OK");
@@ -1047,7 +509,6 @@ boolean handleDefaultHttpRequest(Adafruit_CC3000_ClientRef& client) {
 // Tries to read the IP address and other connection details
 //
 boolean displayConnectionDetails (void) {
-//  uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
   
   if(!cc3000.getIPAddress (&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
     Serial.println(F("Unable to retrieve the IP Address!\r\n"));
@@ -1061,6 +522,7 @@ boolean displayConnectionDetails (void) {
     Serial.println();
     return true;
   }
+  
 }
 
 String Get_IP_Address (uint32_t ip) {
@@ -1075,8 +537,7 @@ String Get_IP_Address (uint32_t ip) {
   return ipAddress;
 }
 
-uint16_t checkFirmwareVersion(void)
-{
+uint16_t checkFirmwareVersion (void) {
   uint8_t major, minor;
   uint16_t version;
   
@@ -1096,7 +557,7 @@ uint16_t checkFirmwareVersion(void)
   return version;
 }
 
-String getValue(String data, char separator, int index)
+String getValue (String data, char separator, int index)
 {
   int found = 0;
   int strIndex[] = {0, -1};

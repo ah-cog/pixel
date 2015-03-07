@@ -49,6 +49,8 @@
 #define BEHAVIOR_TYPE_SOUND  4 // TODO: Make this a "user defined" behavior in Looper
 #define BEHAVIOR_TYPE_MOTION  5 // TODO: Make this a "user defined" behavior in Looper
 
+#define BEHAVIOR_TYPE_LANGUAGE  6 // TODO: Hack... consider removing this "message" behavior
+
 struct Substrate;
 struct Sequence;
 //struct Point; // or "Dot"
@@ -122,6 +124,7 @@ struct Behavior {
   void* schema; // The schema for the specific behavior type (e.g., for the "set pin" behavior)
   
   // Activation conditions
+  int conditionType; // 0 = NONE, 1 = <X> equals <Y>, 2 = <X> is not equal to <Y>
   
   
   Substrate* substrate; // The substrate containing the behavior
@@ -192,6 +195,7 @@ struct Sound {
   int duration;
 };
 
+
 struct Motion {
   Behavior* behavior;
   
@@ -202,6 +206,16 @@ struct Motion {
   int first; // = 0.4 * 1000; //0.5ms is 0 degrees in HS-422 servo
   int end; // = 2.3 * 1000; // 3.7 * 1000;
   int increment; // = 0.01 * 1000;
+};
+
+//! \struct Language
+//! The definition of the Language structure.
+//!
+struct Language {
+  Behavior* behavior;
+  
+  int messageSize;
+  char* message;
 };
 
 #endif

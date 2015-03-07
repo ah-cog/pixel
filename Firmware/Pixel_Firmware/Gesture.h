@@ -252,7 +252,7 @@ boolean Handle_Gesture_Swing () {
     
     Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice gesture swing");
     
-    Start_Focus ();
+//    Start_Focus ();
     
   }
   

@@ -49,6 +49,10 @@ int getValueCount (String data, char separator) {
   if (count > 0) {
     count = count + 1;
   }
+  
+  if (count == 0 && data.length() > 0) {
+    count = 1;
+  }
 
   return count;
 }

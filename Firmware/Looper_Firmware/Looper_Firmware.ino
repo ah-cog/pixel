@@ -14,10 +14,11 @@ Authors: Michael Gubbels
 #include <Wire.h>
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
-//#include "VirtualDevice.h"
-#include "WebServer.h"
 
-#include "UDPServer.h"
+#define DEVICE_SERIAL Serial3
+
+#include "WebServer.h"
+#include <UDPServer.h>
 
 #define UDP_READ_BUFFER_SIZE 36
 #define LISTEN_PORT_UDP 4445
@@ -30,7 +31,7 @@ UDPServer udpServer(LISTEN_PORT_UDP);
 //       changes to (1) make to Looper, and (2) to queue for sending to the other device 
 //       over I2C upon request.
 
-#define DEVICE_SERIAL Serial3
+//#define DEVICE_SERIAL Serial3
 
 boolean setupBridge () {
   DEVICE_SERIAL.begin (115200);
@@ -43,7 +44,7 @@ void setup () {
   Serial.begin (115200); // Start serial for output
   Serial.println (F ("Looper Firmware"));
   
-  setupLooper ();
+//  setupLooper ();
 //  Propagation* transformation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
 //  Queue_Propagation (propagator, transformation);
   
@@ -64,121 +65,128 @@ const unsigned long
 // Read from client stream with a 5 second timeout.  Although an
 // essentially identical method already exists in the Stream() class,
 // it's declared private there...so this is a local copy.
-int timedRead(void) {
+int timedRead (void) {
   unsigned long start = millis();
-  while((!client.available()) && ((millis() - start) < responseTimeout));
-  return client.read();  // -1 on timeout
+  while ((!client.available ()) && ((millis () - start) < responseTimeout));
+  return client.read ();  // -1 on timeout
 }
+
+boolean hasTouch = false;
 
 /**
  * The event loop (i.e., this function is called repeatedly when the board is on)
  */
 void loop () {
   
-  if (udpServer.available()) {
-
-      char buffer[UDP_READ_BUFFER_SIZE] = { 0 };
-      int n = udpServer.readData(buffer, UDP_READ_BUFFER_SIZE);  // n contains # of bytes read into buffer
-      buffer[n] = '\0';
+  if (hasTouch == false) {
+    if (udpServer.available()) {
+  
+        char buffer[UDP_READ_BUFFER_SIZE] = { 0 };
+        int n = udpServer.readData(buffer, UDP_READ_BUFFER_SIZE);  // n contains # of bytes read into buffer
+        buffer[n] = '\0';
+        
+        char* hostIpAddress; // Remote host address (i.e., Pixel VPE)
+  
+  //      Serial.print("n: "); Serial.println(n);
+  //      for (int i = 0; i < n; ++i) {
+  //         uint8_t c = buffer[i];
+  ////         Serial.print("c: "); Serial.println(c);
+  //         // ... Do whatever you want with 'c' here ...
+  //      }
+  
+        // TODO: Make sure the packet starts with "Pixel" (or whatever the packet signature is, so only parse packets with valid addresses)
+        if (buffer[0] != 'P') {
+          return;
+        }
+  
+        hostIpAddress = &buffer[7];
+        Serial.println (hostIpAddress);
+        
+        // Send IP Address to send of UDP packet
+        String moduleIp = Get_IP_Address (ipAddress); // Get this module's IP address to send to remote host
+     
+     
+        // 192.168.0.1
+        // ^   ^   ^ ^
+        char* ipPart1 = hostIpAddress;
+        char* ipPart2 = strchr (ipPart1, '.'); ipPart2[0] = '\0'; ++ipPart2;
+        char* ipPart3 = strchr (ipPart2, '.'); ipPart3[0] = '\0'; ++ipPart3;
+        char* ipPart4 = strchr (ipPart3, '.'); ipPart4[0] = '\0'; ++ipPart4;
+        char* portStr = strchr (ipPart4, ':'); portStr[0] = '\0'; ++portStr;
+        
+        int ip1  = atoi(ipPart1); // convert IP octets and port to integer data type
+        int ip2  = atoi(ipPart2);
+        int ip3  = atoi(ipPart3);
+        int ip4  = atoi(ipPart4);
+        int port = atoi(portStr);
+        
+        --ipPart2; ipPart2[0] = '.'; // restore the '.' and ':' in the address for later use
+        --ipPart3; ipPart3[0] = '.';
+        --ipPart4; ipPart4[0] = '.';
+        --portStr; portStr[0] = ':';
+        
+  //      Serial.println (ip1);
+  //      Serial.println (ip2);
+  //      Serial.println (ip3);
+  //      Serial.println (ip4);
+  //      Serial.println (port);
+        
+        
+        
+        // Send HTTP GET request to Pixel VPE
+        
+        unsigned long startTime, t;
+        unsigned long ip = cc3000.IP2U32 (ip1, ip2, ip3, ip4);
+        
+        client = cc3000.connectTCP (ip, port);
+        
+        // Connect to numeric IP
+        Serial.print (F("OK\r\nConnecting to server..."));
+        t = millis();
+        do {
+          client = cc3000.connectTCP(ip, port);
+        } while ((!client.connected ()) && ((millis () - t) < connectTimeout));
+        
+        if (client.connected()) { // Success!
+        
+          Serial.print(F("OK\r\nIssuing HTTP request..."));
+          
+          // Set up endpoint
+          char endpoint[48];
+          String endpointStr = String("/modules?ip=") + moduleIp;
+          endpointStr.toCharArray (endpoint, 48);
+          
+          Serial.println (endpoint);
+          
+          char agent[] = "Pixel/1.0";
       
-      char* hostIpAddress; // Remote host address (i.e., Pixel VPE)
-
-//      Serial.print("n: "); Serial.println(n);
-//      for (int i = 0; i < n; ++i) {
-//         uint8_t c = buffer[i];
-////         Serial.print("c: "); Serial.println(c);
-//         // ... Do whatever you want with 'c' here ...
-//      }
-
-      // TODO: Make sure the packet starts with "Pixel" (or whatever the packet signature is, so only parse packets with valid addresses)
-      if (buffer[0] != 'P') {
-        return;
+          // Unlike the hash prep, parameters in the HTTP request don't require sorting.
+          client.fastrprint(F("GET ")); client.fastrprint(endpoint); client.fastrprint(F(" HTTP/1.1\r\n"));
+          client.fastrprint(F("Host: ")); client.fastrprint(hostIpAddress);
+          client.fastrprint(F("\r\nUser-Agent: ")); client.fastrprint(F(agent));
+  //        client.fastrprint(F("\r\nConnection: keep-alive\r\n"));
+          client.fastrprint(F("\r\nConnection: close\r\n"));
+      
+          Serial.print(F("OK\r\nAwaiting response..."));
+  //        int c = 0;
+          // Dirty trick: instead of parsing results, just look for opening
+          // curly brace indicating the start of a successful JSON response.
+  //        while(((c = timedRead()) > 0) && (c != '{'));
+  //        if(c == '{')   Serial.println(F("success!"));
+  //        else if(c < 0) Serial.println(F("timeout"));
+  //        else           Serial.println(F("error (invalid Twitter credentials?)"));
+          client.close();
+  //        return (c == '{');
+  
+          hasTouch = true; // Has successfully connected to Looper mobile interface
+          
+        } else { // Couldn't contact server
+          Serial.println(F("failed"));
+  //        return false;
       }
-
-      hostIpAddress = &buffer[7];
-      Serial.println (hostIpAddress);
-      
-      // Send IP Address to send of UDP packet
-      String moduleIp = Get_IP_Address (ipAddress); // Get this module's IP address to send to remote host
-   
-   
-      // 192.168.0.1
-      // ^   ^   ^ ^
-      char* ipPart1 = hostIpAddress;
-      char* ipPart2 = strchr (ipPart1, '.'); ipPart2[0] = '\0'; ++ipPart2;
-      char* ipPart3 = strchr (ipPart2, '.'); ipPart3[0] = '\0'; ++ipPart3;
-      char* ipPart4 = strchr (ipPart3, '.'); ipPart4[0] = '\0'; ++ipPart4;
-      char* portStr = strchr (ipPart4, ':'); portStr[0] = '\0'; ++portStr;
-      
-      int ip1  = atoi(ipPart1); // convert IP octets and port to integer data type
-      int ip2  = atoi(ipPart2);
-      int ip3  = atoi(ipPart3);
-      int ip4  = atoi(ipPart4);
-      int port = atoi(portStr);
-      
-      --ipPart2; ipPart2[0] = '.'; // restore the '.' and ':' in the address for later use
-      --ipPart3; ipPart3[0] = '.';
-      --ipPart4; ipPart4[0] = '.';
-      --portStr; portStr[0] = ':';
-      
-//      Serial.println (ip1);
-//      Serial.println (ip2);
-//      Serial.println (ip3);
-//      Serial.println (ip4);
-//      Serial.println (port);
-      
-      
-      
-      // Send HTTP GET request to Pixel VPE
-      
-      unsigned long startTime, t;
-      unsigned long ip = cc3000.IP2U32 (ip1, ip2, ip3, ip4);
-      
-      client = cc3000.connectTCP (ip, port);
-      
-      // Connect to numeric IP
-      Serial.print (F("OK\r\nConnecting to server..."));
-      t = millis();
-      do {
-        client = cc3000.connectTCP(ip, port);
-      } while ((!client.connected ()) && ((millis () - t) < connectTimeout));
-      
-      if (client.connected()) { // Success!
-      
-        Serial.print(F("OK\r\nIssuing HTTP request..."));
         
-        // Set up endpoint
-        char endpoint[48];
-        String endpointStr = String("/modules?ip=") + moduleIp;
-        endpointStr.toCharArray (endpoint, 48);
         
-        Serial.println (endpoint);
-        
-        char agent[] = "Pixel/1.0";
-    
-        // Unlike the hash prep, parameters in the HTTP request don't require sorting.
-        client.fastrprint(F("GET ")); client.fastrprint(endpoint); client.fastrprint(F(" HTTP/1.1\r\n"));
-        client.fastrprint(F("Host: ")); client.fastrprint(hostIpAddress);
-        client.fastrprint(F("\r\nUser-Agent: ")); client.fastrprint(F(agent));
-//        client.fastrprint(F("\r\nConnection: keep-alive\r\n"));
-        client.fastrprint(F("\r\nConnection: close\r\n"));
-    
-        Serial.print(F("OK\r\nAwaiting response..."));
-//        int c = 0;
-        // Dirty trick: instead of parsing results, just look for opening
-        // curly brace indicating the start of a successful JSON response.
-//        while(((c = timedRead()) > 0) && (c != '{'));
-//        if(c == '{')   Serial.println(F("success!"));
-//        else if(c < 0) Serial.println(F("timeout"));
-//        else           Serial.println(F("error (invalid Twitter credentials?)"));
-        client.close();
-//        return (c == '{');
-      } else { // Couldn't contact server
-        Serial.println(F("failed"));
-//        return false;
     }
-      
-      
   }
    
    
@@ -192,13 +200,13 @@ void loop () {
   }
   
   // Propagate data to the main device
-  if (propagator != NULL) {
-//    Serial.println ((int) (*propagator).transformation);
-    if ((*propagator).transformation != NULL) {
-      Propagate (propagator, SERIAL_CHANNEL);
-  //    Delete_Propagator (propagator);
-    }
-  }
+//  if (propagator != NULL) {
+////    Serial.println ((int) (*propagator).transformation);
+//    if ((*propagator).transformation != NULL) {
+//      Propagate (propagator, SERIAL_CHANNEL);
+//  //    Delete_Propagator (propagator);
+//    }
+//  }
   
 //  // Create behavior substrate
 //  substrate = Create_Substrate ();
@@ -230,8 +238,8 @@ void loop () {
   
   // Perform the next behavior
 //  while (true) {
-    boolean performanceResult = Perform_Behavior (performer);
-    delay (800);
+//    boolean performanceResult = Perform_Behavior (performer);
+//    delay (800);
 //  }
 
 //  Propagator* propagator = Create_Propagator ();

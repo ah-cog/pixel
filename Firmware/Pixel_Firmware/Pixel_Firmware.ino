@@ -22,7 +22,7 @@
 String ipAddress = "unassigned";
 
 #include <Adafruit_NeoPixel.h>
-#include "Utilities.h"
+#include "Utilities.h" 
 #include "Platform.h"
 #include "Color.h"
 #include "Sound.h"
@@ -33,46 +33,45 @@ String ipAddress = "unassigned";
 
 // The module has focus (or is "active") and will receive commands (e.g., from Looper). If there are multiple active modules, interactively choose one (or say "both").
 // TODO: Send message to Looper to let it know which module is active so Looper can show it.
-// TODO: Implement the "focus" behavior in Looper itself
-boolean hasFocus = false;
-unsigned long focusStartTime = 0L;
-//unsigned long focusLastTime;
-#define MAX_FOCUS_DURATION 10000
+// TODO: Implement the "focus" behavior in Looper itself 
+//boolean hasFocus = false;
+//unsigned long focusStartTime = 0L;
+//#define MAX_FOCUS_DURATION 10000
 
-void Start_Focus () {
-  Serial.println ("Starting Focus");
-  focusStartTime = millis ();
-  hasFocus = true;
-  
-  // Set focus color
-  Update_Brightness (1.0);
-  
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice start focus"); // TODO: remember focus 234
-}
+//void Start_Focus () {
+//  Serial.println ("Starting Focus");
+//  focusStartTime = millis ();
+//  hasFocus = true;
+//  
+//  // Set focus color
+//  Update_Brightness (1.0);
+//  
+//  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice start focus"); // TODO: remember focus 234
+//}
+//
+//void Continue_Focus () {
+//}
 
-void Continue_Focus () {
-}
+//boolean Update_Focus () {
+//  if (hasFocus) {
+//    unsigned long currentTime = millis (); // TODO: Replace with global timescale
+//    if (currentTime > focusStartTime + MAX_FOCUS_DURATION) {
+//      Stop_Focus ();
+//    } else {
+//      Continue_Focus ();
+//    }
+//  }
+//}
 
-boolean Update_Focus () {
-  if (hasFocus) {
-    unsigned long currentTime = millis (); // TODO: Replace with global timescale
-    if (currentTime > focusStartTime + MAX_FOCUS_DURATION) {
-      Stop_Focus ();
-    } else {
-      Continue_Focus ();
-    }
-  }
-}
-
-void Stop_Focus () {
-  Serial.println ("Stopping Focus");
-  hasFocus = false;
-  
-  // Set default color
-  Update_Brightness (0.125);
-  
-  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice stop focus"); // TODO: remember focus 234
-}
+//void Stop_Focus () {
+//  Serial.println ("Stopping Focus");
+//  hasFocus = false;
+//  
+//  // Set default color
+//  Update_Brightness (0.125);
+//  
+//  Queue_Message (platformUuid, BROADCAST_ADDRESS, "notice stop focus"); // TODO: remember focus 234
+//}
 
 #include "Gesture.h"
 #include "Movement.h"
@@ -190,7 +189,7 @@ void setup () {
 
 void loop () {
   
-  Update_Focus (); // Update focus (this is part of the gestural language)
+//  Update_Focus (); // Update focus (this is part of the gestural language)
   
   Get_Console (); // Get any text received over the serial port (e.g., from the Arduino IDE)
   
@@ -257,10 +256,10 @@ void loop () {
       Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
       Propagate_Channel_Value (moduleOutputChannel);
-      Blink_Light (1);
+      Blink_Light (2);      
     } else {
       // Output port is on a different module than this one!
-      Blink_Light (2);
+      Blink_Light (3); // BUG! wrong number
 //      Queue_Message (BROADCAST_ADDRESS, ACTIVATE_MODULE_OUTPUT);
       Queue_Message (platformUuid, BROADCAST_ADDRESS, String ("turn output on"));
     }

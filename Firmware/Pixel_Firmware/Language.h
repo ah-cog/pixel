@@ -86,7 +86,7 @@ void Interpret_Message (Message* message) {
       
       // Another module has focus, so remove focus from this module (if it has focus)
       Serial.println ("notice start focus");
-      Stop_Focus ();
+//      Stop_Focus ();
       
       // TODO: store the modules that have focus (TODO: on module sending "notice start focus", command this one to remember the sending module has focus, possibly along with others, so maybe push memory onto a stack)
       
@@ -251,6 +251,7 @@ void Perform_Shell_Behavior (String message) {
   Serial.print ("\n");
   
   int wordCount = getValueCount (message, ' ');
+  int messageWordCount = getValueCount (message, ' ');
   String firstWord = getValue (message, ' ', 0);
   
   
@@ -330,8 +331,8 @@ void Perform_Shell_Behavior (String message) {
       } else if (behaviorType.compareTo ("sound") == 0) {
     
         // Parse parameters
-        int note = getValue (split, ' ', 3).toInt();
-        int duration = getValue (split, ' ', 4).toInt();
+        int note = getValue (split, ' ', 3).toInt ();
+        int duration = getValue (split, ' ', 4).toInt ();
 //            String signal = getValue (split, ' ', 4);
 //            String data = getValue (split, ' ', 5);
         
@@ -353,9 +354,13 @@ void Perform_Shell_Behavior (String message) {
         if (key.compareTo ("ip") == 0) {
           ipAddress = value;
         }
+    
+        // Send module to remote module to set up its "messageSourceModule"
+        Memory* memory = Create_Memory (key, value);
+        Append_Memory (memory);
         
-        Serial.println ("MEMORY!");
-        Serial.println (value);
+//        Serial.println ("MEMORY!");
+//        Serial.println (value);
         
 //            // Create behavior and add it to the behavior substrate
 //            Behavior* behavior = Create_Input_Behavior (substrate, pin, signal);
@@ -364,6 +369,28 @@ void Perform_Shell_Behavior (String message) {
 //            Update_Behavior_Sequence (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+        
+      } else if (behaviorType.compareTo ("language") == 0) { // HACK! Executes command...
+        
+        // Parse parameters
+        
+        // create behavior language change color to red
+        //                          ^
+        //                          index = 25
+        String newMessage = message.substring (25);
+        Serial.println ("MESSAGE:");
+        Serial.println (newMessage);
+        
+//        int note = getValue (split, ' ', 3).toInt ();
+//        int duration = getValue (split, ' ', 4).toInt ();
+////            String signal = getValue (split, ' ', 4);
+////            String data = getValue (split, ' ', 5);
+//        
+        // Create behavior and add it to the behavior substrate
+        Behavior* behavior = Create_Language_Behavior (substrate, newMessage);
+        (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
+        Sequence* sequence = (*substrate).sequences;
+        Update_Behavior_Sequence (behavior, sequence);
         
       } else {
         
@@ -701,6 +728,14 @@ void Perform_Shell_Behavior (String message) {
         Update_Input_Color (red, green, blue);
         Update_Output_Color (red, green, blue);
         
+      } else if (color.compareTo ("white") == 0) {
+        int red   = 255;
+        int green = 255;
+        int blue  = 255;
+        
+        Update_Input_Color (red, green, blue);
+        Update_Output_Color (red, green, blue);
+        
       } else if (color.compareTo ("yellow") == 0) {
         int red   = 255;
         int green = 255;
@@ -912,21 +947,32 @@ void Perform_Shell_Behavior (String message) {
     
   } else if (firstWord.compareTo ("recall") == 0) {
     
-    // TODO: Recall (key, value) pair by key
-    // Add (key, value) pair to memory
-    String trigger = getValue (message, ' ', 1);
-    
-    // Send module to remote module to set up its "messageSourceModule"
-    const int triggerBufferSize = 64;
-    char triggerChar[triggerBufferSize];
-    trigger.toCharArray (triggerChar, triggerBufferSize);
-    Memory* memory = Get_Memory (triggerChar);
-    
-    if (memory != NULL) {
-      Serial.print ((*memory).trigger);
-      Serial.print (" -> ");
-      Serial.print ((*memory).content);
-      Serial.print ("\n");
+    if (messageWordCount == 1) {
+      
+      // Print all memories
+      Print_Memory ();
+      
+    } else {
+      
+      // Print specific memory
+      
+      // TODO: Recall (key, value) pair by key
+      // Add (key, value) pair to memory
+      String trigger = getValue (message, ' ', 1);
+      
+      // Send module to remote module to set up its "messageSourceModule"
+      const int triggerBufferSize = 64;
+      char triggerChar[triggerBufferSize];
+      trigger.toCharArray (triggerChar, triggerBufferSize);
+      Memory* memory = Get_Memory (triggerChar);
+      
+      if (memory != NULL) {
+        Serial.print ((*memory).trigger);
+        Serial.print (" -> ");
+        Serial.print ((*memory).content);
+        Serial.print ("\n");
+      }
+      
     }
     
   } else if (firstWord.compareTo ("generalize") == 0) { // generalize upon memory/KB (using FOL or similar kinds of techniques), and verify with other people that inferrences are correct
