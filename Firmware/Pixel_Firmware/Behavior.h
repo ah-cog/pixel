@@ -49,7 +49,7 @@
 #define BEHAVIOR_TYPE_SOUND  4 // TODO: Make this a "user defined" behavior in Looper
 #define BEHAVIOR_TYPE_MOTION  5 // TODO: Make this a "user defined" behavior in Looper
 
-#define BEHAVIOR_TYPE_LANGUAGE  6 // TODO: Hack... consider removing this "message" behavior
+#define BEHAVIOR_TYPE_IMMEDIATE  6 // TODO: Hack... consider removing this "message" behavior
 
 struct Substrate;
 struct Sequence;
@@ -126,7 +126,6 @@ struct Behavior {
   // Activation conditions
   int conditionType; // 0 = NONE, 1 = <X> equals <Y>, 2 = <X> is not equal to <Y>
   
-  
   Substrate* substrate; // The substrate containing the behavior
   
   Sequence* sequence; // The sequence containing the behavior (if any)
@@ -149,6 +148,10 @@ struct Behavior {
 
 #define DATA_OFF 0
 #define DATA_ON  1
+
+// TODO: char* behaviors = { "input", "output", "delay" }; // Populate this array with the behaviors implemented by the device, interfacing betwen the hardware and the Looper engine
+
+// TODO: Update the following Behavior schema declarations to be (key,value (,type?)) values stored in dynamic memory... so platform implementers only have to define mappings between hardware-specific I/O functions and Looper
 
 struct Input {
   Behavior* behavior;
@@ -208,14 +211,18 @@ struct Motion {
   int increment; // = 0.01 * 1000;
 };
 
-//! \struct Language
-//! The definition of the Language structure.
+//! \struct Immediate
+//! The definition of the Immediate structure.
 //!
-struct Language {
+struct Immediate {
   Behavior* behavior;
   
   int messageSize;
   char* message;
 };
+
+// TODO: struct Periodic // i.e., a periodic behavior occurs every "x" seconds (converted from whatever unit of time is designated by the user)
+// TODO: struct Counted // i.e., a counted behavior occurs "x" times only (then is handled similar to an executed "Immediate" behavior)
+// TODO: struct Immediate // i.e., an immediate behavior is performed once, then stopped (deleted? disabled? deleted but a history is kept of it in the behavior history/timeline on remote server then deleted locally?)
 
 #endif

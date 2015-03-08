@@ -3,7 +3,7 @@
 
 // TODO: Consider renaming "Interpret" to "Transducer" to remove the anthropomorphic feel of the word interpret. Or keep it for the same reason :). Just make the system aesthetic consistent.
 void Process_Message (Message* message); // start the "interpretive dance": transformation/message => interpret => behavior
-void Perform_Shell_Behavior (String consoleMessage);
+void Perform_Behavior (String consoleMessage);
 void Perform_Immediate_Behavior (String message);
 
 String previousConsoleInput = "";
@@ -31,6 +31,8 @@ void Recieve_Serial_Message () { // NOTE: Formerly Get_Serial_Message
         previousConsoleInput.toCharArray (consoleBuffer, CONSOLE_BUFFER_SIZE);
         consoleBufferSize = previousConsoleInput.length ();
       }
+      
+      // Prepare the message for processing:
       
       consoleBuffer[consoleBufferSize] = '\0'; // Terminate console message buffer
       
@@ -77,7 +79,7 @@ void Process_Message (Message* message) {
   if ((*message).source == (*message).destination) { // TODO: Update this. Add concept of "channel" possibly. Or make EVERYTHING text based and virtual (THIS ONE!).
   
     // TODO: Don't separate "shell" behavior from other behaviors!
-    Perform_Shell_Behavior ((*message).content);
+    Perform_Behavior ((*message).content);
     
     Delete_Message (message);
     
@@ -86,12 +88,12 @@ void Process_Message (Message* message) {
 
     // Check if the message is from the remote "mesh" channel
     
-    if (strncmp ((*message).content, "notice presence", (*message).size) == 0) {  
+    if (strncmp ((*message).content, "notice presence", (*message).size) == 0) {
       Serial.println ("notice presence");
       
       Handle_Message_Active (message);
       
-    } else if (strncmp ((*message).content, "notice start focus", (*message).size) == 0) {  
+    } else if (strncmp ((*message).content, "notice start focus", (*message).size) == 0) {
       
       // Another module has focus, so remove focus from this module (if it has focus)
       Serial.println ("notice start focus");
@@ -233,11 +235,11 @@ void Process_Message (Message* message) {
       Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
       Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
       Propagate_Channel_Value (moduleOutputChannel);
-    }
-    
-    else {
-//      Serial.print ((*message).content);
-      Perform_Shell_Behavior ((*message).content);
+      
+    } else {
+      
+      Perform_Behavior ((*message).content);
+      
     }
     
     Delete_Message (message);
@@ -252,21 +254,30 @@ void Process_Message (Message* message) {
 
 // TODO: Make this callable remotely from other nodes...
 // TODO: Add command to set default module (e.g., "enter"), and return to the current module (e.g., "exit")
-void Perform_Shell_Behavior (String message) {
+void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
   
   // Echo the message
   Serial.print ("> ");
   Serial.print (message);
   Serial.print ("\n");
   
-  int wordCount = getValueCount (message, ' ');
+  // Look up synonyms (as can be defined dynamically)
+  if (message.startsWith ("delay") == true) {
+    message = String ("create behavior ") + message;
+  } else if (message.startsWith ("play note") == true) {
+    message = String ("create behavior sound") + message.substring (9);
+  } else if (message.startsWith ("remember") == true) {
+    message = String ("create behavior memory") + message.substring (8);
+  }
+  
+  int wordCount        = getValueCount (message, ' ');
   int messageWordCount = getValueCount (message, ' ');
-  String firstWord = getValue (message, ' ', 0);
+  String firstWord     = getValue      (message, ' ', 0);
   
   
-        String split = String (message);
-      int spaceCount = getValueCount (split, ' ');
-    String first = getValue (message, ' ', 0);
+  String split   = String        (message);
+  int spaceCount = getValueCount (split, ' ');
+  String first   = getValue      (message, ' ', 0);
     
   //!
   //! Looper Engine (maps looper language behavioral constructs onto platform)
@@ -358,52 +369,14 @@ void Perform_Shell_Behavior (String message) {
         // Parse parameters
         String key = getValue (split, ' ', 3);
         String value = getValue (split, ' ', 4);
-        
-        // Check if the memory is the IP address!
-        if (key.compareTo ("ip") == 0) {
-          ipAddress = value;
-        }
     
         // Send module to remote module to set up its "messageSourceModule"
-        Memory* memory = Create_Memory (key, value);
+        Memory* memory = Update_Memory (key, value); // Memory* memory = Create_Memory (key, value);
         Append_Memory (memory);
-        
-//        Serial.println ("MEMORY!");
-//        Serial.println (value);
-        
-//            // Create behavior and add it to the behavior substrate
-//            Behavior* behavior = Create_Input_Behavior (substrate, pin, signal);
-//            (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
-//            Sequence* sequence = (*substrate).sequences;
-//            Update_Behavior_Sequence (behavior, sequence);
-        
-        // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
-        
-      } else if (behaviorType.compareTo ("language") == 0) { // HACK! Executes command...
-        
-        // Parse parameters
-        
-        // create behavior language change color to red
-        //                          ^
-        //                          index = 25
-        String newMessage = message.substring (25);
-        Serial.println ("MESSAGE:");
-        Serial.println (newMessage);
-        
-//        int note = getValue (split, ' ', 3).toInt ();
-//        int duration = getValue (split, ' ', 4).toInt ();
-////            String signal = getValue (split, ' ', 4);
-////            String data = getValue (split, ' ', 5);
-//        
-        // Create behavior and add it to the behavior substrate
-        Behavior* behavior = Create_Language_Behavior (substrate, newMessage);
-        (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
-        Sequence* sequence = (*substrate).sequences;
-        Update_Behavior_Sequence (behavior, sequence);
         
       } else {
         
-        // TODO: Implement "custom" cloud "RPC" behavior.
+        // TODO: Look for "custom" (maybe a remotely-defined behavior, on the Looper engine server... i.e., a "cloud RPC behavior").
         
       }
       
@@ -478,21 +451,66 @@ void Perform_Shell_Behavior (String message) {
 //          }
     }
     
+  } else {
+    
+//    Serial.println ("...FUTURE IMMEDIATE BEHAVIOR!");
+//    Perform_Immediate_Behavior (message);
+
+
+        // Parse parameters
+        
+        // create behavior immediate change color to red
+        //                           ^
+        //                           index = 26
+//        String newMessage = message.substring (26);
+//        Serial.print ("IMMEDIATE BEHAVIOR:");
+//        Serial.println (message);
+        
+//        int note = getValue (split, ' ', 3).toInt ();
+//        int duration = getValue (split, ' ', 4).toInt ();
+////            String signal = getValue (split, ' ', 4);
+////            String data = getValue (split, ' ', 5);
+//        
+
+
+
+//        // Create behavior and add it to the behavior substrate
+//        Behavior* behavior = Create_Immediate_Behavior (substrate, message);
+////        (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
+//        Sequence* sequence = (*substrate).sequences;
+//        Update_Behavior_Sequence (behavior, sequence); // Add to behavior sequence
+
+        //!        
+        //! Check temporal modifier
+        //!
+        
+        if (message.endsWith (" now") == true) { // Check if the behavior is immediate...
+          message = message.substring (0, message.lastIndexOf (" now")); // Remove "now" from last part of string
+          Behavior* behavior = Create_Immediate_Behavior (substrate, message);
+          Queue_Immediate_Behavior (performer, behavior);
+        } else { // ...or add it to the current (or specified) loop.
+          Behavior* behavior = Create_Immediate_Behavior (substrate, message);
+//          (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
+          Sequence* sequence = (*substrate).sequences;
+          Update_Behavior_Sequence (behavior, sequence); // Add to behavior sequence
+        }
+    
   }
-  
-  Perform_Immediate_Behavior (message);
 }
 
 void Perform_Immediate_Behavior (String message) {
+//  Serial.println ("Perform_Immediate_Behavior");
+//  
+//  Serial.print ("message: ");
+//  Serial.println (message);
   
   int wordCount = getValueCount (message, ' ');
   int messageWordCount = getValueCount (message, ' ');
   String firstWord = getValue (message, ' ', 0);
   
-  
-        String split = String (message);
-      int spaceCount = getValueCount (split, ' ');
-    String first = getValue (message, ' ', 0);
+  String split = String (message);
+  int spaceCount = getValueCount (split, ' ');
+  String first = getValue (message, ' ', 0);
   
   //!
   //! Parse and process the message
@@ -503,6 +521,8 @@ void Perform_Immediate_Behavior (String message) {
   // "to ..."
   // e.g.,
   // "to 34 turn light off"
+  
+  // TODO: By default, send messages to all devices. Can "enter" a device or create a group of devices then enter it to specify which devices to control specifically.
   
   if (firstWord.compareTo ("to") == 0) {
     
@@ -958,17 +978,6 @@ void Perform_Immediate_Behavior (String message) {
 //    Serial.print (messageTargetModule);
 //    Serial.print (".");
     
-  } else if (firstWord.compareTo ("remember") == 0) { // i.e., learn, store, remember
-    
-    // Add (key, value) pair to memory
-    String trigger = getValue (message, ' ', 1);
-    String content = getValue (message, ' ', 2);
-    
-    // Send module to remote module to set up its "messageSourceModule"
-//    Memory* memory = Create_Memory (trigger, content);
-    Memory* memory = Update_Memory (trigger, content);
-    Append_Memory (memory);
-    
   } else if (firstWord.compareTo ("forget") == 0) { // i.e., remember, recall, load
     
     // Add (key, value) pair to memory
@@ -1071,6 +1080,7 @@ void Perform_Immediate_Behavior (String message) {
     
   } else {
     
+    Serial.println (message);
     Serial.println ("That doesn't do anything.");
     
   }

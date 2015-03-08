@@ -23,8 +23,8 @@ Performer* performer = NULL;
 Performer* Create_Performer (Substrate* substrate);
 Propagator* Create_Propagator ();
 
-
-void Perform_Shell_Behavior (String message); // HACK
+boolean Perform_Behavior_On_Platform (Behavior* behavior);
+void Perform_Immediate_Behavior (String message); // HACK
 
 
 
@@ -838,36 +838,33 @@ Sound* Get_Sound_Behavior (Behavior* behavior) {
 
 //! Create message (i.e., a behavior transformation).
 //!
-Behavior* Create_Language_Behavior (Substrate* substrate, String message) { // (int source, int destination, String content) {
+Behavior* Create_Immediate_Behavior (Substrate* substrate, String message) {
   
   Behavior* behavior = NULL;
   
-  Serial.println("Create_Language_Behavior");
+  Serial.println("Create_Immediate_Behavior");
   
   if (substrate != NULL) {
     
-//    Serial.println (note);
-//    Serial.println (duration);
-    
-    Serial.println("CREATING LANGUAGE BEHAVIOR");
+    Serial.println("CREATING IMMEDIATE BEHAVIOR");
     
     // Create the Output schema for Behavior
-    Language* language   = (Language*) malloc (sizeof (Language));
-    (*language).messageSize = message.length ();
-    (*language).message = (char*) malloc (((*language).messageSize + 1) * sizeof (char));
-    message.toCharArray ((*language).message, ((*language).messageSize + 1));    
+    Immediate* immediate   = (Immediate*) malloc (sizeof (Immediate));
+    (*immediate).messageSize = message.length ();
+    (*immediate).message = (char*) malloc (((*immediate).messageSize + 1) * sizeof (char));
+    message.toCharArray ((*immediate).message, ((*immediate).messageSize + 1));    
     
     // Create the Behavior
     behavior = Create_Behavior (substrate);
-    (*behavior).type = BEHAVIOR_TYPE_LANGUAGE;
-    (*behavior).schema = (void *) language;
+    (*behavior).type = BEHAVIOR_TYPE_IMMEDIATE;
+    (*behavior).schema = (void *) immediate;
     
     // Associate the created Output schema with the corresponding created Behavior
-    (*language).behavior = behavior;
+    (*immediate).behavior = behavior;
     
     // Parse behavior schema parameters
-    Serial.println ((*language).messageSize);
-    Serial.println ((*language).message);
+    Serial.println ((*immediate).messageSize);
+    Serial.println ((*immediate).message);
     
   }
   
@@ -994,7 +991,53 @@ Behavior* Update_Behavior (int uid) {
   return behavior;
 }
 
-boolean Delete_Behavior (int uid) {
+boolean Delete_Behavior_Schema (Behavior* behavior) { // i.e., Delete_Schema_By_Behavior
+  Serial.println ("Delete_Behavior_Schema");
+
+  if (behavior != NULL) {
+    
+//    if ((*behavior).type == BEHAVIOR_TYPE_OUTPUT) {
+//        free ((*behavior).schema); // Free the behavior's schema from memory
+//        return true;
+//    }
+
+    free ((*behavior).schema); // Free the behavior's schema from memory
+    return true;
+    
+  }
+  
+  return false;
+  
+}
+
+boolean Delete_Behavior (Behavior* behavior) {
+  Serial.println ("Delete_Behavior");
+  
+  if (behavior != NULL) {
+    
+    Serial.println("Deleting behavior");
+    
+    // TODO: Remove behavior from ALL sequences (maybe replace it with a "NONE" behavior in sequences, while still referencing the behavior in the behavior's history)
+    Sequence* currentSequence = (*substrate).sequences;
+    int isRemoved = Remove_Behavior_Sequence (behavior, currentSequence);
+          
+    // Free the behavior from memory
+    Delete_Behavior_Schema (behavior); // free ((*behavior).schema); // Free the behavior's schema from memory
+    free (behavior); // Free the behavior from memory
+    
+    behavior = NULL;
+    
+    return true;
+    
+  }
+  
+  return false;
+  
+}
+
+// i.e., delete by behavior URI or "address"
+boolean Delete_Behavior_By_Address (int uid) {
+  Serial.println ("Delete_Behavior_By_Address");
     
   // Get pointer to behavior node at specified index
   Behavior* behavior = NULL;
@@ -1015,16 +1058,9 @@ boolean Delete_Behavior (int uid) {
         // Return the behavior if it has been found
         if ((*soughtBehavior).uid == uid) {
           
-          Serial.println("Deleting behavior");
+          boolean result = Delete_Behavior (soughtBehavior);
           
-          int isRemoved = Remove_Behavior_Sequence (soughtBehavior, currentSequence);
-          
-          // Free the behavior from memory
-//          assert(soughtBehavior != NULL);
-          free((*soughtBehavior).schema); // Free the behavior's schema from memory
-          free(soughtBehavior); // Free the behavior from memory
-          
-          return true;
+          return result;
         }
         
         soughtBehavior = (*soughtBehavior).next;
@@ -1060,6 +1096,8 @@ boolean Delete_Behavior (int uid) {
 //! Performs run according to their own time-scale. That is, one can perform 
 //! a sequence of actions faster than another.
 //!
+//! TODO: Give each performer it's own memory, performance history... essentially its own state and history, as if it is a "Computer" running the behavior.
+//!
 struct Performer {
   int uid;
   Substrate* substrate;
@@ -1068,8 +1106,89 @@ struct Performer {
   Sequence* origin; // i.e., The performer's first behavior sequence.
   // Behavior* origin; // i.e., The performer's first behavior.
   
+  Behavior* immediateBehaviorQueue; // FIFO Queue of immediate behaviors to perform before the next behavior
+  
 //  Device* device; // i.e., The device upon which the performance will take place.
 };
+
+//! Queue the outgoing message.
+//! Returns the queue size.
+//!
+int Queue_Immediate_Behavior (Performer* performer, Behavior* behavior) {
+  Serial.println ("Queue_Immediate_Behavior");
+
+  int behaviorCount = 0;
+
+  if (performer != NULL) {
+  
+    if ((*performer).immediateBehaviorQueue == NULL) {
+      
+      // Push to the top of the stack (as the first element)
+      (*performer).immediateBehaviorQueue = behavior;
+      
+      // Set up the forward and back links
+      (*behavior).previous = NULL;
+      (*behavior).next     = NULL;
+      
+      behaviorCount = 1; // The queue size is now 1
+      
+    } else {
+      
+      // Get the last message in the queue
+      Behavior* lastBehavior = (*performer).immediateBehaviorQueue;
+      while ((*lastBehavior).next != NULL) {
+        Serial.print ("\tnext immediate behavior");
+        lastBehavior = (*lastBehavior).next;
+        
+        behaviorCount++; // Count the behavior
+      }
+      
+      // Push to the last position in the queue
+      // i.e., add to [ m0, m1, ..., mn ] at m(n + 1) as in [ m0, m1, ..., mn, m(n + 1) ]
+      (*lastBehavior).next = behavior;
+      
+      // Set up the backward and forward queue links
+      (*behavior).previous = lastBehavior;
+      (*behavior).next = NULL;
+      
+      behaviorCount++; // Count the behavior just queued
+      
+    }
+    
+  }
+  
+  return behaviorCount;
+  
+}
+
+//! Dequeue the next outgoing message.
+//!
+Behavior* Dequeue_Immediate_Behavior (Performer* performer) {
+  Serial.println ("Dequeue_Immediate_Behavior");
+  
+  Behavior* behavior = NULL;
+  
+  if (performer != NULL) {
+  
+    if ((*performer).immediateBehaviorQueue != NULL) {
+      
+      // Get the transformation at the front of the propagator's queue
+      behavior = (*performer).immediateBehaviorQueue;
+      
+      // Update the message queue. Set the message following the dequeued message as the front of the queue.
+      (*performer).immediateBehaviorQueue = (*behavior).next;
+      
+      // Dissociate the dequeued message. Update the backward and forward links of the dequeued message.
+      (*behavior).next = NULL;
+      (*behavior).previous = NULL;
+      
+    }
+    
+  }
+  
+  return behavior;
+  
+}
 
 ////! Behavior Performer Dialect (e.g., Teensy, Arduino)
 ////!
@@ -1100,6 +1219,8 @@ Performer* Create_Performer (Substrate* substrate) {
     (*performer).behavior  = NULL;
     (*performer).origin    = NULL;
     
+    (*performer).immediateBehaviorQueue = NULL;
+    
     // Generate UUID for the processor
     (*performer).uid  = Generate_Uuid ();
     
@@ -1124,8 +1245,22 @@ boolean Perform_Behavior (Performer* performer) {
   // Serial.println ("Perform_Behavior");
   
   boolean sustainBehavior = false;
+  boolean performanceResult = false;
+  
+  boolean deleteBehavior = false;
   
   if (performer != NULL) {
+    
+    // Perform all immediate behaviors (if any) then delete them before moving on
+//    Serial.print ("immediateBehaviorQueue = ");
+//    Serial.println ((int) (*performer).immediateBehaviorQueue);
+    while ((*performer).immediateBehaviorQueue != NULL) {
+      Behavior* immediateBehavior = Dequeue_Immediate_Behavior (performer);
+      
+      boolean sustainBehavior2 = Perform_Behavior_On_Platform (immediateBehavior);
+      
+      Delete_Behavior (immediateBehavior);
+    }
     
     // Update the Performer
     if ((*performer).behavior == NULL) {
@@ -1141,118 +1276,123 @@ boolean Perform_Behavior (Performer* performer) {
     
     if (behavior != NULL) { // Check if the Behavior is valid.  
       // Serial.println ("behavior != NULL");
-    
-      if ((*behavior).type == BEHAVIOR_TYPE_OUTPUT) {
-        Output* output = (Output*) (*behavior).schema;
-        
-        Serial.print ("Output "); Serial.print ((*output).pin); Serial.print ("\n");
-        Serial.print ("\tdata: "); Serial.print ((*output).data); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        Channel* channel = Get_Channel (platform, (*output).pin);
-        Update_Channel_Value (channel, (*output).data);
-//        Get_Channel_Value (channel);
-//        Propagate_Channel_Value (channel);
-        
-        // Update the pin's state
-//        Update_Virtual_Pin ((*output).pin, (*output).signal, (*output).data);
-      } else if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
-        Input* input = (Input*) (*behavior).schema;
-        
-        Serial.print ("Input "); Serial.print ((*input).pin); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        Channel* channel = Get_Channel (platform, (*input).pin);
-//        Update_Channel_Value (channel, PIN_VALUE_HIGH);
-        Get_Channel_Value (channel);
-//        Propagate_Channel_Value (channel);
-        
-      } else if ((*behavior).type == BEHAVIOR_TYPE_DELAY) {
-        Delay* delay = (Delay*) (*behavior).schema;
-        
-        // TO DEBUG: Uncomment the following to monitor the timer
-        // Serial.print ("Delay "); Serial.print ((*delay).milliseconds); Serial.print ("\n");
-        // Serial.print ("\tstartTime: "); Serial.print ((*delay).startTime); Serial.print ("\n");
-        // Serial.print ("\tcurrentTime: "); Serial.print ((*delay).currentTime); Serial.print ("\n");
-        
-        // Update timers
-        if ((*delay).startTime == 0) {
-          (*delay).startTime = millis ();
-          (*delay).currentTime = (*delay).startTime;
-        }
-          
-        // Update timer with current time
-        (*delay).currentTime = millis ();
-        
-        // Check if timer has expired
-        if ((*delay).currentTime - (*delay).startTime >= (*delay).milliseconds) {
-          // Reset timers
-          (*delay).startTime = 0L;
-          (*delay).currentTime = 0L;
-        } else {
-          sustainBehavior = true;
-        }
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-      } else if ((*behavior).type == BEHAVIOR_TYPE_SOUND) {
-        Sound* sound = (Sound*) (*behavior).schema;
-        
-        Serial.print ("Sound "); Serial.print ((*sound).note); Serial.print ("\n");
-        Serial.print ("\tDuration: "); Serial.print ((*sound).duration); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        //Play_Note (NOTE_C6, 250);
-        Play_Note ((*sound).note, (*sound).duration);
-        
-        
-//        Channel* channel = Get_Channel (platform, (*input).pin);
-////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
-//        Get_Channel_Value (channel);
-////        Propagate_Channel_Value (channel);
-        
-      } else if ((*behavior).type == BEHAVIOR_TYPE_MOTION) {
-        Motion* motion = (Motion*) (*behavior).schema;
-        
-        Serial.print ("Motion "); Serial.print ("\n");
-        Serial.print ("\tEnd: "); Serial.print ((*motion).first); Serial.print ("\n");
-        Serial.print ("\tEnd: "); Serial.print ((*motion).end); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        //Play_Note (NOTE_C6, 250);
-        //Sweep_Motion ((*motion).first, (*motion).end, (*motion).increment, (*motion).lenMicroSecondsOfPeriod, (*motion).lenMicroSecondsOfPulse);
-        Move_Motion ((*motion).position);
-        
-        
-//        Channel* channel = Get_Channel (platform, (*input).pin);
-////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
-//        Get_Channel_Value (channel);
-////        Propagate_Channel_Value (channel);
-        
-      } else if ((*behavior).type == BEHAVIOR_TYPE_LANGUAGE) {
-        
-        Language* language = (Language*) (*behavior).schema;
-        
-//        Serial.print ("Language "); Serial.print ("\n");
-//        Serial.print ("Size "); Serial.print ((*language).messageSize); Serial.print ("\n");
-//        Serial.print ("Message "); Serial.print ((*language).message); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        //Play_Note (NOTE_C6, 250);
-//        Play_Note ((*sound).note, (*sound).duration);
-        Perform_Shell_Behavior (String((*language).message));
-        
-      }
       
-      else if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        
-      } else {
-        
-        // NOTE: The Behavior type is invalid or not supported.
-        // NOTE: To add additional Behaviors, append this if-else control flow.
-        
-      }
+      sustainBehavior = Perform_Behavior_On_Platform (behavior);
+    
+//      if ((*behavior).type == BEHAVIOR_TYPE_OUTPUT) {
+//        Output* output = (Output*) (*behavior).schema;
+//        
+//        Serial.print ("Output "); Serial.print ((*output).pin); Serial.print ("\n");
+//        Serial.print ("\tdata: "); Serial.print ((*output).data); Serial.print ("\n");
+//        
+//        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+//        Channel* channel = Get_Channel (platform, (*output).pin);
+//        Update_Channel_Value (channel, (*output).data);
+////        Get_Channel_Value (channel);
+////        Propagate_Channel_Value (channel);
+//        
+//        // Update the pin's state
+////        Update_Virtual_Pin ((*output).pin, (*output).signal, (*output).data);
+//      } else if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//        Input* input = (Input*) (*behavior).schema;
+//        
+//        Serial.print ("Input "); Serial.print ((*input).pin); Serial.print ("\n");
+//        
+//        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+//        Channel* channel = Get_Channel (platform, (*input).pin);
+////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
+//        Get_Channel_Value (channel);
+////        Propagate_Channel_Value (channel);
+//        
+//      } else if ((*behavior).type == BEHAVIOR_TYPE_DELAY) {
+//        Delay* delay = (Delay*) (*behavior).schema;
+//        
+//        // TO DEBUG: Uncomment the following to monitor the timer
+//        // Serial.print ("Delay "); Serial.print ((*delay).milliseconds); Serial.print ("\n");
+//        // Serial.print ("\tstartTime: "); Serial.print ((*delay).startTime); Serial.print ("\n");
+//        // Serial.print ("\tcurrentTime: "); Serial.print ((*delay).currentTime); Serial.print ("\n");
+//        
+//        // Update timers
+//        if ((*delay).startTime == 0) {
+//          (*delay).startTime = millis ();
+//          (*delay).currentTime = (*delay).startTime;
+//        }
+//          
+//        // Update timer with current time
+//        (*delay).currentTime = millis ();
+//        
+//        // Check if timer has expired
+//        if ((*delay).currentTime - (*delay).startTime >= (*delay).milliseconds) {
+//          // Reset timers
+//          (*delay).startTime = 0L;
+//          (*delay).currentTime = 0L;
+//        } else {
+//          sustainBehavior = true;
+//        }
+//        
+//        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+//      } else if ((*behavior).type == BEHAVIOR_TYPE_SOUND) {
+//        Sound* sound = (Sound*) (*behavior).schema;
+//        
+//        Serial.print ("Sound "); Serial.print ((*sound).note); Serial.print ("\n");
+//        Serial.print ("\tDuration: "); Serial.print ((*sound).duration); Serial.print ("\n");
+//        
+//        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+//        //Play_Note (NOTE_C6, 250);
+//        Play_Note ((*sound).note, (*sound).duration);
+//        
+//        
+////        Channel* channel = Get_Channel (platform, (*input).pin);
+//////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
+////        Get_Channel_Value (channel);
+//////        Propagate_Channel_Value (channel);
+//        
+//      } else if ((*behavior).type == BEHAVIOR_TYPE_MOTION) {
+//        Motion* motion = (Motion*) (*behavior).schema;
+//        
+//        Serial.print ("Motion "); Serial.print ("\n");
+//        Serial.print ("\tEnd: "); Serial.print ((*motion).first); Serial.print ("\n");
+//        Serial.print ("\tEnd: "); Serial.print ((*motion).end); Serial.print ("\n");
+//        
+//        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+//        //Play_Note (NOTE_C6, 250);
+//        //Sweep_Motion ((*motion).first, (*motion).end, (*motion).increment, (*motion).lenMicroSecondsOfPeriod, (*motion).lenMicroSecondsOfPulse);
+//        Move_Motion ((*motion).position);
+//        
+//        
+////        Channel* channel = Get_Channel (platform, (*input).pin);
+//////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
+////        Get_Channel_Value (channel);
+//////        Propagate_Channel_Value (channel);
+//        
+//      } else if ((*behavior).type == BEHAVIOR_TYPE_IMMEDIATE) {
+//        
+//        Immediate* immediate = (Immediate*) (*behavior).schema;
+//        
+////        Serial.print ("Language "); Serial.print ("\n");
+////        Serial.print ("Size "); Serial.print ((*language).messageSize); Serial.print ("\n");
+////        Serial.print ("Message "); Serial.print ((*language).message); Serial.print ("\n");
+//        
+//        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+//        //Play_Note (NOTE_C6, 250);
+////        Play_Note ((*sound).note, (*sound).duration);
+//        Serial.print ("PERFORMING!!!: ");
+//        Serial.println (String ((*immediate).message));
+//        Perform_Immediate_Behavior (String ((*immediate).message));
+//        
+//        // Flag behavior for deletion now that it's been performed
+//        deleteBehavior = false;
+//        
+//      } else if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
+//        
+//        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+//        
+//      } else {
+//        
+//        // NOTE: The Behavior type is invalid or not supported.
+//        // NOTE: To add additional Behaviors, append this if-else control flow.
+//        
+//      }
       
       // Continue behavior performance
       if (sustainBehavior == false) {
@@ -1266,182 +1406,12 @@ boolean Perform_Behavior (Performer* performer) {
           
           Behavior* nextBehavior = (*((*performer).behavior)).next;
           
-          if (nextBehavior != NULL) {
-//            Serial.println("next behavior");
-            // Go to next behavior in the sequence
-            (*performer).behavior = (*((*performer).behavior)).next;
-          } else {
-//            Serial.println("restart sequence from first behavior");
-            // The end of the looping sequence has been reached, so start again from the beginning of the performer's origin behavior sequence.
-            (*performer).behavior = (*((*performer).origin)).behavior;
-          }
-          return true;
-          
-        } else {
-          
-          // TODO: Implement "next" code for Dot and Line (i.e., they are terminal, non-repeating, so only execute once)
-          
-          return false; // Return false, indicating "no next/more behaviors"
-          
-        }
-      }
-      
-      return false;
-    }
-  }
-  
-  return false;
-  
-}
-
-//! Starts the Performer's behavior performance. This is essentially a behavior
-//! interpreter (i.e., analogous to a JavaScript interpreter).
-//!
-boolean Show_Performance (Performer* performer) {
-  // Serial.println ("Perform_Behavior");
-  
-  boolean sustainBehavior = false;
-  
-  if (performer != NULL) {
-    
-    // Update the Performer
-    if ((*performer).behavior == NULL) {
-      // Serial.println ("Updating performer's origin and behavior.");
-      (*performer).origin = (*((*performer).substrate)).origin; // (*substrate).origin
-      (*performer).behavior = (*((*((*performer).substrate)).origin)).behavior;
-      
-      // Serial.print ("\tsequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
-    }
-    
-    Behavior* behavior = (*performer).behavior;
-    // Serial.println ("performer != NULL");
-    
-    if (behavior != NULL) { // Check if the Behavior is valid.  
-      // Serial.println ("behavior != NULL");
-    
-      if ((*behavior).type == BEHAVIOR_TYPE_OUTPUT) {
-        Output* output = (Output*) (*behavior).schema;
-        
-        Serial.print ("Output "); Serial.print ((*output).pin); Serial.print ("\n");
-        Serial.print ("\tdata: "); Serial.print ((*output).data); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        Channel* channel = Get_Channel (platform, (*output).pin);
-        Update_Channel_Value (channel, (*output).data);
-//        Get_Channel_Value (channel);
-//        Propagate_Channel_Value (channel);
-        
-        // Update the pin's state
-//        Update_Virtual_Pin ((*output).pin, (*output).signal, (*output).data);
-      } else if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
-        Input* input = (Input*) (*behavior).schema;
-        
-        Serial.print ("Input "); Serial.print ((*input).pin); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        Channel* channel = Get_Channel (platform, (*input).pin);
-//        Update_Channel_Value (channel, PIN_VALUE_HIGH);
-        Get_Channel_Value (channel);
-//        Propagate_Channel_Value (channel);
-        
-      } else if ((*behavior).type == BEHAVIOR_TYPE_DELAY) {
-        Delay* delay = (Delay*) (*behavior).schema;
-        
-        // TO DEBUG: Uncomment the following to monitor the timer
-        // Serial.print ("Delay "); Serial.print ((*delay).milliseconds); Serial.print ("\n");
-        // Serial.print ("\tstartTime: "); Serial.print ((*delay).startTime); Serial.print ("\n");
-        // Serial.print ("\tcurrentTime: "); Serial.print ((*delay).currentTime); Serial.print ("\n");
-        
-        // Update timers
-        if ((*delay).startTime == 0) {
-          (*delay).startTime = millis ();
-          (*delay).currentTime = (*delay).startTime;
-        }
-          
-        // Update timer with current time
-        (*delay).currentTime = millis ();
-        
-        // Check if timer has expired
-        if ((*delay).currentTime - (*delay).startTime >= (*delay).milliseconds) {
-          // Reset timers
-          (*delay).startTime = 0L;
-          (*delay).currentTime = 0L;
-        } else {
-          sustainBehavior = true;
-        }
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-      } else if ((*behavior).type == BEHAVIOR_TYPE_SOUND) {
-        Sound* sound = (Sound*) (*behavior).schema;
-        
-        Serial.print ("Sound "); Serial.print ((*sound).note); Serial.print ("\n");
-        Serial.print ("\tDuration: "); Serial.print ((*sound).duration); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        //Play_Note (NOTE_C6, 250);
-        Play_Note ((*sound).note, (*sound).duration);
-        
-        
-//        Channel* channel = Get_Channel (platform, (*input).pin);
-////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
-//        Get_Channel_Value (channel);
-////        Propagate_Channel_Value (channel);
-        
-      } else if ((*behavior).type == BEHAVIOR_TYPE_MOTION) {
-        Motion* motion = (Motion*) (*behavior).schema;
-        
-        Serial.print ("Motion "); Serial.print ("\n");
-        Serial.print ("\tEnd: "); Serial.print ((*motion).first); Serial.print ("\n");
-        Serial.print ("\tEnd: "); Serial.print ((*motion).end); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        //Play_Note (NOTE_C6, 250);
-        //Sweep_Motion ((*motion).first, (*motion).end, (*motion).increment, (*motion).lenMicroSecondsOfPeriod, (*motion).lenMicroSecondsOfPulse);
-        Move_Motion ((*motion).position);
-        
-        
-//        Channel* channel = Get_Channel (platform, (*input).pin);
-////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
-//        Get_Channel_Value (channel);
-////        Propagate_Channel_Value (channel);
-        
-      } else if ((*behavior).type == BEHAVIOR_TYPE_LANGUAGE) {
-        
-        Language* language = (Language*) (*behavior).schema;
-        
-        Serial.print ("Language "); Serial.print ("\n");
-        Serial.print ("Size "); Serial.print ((*language).messageSize); Serial.print ("\n");
-        Serial.print ("Message "); Serial.print ((*language).message); Serial.print ("\n");
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        //Play_Note (NOTE_C6, 250);
-//        Play_Note ((*sound).note, (*sound).duration);
-        Perform_Shell_Behavior (String((*language).message));
-        
-      }
-      
-      else if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
-        
-        // TODO: Call device-specific routine (retreived from cloud to change the device itself).
-        
-      } else {
-        
-        // NOTE: The Behavior type is invalid or not supported.
-        // NOTE: To add additional Behaviors, append this if-else control flow.
-        
-      }
-      
-      // Continue behavior performance
-      if (sustainBehavior == false) {
-        // TODO: Get next behavior (following logic specific to loops, lines, dots).
-        //Serial.print ("behavior's sequence type: "); Serial.print ((*(*behavior).sequence).type); Serial.print ("\n");
-        Serial.print ("behavior's sequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
-        // if ((*(*behavior).sequence).type == SEQUENCE_TYPE_LOOP) {
-        if ((*((*performer).origin)).type == SEQUENCE_TYPE_LOOP) {
-          
-          // TODO: If the current behavior is a delay, only proceed if the delay period has passed, otherwise, remain on the delay behavior.
-          
-          Behavior* nextBehavior = (*((*performer).behavior)).next;
+          Serial.print ("current behavior: ");
+          Serial.println ((int) ((*performer).behavior));
+          Serial.print ("next behavior: ");
+          Serial.println ((int) (*((*performer).behavior)).next);
+          Serial.print ("origin: ");
+          Serial.println ((int) (*((*performer).origin)).behavior);
           
           if (nextBehavior != NULL) {
             Serial.println("next behavior");
@@ -1451,27 +1421,170 @@ boolean Show_Performance (Performer* performer) {
             Serial.println("restart sequence from first behavior");
             // The end of the looping sequence has been reached, so start again from the beginning of the performer's origin behavior sequence.
             (*performer).behavior = (*((*performer).origin)).behavior;
+            
+            // Check if the next behavior is the behavior just performed and is about to be deleted... if so, performer is trying to perform a loop that is (about to be) empty, so set to NULL
+//            if (deleteBehavior) { // check if the behavior just performed is about to be deleted...
+//              if ((*performer).behavior == behavior) { // ...if so, check if behavior being deleted is the behavior the performer will next try to perform...
+//                (*performer).behavior = NULL; // ...if so, point the performer to "NULL" stopping it
+//              }
+//            }
           }
-          return true;
+          performanceResult = true;
           
         } else {
           
           // TODO: Implement "next" code for Dot and Line (i.e., they are terminal, non-repeating, so only execute once)
           
-          return false; // Return false, indicating "no next/more behaviors"
+          performanceResult = false; // Return false, indicating "no next/more behaviors"
           
         }
       }
       
-      return false;
+      performanceResult = false;
     }
+    
+//    // Delete behavior if needed
+//    if (deleteBehavior == true) {
+//      
+//        // Remove behavior from loop and free it from memory
+//        Delete_Behavior (behavior);
+//    }
+    
+    return performanceResult;
+    
   }
   
   return false;
   
 }
 
-
+// Applies the platform-specific performance
+boolean Perform_Behavior_On_Platform (Behavior* behavior) {
+  
+  boolean sustainBehavior = false;
+  
+  if (behavior != NULL) {
+  
+    if ((*behavior).type == BEHAVIOR_TYPE_OUTPUT) {
+      Output* output = (Output*) (*behavior).schema;
+      
+      Serial.print ("Output "); Serial.print ((*output).pin); Serial.print ("\n");
+      Serial.print ("\tdata: "); Serial.print ((*output).data); Serial.print ("\n");
+      
+      // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+      Channel* channel = Get_Channel (platform, (*output).pin);
+      Update_Channel_Value (channel, (*output).data);
+//        Get_Channel_Value (channel);
+//        Propagate_Channel_Value (channel);
+      
+      // Update the pin's state
+//        Update_Virtual_Pin ((*output).pin, (*output).signal, (*output).data);
+    } else if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+      Input* input = (Input*) (*behavior).schema;
+      
+      Serial.print ("Input "); Serial.print ((*input).pin); Serial.print ("\n");
+      
+      // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+      Channel* channel = Get_Channel (platform, (*input).pin);
+//        Update_Channel_Value (channel, PIN_VALUE_HIGH);
+      Get_Channel_Value (channel);
+//        Propagate_Channel_Value (channel);
+      
+    } else if ((*behavior).type == BEHAVIOR_TYPE_DELAY) {
+      Delay* delay = (Delay*) (*behavior).schema;
+      
+      // TO DEBUG: Uncomment the following to monitor the timer
+      // Serial.print ("Delay "); Serial.print ((*delay).milliseconds); Serial.print ("\n");
+      // Serial.print ("\tstartTime: "); Serial.print ((*delay).startTime); Serial.print ("\n");
+      // Serial.print ("\tcurrentTime: "); Serial.print ((*delay).currentTime); Serial.print ("\n");
+      
+      // Update timers
+      if ((*delay).startTime == 0) {
+        (*delay).startTime = millis ();
+        (*delay).currentTime = (*delay).startTime;
+      }
+        
+      // Update timer with current time
+      (*delay).currentTime = millis ();
+      
+      // Check if timer has expired
+      if ((*delay).currentTime - (*delay).startTime >= (*delay).milliseconds) {
+        // Reset timers
+        (*delay).startTime = 0L;
+        (*delay).currentTime = 0L;
+      } else {
+        sustainBehavior = true;
+      }
+      
+      // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+    } else if ((*behavior).type == BEHAVIOR_TYPE_SOUND) {
+      Sound* sound = (Sound*) (*behavior).schema;
+      
+      Serial.print ("Sound "); Serial.print ((*sound).note); Serial.print ("\n");
+      Serial.print ("\tDuration: "); Serial.print ((*sound).duration); Serial.print ("\n");
+      
+      // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+      //Play_Note (NOTE_C6, 250);
+      Play_Note ((*sound).note, (*sound).duration);
+      
+      
+//        Channel* channel = Get_Channel (platform, (*input).pin);
+////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
+//        Get_Channel_Value (channel);
+////        Propagate_Channel_Value (channel);
+      
+    } else if ((*behavior).type == BEHAVIOR_TYPE_MOTION) {
+      Motion* motion = (Motion*) (*behavior).schema;
+      
+      Serial.print ("Motion "); Serial.print ("\n");
+      Serial.print ("\tEnd: "); Serial.print ((*motion).first); Serial.print ("\n");
+      Serial.print ("\tEnd: "); Serial.print ((*motion).end); Serial.print ("\n");
+      
+      // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+      //Play_Note (NOTE_C6, 250);
+      //Sweep_Motion ((*motion).first, (*motion).end, (*motion).increment, (*motion).lenMicroSecondsOfPeriod, (*motion).lenMicroSecondsOfPulse);
+      Move_Motion ((*motion).position);
+      
+      
+//        Channel* channel = Get_Channel (platform, (*input).pin);
+////        Update_Channel_Value (channel, PIN_VALUE_HIGH);
+//        Get_Channel_Value (channel);
+////        Propagate_Channel_Value (channel);
+      
+    } else if ((*behavior).type == BEHAVIOR_TYPE_IMMEDIATE) {
+      
+      Immediate* immediate = (Immediate*) (*behavior).schema;
+      
+//        Serial.print ("Language "); Serial.print ("\n");
+//        Serial.print ("Size "); Serial.print ((*language).messageSize); Serial.print ("\n");
+//        Serial.print ("Message "); Serial.print ((*language).message); Serial.print ("\n");
+      
+      // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+      //Play_Note (NOTE_C6, 250);
+//        Play_Note ((*sound).note, (*sound).duration);
+      Serial.print ("PERFORMING!!!: ");
+      Serial.println (String ((*immediate).message));
+      Perform_Immediate_Behavior (String ((*immediate).message));
+      
+      // Flag behavior for deletion now that it's been performed
+//      deleteBehavior = false;
+      
+    } else if ((*behavior).type == BEHAVIOR_TYPE_NONE) {
+      
+      // TODO: Call device-specific routine (retreived from cloud to change the device itself).
+      
+    } else {
+      
+      // NOTE: The Behavior type is invalid or not supported.
+      // NOTE: To add additional Behaviors, append this if-else control flow.
+      
+    }
+      
+  }
+  
+  return sustainBehavior;
+  
+}
 
 //!
 //! Behavior Propagator
