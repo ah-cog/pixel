@@ -514,7 +514,7 @@ void loop () {
     // Get the next message on the queue of incoming messages
     Message* message = Dequeue_Incoming_Message ();
     
-    Interpret_Message (message);
+    Process_Message (message);
     
   }
   

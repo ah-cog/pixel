@@ -5,7 +5,7 @@
 #include "Platform.h"
 
 // from Language.h
-void Interpret_Message (Message* message); // start the "interpretive dance": transformation/message => interpret => behavior
+void Process_Message (Message* message); // start the "interpretive dance": transformation/message => interpret => behavior
 
 #define DEVICE_SERIAL Serial3
 
@@ -352,7 +352,7 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
         
         String remoteMessage = String (behaviorDescriptionBuffer);
         Message* message = Create_Message (platformUuid, platformUuid, remoteMessage);
-        Interpret_Message (message);
+        Process_Message (message);
         
 //      }
       

@@ -2,11 +2,13 @@
 #define LANGUAGE_H
 
 // TODO: Consider renaming "Interpret" to "Transducer" to remove the anthropomorphic feel of the word interpret. Or keep it for the same reason :). Just make the system aesthetic consistent.
-void Interpret_Message (Message* message); // start the "interpretive dance": transformation/message => interpret => behavior
+void Process_Message (Message* message); // start the "interpretive dance": transformation/message => interpret => behavior
 void Perform_Shell_Behavior (String consoleMessage);
+void Perform_Immediate_Behavior (String message);
 
 String previousConsoleInput = "";
-char consoleBuffer[64] = { 0 };
+#define CONSOLE_BUFFER_SIZE 64
+char consoleBuffer[CONSOLE_BUFFER_SIZE] = { 0 };
 int consoleBufferSize = 0;
 
 /**
@@ -23,6 +25,13 @@ void Recieve_Serial_Message () { // NOTE: Formerly Get_Serial_Message
     char c = (char) incomingByte;
     
     if (c == '\n') {
+      
+      // Check if "return" was pressed with no input (in which case, repeat the previous command)
+      if (consoleBufferSize == 0) {
+        previousConsoleInput.toCharArray (consoleBuffer, CONSOLE_BUFFER_SIZE);
+        consoleBufferSize = previousConsoleInput.length ();
+      }
+      
       consoleBuffer[consoleBufferSize] = '\0'; // Terminate console message buffer
       
       // Create a String from the terminal buffer
@@ -42,7 +51,7 @@ void Recieve_Serial_Message () { // NOTE: Formerly Get_Serial_Message
 //        // TODO: Don't separate "shell" behavior from other behaviors!
 //        Perform_Shell_Behavior (consoleMessage);
         Message* message = Create_Message (platformUuid, messageTargetModule, consoleMessage);
-        Interpret_Message (message);
+        Process_Message (message);
         
         consoleBufferSize = 0;
       }
@@ -59,7 +68,7 @@ void Recieve_Serial_Message () { // NOTE: Formerly Get_Serial_Message
 /**
  * Message "multiplexor". This is where the messages from the serial terminal, serial from the secondary board (by way of Looper), and mesh messages are processed.
  */
-void Interpret_Message (Message* message) {
+void Process_Message (Message* message) {
   
 //  Serial.println ((*message).source);
 //  Serial.println ((*message).destination);
@@ -470,6 +479,20 @@ void Perform_Shell_Behavior (String message) {
     }
     
   }
+  
+  Perform_Immediate_Behavior (message);
+}
+
+void Perform_Immediate_Behavior (String message) {
+  
+  int wordCount = getValueCount (message, ' ');
+  int messageWordCount = getValueCount (message, ' ');
+  String firstWord = getValue (message, ' ', 0);
+  
+  
+        String split = String (message);
+      int spaceCount = getValueCount (split, ' ');
+    String first = getValue (message, ' ', 0);
   
   //!
   //! Parse and process the message
@@ -1051,6 +1074,7 @@ void Perform_Shell_Behavior (String message) {
     Serial.println ("That doesn't do anything.");
     
   }
+  
 }
 
 #endif
