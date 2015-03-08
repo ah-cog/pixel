@@ -22,13 +22,13 @@
 String ipAddress = "unassigned";
 
 #include <Adafruit_NeoPixel.h>
-#include "Utilities.h" 
+
+#include "Utilities.h"
 #include "Platform.h"
 #include "Color.h"
 #include "Sound.h"
 #include "Motion.h"
 #include "Memory.h"
-
 #include "Communication.h"
 
 // The module has focus (or is "active") and will receive commands (e.g., from Looper). If there are multiple active modules, interactively choose one (or say "both").
@@ -75,7 +75,6 @@ String ipAddress = "unassigned";
 
 #include "Gesture.h"
 #include "Movement.h"
-//#include "Communication.h"
 #include "Looper.h"
 #include "Serial.h"
 #include "Ports.h"
@@ -191,7 +190,8 @@ void loop () {
   
 //  Update_Focus (); // Update focus (this is part of the gestural language)
   
-  Get_Console (); // Get any text received over the serial port (e.g., from the Arduino IDE)
+  // Get "resource" sample
+  Recieve_Serial_Message (); // Get any text received over the serial port (e.g., from the Arduino IDE)
   
   // Broadcast Presence
   if (hasPlatformUuid) { 
@@ -371,7 +371,7 @@ void loop () {
   
   // Check for mesh data and receive it if present
   boolean hasReceivedMeshData = false;
-  hasReceivedMeshData = Capture_Messages ();
+  hasReceivedMeshData = Receive_Mesh_Messages ();
   
   //
   // Sense gesture (and phsyical orientation, generally)
@@ -447,14 +447,14 @@ void loop () {
         }
       }
       
-      lastGestureClassificationTime = millis(); // Update time of most recent gesture classification
+      lastGestureClassificationTime = millis (); // Update time of most recent gesture classification
     }
     
     // Update current gesture (if it has changed)
     if (classifiedGestureIndex != previousClassifiedGestureIndex) {
-      Serial.print("Detected gesture: ");
-      Serial.print(gestureName[classifiedGestureIndex]);
-      Serial.println();
+      Serial.print ("Detected gesture: ");
+      Serial.print (gestureName[classifiedGestureIndex]);
+      Serial.println ();
       
       // Update the previous gesture to the current gesture
       previousClassifiedGestureIndex = classifiedGestureIndex;
@@ -466,6 +466,7 @@ void loop () {
       // TODO: Process newly classified gesture
       // TODO: Make sure the transition can happen (with respect to timing, "transition cooldown")
     }
+    
   }
   
   //
@@ -508,69 +509,13 @@ void loop () {
   // Process incoming messages in queue (if any)
   //
   
-  if (incomingMessages != NULL) { //! Check if there are any received messages to be processed
+  if (incomingMessageQueue != NULL) { //! Check if there are any received messages to be processed
     
     // Get the next message on the queue of incoming messages
     Message* message = Dequeue_Incoming_Message ();
     
-//    Serial.print ("Received ");
-    
     Interpret_Message (message);
     
-//    Serial.print (" from module ");
-//    Serial.print ((*message).source);
-////    Serial.print(" (of ");
-////    Serial.print(incomingMessageQueueSize);
-//    Serial.print ("\n");
-    
-    //
-    // Process received messages
-    //
-
-//    if (message.message == ANNOUNCE_ACTIVE) {
-//      Handle_Message_Active (message);
-//    }
-//    
-//    else if (message.message == ANNOUNCE_GESTURE_SWING) {
-//      Handle_Message_Swing (message);
-//    } else if (message.message == ANNOUNCE_GESTURE_SHAKE) {
-//      Handle_Message_Shake (message);
-//    } else if (message.message == ANNOUNCE_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
-//      Handle_Message_Tap (message);
-//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
-//      Handle_Message_Request_Confirm_Tap (message);
-//    } else if (message.message == CONFIRM_GESTURE_TAP) { // From a module that just recognized a "tap" gesture.
-//      Handle_Message_Confirm_Tap (message);
-//    }
-//    
-//    else if (message.message == ANNOUNCE_GESTURE_TAP_AS_LEFT) { // From "left" module. "Left" module announces that it was tapped to another module as the left module [Sequence: Sequencing request (i.e., linking) confirmation, from "right" module]
-//      Handle_Message_Tap_To_Another_As_Left (message);
-//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_LEFT) { // From "left" module. "Left" module requests "right" module to confirm that it received "ANNOUNCE_GESTURE_TAP_AS_LEFT"
-//       Handle_Message_Request_Confirm_Tap_To_Another_As_Left (message);
-//    } else if (message.message == CONFIRM_GESTURE_TAP_AS_LEFT) { // From "right" module (if it received the message from the "left" module). // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
-//      Handle_Message_Confirm_Tap_To_Another_As_Left (message);
-//    } else if (message.message == ANNOUNCE_GESTURE_TAP_AS_RIGHT) { // From "right" module. // Sequence: Sequencing request (i.e., linking) confirmation, from "left" module
-//      Handle_Message_Tap_To_Another_As_Right (message);
-//    } else if (message.message == REQUEST_CONFIRM_GESTURE_TAP_AS_RIGHT) { // From "right" module. // Sequence: Sequencing (i.e., linking) confirmation, from "left" module
-//      Handle_Message_Request_Confirm_Tap_To_Another_As_Right (message);
-//    } else if (message.message == CONFIRM_GESTURE_TAP_AS_RIGHT) { // From "left" module (if it received the messsage from the "right" module). // Sequence: Sequencing (i.e., linking) confirmation, from "right" module
-//      Handle_Message_Confirm_Tap_To_Another_As_Right (message);
-//      // Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
-//    
-//    } else if (message.message == ACTIVATE_MODULE_OUTPUT) {
-//      // ACTIVATE_MODULE_OUTPUT
-////      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
-////      syncPinValue(MODULE_OUTPUT_PIN);
-//      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-//      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
-//      Propagate_Channel_Value (moduleOutputChannel);
-//    } else if (message.message == DEACTIVATE_MODULE_OUTPUT) {
-////      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
-////      syncPinValue(MODULE_OUTPUT_PIN);
-//      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-//      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
-//      Propagate_Channel_Value (moduleOutputChannel);
-//    }
   }
   
   //
@@ -605,8 +550,8 @@ void loop () {
   if (currentTime - lastMessageSendTime > PACKET_WRITE_TIMEOUT) {
   
     // Process mesh message queue  
-    if (outgoingMessages != NULL) { // if (messageQueueSize > 0) {
-      Release_Message ();
+    if (outgoingMessageQueue != NULL) { // if (messageQueueSize > 0) {
+      Send_Mesh_Message ();
     }
     
     // Update the time that a message was most-recently dispatched

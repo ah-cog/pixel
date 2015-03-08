@@ -7,6 +7,10 @@
 //       - accessible from both firmware and higher level (or maybe not firmware?)
 // (TODO: in Language.h, add "give focus" and "has focus" commands)
 
+struct Memory;
+
+Memory* Get_Memory (char* trigger);
+
 struct Memory {
   char* trigger;
   int triggerSize;
@@ -42,6 +46,41 @@ Memory* Create_Memory (String trigger, String content) { // (trigger, content)
   
   (*memory).previous = NULL;
   (*memory).next = NULL;
+  
+  // Return sequence
+  return memory;
+  
+}
+
+//! Updates memory if it exists and creates it if it does not exist.
+//!
+Memory* Update_Memory (String trigger, String content) { // (trigger, content)
+  
+  Serial.println ("Update_Memory");
+  
+  // Check if memory already exists ("memory" will be "NULL" if so)
+  char triggerBuffer[32]; // TODO: Update parameters to be char* rather than String for portability
+  trigger.toCharArray (triggerBuffer, 32); // TODO: Update parameters to be char* rather than String for portability
+  Memory* memory = Get_Memory (triggerBuffer);
+  
+  if (memory != NULL) { // Memory exists...
+  
+    // Free the memory content so it can be replaced...
+    if ((*memory).content != NULL) {
+      free ((*memory).content);
+      (*memory).contentSize = 0;
+    }
+    
+    // Allocate memory for new memory content and assign it to the memory...
+    (*memory).contentSize = content.length (); // NOTE: Add 1 to the length to account for the '\0' character.
+    (*memory).content = (char*) malloc (((*memory).contentSize + 1) * sizeof (char));
+    content.toCharArray ((*memory).content, ((*memory).contentSize + 1));
+  
+  } else { // Memory doesn't exist...
+  
+    memory = Create_Memory (trigger, content);
+    
+  }
   
   // Return sequence
   return memory;

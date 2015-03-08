@@ -83,8 +83,8 @@ struct Message {
   Message* next;
 };
 
-Message* outgoingMessages = NULL; // outgoing message queue
-Message* incomingMessages = NULL; // incoming message queue
+Message* outgoingMessageQueue = NULL; // outgoing message queue
+Message* incomingMessageQueue = NULL; // incoming message queue
 
 //! Create message (i.e., a behavior transformation).
 //!
@@ -142,10 +142,10 @@ Message* Queue_Outgoing_Message (Message* message) {
   
 //  Serial.println ("Queue_Outgoing_Message");
   
-  if (outgoingMessages == NULL) {
+  if (outgoingMessageQueue == NULL) {
     
     // Push to the top of the stack (as the first element)
-    outgoingMessages = message;
+    outgoingMessageQueue = message;
     
     // Set up the forward and back links
     (*message).previous = NULL;
@@ -154,7 +154,7 @@ Message* Queue_Outgoing_Message (Message* message) {
   } else {
     
     // Get the last message in the queue
-    Message* lastMessage = outgoingMessages;
+    Message* lastMessage = outgoingMessageQueue;
     while ((*lastMessage).next != NULL) {
       Serial.print ("\tnext");
       lastMessage = (*lastMessage).next;
@@ -183,13 +183,13 @@ Message* Dequeue_Outgoing_Message () {
   
   Message* message = NULL;
   
-  if (outgoingMessages != NULL) {
+  if (outgoingMessageQueue != NULL) {
     
     // Get the transformation at the front of the propagator's queue
-    message = outgoingMessages;
+    message = outgoingMessageQueue;
     
     // Update the message queue. Set the message following the dequeued message as the front of the queue.
-    outgoingMessages = (*message).next;
+    outgoingMessageQueue = (*message).next;
     
     // Dissociate the dequeued message. Update the backward and forward links of the dequeued message.
     (*message).next = NULL;
@@ -207,10 +207,10 @@ Message* Queue_Incoming_Message (Message* message) {
   
 //  Serial.println ("Queue_Incoming_Message");
   
-  if (incomingMessages == NULL) {
+  if (incomingMessageQueue == NULL) {
     
     // Push to the front of the queue (as the first message)
-    incomingMessages = message;
+    incomingMessageQueue = message;
     
     // Set up the forward and back links
     (*message).previous = NULL;
@@ -219,7 +219,7 @@ Message* Queue_Incoming_Message (Message* message) {
   } else {
     
     // Get the last message in the queue
-    Message* lastMessage = incomingMessages;
+    Message* lastMessage = incomingMessageQueue;
     
     // Push the message to the end of the queue
     while ((*lastMessage).next != NULL) {
@@ -250,13 +250,13 @@ Message* Dequeue_Incoming_Message () {
   
   Message* message = NULL;
   
-  if (incomingMessages != NULL) {
+  if (incomingMessageQueue != NULL) {
     
     // Get the transformation at the front of the propagator's queue
-    message = incomingMessages;
+    message = incomingMessageQueue;
     
     // Update the message queue. Set the message following the dequeued message as the front of the queue.
-    incomingMessages = (*message).next;
+    incomingMessageQueue = (*message).next;
     
     // Dissociate the dequeued message. Update the backward and forward links of the dequeued message.
     (*message).next = NULL;
@@ -296,10 +296,10 @@ boolean Queue_Message (int source, int destination, String content) {
 
 //! Actually release the message on the mesh network.
 //!
-boolean Release_Message () { // boolean Send_Message () {
+boolean Send_Mesh_Message () { // boolean Send_Message () {
 //  Serial.println ("Release_Message");
   
-  if (outgoingMessages != NULL) { //! Check if there are any messages to be sent
+  if (outgoingMessageQueue != NULL) { //! Check if there are any messages to be sent
         
     // Dequeue the next message from the front of the queue
     Message* message = Dequeue_Outgoing_Message ();
@@ -330,13 +330,13 @@ boolean Release_Message () { // boolean Send_Message () {
 
 //! Captures any available messages on the mesh.
 //!
-boolean Capture_Messages () {
+boolean Receive_Mesh_Messages () {
   // Serial.println ("Capture_Messages");
   
   // Receive any data received over the mesh network.
   if (MESH_SERIAL.available () > 0) {
     
-    // Serial.println ("Capture_Messages");
+    // Serial.println ("Receive_Mesh_Messages");
     
     int incomingByte = MESH_SERIAL.read ();
   

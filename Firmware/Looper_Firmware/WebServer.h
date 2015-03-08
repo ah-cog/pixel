@@ -1,10 +1,6 @@
 #ifndef WEB_SERVER_H
 #define WEB_SERVER_H
 
-#include "Looper.h"
-
-//#include <Adafruit_CC3000.h>
-//#include <SPI.h>
 #include "utility/debug.h"
 #include "utility/socket.h"
 
@@ -15,14 +11,20 @@
 // Use the hardware SPI pins for the remaining connections to the Wi-Fi module (e.g., On an UNO, SCK = 13, MISO = 12, and MOSI = 11).
 Adafruit_CC3000 cc3000 = Adafruit_CC3000 (ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT, SPI_CLOCK_DIV4); // you can change this clock speed
 
-#define WLAN_SSID "shell-2.4GHz" // Cannot be longer than 32 characters!
+#define WLAN_SSID "shell-2.4GHz" // Note: SSID cannot be longer than 32 characters
 #define WLAN_PASS "technologydrive"
-// Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
-#define WLAN_SECURITY WLAN_SEC_WPA2
+#define WLAN_SECURITY WLAN_SEC_WPA2 // Note: Security can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
 
-#define LISTEN_PORT 80 // What TCP port to listen on for connections.  The echo protocol uses port 7.
+#define HTTP_PORT 80
+#define TCP_LISTEN_PORT HTTP_PORT // What TCP port to listen on for connections.  The echo protocol uses port 7.
 
-Adafruit_CC3000_Server httpServer (LISTEN_PORT);
+Adafruit_CC3000_Server tcpServer (TCP_LISTEN_PORT);
+
+Adafruit_CC3000_Client client;
+const unsigned long dhcpTimeout     = 60L * 1000L; // Max time to wait for address from DHCP
+const unsigned long connectTimeout  = 15L * 1000L; // Max time to wait for server connection
+const unsigned long responseTimeout = 15L * 1000L; // Max time to wait for data from server
+      unsigned long currentTime     = 0L;
 
 /**
  * Data structures
@@ -32,9 +34,15 @@ char httpRequestUriBuffer[100]; // HTTP request buffer
 int bi = 0; // HTTP request buffer index
 char* httpRequestParameters[10]; // HTTP request parameters (i.e., key/value pairs encoded in the URI like "?key1=value1&key2=value2")
 int httpRequestParameterCount = 0;
-//char* httpRequestParameterDictionary[10][2]; // HTTP rdequest parameters (i.e., key/value pairs encoded in the URI like "?key1=value1&key2=value2")
-// httpRequestParameterDictionary[paramIndex][key] // key = 0 (returns char*)
-// httpRequestParameterDictionary[paramIndex][value] // value = 1 (returns char*)
+
+// Read from client stream with a 5 second timeout.  Although an
+// essentially identical method already exists in the Stream() class,
+// it's declared private there...so this is a local copy.
+int timedRead (void) {
+  unsigned long start = millis();
+  while ((!client.available ()) && ((millis () - start) < responseTimeout));
+  return client.read ();  // -1 on timeout
+}
 
 /**
  * Function declarations (i.e., function signatures)
@@ -43,8 +51,8 @@ int httpRequestParameterCount = 0;
 uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
 
 // Adafruit CC3000 Breakout Board
-boolean setupWebServer ();
-boolean handleClientConnection (Adafruit_CC3000_ClientRef& client);
+boolean Setup_Http_Server ();
+boolean Handle_Client_Connection (Adafruit_CC3000_ClientRef& client);
 uint16_t checkFirmwareVersion (void);
 boolean displayConnectionDetails (void);
 String Get_IP_Address (uint32_t ip);
@@ -59,7 +67,7 @@ String getValue (String data, char separator, int index);
  * Function definitions
  */
 
-boolean setupWebServer () {
+boolean Setup_WiFi_Communication () {
   
   /* Initialise the module */
   Serial.println (F ("\nInitializing Wi-Fi."));
@@ -70,15 +78,16 @@ boolean setupWebServer () {
     };
   }
   
-  Serial.println (F ("\Connecting... "));
+  Serial.print (F ("\Connecting to Wi-Fi access point... "));
   if (!cc3000.connectToAP (WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
     Serial.println (F ("Failed!"));
     while (1);
   }
    
-  Serial.println (F ("Connected!"));
-  
-  
+  Serial.print (F ("Done.\n"));
+ 
+  Serial.print (F ("\Checking CC3000 firmware version... "));
+  Serial.print (F ("Done.\n"));
   uint16_t firmware = checkFirmwareVersion ();
   if (firmware < 0x113) {
     Serial.println (F ("Wrong firmware version!"));
@@ -87,11 +96,13 @@ boolean setupWebServer () {
   
 //  displayMACAddress();
   
-  Serial.println(F("Requesting address over DHCP."));
+  Serial.print (F("Requesting IP address over DHCP from access point... "));
   while (!cc3000.checkDHCP()) {
     delay (100); // ToDo: Insert a DHCP timeout!
 //    Serial.println("DHCP Timeout");
   }
+  
+  Serial.print (F ("Done.\n"));
 
   /* Display the IP address DNS, Gateway, etc. */  
   while (! displayConnectionDetails ()) {
@@ -119,13 +130,21 @@ boolean setupWebServer () {
   // Serial.println (F ("timeout period passes.  This is normal behaviour since"));
   // Serial.println (F ("there isn't an obvious moment to disconnect with a server.\r\n"));
   
+  return true;
+  
+}
+  
+boolean Setup_Http_Server () {
+  
   // Start listening for connections
-  httpServer.begin ();
+  tcpServer.begin ();
   
   Serial.println (F ("Listening for connections..."));
+  
+  return true;
 }
 
-boolean handleClientConnection (Adafruit_CC3000_ClientRef& client) {
+boolean Handle_Client_Connection (Adafruit_CC3000_ClientRef& client) {
   
   Serial.println ("Status: New client connected.");
     
@@ -511,15 +530,15 @@ boolean handleDefaultHttpRequest (Adafruit_CC3000_ClientRef& client) {
 boolean displayConnectionDetails (void) {
   
   if(!cc3000.getIPAddress (&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
-    Serial.println(F("Unable to retrieve the IP Address!\r\n"));
+    Serial.println (F("Unable to retrieve the IP Address!\r\n"));
     return false;
   } else {
-    Serial.print(F("\nIP Addr: ")); cc3000.printIPdotsRev(ipAddress);
-    Serial.print(F("\nNetmask: ")); cc3000.printIPdotsRev(netmask);
-    Serial.print(F("\nGateway: ")); cc3000.printIPdotsRev(gateway);
-    Serial.print(F("\nDHCPsrv: ")); cc3000.printIPdotsRev(dhcpserv);
-    Serial.print(F("\nDNSserv: ")); cc3000.printIPdotsRev(dnsserv);
-    Serial.println();
+    Serial.print (F("\n\tAddress: ")); cc3000.printIPdotsRev(ipAddress);
+    Serial.print (F("\n\tNetmask: ")); cc3000.printIPdotsRev(netmask);
+    Serial.print (F("\n\tGateway: ")); cc3000.printIPdotsRev(gateway);
+    Serial.print (F("\n\tDHCPsrv: ")); cc3000.printIPdotsRev(dhcpserv);
+    Serial.print (F("\n\tDNSserv: ")); cc3000.printIPdotsRev(dnsserv);
+    Serial.println ();
     return true;
   }
   
@@ -542,15 +561,12 @@ uint16_t checkFirmwareVersion (void) {
   uint16_t version;
   
 #ifndef CC3000_TINY_DRIVER  
-  if(!cc3000.getFirmwareVersion(&major, &minor))
-  {
-    Serial.println(F("Unable to retrieve the firmware version!\r\n"));
+  if (!cc3000.getFirmwareVersion (&major, &minor)) {
+    Serial.println (F ("Unable to retrieve the firmware version!\r\n"));
     version = 0;
-  }
-  else
-  {
-    Serial.print(F("Firmware V. : "));
-    Serial.print(major); Serial.print(F(".")); Serial.println(minor);
+  } else {
+    Serial.print (F ("\tFirmware Version "));
+    Serial.print (major); Serial.print (F (".")); Serial.println (minor);
     version = major; version <<= 8; version |= minor;
   }
 #endif

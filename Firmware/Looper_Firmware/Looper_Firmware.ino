@@ -24,6 +24,12 @@ Authors: Michael Gubbels
 #define LISTEN_PORT_UDP 4445
 UDPServer udpServer(LISTEN_PORT_UDP);
 
+boolean Setup_Udp_Server () {
+  udpServer.begin();
+  
+  return true;
+}
+
 // TODO: Implement list of changes to make to send to the Master (which executes gestural and the behavior code for the module)
 // - TODO: Include status: "new", "sending", "sent", "confirmed" (after which, they're deleted)
 
@@ -33,42 +39,21 @@ UDPServer udpServer(LISTEN_PORT_UDP);
 
 //#define DEVICE_SERIAL Serial3
 
-boolean setupBridge () {
+boolean Setup_Serial_Bridge () {
   DEVICE_SERIAL.begin (115200);
-}  
+}
 
 void setup () {
   
-  setupBridge ();
+  Setup_Serial_Bridge ();
 
   Serial.begin (115200); // Start serial for output
   Serial.println (F ("Looper Firmware"));
   
-//  setupLooper ();
-//  Propagation* transformation = Create_Propagation ("create substrate 55ff68064989"); // 55ff68064989495329092587
-//  Queue_Propagation (propagator, transformation);
-  
-  // Setup Wi-Fi and web server
-  setupWebServer ();
-  
-  udpServer.begin();
-}
-
-Adafruit_CC3000_Client client;
-const unsigned long
-        dhcpTimeout     = 60L * 1000L, // Max time to wait for address from DHCP
-        connectTimeout  = 15L * 1000L, // Max time to wait for server connection
-        responseTimeout = 15L * 1000L; // Max time to wait for data from server
-      unsigned long
-        currentTime = 0L;
-
-// Read from client stream with a 5 second timeout.  Although an
-// essentially identical method already exists in the Stream() class,
-// it's declared private there...so this is a local copy.
-int timedRead (void) {
-  unsigned long start = millis();
-  while ((!client.available ()) && ((millis () - start) < responseTimeout));
-  return client.read ();  // -1 on timeout
+  // Setup Wi-Fi, HTTP server, and UDP server
+  Setup_WiFi_Communication ();
+  Setup_Http_Server ();
+  Setup_Udp_Server ();
 }
 
 boolean hasTouch = false;
@@ -193,10 +178,10 @@ void loop () {
    
     
   // Try to get a client which is connected.
-  Adafruit_CC3000_ClientRef client = httpServer.available ();
+  Adafruit_CC3000_ClientRef client = tcpServer.available ();
   
   if (client) {
-    handleClientConnection (client);
+    Handle_Client_Connection (client);
   }
   
   // Propagate data to the main device

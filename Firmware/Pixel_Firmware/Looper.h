@@ -83,7 +83,7 @@ boolean setupLooper () {
 
 //! Generate and return the UUID.
 //!
-long generateUuid() {
+long Generate_Uuid () {
   long uuid = random (65000L);
   return uuid;
 }
@@ -102,6 +102,65 @@ Substrate* Create_Substrate () {
   // Return sequence
   return substrate;
   
+}
+
+//! Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
+//! behavior to be executed by a performer for the substrate.
+//!
+Sequence* Get_Substrate_Sequences (Substrate* substrate) {
+  Sequence* sequences = NULL;
+  
+  if (substrate != NULL) {
+    
+    // Update sequence topology (i.e., Remove all sequences' references to the substrate)
+    Sequence* currentSequence  = (*substrate).sequences;
+    while (currentSequence != NULL) {
+      
+      Serial.print ("> sequence ");
+      Serial.print ((int) currentSequence);
+      Serial.print ("\n");
+      
+      // Proceed to next sequence
+      currentSequence = (*currentSequence).next;
+      
+    }
+    
+  }
+  
+  return sequences;
+}
+
+//! Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
+//! behavior to be executed by a performer for the substrate.
+//!
+Sequence* Get_Substrate_Behaviors (Substrate* substrate) {
+  Sequence* sequences = NULL;
+  
+  if (substrate != NULL) {
+    
+    // Update sequence topology (i.e., Remove all sequences' references to the substrate)
+    Sequence* currentSequence  = (*substrate).sequences;
+    while (currentSequence != NULL) {
+      
+      // Dissociate behavior topology (i.e., Remove all behaviors' references to the substrate)
+      Behavior* currentBehavior  = (*currentSequence).behavior;
+      while (currentBehavior != NULL) {
+        
+        Serial.print ("> behavior ");
+        Serial.print ((int) currentBehavior);
+        Serial.print ("\n");
+        
+        currentBehavior = (*currentBehavior).next;
+      }
+      
+      // Proceed to next sequence
+      currentSequence = (*currentSequence).next;
+      
+    }
+    
+  }
+  
+  return sequences;
 }
 
 //! Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
@@ -469,6 +528,13 @@ boolean Remove_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
   return false;
 }
 
+// TODO: Hack the default behavior to add to the single default loop...
+// TODO: Create Light behavior
+// TODO: Create Memory behavior
+// TODO: Create Communication behavior
+// TODO: Remove Language behavior?
+// TODO: Update Delay to Time behavior
+
 //! Creates an Output
 //!
 Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, String data) {
@@ -479,32 +545,32 @@ Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, 
   
   if (substrate != NULL) {
     
-    Serial.println(pin);
-    Serial.println(signal);
-    Serial.println(data);
+    Serial.println (pin);
+    Serial.println (signal);
+    Serial.println (data);
     
     // Parse and validate parameters
     int signal2 = 0;
-    if (signal.compareTo("digital") == 0) {
+    if (signal.compareTo ("digital") == 0) {
       signal2 = SIGNAL_DIGITAL;
-    } else if (signal.compareTo("analog") == 0) {
+    } else if (signal.compareTo ("analog") == 0) {
       signal2 = SIGNAL_ANALOG;
     } else {
       return NULL;
     }
     
-    Serial.println("Parsed signal");
+    Serial.println ("Parsed signal");
     
     int data2 = 0;
-    if (data.compareTo("on") == 0) {
-      Serial.println("on");
+    if (data.compareTo ("on") == 0) {
+      Serial.println ("on");
       data2 = DATA_ON;
-    } else if (data.compareTo("off") == 0) {
-      Serial.println("off");
+    } else if (data.compareTo ("off") == 0) {
+      Serial.println ("off");
       data2 = DATA_OFF;
     } else {
-      Serial.println("NULL");
-      Serial.println(data.length());
+      Serial.println ("NULL");
+      Serial.println (data.length ());
       return NULL;
     }
     
@@ -527,9 +593,9 @@ Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, 
     (*output).behavior = behavior;
     
     // Parse behavior schema parameters
-    Serial.println(pin);
-    Serial.println(signal);
-    Serial.println(data);
+    Serial.println (pin);
+    Serial.println (signal);
+    Serial.println (data);
     
 //    // Set up the behavior schema
 //    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
@@ -822,7 +888,7 @@ Behavior* Create_Behavior (Substrate* substrate) {
   (*behavior).next      = NULL;
   
   // Generate UUID for the behavior
-  (*behavior).uid  = generateUuid();
+  (*behavior).uid  = Generate_Uuid ();
   
 //  // Parse behavior type parameters
 //  if (type.compareTo("output") == 0) {
@@ -902,12 +968,12 @@ Behavior* Update_Behavior (int uid) {
     // Get the last behavior in the loop
     Sequence* currentSequence = (*substrate).sequences;
     while (currentSequence != NULL) {
-      Serial.println("Searching sequence");
+      Serial.println ("Searching sequence");
       
       // Get the last behavior in the loop
       Behavior* soughtBehavior = (*currentSequence).behavior;
       while (soughtBehavior != NULL) {
-        Serial.println("Searching behavior");
+        Serial.println ("Searching behavior");
         
         // Return the behavior if it has been found
         if ((*soughtBehavior).uid == uid) {
@@ -1035,7 +1101,7 @@ Performer* Create_Performer (Substrate* substrate) {
     (*performer).origin    = NULL;
     
     // Generate UUID for the processor
-    (*performer).uid  = generateUuid();
+    (*performer).uid  = Generate_Uuid ();
     
     // Initialize the processor's current behavior
     if ((*substrate).origin != NULL) {

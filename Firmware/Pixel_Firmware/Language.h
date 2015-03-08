@@ -12,7 +12,7 @@ int consoleBufferSize = 0;
 /**
  * This is the basic shell for the device.
  */
-void Get_Console () { // TODO: Capture_Serial_Channel
+void Recieve_Serial_Message () { // NOTE: Formerly Get_Serial_Message
   
 //  terminalBufferSize = 0;
 
@@ -90,14 +90,14 @@ void Interpret_Message (Message* message) {
       
       // TODO: store the modules that have focus (TODO: on module sending "notice start focus", command this one to remember the sending module has focus, possibly along with others, so maybe push memory onto a stack)
       
-    } else if (strncmp ((*message).content, "notice stop focus", (*message).size) == 0) {  
+    } else if (strncmp ((*message).content, "notice stop focus", (*message).size) == 0) {
       
       // Another module has focus, so remove focus from this module (if it has focus)
       Serial.println ("notice stop focus");
       
       // TODO: remove module from those known to have focus
       
-    } else if (strncmp ((*message).content, "ping", (*message).size) == 0) {  
+    } else if (strncmp ((*message).content, "ping", (*message).size) == 0) {
       Serial.println ("ping");
       
       // TODO: Send module to remote module to set up its "messageSourceModule"
@@ -792,8 +792,29 @@ void Perform_Shell_Behavior (String message) {
   } else if (firstWord.compareTo ("show") == 0) { // i.e., echo, print, show, display
     
     String secondWord = getValue (message, ' ', 1);
+
+    if (secondWord.compareTo ("substrate") == 0) {
+      
+//      Serial.print ("> The substrate is\n");
+      Serial.print ("> substrate ");
+      Serial.print ((int) substrate);
+      Serial.print ("\n");
     
-    if (secondWord.compareTo ("orientation") == 0) {
+    } else if (secondWord.compareTo ("loops") == 0) {
+      
+//      Serial.print ("> The loops are\n");
+      Sequence* sequences = Get_Substrate_Sequences (substrate);
+//      Serial.print ((int) sequences);
+      Serial.print ("\n");
+    
+    } else if (secondWord.compareTo ("behaviors") == 0) {
+      
+//      Serial.print ("> The behaviors are\n");
+      Sequence* sequences = Get_Substrate_Behaviors (substrate);
+//      Serial.print ((int) sequences);
+      Serial.print ("\n");
+    
+    } else if (secondWord.compareTo ("orientation") == 0) {
     
       Serial.print ("(");
       Serial.print (roll); Serial.print (", ");
@@ -921,7 +942,8 @@ void Perform_Shell_Behavior (String message) {
     String content = getValue (message, ' ', 2);
     
     // Send module to remote module to set up its "messageSourceModule"
-    Memory* memory = Create_Memory (trigger, content);
+//    Memory* memory = Create_Memory (trigger, content);
+    Memory* memory = Update_Memory (trigger, content);
     Append_Memory (memory);
     
   } else if (firstWord.compareTo ("forget") == 0) { // i.e., remember, recall, load
