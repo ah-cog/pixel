@@ -1,18 +1,12 @@
-#ifndef I2C_H
-#define I2C_H
-
-#include "Behavior.h"
-#include "Platform.h"
-
-// from Language.h
-long Process_Message (Message* message); // start the "interpretive dance": transformation/message => interpret => behavior
+#ifndef SERIAL_H
+#define SERIAL_H
 
 #define DEVICE_SERIAL Serial3
 
-char behaviorDescriptionBuffer[128];
-int behaviorDescriptionBufferIndex = 0;
+char serialMessageBuffer[128];
+int serialMessageBufferIndex = 0;
 
-boolean setupBridge () {
+boolean Setup_Serial_Channel () {
   DEVICE_SERIAL.begin (115200);
 }
 
@@ -21,28 +15,15 @@ boolean setupBridge () {
 char i2cMessageBuffer[128] = { 0 };
 int i2cMessageBufferSize = 0;
 
-//! Propagates channel values to machine's transclusions.
-//!
-//! TODO: Move this to "Ports.h"
-void Propagate_Channel_Value (Channel* channel) {
-//void syncPinValue(int pin) {
-
-  // Get the most recent pin value
-  int pinValue = Get_Current_Channel_Value (channel);
-  
-  // TODO: Conditionally propagate only on channels on which machines/simulation transclusions exist.
-  
-  // TODO: Update state on other modules in mesh network.
-  
-  //channels[pin].isUpdated = false;
-  (*channel).isUpdated = false;
-}
+// TODO: Expect_Serial_Response // NOTE: This should be like Get_Direct_Serial_Response, but doesn't wait, looks for it later in an asynchronous message queue
 
 /**
  * The "behavior" data structure and interpretter
  */
 // TODO: Updates behavior (i.e., the state of the program being interpretted)
-void Get_Behavior_Transformations () { // consider renaming this something like acceptBehaviorTransformation
+String Get_Direct_Serial_Response (unsigned long timeout) { // consider renaming this something like acceptBehaviorTransformation
+
+  delay (timeout);
   
 //  Serial.print ("bytes = "); Serial.println(bytes);
   int transformationDataSize = 0; // The actual transformation data received (less than or equal to 32 bytes)
@@ -80,7 +61,7 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
   
   // Process received data (i.e., parse the received messages)
   // if (strlen(i2cMessageBuffer) > 1) { // if (i2cMessageBufferSize > 0) {
-  if (transformationDataSize > 0) { // if (i2cMessageBufferSize > 0) {
+  if (transformationDataSize > 0) {
 //    Serial.println (i2cMessageBuffer);
 
     // Search for start of message
@@ -91,11 +72,11 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
     if (firstCharacterIndex != NULL) {
 //      Serial.println ("Found '('");
       firstCharacterIndex = firstCharacterIndex + 1;
-      behaviorDescriptionBufferIndex = 0;
+      serialMessageBufferIndex = 0;
       
       // Find first of '\0', ')', or the (maximum) index of 32 (which means there should be more coming!)
       
-//      strncpy (behaviorDescriptionBuffer + behaviorDescriptionBufferIndex, firstCharacterIndex + 1, );
+//      strncpy (serialMessageBuffer + serialMessageBufferIndex, firstCharacterIndex + 1, );
 //      Serial.print ("\tfirstCharacterIndex: "); Serial.print (firstCharacterIndex); Serial.print ("\n");
       
     } else {
@@ -144,47 +125,53 @@ void Get_Behavior_Transformations () { // consider renaming this something like 
 //    if (i2cMessageBuffer[lastCharacterIndex] == ')') {
 //      behaviorDescriptionSize = behaviorDescriptionSize + 1;
 //    }
-    strncpy (behaviorDescriptionBuffer + behaviorDescriptionBufferIndex, firstCharacterIndex, behaviorDescriptionSize);
-    behaviorDescriptionBufferIndex = behaviorDescriptionBufferIndex + behaviorDescriptionSize;
+    strncpy (serialMessageBuffer + serialMessageBufferIndex, firstCharacterIndex, behaviorDescriptionSize);
+    serialMessageBufferIndex = serialMessageBufferIndex + behaviorDescriptionSize;
     
-    behaviorDescriptionBuffer[behaviorDescriptionBufferIndex] = '\0';
-//    Serial.print ("\tbehaviorDescriptionBuffer: "); Serial.print (behaviorDescriptionBuffer); Serial.print ("\n");
+    serialMessageBuffer[serialMessageBufferIndex] = '\0';
+//    Serial.print ("\tserialMessageBuffer: "); Serial.print (serialMessageBuffer); Serial.print ("\n");
     
     // TODO: Check for an infinite loop and prevent it (e.g., with a timer).
     
     if (done) {
       
       // Terminate the string stored in the buffer.
-      behaviorDescriptionBuffer[behaviorDescriptionBufferIndex] = '\0';
+      serialMessageBuffer[serialMessageBufferIndex] = '\0';
       
-      Serial.println (behaviorDescriptionBuffer);
+      Serial.print ("Received response: ");
+      Serial.println (serialMessageBuffer);
+      String responseString = String (serialMessageBuffer);
       
-      String split = String (behaviorDescriptionBuffer);
-      int spaceCount = getValueCount (split, ' ');
+      String split = String (serialMessageBuffer);
+//      int spaceCount = getValueCount (split, ' ');
 
-      String first = getValue (split, ' ', 0);
+//      String first = getValue (split, ' ', 0);
       
-      Serial.println (first);
+//      Serial.println (first);
       
-      long responseUuid = 0L;
-        
-      String remoteMessage = String (behaviorDescriptionBuffer);
-      Message* message = Create_Message (platformUuid, platformUuid, remoteMessage);
-      responseUuid = Process_Message (message);
-      
-      // TODO: Get return value from Process_Message. This should be a UUID corresponding to the queued message item. The UUID generated is used for the created behavior if a behavior is being created. If no response will be given (over serial to the slave board), then return 0, which means "no UUID".
-      
+//      long responseUuid = 0L;
+//        
+//      String remoteMessage = String (serialMessageBuffer);
+//      Message* message = Create_Message (platformUuid, platformUuid, remoteMessage);
+//      Process_Message (message);
+//      
+//      // TODO: Get return value from Process_Message. This should be a UUID corresponding to the queued message item. The UUID generated is used for the created behavior if a behavior is being created. If no response will be given (over serial to the slave board), then return 0, which means "no UUID".
+//      
 //      responseUuid = Generate_Platform_Uuid ();
-      
-      // DIRECTLY RESPOND (BLOCKING/SYNCRONOUS) relay response to the secondary board (to return to the HTTP client)
-      String responseMessage = String ("(") + String (responseUuid) + String (")");
-      const int serialResponseBufferSize = 64;
-      char messageChar[serialResponseBufferSize];
-      responseMessage.toCharArray (messageChar, serialResponseBufferSize);
-      DEVICE_SERIAL.write (messageChar);
+//      
+//      // Directly relay response to the secondary board (to return to the HTTP client)
+//      String responseMessage = String (responseUuid);
+//      const int serialResponseBufferSize = 64;
+//      char messageChar[serialResponseBufferSize];
+//      responseMessage.toCharArray (messageChar, serialResponseBufferSize);
+//      DEVICE_SERIAL.write (messageChar);
+
+      return responseString;
       
     }
   }
+  
+  return String ("");
 }
 
 #endif

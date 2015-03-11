@@ -10,9 +10,13 @@
 
 Substrate* Create_Substrate ();
 Sequence* Create_Sequence (Substrate* substrate);
-boolean Update_Sequence_Substrate (Sequence* sequence, Substrate* substrate);
 Behavior* Create_Behavior (Substrate* substrate);
-boolean Remove_Sequence_Substrate (Sequence* sequence, Substrate* substrate);
+
+boolean Contextualize_Sequence (Sequence* sequence, Substrate* substrate);
+boolean Decontextualize_Sequence (Sequence* sequence, Substrate* substrate);
+
+Behavior* Create_Behavior (Substrate* substrate);
+boolean Desequence_Behavior (Behavior* behavior, Sequence* sequence);
 
 struct Performer;
 struct Propagator;
@@ -24,7 +28,7 @@ Performer* Create_Performer (Substrate* substrate);
 Propagator* Create_Propagator ();
 
 boolean Perform_Behavior_On_Platform (Behavior* behavior);
-void Perform_Immediate_Behavior (String message); // HACK
+void Process_Immediate_Message (String message); // HACK
 
 
 
@@ -57,7 +61,7 @@ void Perform_Immediate_Behavior (String message); // HACK
 
 //! Setup the Looper engine.
 //!
-boolean setupLooper () {
+boolean Setup_Looper () {
   
   // Create behavior substrate
   if (substrate == NULL) {
@@ -70,7 +74,7 @@ boolean setupLooper () {
     
     Sequence* sequence = Create_Sequence (substrate);
     
-    boolean isAdded = Update_Sequence_Substrate (sequence, substrate);
+    boolean isAdded = Contextualize_Sequence (sequence, substrate);
     
 //    return isAdded;
   }
@@ -147,7 +151,7 @@ Sequence* Get_Substrate_Behaviors (Substrate* substrate) {
       while (currentBehavior != NULL) {
         
         Serial.print ("> behavior ");
-        Serial.print ((int) currentBehavior);
+        Serial.print ((int) (*currentBehavior).uid);
         Serial.print ("\n");
         
         currentBehavior = (*currentBehavior).next;
@@ -204,7 +208,7 @@ Sequence* Dissociate_Sequence (Sequence* sequence) {
     }
     
     // Step 2. Remove sequence from substrate
-    boolean hasRemoved = Remove_Sequence_Substrate (sequence, (*sequence).substrate);
+    boolean hasRemoved = Decontextualize_Sequence (sequence, (*sequence).substrate);
     
     // Dissociate from sequence
     // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
@@ -390,7 +394,9 @@ boolean Delete_Sequence (Sequence* sequence) {
   
 }
 
-boolean Update_Sequence_Substrate (Sequence* sequence, Substrate* substrate) {
+//! Adds the specified sequence to the specified substrate.
+//!
+boolean Contextualize_Sequence (Sequence* sequence, Substrate* substrate) {
   
   // Add sequence to substrate
   if ((*substrate).sequences == NULL) {
@@ -425,7 +431,7 @@ boolean Update_Sequence_Substrate (Sequence* sequence, Substrate* substrate) {
 
 //! Removes the specified sequence from the specified substrate.
 //!
-boolean Remove_Sequence_Substrate (Sequence* sequence, Substrate* substrate) {
+boolean Decontextualize_Sequence (Sequence* sequence, Substrate* substrate) {
   
   // Update behavior topology
   Sequence* previousSequence = (*sequence).previous;
@@ -461,8 +467,8 @@ boolean Remove_Sequence_Substrate (Sequence* sequence, Substrate* substrate) {
 
 //! Adds the specified behavior to the specified sequence.
 //!
-boolean Update_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
-  Serial.println ("Update_Behavior_Sequence");
+boolean Sequence_Behavior (Behavior* behavior, Sequence* sequence) {
+  Serial.println ("Sequence_Behavior");
   
   Serial.print ("\tsequence type: "); Serial.print ((*sequence).type); Serial.print ("\n");
   
@@ -497,7 +503,7 @@ boolean Update_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
 
 //! Removes the specified behavior from the specified sequence
 //!
-boolean Remove_Behavior_Sequence (Behavior* behavior, Sequence* sequence) {
+boolean Desequence_Behavior (Behavior* behavior, Sequence* sequence) {
   
   // Update behavior topology
   Behavior* previousBehavior = (*behavior).previous;
@@ -846,7 +852,7 @@ Behavior* Create_Immediate_Behavior (Substrate* substrate, String message) {
   
   if (substrate != NULL) {
     
-    Serial.println("CREATING IMMEDIATE BEHAVIOR");
+//    Serial.println("CREATING IMMEDIATE BEHAVIOR");
     
     // Create the Output schema for Behavior
     Immediate* immediate   = (Immediate*) malloc (sizeof (Immediate));
@@ -863,8 +869,8 @@ Behavior* Create_Immediate_Behavior (Substrate* substrate, String message) {
     (*immediate).behavior = behavior;
     
     // Parse behavior schema parameters
-    Serial.println ((*immediate).messageSize);
-    Serial.println ((*immediate).message);
+//    Serial.println ((*immediate).messageSize);
+//    Serial.println ((*immediate).message);
     
   }
   
@@ -1010,6 +1016,121 @@ boolean Delete_Behavior_Schema (Behavior* behavior) { // i.e., Delete_Schema_By_
   
 }
 
+//! Deletes all behaviors in the specified sequence
+//!
+boolean Delete_Sequence_Behaviors (Sequence* sequence) {
+  Serial.println ("Delete_Sequence_Behaviors");
+  
+  if (sequence != NULL) {
+    
+    Behavior* behavior = (*sequence).behavior;
+  
+    while (behavior != NULL) {
+      
+      Serial.println("Deleting behavior");
+      
+      // TODO: Remove behavior from ALL sequences (maybe replace it with a "NONE" behavior in sequences, while still referencing the behavior in the behavior's history)
+//      Sequence* currentSequence = (*substrate).sequences;
+      int isRemoved = Desequence_Behavior (behavior, sequence);
+            
+      // Free the behavior from memory
+      Delete_Behavior_Schema (behavior); // free ((*behavior).schema); // Free the behavior's schema from memory
+      free (behavior); // Free the behavior from memory
+      
+//      behavior = NULL;
+      
+      
+      
+      // Get next behavior
+//      Behavior* nextBehavior = (*behavior).next;
+          
+//      Serial.print ("current behavior: ");
+//      Serial.println ((int) ((*performer).behavior));
+//      Serial.print ("next behavior: ");
+//      Serial.println ((int) (*((*performer).behavior)).next);
+//      Serial.print ("origin: ");
+//      Serial.println ((int) (*((*performer).origin)).behavior);
+      
+//      if (nextBehavior != NULL) {
+        Serial.println("next behavior");
+        // Go to next behavior in the sequence
+        behavior = (*behavior).next;
+//      }
+//      else {
+//        Serial.println("restart sequence from first behavior");
+//        // The end of the looping sequence has been reached, so start again from the beginning of the performer's origin behavior sequence.
+//        (*performer).behavior = (*((*performer).origin)).behavior;
+//      }
+      
+    }
+    
+    return true;
+    
+  }
+  
+  return false;
+  
+}
+
+//! Shows all behaviors in the specified sequence
+//!
+boolean Show_Sequence_Behaviors (Sequence* sequence) {
+  Serial.println ("Show_Sequence_Behaviors");
+  
+  if (sequence != NULL) {
+    
+    Behavior* behavior = (*sequence).behavior;
+  
+    while (behavior != NULL) {
+      
+      Serial.print ("Behavior ");
+      Serial.println ((int) behavior);
+      
+//      Serial.println("Deleting behavior");
+      
+      // TODO: Remove behavior from ALL sequences (maybe replace it with a "NONE" behavior in sequences, while still referencing the behavior in the behavior's history)
+//      Sequence* currentSequence = (*substrate).sequences;
+//      int isRemoved = Remove_Behavior_Sequence (behavior, sequence);
+//            
+//      // Free the behavior from memory
+//      Delete_Behavior_Schema (behavior); // free ((*behavior).schema); // Free the behavior's schema from memory
+//      free (behavior); // Free the behavior from memory
+      
+//      behavior = NULL;
+      
+      
+      
+      // Get next behavior
+//      Behavior* nextBehavior = (*behavior).next;
+          
+//      Serial.print ("current behavior: ");
+//      Serial.println ((int) ((*performer).behavior));
+//      Serial.print ("next behavior: ");
+//      Serial.println ((int) (*((*performer).behavior)).next);
+//      Serial.print ("origin: ");
+//      Serial.println ((int) (*((*performer).origin)).behavior);
+      
+//      if (nextBehavior != NULL) {
+//        Serial.println("next behavior");
+        // Go to next behavior in the sequence
+        behavior = (*behavior).next;
+//      }
+//      else {
+//        Serial.println("restart sequence from first behavior");
+//        // The end of the looping sequence has been reached, so start again from the beginning of the performer's origin behavior sequence.
+//        (*performer).behavior = (*((*performer).origin)).behavior;
+//      }
+      
+    }
+    
+    return true;
+    
+  }
+  
+  return false;
+  
+}
+
 boolean Delete_Behavior (Behavior* behavior) {
   Serial.println ("Delete_Behavior");
   
@@ -1019,7 +1140,7 @@ boolean Delete_Behavior (Behavior* behavior) {
     
     // TODO: Remove behavior from ALL sequences (maybe replace it with a "NONE" behavior in sequences, while still referencing the behavior in the behavior's history)
     Sequence* currentSequence = (*substrate).sequences;
-    int isRemoved = Remove_Behavior_Sequence (behavior, currentSequence);
+    int isRemoved = Desequence_Behavior (behavior, currentSequence);
           
     // Free the behavior from memory
     Delete_Behavior_Schema (behavior); // free ((*behavior).schema); // Free the behavior's schema from memory
@@ -1247,7 +1368,7 @@ boolean Perform_Behavior (Performer* performer) {
   boolean sustainBehavior = false;
   boolean performanceResult = false;
   
-  boolean deleteBehavior = false;
+//  boolean deleteBehavior = false;
   
   if (performer != NULL) {
     
@@ -1406,19 +1527,19 @@ boolean Perform_Behavior (Performer* performer) {
           
           Behavior* nextBehavior = (*((*performer).behavior)).next;
           
-          Serial.print ("current behavior: ");
-          Serial.println ((int) ((*performer).behavior));
-          Serial.print ("next behavior: ");
-          Serial.println ((int) (*((*performer).behavior)).next);
-          Serial.print ("origin: ");
-          Serial.println ((int) (*((*performer).origin)).behavior);
+//          Serial.print ("current behavior: ");
+//          Serial.println ((int) ((*performer).behavior));
+//          Serial.print ("next behavior: ");
+//          Serial.println ((int) (*((*performer).behavior)).next);
+//          Serial.print ("origin: ");
+//          Serial.println ((int) (*((*performer).origin)).behavior);
           
           if (nextBehavior != NULL) {
-            Serial.println("next behavior");
+//            Serial.println("next behavior");
             // Go to next behavior in the sequence
             (*performer).behavior = (*((*performer).behavior)).next;
           } else {
-            Serial.println("restart sequence from first behavior");
+//            Serial.println("restart sequence from first behavior");
             // The end of the looping sequence has been reached, so start again from the beginning of the performer's origin behavior sequence.
             (*performer).behavior = (*((*performer).origin)).behavior;
             
@@ -1562,9 +1683,9 @@ boolean Perform_Behavior_On_Platform (Behavior* behavior) {
       // TODO: Call device-specific routine (retreived from cloud to change the device itself).
       //Play_Note (NOTE_C6, 250);
 //        Play_Note ((*sound).note, (*sound).duration);
-      Serial.print ("PERFORMING!!!: ");
-      Serial.println (String ((*immediate).message));
-      Perform_Immediate_Behavior (String ((*immediate).message));
+//      Serial.print ("PERFORMING!!!: ");
+//      Serial.println (String ((*immediate).message));
+      Process_Immediate_Message (String ((*immediate).message));
       
       // Flag behavior for deletion now that it's been performed
 //      deleteBehavior = false;

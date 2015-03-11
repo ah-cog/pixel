@@ -2,13 +2,13 @@
 #define LANGUAGE_H
 
 // TODO: Consider renaming "Interpret" to "Transducer" to remove the anthropomorphic feel of the word interpret. Or keep it for the same reason :). Just make the system aesthetic consistent.
-void Process_Message (Message* message); // start the "interpretive dance": transformation/message => interpret => behavior
-void Perform_Behavior (String consoleMessage);
-void Perform_Immediate_Behavior (String message);
+long Process_Message (Message* message); // start the "interpretive dance": transformation/message => interpret => behavior
+long Process_Core_Message (String message);
+void Process_Immediate_Message (String message);
 
 String previousConsoleInput = "";
-#define CONSOLE_BUFFER_SIZE 64
-char consoleBuffer[CONSOLE_BUFFER_SIZE] = { 0 };
+#define SERIAL_BUFFER_SIZE 64
+char consoleBuffer[SERIAL_BUFFER_SIZE] = { 0 };
 int consoleBufferSize = 0;
 
 /**
@@ -28,7 +28,7 @@ void Recieve_Serial_Message () { // NOTE: Formerly Get_Serial_Message
       
       // Check if "return" was pressed with no input (in which case, repeat the previous command)
       if (consoleBufferSize == 0) {
-        previousConsoleInput.toCharArray (consoleBuffer, CONSOLE_BUFFER_SIZE);
+        previousConsoleInput.toCharArray (consoleBuffer, SERIAL_BUFFER_SIZE);
         consoleBufferSize = previousConsoleInput.length ();
       }
       
@@ -70,7 +70,9 @@ void Recieve_Serial_Message () { // NOTE: Formerly Get_Serial_Message
 /**
  * Message "multiplexor". This is where the messages from the serial terminal, serial from the secondary board (by way of Looper), and mesh messages are processed.
  */
-void Process_Message (Message* message) {
+long Process_Message (Message* message) {
+  
+  long result = 0L;
   
 //  Serial.println ((*message).source);
 //  Serial.println ((*message).destination);
@@ -79,7 +81,7 @@ void Process_Message (Message* message) {
   if ((*message).source == (*message).destination) { // TODO: Update this. Add concept of "channel" possibly. Or make EVERYTHING text based and virtual (THIS ONE!).
   
     // TODO: Don't separate "shell" behavior from other behaviors!
-    Perform_Behavior ((*message).content);
+    result = Process_Core_Message ((*message).content);
     
     Delete_Message (message);
     
@@ -238,7 +240,7 @@ void Process_Message (Message* message) {
       
     } else {
       
-      Perform_Behavior ((*message).content);
+      Process_Immediate_Message ((*message).content);
       
     }
     
@@ -250,11 +252,15 @@ void Process_Message (Message* message) {
     
   }
   
+  return result;
+  
 }
 
 // TODO: Make this callable remotely from other nodes...
 // TODO: Add command to set default module (e.g., "enter"), and return to the current module (e.g., "exit")
-void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
+long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
+
+  long resultUuid = 0L;
   
   // Echo the message
   Serial.print ("> ");
@@ -268,7 +274,28 @@ void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
     message = String ("create behavior sound") + message.substring (9);
   } else if (message.startsWith ("remember") == true) {
     message = String ("create behavior memory") + message.substring (8);
+    
+    
   }
+  
+//  else if (message.startsWith ("if") == true) {
+//    Serial.println ("conditional behavior");
+//    
+//    String thirdWord = getValue (message, ' ', 2);
+//    int channelAddress = thirdWord.toInt ();
+//    
+//    Channel* channel = Get_Channel (platform, MODULE_INPUT_PIN);
+//    
+//    if (channel != NULL) {
+//      Serial.print ("Channel ");
+//      Serial.print (MODULE_INPUT_PIN);
+//      Serial.print (" is ");
+//      Serial.print ((*channel).value);
+//      Serial.print (".\n");
+//    }
+//    
+//    return;
+//  }
   
   int wordCount        = getValueCount (message, ' ');
   int messageWordCount = getValueCount (message, ' ');
@@ -316,14 +343,16 @@ void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
         Behavior* behavior = Create_Input_Behavior (substrate, pin, signal);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
         Sequence* sequence = (*substrate).sequences;
-        Update_Behavior_Sequence (behavior, sequence);
+        Sequence_Behavior (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+        
+        resultUuid = (*behavior).uid;
         
       } else if (behaviorType.compareTo ("output") == 0) {
     
         // Parse parameters
-        int pin = getValue (split, ' ', 3).toInt();
+        int pin = getValue (split, ' ', 3).toInt ();
         String signal = getValue (split, ' ', 4);
         String data = getValue (split, ' ', 5);
         
@@ -331,9 +360,11 @@ void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
         Behavior* behavior = Create_Output_Behavior (substrate, pin, signal, data);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
         Sequence* sequence = (*substrate).sequences;
-        Update_Behavior_Sequence (behavior, sequence);
+        Sequence_Behavior (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+        
+        resultUuid = (*behavior).uid;
         
       } else if (behaviorType.compareTo ("delay") == 0) {
     
@@ -344,9 +375,11 @@ void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
         Behavior* behavior = Create_Delay_Behavior (substrate, milliseconds);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
         Sequence* sequence = (*substrate).sequences;
-        Update_Behavior_Sequence (behavior, sequence);
+        Sequence_Behavior (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+        
+        resultUuid = (*behavior).uid;
         
       } else if (behaviorType.compareTo ("sound") == 0) {
     
@@ -360,9 +393,11 @@ void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
         Behavior* behavior = Create_Sound_Behavior (substrate, note, duration);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
         Sequence* sequence = (*substrate).sequences;
-        Update_Behavior_Sequence (behavior, sequence);
+        Sequence_Behavior (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+        
+        resultUuid = (*behavior).uid;
         
       } else if (behaviorType.compareTo ("memory") == 0) {
     
@@ -391,16 +426,100 @@ void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
 //          // TODO: Substrate
 //        }
     
-  } else if (first.compareTo ("print") == 0) {
+  } else if (first.compareTo ("erase") == 0) { // synonyms: clear, wipe, clean
     
-    int messageIndex = message.indexOf (' ');
+    String second = getValue (split, ' ', 1);
+    Serial.println (second);
     
-    if (messageIndex != -1) {
-      String messageString = message.substring (messageIndex + 1);
-      // TODO: Print where the message was from!
-      Serial.print (messageString); Serial.print ("\n");
+    if (second.compareTo ("substrate") == 0) {
+      
+      // TODO: Implement core behavior
+      
+    } else if (second.compareTo ("loop") == 0) {
+      
+      Serial.println ("> Clearing loop");
+      
+      Sequence* sequence = (*substrate).sequences;
+      Delete_Sequence_Behaviors (sequence);
+      
+    } else if (second.compareTo ("behavior") == 0) {
+      
+      int third = getValue (split, ' ', 2).toInt ();
+      
+      Serial.println ("> Removing behavior " + String (third));
+      
+      Delete_Behavior_By_Address (third);
+      
+    } 
+    
+  } else if (firstWord.compareTo ("show") == 0) { // i.e., echo, print, show, display
+    
+    String secondWord = getValue (message, ' ', 1);
+
+    if (secondWord.compareTo ("substrate") == 0) {
+      
+//      Serial.print ("> The substrate is\n");
+      Serial.print ("> substrate ");
+      Serial.print ((int) substrate);
+      Serial.print ("\n");
+    
+    } else if (secondWord.compareTo ("loop") == 0) {
+      
+      Sequence* sequence = (*substrate).sequences;
+      Show_Sequence_Behaviors (sequence);
+      
+    } else if (secondWord.compareTo ("loops") == 0) {
+      
+//      Serial.print ("> The loops are\n");
+//      Sequence* sequences = Get_Substrate_Sequences (substrate);
+////      Serial.print ((int) sequences);
+//      Serial.print ("\n");
+    
+    } else if (secondWord.compareTo ("behaviors") == 0) {
+      
+//      Serial.print ("> The behaviors are\n");
+      Sequence* sequences = Get_Substrate_Behaviors (substrate);
+//      Serial.print ((int) sequences);
+      Serial.print ("\n");
+      
     }
     
+//  } else if (first.compareTo ("print") == 0) {
+//    
+//    int messageIndex = message.indexOf (' ');
+//    
+//    if (messageIndex != -1) {
+//      String messageString = message.substring (messageIndex + 1);
+//      // TODO: Print where the message was from!
+//      Serial.print (messageString); Serial.print ("\n");
+//    }
+    
+  } else if (first.compareTo ("drop") == 0) { // Synonyms: attach, push, unloop
+    
+    String second = getValue (split, ' ', 1);
+    Serial.println (second);
+    
+    if (second.compareTo ("behavior") == 0) {
+    }
+    
+  } else if (first.compareTo ("pop") == 0) { // Synonyms: detach, loop
+    
+    String second = getValue (split, ' ', 1);
+    Serial.println (second);
+  
+    if (second.compareTo ("behavior") == 0) {
+      
+      int third = getValue (split, ' ', 2).toInt ();
+      
+      Serial.println ("> Desequencing behavior " + String (third));
+      
+      Sequence* sequences = Get_Substrate_Behaviors (substrate);
+      Sequence* sequence = (*substrate).sequences;
+      Behavior* behavior = Get_Behavior (third); // TODO: Get_Behavior (third, sequence)
+      Desequence_Behavior (behavior, sequence);
+      
+    }
+  
   } else if (first.compareTo ("update") == 0) {
     
     String second = getValue (split, ' ', 1);
@@ -454,7 +573,7 @@ void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
   } else {
     
 //    Serial.println ("...FUTURE IMMEDIATE BEHAVIOR!");
-//    Perform_Immediate_Behavior (message);
+//    Process_Immediate_Message (message);
 
 
         // Parse parameters
@@ -492,14 +611,18 @@ void Perform_Behavior (String message) { // i.e., Perform_Engine_Behavior
           Behavior* behavior = Create_Immediate_Behavior (substrate, message);
 //          (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
           Sequence* sequence = (*substrate).sequences;
-          Update_Behavior_Sequence (behavior, sequence); // Add to behavior sequence
+          Sequence_Behavior (behavior, sequence); // Add to behavior sequence
+          
+          resultUuid = (*behavior).uid;
         }
     
   }
+  
+  return resultUuid;
 }
 
-void Perform_Immediate_Behavior (String message) {
-//  Serial.println ("Perform_Immediate_Behavior");
+void Process_Immediate_Message (String message) {
+//  Serial.println ("Behavior");
 //  
 //  Serial.print ("message: ");
 //  Serial.println (message);
@@ -728,7 +851,7 @@ void Perform_Immediate_Behavior (String message) {
         
         Update_Output_Color (red, green, blue);
         
-        Serial.println ("Changing output color.");
+        // Serial.println ("Changing output color.");
         
       }
       
@@ -746,59 +869,117 @@ void Perform_Immediate_Behavior (String message) {
       // Isolate and extract the color chunk
       String color = getValue (message, ' ', 3);
       
-      // Parse the color chunk according to its format
-      if (color.compareTo ("red") == 0) {
-        int red   = 255;
-        int green = 0;
-        int blue  = 0;
+      
+
+      // TODO:
+      // - Add "condition list" where each entry can have multiple conditions that need to be simultaneously satisfied
+      // - Move this to the Looper engine in the Perform_Behavior function so each Performer can consider the condition given its memory/experience
+      boolean conditionSatisfied = false;
+//      Channel* channel = Get_Channel (platform, MODULE_INPUT_PIN);
+//      if ((*channel).value == PIN_VALUE_HIGH) { // Condition...
+//        conditionSatisfied = true;
+//      }
+
+
+      // Condition types (to start):
+      // - Memory value constrained
+      // - I/O value constrained
+      // - (maybe) Message-recieved constrained
+      // - (maybe later) Belief-based/Probabilistic
+      
+      int conditionIndex = message.indexOf (" when");
+      if (conditionIndex != -1) {
+        String conditionString = message.substring (conditionIndex + 1);
+        message = message.substring (0, conditionIndex);
         
-        Update_Input_Color (red, green, blue);
-        Update_Output_Color (red, green, blue);
+        String conditionKey = conditionString.substring (5, conditionString.indexOf (" is"));
+        String conditionValue = conditionString.substring (conditionString.indexOf (" is ") + 4);
         
-      } else if (color.compareTo ("green") == 0) {
-        int red   = 0;
-        int green = 255;
-        int blue  = 0;
+        char buffer[32];
         
-        Update_Input_Color (red, green, blue);
-        Update_Output_Color (red, green, blue);
+        Serial.print ("conditionKey: ");
+        Serial.println (conditionKey);
         
-      } else if (color.compareTo ("blue") == 0) {
-        int red   = 0;
-        int green = 0;
-        int blue  = 255;
+        Serial.print ("conditionValue: ");
+        Serial.println (conditionValue);
         
-        Update_Input_Color (red, green, blue);
-        Update_Output_Color (red, green, blue);
+        conditionKey.toCharArray (buffer, 32);
         
-      } else if (color.compareTo ("white") == 0) {
-        int red   = 255;
-        int green = 255;
-        int blue  = 255;
+        Memory* memory = Get_Memory (buffer);
+
+        if (memory != NULL) {
+          conditionValue.toCharArray (buffer, 32);
+          if (strncmp ((*memory).content, buffer, (*memory).contentSize) == 0) {
+            conditionSatisfied = true;
+          }
+        }
         
-        Update_Input_Color (red, green, blue);
-        Update_Output_Color (red, green, blue);
+      } else {
         
-      } else if (color.compareTo ("yellow") == 0) {
-        int red   = 255;
-        int green = 255;
-        int blue  = 0;
+        // There are no conditions for the action, so perform it. The action is unconditional.
+        conditionSatisfied = true;
         
-        Update_Input_Color (red, green, blue);
-        Update_Output_Color (red, green, blue);
+      }
+      
+      
+      
+      if (conditionSatisfied == true) {
+      
+        // Parse the color chunk according to its format
+        if (color.compareTo ("red") == 0) {
+          int red   = 255;
+          int green = 0;
+          int blue  = 0;
+          
+          Update_Input_Color (red, green, blue);
+          Update_Output_Color (red, green, blue);
+          
+        } else if (color.compareTo ("green") == 0) {
+          int red   = 0;
+          int green = 255;
+          int blue  = 0;
+          
+          Update_Input_Color (red, green, blue);
+          Update_Output_Color (red, green, blue);
+          
+        } else if (color.compareTo ("blue") == 0) {
+          int red   = 0;
+          int green = 0;
+          int blue  = 255;
+          
+          Update_Input_Color (red, green, blue);
+          Update_Output_Color (red, green, blue);
+          
+        } else if (color.compareTo ("white") == 0) {
+          int red   = 255;
+          int green = 255;
+          int blue  = 255;
+          
+          Update_Input_Color (red, green, blue);
+          Update_Output_Color (red, green, blue);
+          
+        } else if (color.compareTo ("yellow") == 0) {
+          int red   = 255;
+          int green = 255;
+          int blue  = 0;
+          
+          Update_Input_Color (red, green, blue);
+          Update_Output_Color (red, green, blue);
+          
+        } else if (color.indexOf (",") != -1) {
+          int red   = getValue (color, ',', 0).toInt ();
+          int green = getValue (color, ',', 1).toInt ();
+          int blue  = getValue (color, ',', 2).toInt ();
+          
+          Update_Input_Color (red, green, blue);
+          Update_Output_Color (red, green, blue);
+        }
         
-      } else if (color.indexOf (",") != -1) {
-        int red   = getValue (color, ',', 0).toInt ();
-        int green = getValue (color, ',', 1).toInt ();
-        int blue  = getValue (color, ',', 2).toInt ();
-        
-        Update_Input_Color (red, green, blue);
-        Update_Output_Color (red, green, blue);
       }
       
       // TODO: Rather than printing locally, send local messages through the incoming message queue. Everything should pass through that so it can all be processed at a higher level.
       if (messageSourceModule == -1) { // print the message locally since it was not issued by way of another module
-        Serial.println ("Changing output color.");
+        // Serial.println ("Changing output color.");
       } else {
         Message* messageReply = Create_Message (platformUuid, messageSourceModule, String ("print Changing output color."));
         Queue_Outgoing_Message (messageReply);
@@ -835,29 +1016,8 @@ void Perform_Immediate_Behavior (String message) {
   } else if (firstWord.compareTo ("show") == 0) { // i.e., echo, print, show, display
     
     String secondWord = getValue (message, ' ', 1);
-
-    if (secondWord.compareTo ("substrate") == 0) {
-      
-//      Serial.print ("> The substrate is\n");
-      Serial.print ("> substrate ");
-      Serial.print ((int) substrate);
-      Serial.print ("\n");
     
-    } else if (secondWord.compareTo ("loops") == 0) {
-      
-//      Serial.print ("> The loops are\n");
-      Sequence* sequences = Get_Substrate_Sequences (substrate);
-//      Serial.print ((int) sequences);
-      Serial.print ("\n");
-    
-    } else if (secondWord.compareTo ("behaviors") == 0) {
-      
-//      Serial.print ("> The behaviors are\n");
-      Sequence* sequences = Get_Substrate_Behaviors (substrate);
-//      Serial.print ((int) sequences);
-      Serial.print ("\n");
-    
-    } else if (secondWord.compareTo ("orientation") == 0) {
+    if (secondWord.compareTo ("orientation") == 0) {
     
       Serial.print ("(");
       Serial.print (roll); Serial.print (", ");

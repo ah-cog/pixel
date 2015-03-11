@@ -136,7 +136,7 @@ void setup () {
     hasFoundationUuid = true;
   } // The layer on which the "platform" depends
   
-  setupLooper (); // set the Looper engine up
+  Setup_Looper (); // set the Looper engine up
   
   setupPlatformUuid ();
 //  setupPlatform(); // Setup Pixel's reflection (i.e., it's virtual machine)
@@ -144,7 +144,7 @@ void setup () {
   // Set up defualt perspective
   messageTargetModule = platformUuid;
 
-  setupPorts (); // Setup pin mode for I/O
+  Setup_Ports (); // Setup pin mode for I/O
   setupColor (); // Setup the Pixel's color
   
   // TODO: Read device GUID from EEPROM if it exists, otherwise generate one, store it in EEPROM, and read it.
@@ -246,10 +246,17 @@ void loop () {
   lastInputValue = touchInputMean;
   
   // Get module's input
-  Get_Input_Port_Continuous ();  
+  Get_Input_Port_Continuous ();
   // Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
   
   if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
+  
+    // Update input pin value to low (off)
+    Channel* moduleInputChannel = Get_Channel (platform, MODULE_INPUT_PIN);
+    Update_Channel_Value (moduleInputChannel, PIN_VALUE_HIGH);
+    Propagate_Channel_Value (moduleInputChannel);
+  
+    // Update output pin value to low (off)
     if (outputPinRemote == false) {
       // Output port is on this module!
       //Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
@@ -265,6 +272,13 @@ void loop () {
     }
 //    delay(500);
   } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
+  
+    // Update input pin value to high (on)
+    Channel* moduleInputChannel = Get_Channel (platform, MODULE_INPUT_PIN);
+    Update_Channel_Value (moduleInputChannel, PIN_VALUE_LOW);
+    Propagate_Channel_Value (moduleInputChannel);
+  
+    // Update output pin value to high (on)
     if (outputPinRemote == false) {
 //      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
 //      syncPinValue(MODULE_OUTPUT_PIN);
@@ -455,6 +469,24 @@ void loop () {
       Serial.print ("Detected gesture: ");
       Serial.print (gestureName[classifiedGestureIndex]);
       Serial.println ();
+      
+      
+      
+      
+//      // Parse parameters
+//      String key = getValue (split, ' ', 3);
+//      String value = getValue (split, ' ', 4);
+  
+      // Send module to remote module to set up its "messageSourceModule"
+      Memory* memory = Update_Memory (String ("latest-gesture"), String (gestureName[classifiedGestureIndex])); // Memory* memory = Create_Memory (key, value);
+      
+      Memory* existingMemory = Get_Memory ("latest-gesture");
+      if (existingMemory == NULL) {
+        Append_Memory (memory);
+      }
+      
+      
+      
       
       // Update the previous gesture to the current gesture
       previousClassifiedGestureIndex = classifiedGestureIndex;

@@ -15,8 +15,9 @@ Authors: Michael Gubbels
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
 
-#define DEVICE_SERIAL Serial3
+//#define DEVICE_SERIAL Serial3
 
+#include "Serial.h"
 #include "WebServer.h"
 #include <UDPServer.h>
 
@@ -39,13 +40,13 @@ boolean Setup_Udp_Server () {
 
 //#define DEVICE_SERIAL Serial3
 
-boolean Setup_Serial_Bridge () {
-  DEVICE_SERIAL.begin (115200);
-}
+//boolean Setup_Serial_Bridge () {
+//  DEVICE_SERIAL.begin (115200);
+//}
 
 void setup () {
   
-  Setup_Serial_Bridge ();
+  Setup_Serial_Channel ();
 
   Serial.begin (115200); // Start serial for output
   Serial.println (F ("Looper Firmware"));

@@ -236,12 +236,24 @@ boolean Handle_Client_Connection (Adafruit_CC3000_ClientRef& client) {
               message.toCharArray (messageChar, triggerBufferSize);
               DEVICE_SERIAL.write (messageChar);
               
+              // TODO: Block until either receive 0 or UUID (or timeout)
+              String response = Get_Direct_Serial_Response (1000);
+              
               // Send a standard HTTP response header
               client.println("HTTP/1.1 200 OK");
               client.println("Access-Control-Allow-Origin: *");
               client.println("Access-Control-Expose-Headers: Location");
               client.println("Content-Type: text/html");
               client.println("Connection: close");
+              
+              client.println();
+  
+              // Use tools to clean up HTML, minify the cleaned script, and escape special characters in the script text:
+              // (1) http://htmlcompressor.com/compressor/
+              // (2) http://www.willpeavy.com/minifier/
+              // (3) http://www.freeformatter.com/java-dotnet-escape.html
+              client.println(String ("response = ") + response);
+              client.println();
               
               break;
                 

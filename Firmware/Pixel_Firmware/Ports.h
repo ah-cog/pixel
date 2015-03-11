@@ -14,13 +14,13 @@ boolean inputStateChanged = false;
 
 double touchInputMean = 0;
 
-boolean setupInputPort();
+boolean Setup_Input_Port ();
 
-boolean setupPorts() {
+boolean Setup_Ports () {
   // Set up pin mode for I/O
   pinMode(MODULE_OUTPUT_PIN, OUTPUT); // pinMode(13, OUTPUT);
   
-  setupInputPort();
+  Setup_Input_Port ();
 }
 
 #define SAMPLE_CAPACITY 100
@@ -36,7 +36,7 @@ int sMin;
 long n;            // count of how many readings so far
 double x, mean, delta, sumsq, m2, variance, stdev;  // to calculate standard deviation
 
-boolean setupInputPort() {
+boolean Setup_Input_Port () {
   
   // Initialize variables for computing touch input
   datSum = 0;
@@ -88,7 +88,7 @@ void Get_Input_Port_Continuous () {
   touchInputMean = mean;
 }
 
-void getInputPort () {
+void Get_Input_Port () {
   int t1;
   long tStart;  // starting time
   long datSum;  // reset our accumulated sum of input values to zero
