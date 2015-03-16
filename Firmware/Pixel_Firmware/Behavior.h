@@ -162,9 +162,9 @@ struct Input {
 //  int data;
 };
 
-//! \struct Output
-//! The definition of the Output structure.
-//!
+/// \struct Output
+/// The definition of the Output structure.
+///
 struct Output {
   Behavior* behavior;
   
@@ -176,9 +176,9 @@ struct Output {
   int data;
 };
 
-//! \struct Delay
-//! The definition of the Delay structure.
-//!
+/// \struct Delay
+/// The definition of the Delay structure.
+///
 struct Delay {
   Behavior* behavior;
   
@@ -211,9 +211,9 @@ struct Motion {
   int increment; // = 0.01 * 1000;
 };
 
-//! \struct Immediate
-//! The definition of the Immediate structure.
-//!
+/// \struct Immediate
+/// The definition of the Immediate structure.
+///
 struct Immediate {
   Behavior* behavior;
   

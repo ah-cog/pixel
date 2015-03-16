@@ -21,9 +21,9 @@ boolean setupBridge () {
 char i2cMessageBuffer[128] = { 0 };
 int i2cMessageBufferSize = 0;
 
-//! Propagates channel values to machine's transclusions.
-//!
-//! TODO: Move this to "Ports.h"
+/// Propagates channel values to machine's transclusions.
+///
+/// TODO: Move this to "Ports.h"
 void Propagate_Channel_Value (Channel* channel) {
 //void syncPinValue(int pin) {
 

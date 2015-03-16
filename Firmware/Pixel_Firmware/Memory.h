@@ -26,8 +26,8 @@ struct Memory {
 
 Memory* memories = NULL; // incoming memory queue
 
-//! Create memory (i.e., a behavior transformation).
-//!
+/// Create memory (i.e., a behavior transformation).
+///
 Memory* Create_Memory (String trigger, String content) { // (trigger, content)
   
   Serial.println ("Create_Memory");
@@ -52,8 +52,8 @@ Memory* Create_Memory (String trigger, String content) { // (trigger, content)
   
 }
 
-//! Updates memory if it exists and creates it if it does not exist.
-//!
+/// Updates memory if it exists and creates it if it does not exist.
+///
 Memory* Update_Memory (String trigger, String content) { // (trigger, content)
   
   Serial.println ("Update_Memory");
@@ -87,8 +87,8 @@ Memory* Update_Memory (String trigger, String content) { // (trigger, content)
   
 }
 
-//! Frees the memory from dynamic memory.
-//!
+/// Frees the memory from dynamic memory.
+///
 boolean Delete_Memory (Memory* memory) {
   
   Serial.println ("Delete_Memory");
@@ -112,8 +112,8 @@ boolean Delete_Memory (Memory* memory) {
   
 }
 
-//! Queue the outgoing memory.
-//!
+/// Queue the outgoing memory.
+///
 Memory* Append_Memory (Memory* memory) {
   
   Serial.println ("Append_Memory");
@@ -151,8 +151,8 @@ Memory* Append_Memory (Memory* memory) {
   
 }
 
-//! Dequeue the next outgoing memory.
-//!
+/// Dequeue the next outgoing memory.
+///
 Memory* Remove_Memory (char* trigger) {
   
   Serial.println ("Remove_Memory");
@@ -195,8 +195,8 @@ Memory* Remove_Memory (char* trigger) {
   
 }
 
-//! Dequeue the next outgoing memory.
-//!
+/// Dequeue the next outgoing memory.
+///
 Memory* Get_Memory (char* trigger) {
   
   Serial.println ("Get_Memory");
@@ -219,8 +219,8 @@ Memory* Get_Memory (char* trigger) {
   
 }
 
-//! Dequeue the next outgoing memory.
-//!
+/// Dequeue the next outgoing memory.
+///
 void Print_Memory () {
   
 //  Serial.println ("Print_Memory");

@@ -23,10 +23,10 @@ int gestureSignatureSize[] = { 35, 35, 35, 35, 35, 35, 35, 35, 35 };
 
 int gestureSustainDuration[GESTURE_COUNT] = {
 	0, // "at rest"
-	1000, // 600, // "swing"
+	0, // 600, // "swing"
 	800, // 800, // "tap to another, as left"
 	800, // 800,  // "tap to another, as right"
-	600, // 200, // "shake"
+	100, // 200, // "shake"
 	0, // "tilt left"
 	0, // "tilt right"
 	0, // "tilt forward"

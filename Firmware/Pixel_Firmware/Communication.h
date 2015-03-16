@@ -68,9 +68,9 @@ unsigned long lastSentActive = 0L;
 // TODO: Dynamically adjust frequency, depending on the module's use
 unsigned long lastSentActiveTimeout = 1000L; // 30000L; // Broadcast heartbeat every 30 seconds
 
-//! Message (i.e., Message) to propagate.
-//!
-//! TODO: Rename to Transformation
+/// Message (i.e., Message) to propagate.
+///
+/// TODO: Rename to Transformation
 struct Message {
   char* content;
   int size;
@@ -86,8 +86,8 @@ struct Message {
 Message* outgoingMessageQueue = NULL; // outgoing message queue
 Message* incomingMessageQueue = NULL; // incoming message queue
 
-//! Create message (i.e., a behavior transformation).
-//!
+/// Create message (i.e., a behavior transformation).
+///
 Message* Create_Message (int source, int destination, String content) {
   
 //  Serial.println ("Create_Message");
@@ -116,8 +116,8 @@ Message* Create_Message (int source, int destination, String content) {
   
 }
 
-//! Frees the message from dynamic memory.
-//!
+/// Frees the message from dynamic memory.
+///
 boolean Delete_Message (Message* message) {
   
 //  Serial.println ("Delete_Message");
@@ -136,8 +136,8 @@ boolean Delete_Message (Message* message) {
   
 }
 
-//! Queue the outgoing message.
-//!
+/// Queue the outgoing message.
+///
 Message* Queue_Outgoing_Message (Message* message) {
   
 //  Serial.println ("Queue_Outgoing_Message");
@@ -175,8 +175,8 @@ Message* Queue_Outgoing_Message (Message* message) {
   
 }
 
-//! Dequeue the next outgoing message.
-//!
+/// Dequeue the next outgoing message.
+///
 Message* Dequeue_Outgoing_Message () {
   
 //  Serial.println ("Dequeue_Outgoing_Message");
@@ -201,8 +201,8 @@ Message* Dequeue_Outgoing_Message () {
   
 }
 
-//! Queue the incoming message.
-//!
+/// Queue the incoming message.
+///
 Message* Queue_Incoming_Message (Message* message) {
   
 //  Serial.println ("Queue_Incoming_Message");
@@ -242,8 +242,8 @@ Message* Queue_Incoming_Message (Message* message) {
   
 }
 
-//! Dequeue the next incoming message.
-//!
+/// Dequeue the next incoming message.
+///
 Message* Dequeue_Incoming_Message () {
   
 //  Serial.println ("Dequeue_Incoming_Message");
@@ -268,8 +268,8 @@ Message* Dequeue_Incoming_Message () {
   
 }
 
-//! Push a message onto the queue of messages to be processed and sent via the mesh network.
-//!
+/// Push a message onto the queue of messages to be processed and sent via the mesh network.
+///
 //boolean Queue_Broadcast (String content) {
 //  Serial.println ("Queue_Broadcast");
 //
@@ -279,8 +279,8 @@ Message* Dequeue_Incoming_Message () {
 //  return true;
 //}
 
-//! Push a message onto the queue of messages to be processed and sent via the mesh network.
-//!
+/// Push a message onto the queue of messages to be processed and sent via the mesh network.
+///
 boolean Queue_Message (int source, int destination, String content) {
 //  Serial.println ("Queue_Message");
 
@@ -294,12 +294,12 @@ boolean Queue_Message (int source, int destination, String content) {
   return true;
 }
 
-//! Actually release the message on the mesh network.
-//!
+/// Actually release the message on the mesh network.
+///
 boolean Send_Mesh_Message () { // boolean Send_Message () {
 //  Serial.println ("Release_Message");
   
-  if (outgoingMessageQueue != NULL) { //! Check if there are any messages to be sent
+  if (outgoingMessageQueue != NULL) { /// Check if there are any messages to be sent
         
     // Dequeue the next message from the front of the queue
     Message* message = Dequeue_Outgoing_Message ();
@@ -328,8 +328,8 @@ boolean Send_Mesh_Message () { // boolean Send_Message () {
 
 // TODO: Collect, Distribute, Scatter, Saturate, Suggest (stored in a module's memory if it's existing memory is more or less consistent with the memory, kind of like a brain)
 
-//! Captures any available messages on the mesh.
-//!
+/// Captures any available messages on the mesh.
+///
 boolean Receive_Mesh_Messages () {
   // Serial.println ("Capture_Messages");
   
@@ -403,8 +403,8 @@ boolean Receive_Mesh_Messages () {
   
 }
 
-//! Adds the specified module as a previous module if it hasn't already been added.
-//!
+/// Adds the specified module as a previous module if it hasn't already been added.
+///
 boolean Add_Input_Module (int module) {
   
   if (previousModuleCount < PREVIOUS_MODULE_CAPACITY) {
@@ -426,8 +426,8 @@ boolean Add_Input_Module (int module) {
   return false;
 }
 
-//! Removes the specified module from the set of previous modules if it's in the set.
-//!
+/// Removes the specified module from the set of previous modules if it's in the set.
+///
 boolean Remove_Input_Module (int module) {
   
   if (previousModuleCount > 0) {
@@ -450,14 +450,14 @@ boolean Remove_Input_Module (int module) {
   return false;
 }
 
-//! Removes all previous modules
-//!
+/// Removes all previous modules
+///
 boolean Remove_Input_Modules () {
   previousModuleCount = 0;
 }
 
-//! Checks if the specified module is in the set of previous modules.
-//!
+/// Checks if the specified module is in the set of previous modules.
+///
 boolean Has_Previous_Module (int module) {
   
   if (previousModuleCount > 0) {
@@ -479,8 +479,8 @@ int Get_Input_Module_Count () {
   return previousModuleCount;
 }
 
-//! Adds the specified module as a next module if it hasn't already been added.
-//!
+/// Adds the specified module as a next module if it hasn't already been added.
+///
 boolean Add_Output_Module (int module) {
   
   if (nextModuleCount < NEXT_MODULE_CAPACITY) {
@@ -502,8 +502,8 @@ boolean Add_Output_Module (int module) {
   return false;
 }
 
-//! Removes the specified module from the set of next modules if it's in the set.
-//!
+/// Removes the specified module from the set of next modules if it's in the set.
+///
 boolean Remove_Output_Module (int module) {
   
   if (nextModuleCount > 0) {
@@ -526,14 +526,14 @@ boolean Remove_Output_Module (int module) {
   return false;
 }
 
-//! Removes all next modules
-//!
+/// Removes all next modules
+///
 boolean Remove_Output_Modules () {
   nextModuleCount = 0;
 }
 
-//! Checks if the specified module is in the set of next modules.
-//!
+/// Checks if the specified module is in the set of next modules.
+///
 boolean Has_Output_Module (int module) {
   
   if (nextModuleCount > 0) {
@@ -672,8 +672,8 @@ boolean Handle_Message_Shake (Message* message) {
 //  }
 }
 
-//! Event handler for the "tap" announcement (i.e., broadcast) message.
-//!
+/// Event handler for the "tap" announcement (i.e., broadcast) message.
+///
 boolean Handle_Message_Tap (Message* message) {
   
   Serial.println (">> Received ANNOUNCE_GESTURE_TAP");
@@ -724,8 +724,8 @@ boolean Handle_Message_Tap (Message* message) {
   
 }
 
-//! Event handler for the "request confirm tap" message.
-//!
+/// Event handler for the "request confirm tap" message.
+///
 boolean Handle_Message_Request_Confirm_Tap (Message* message) {
   
   Add_Input_Module ((*message).source);
@@ -741,8 +741,8 @@ boolean Handle_Message_Request_Confirm_Tap (Message* message) {
   
 }
 
-//! Event handler for the "confirm tap" message.
-//!
+/// Event handler for the "confirm tap" message.
+///
 boolean Handle_Message_Confirm_Tap (Message* message) {
   
   if (hasSwung) { // if this is the module that was swung
@@ -758,8 +758,8 @@ boolean Handle_Message_Confirm_Tap (Message* message) {
   
 }
 
-//! "Right" module handle "tap to another, as left" message.
-//!
+/// "Right" module handle "tap to another, as left" message.
+///
 boolean Handle_Message_Tap_To_Another_As_Left (Message* message) {
     if (awaitingPreviousModule) {
       // Update message state
@@ -778,8 +778,8 @@ boolean Handle_Message_Tap_To_Another_As_Left (Message* message) {
     }
 }
 
-//! "Left" module handle request for confirmation of "tap to another, as left" message.
-//!
+/// "Left" module handle request for confirmation of "tap to another, as left" message.
+///
 boolean Handle_Message_Request_Confirm_Tap_To_Another_As_Left (Message* message) {
         
 //  unsigned long currentTime = millis();
@@ -830,14 +830,14 @@ boolean Handle_Message_Request_Confirm_Tap_To_Another_As_Left (Message* message)
   }
 }
 
-//! "Right" module handle confirmation of "tap to another, as left" message.
-//!
+/// "Right" module handle confirmation of "tap to another, as left" message.
+///
 boolean Handle_Message_Confirm_Tap_To_Another_As_Left (Message* message) {
   Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_LEFT");
 }
 
-//! "Left" module handle "tap to another, as right" message.
-//!
+/// "Left" module handle "tap to another, as right" message.
+///
 boolean Handle_Message_Tap_To_Another_As_Right (Message* message) {
   // NOTE: Received by the "left" module from the "right" module
   
@@ -861,8 +861,8 @@ boolean Handle_Message_Tap_To_Another_As_Right (Message* message) {
   }
 }
 
-//! "Right" module handle request for confirmation of "tap to another, as right" message.
-//!
+/// "Right" module handle request for confirmation of "tap to another, as right" message.
+///
 boolean Handle_Message_Request_Confirm_Tap_To_Another_As_Right (Message* message) {
   // NOTE: Received by the "right" module from the "left" module
   
@@ -904,8 +904,8 @@ boolean Handle_Message_Request_Confirm_Tap_To_Another_As_Right (Message* message
   }
 }
 
-//! "Left" module handle confirmation of "tap to another, as left" message.
-//!
+/// "Left" module handle confirmation of "tap to another, as left" message.
+///
 boolean Handle_Message_Confirm_Tap_To_Another_As_Right (Message* message) {
   Serial.println(">> Receiving CONFIRM_GESTURE_TAP_AS_RIGHT");
   

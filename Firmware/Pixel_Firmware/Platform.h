@@ -39,12 +39,12 @@ struct Platform {
 };
 //Platform platform;
 
-//! Channels are paths along which messages or data can be propagated, 
-//! captured, or exchanged. 
-//! For example, pins on a hardware platform (e.g., Arduino) are channels.
-//! Channels can also be a web socket, HTTP interface, memory, cloud 
-//! database, etc.
-//!
+/// Channels are paths along which messages or data can be propagated, 
+/// captured, or exchanged. 
+/// For example, pins on a hardware platform (e.g., Arduino) are channels.
+/// Channels can also be a web socket, HTTP interface, memory, cloud 
+/// database, etc.
+///
 struct Channel {
   int uid; // Universally unique ID
   
@@ -131,8 +131,8 @@ void setupPlatform () {
   Serial.print (" channels\n");
 }
 
-//! Create platform structures.
-//!
+/// Create platform structures.
+///
 Platform* Create_Platform () {
 //  Serial.println ("Create_Platform");
   
@@ -155,8 +155,8 @@ Platform* Create_Platform () {
   
 }
 
-//! Returns the channel on the specified platform with the specified address.
-//!
+/// Returns the channel on the specified platform with the specified address.
+///
 Channel* Get_Channel (Platform* platform, int address) {
   Serial.println ("Get_Channel");
   
@@ -188,10 +188,10 @@ Channel* Get_Channel (Platform* platform, int address) {
   
 }
 
-//! Creates a channel associated with the specified platform, available at the specified address.
-//!
-//! TODO: Change default "address" from 0 to something else, such as -1, which can mean "none".
-//!
+/// Creates a channel associated with the specified platform, available at the specified address.
+///
+/// TODO: Change default "address" from 0 to something else, such as -1, which can mean "none".
+///
 Channel* Create_Channel (Platform* platform, int address) {
 //  Serial.println ("Create_Channel");
   // i.e., "address" is a "pin"
@@ -318,8 +318,8 @@ void Update_Channel_Value (Channel* channel, int value) {
   // TODO: Return "none" if channel not found (if specified channel is NULL)
 }
 
-//! Gets the "current" value on the specified channel.
-//!
+/// Gets the "current" value on the specified channel.
+///
 int Get_Current_Channel_Value (Channel* channel) {
   Serial.println ("Get_Current_Channel_Value");
   
@@ -333,8 +333,8 @@ int Get_Current_Channel_Value (Channel* channel) {
   // TODO: Return "none" if channel not found (if specified channel is NULL)
 }
 
-//! Gets the value on the specified channel.
-//!
+/// Gets the value on the specified channel.
+///
 int Get_Channel_Value (Channel* channel) {
   Serial.println ("Get_Channel_Value");
   
