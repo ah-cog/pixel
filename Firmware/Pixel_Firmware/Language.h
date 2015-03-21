@@ -306,9 +306,9 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
   int spaceCount = getValueCount (split, ' ');
   String first   = getValue      (message, ' ', 0);
     
-  ///
-  /// Looper Engine (maps looper language behavioral constructs onto platform)
-  ///
+  //!
+  //! Looper Engine (maps looper language behavioral constructs onto platform)
+  //!
   
   if (first.compareTo ("create") == 0) {
     
@@ -343,7 +343,7 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
         Behavior* behavior = Create_Input_Behavior (substrate, pin, signal);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
         Sequence* sequence = (*substrate).sequences;
-        Sequence_Behavior (behavior, sequence, LAST_POSITION);
+        Sequence_Behavior (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
         
@@ -360,7 +360,7 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
         Behavior* behavior = Create_Output_Behavior (substrate, pin, signal, data);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
         Sequence* sequence = (*substrate).sequences;
-        Sequence_Behavior (behavior, sequence, LAST_POSITION);
+        Sequence_Behavior (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
         
@@ -375,7 +375,7 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
         Behavior* behavior = Create_Delay_Behavior (substrate, milliseconds);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
         Sequence* sequence = (*substrate).sequences;
-        Sequence_Behavior (behavior, sequence, LAST_POSITION);
+        Sequence_Behavior (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
         
@@ -393,7 +393,7 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
         Behavior* behavior = Create_Sound_Behavior (substrate, note, duration);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
         Sequence* sequence = (*substrate).sequences;
-        Sequence_Behavior (behavior, sequence, LAST_POSITION);
+        Sequence_Behavior (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
         
@@ -571,10 +571,37 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
     }
     
   } else {
+    
+//    Serial.println ("...FUTURE IMMEDIATE BEHAVIOR!");
+//    Process_Immediate_Message (message);
 
-        ///        
-        /// Check temporal modifier
-        ///
+
+        // Parse parameters
+        
+        // create behavior immediate change color to red
+        //                           ^
+        //                           index = 26
+//        String newMessage = message.substring (26);
+//        Serial.print ("IMMEDIATE BEHAVIOR:");
+//        Serial.println (message);
+        
+//        int note = getValue (split, ' ', 3).toInt ();
+//        int duration = getValue (split, ' ', 4).toInt ();
+////            String signal = getValue (split, ' ', 4);
+////            String data = getValue (split, ' ', 5);
+//        
+
+
+
+//        // Create behavior and add it to the behavior substrate
+//        Behavior* behavior = Create_Immediate_Behavior (substrate, message);
+////        (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
+//        Sequence* sequence = (*substrate).sequences;
+//        Update_Behavior_Sequence (behavior, sequence); // Add to behavior sequence
+
+        //!        
+        //! Check temporal modifier
+        //!
         
         if (message.endsWith (" now") == true) { // Check if the behavior is immediate...
           message = message.substring (0, message.lastIndexOf (" now")); // Remove "now" from last part of string
@@ -584,7 +611,7 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
           Behavior* behavior = Create_Immediate_Behavior (substrate, message);
 //          (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
           Sequence* sequence = (*substrate).sequences;
-          Sequence_Behavior (behavior, sequence, LAST_POSITION); // Add to behavior sequence
+          Sequence_Behavior (behavior, sequence); // Add to behavior sequence
           
           resultUuid = (*behavior).uid;
         }
@@ -608,9 +635,9 @@ void Process_Immediate_Message (String message) {
   int spaceCount = getValueCount (split, ' ');
   String first = getValue (message, ' ', 0);
   
-  ///
-  /// Parse and process the message
-  ///
+  //!
+  //! Parse and process the message
+  //!
   
   // TODO: Conver the following to behaviors or to Looper behaviors
   
@@ -1052,7 +1079,7 @@ void Process_Immediate_Message (String message) {
     
     int wordCount = getValueCount (message, ' ');
     
-    /// Send to specific module
+    //! Send to specific module
     if (wordCount > 1) {
       
       String secondWord = getValue (message, ' ', 1);
@@ -1071,7 +1098,7 @@ void Process_Immediate_Message (String message) {
       
     } 
     
-    /// Broadcast
+    //! Broadcast
     else {
       
       // TODO: Send module to remote module to set up its "messageSourceModule"

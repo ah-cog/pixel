@@ -4,9 +4,9 @@
 #include "Behavior.h"
 #include "Platform.h"
 
-///
-/// Looper Engine
-///
+//!
+//! Looper Engine
+//!
 
 Substrate* Create_Substrate ();
 Sequence* Create_Sequence (Substrate* substrate);
@@ -59,8 +59,8 @@ void Process_Immediate_Message (String message); // HACK
 // TODO: Deeper_Delete_Behavior/Network_Delete_Behavior (i.e., (1) deep delete behavior and (2) delete everything that was connected to it and everything that was connected to the things connected to it)
 // Dissociate_Behavior
 
-/// Setup the Looper engine.
-///
+//! Setup the Looper engine.
+//!
 boolean Setup_Looper () {
   
   // Create behavior substrate
@@ -85,15 +85,15 @@ boolean Setup_Looper () {
   return true;
 }
 
-/// Generate and return the UUID.
-///
+//! Generate and return the UUID.
+//!
 long Generate_Uuid () {
   long uuid = random (65000L);
   return uuid;
 }
 
-/// Create behavior substrate
-///
+//! Create behavior substrate
+//!
 Substrate* Create_Substrate () {
   
   // Create substrate
@@ -108,9 +108,9 @@ Substrate* Create_Substrate () {
   
 }
 
-/// Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
-/// behavior to be executed by a performer for the substrate.
-///
+//! Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
+//! behavior to be executed by a performer for the substrate.
+//!
 Sequence* Get_Substrate_Sequences (Substrate* substrate) {
   Sequence* sequences = NULL;
   
@@ -134,9 +134,9 @@ Sequence* Get_Substrate_Sequences (Substrate* substrate) {
   return sequences;
 }
 
-/// Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
-/// behavior to be executed by a performer for the substrate.
-///
+//! Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
+//! behavior to be executed by a performer for the substrate.
+//!
 Sequence* Get_Substrate_Behaviors (Substrate* substrate) {
   Sequence* sequences = NULL;
   
@@ -167,9 +167,9 @@ Sequence* Get_Substrate_Behaviors (Substrate* substrate) {
   return sequences;
 }
 
-/// Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
-/// behavior to be executed by a performer for the substrate.
-///
+//! Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
+//! behavior to be executed by a performer for the substrate.
+//!
 Sequence* Get_Substrate_Origin (Substrate* substrate) {
   Sequence* origin = NULL;
   
@@ -186,8 +186,8 @@ boolean Update_Substrate_Origin (Substrate* substrate, Sequence* origin) {
   }
 }
 
-/// Dissociates all references to the specified sequence and returns it.
-///
+//! Dissociates all references to the specified sequence and returns it.
+//!
 Sequence* Dissociate_Sequence (Sequence* sequence) {
 //  Sequence* sequence = NULL;
   if (sequence != NULL) {
@@ -223,8 +223,8 @@ Sequence* Dissociate_Sequence (Sequence* sequence) {
   return sequence;
 }
 
-///// Dissociates all references to the specified sequence and returns it.
-/////
+////! Dissociates all references to the specified sequence and returns it.
+////!
 //Behavior* Dissociate_Behavior (Behavior* behavior) {
 ////  Behavior* behavior = NULL;
 //  if (behavior != NULL) {
@@ -266,8 +266,8 @@ Sequence* Dissociate_Sequence (Sequence* sequence) {
 //  return sequence;
 //}
 
-/// Deletes the specified substrate. Removes all references to the substrate before deleting it.
-///
+//! Deletes the specified substrate. Removes all references to the substrate before deleting it.
+//!
 boolean Delete_Substrate (Substrate* substrate) {
   
   // TODO: Delete substrate "sequences" and "origin"
@@ -312,8 +312,8 @@ boolean Delete_Substrate (Substrate* substrate) {
   
 }
 
-/// Creates a sequence into which behaviors can be placed.
-///
+//! Creates a sequence into which behaviors can be placed.
+//!
 Sequence* Create_Sequence (Substrate* substrate) {
   Serial.println ("Create_Sequence");
   
@@ -345,8 +345,8 @@ int Get_Sequence_Type (Sequence* sequence) {
   return SEQUENCE_TYPE_NONE;
 }
 
-/// Deletes a sequence structure, freeing it from memory (specifically, from the heap).
-///
+//! Deletes a sequence structure, freeing it from memory (specifically, from the heap).
+//!
 boolean Delete_Sequence (Sequence* sequence) {
   
   if (sequence != NULL) {
@@ -394,8 +394,8 @@ boolean Delete_Sequence (Sequence* sequence) {
   
 }
 
-/// Adds the specified sequence to the specified substrate.
-///
+//! Adds the specified sequence to the specified substrate.
+//!
 boolean Contextualize_Sequence (Sequence* sequence, Substrate* substrate) {
   
   // Add sequence to substrate
@@ -429,8 +429,8 @@ boolean Contextualize_Sequence (Sequence* sequence, Substrate* substrate) {
   
 }
 
-/// Removes the specified sequence from the specified substrate.
-///
+//! Removes the specified sequence from the specified substrate.
+//!
 boolean Decontextualize_Sequence (Sequence* sequence, Substrate* substrate) {
   
   // Update behavior topology
@@ -465,12 +465,9 @@ boolean Decontextualize_Sequence (Sequence* sequence, Substrate* substrate) {
   return true;
 }
 
-#define FIRST_POSITION 0
-#define LAST_POSITION -1
-
-/// Adds the specified behavior to the specified sequence.
-///
-boolean Sequence_Behavior (Behavior* behavior, Sequence* sequence, int index) {
+//! Adds the specified behavior to the specified sequence.
+//!
+boolean Sequence_Behavior (Behavior* behavior, Sequence* sequence) {
   Serial.println ("Sequence_Behavior");
   
   Serial.print ("\tsequence type: "); Serial.print ((*sequence).type); Serial.print ("\n");
@@ -487,23 +484,9 @@ boolean Sequence_Behavior (Behavior* behavior, Sequence* sequence, int index) {
     
     // Get the last behavior in the loop
     Behavior* lastBehavior = (*sequence).behavior;
-    
-    if (index == LAST_POSITION) {
-      while ((*lastBehavior).next != NULL) {
-        Serial.println("Next (again)");
-        lastBehavior = (*lastBehavior).next;
-      }
-    } else { // Insert the behavior at the specified index
-      int currentIndex = 0;
-      while ((*lastBehavior).next != NULL) {
-        if (currentIndex == index) {
-          break;
-        }
-        
-        Serial.println("Next (again)");
-        lastBehavior = (*lastBehavior).next;
-        currentIndex++;
-      }
+    while ((*lastBehavior).next != NULL) {
+      Serial.println("Next (again)");
+      lastBehavior = (*lastBehavior).next;
     }
     
     // Insert at end of the list (iterate to find the last behavior)
@@ -518,8 +501,8 @@ boolean Sequence_Behavior (Behavior* behavior, Sequence* sequence, int index) {
   
 }
 
-/// Removes the specified behavior from the specified sequence
-///
+//! Removes the specified behavior from the specified sequence
+//!
 boolean Desequence_Behavior (Behavior* behavior, Sequence* sequence) {
   
   // Update behavior topology
@@ -558,8 +541,8 @@ boolean Desequence_Behavior (Behavior* behavior, Sequence* sequence) {
 // TODO: Remove Language behavior?
 // TODO: Update Delay to Time behavior
 
-/// Creates an Output
-///
+//! Creates an Output
+//!
 Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, String data) {
   
   Behavior* behavior = NULL;
@@ -643,14 +626,14 @@ Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, 
   return behavior;
 }
 
-/// Returns the Output schema for the Behavior.
-///
+//! Returns the Output schema for the Behavior.
+//!
 Output* Get_Output_Behavior (Behavior* behavior) {
   return ((Output*) (*behavior).schema);
 }
 
-/// Creates an Input
-///
+//! Creates an Input
+//!
 Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal) {
   
   Behavior* behavior = NULL;
@@ -722,8 +705,8 @@ Input* Get_Input_Behavior (Behavior* behavior) {
   return ((Input*) (*behavior).schema);
 }
 
-/// Creates an Output
-///
+//! Creates an Output
+//!
 Behavior* Create_Delay_Behavior (Substrate* substrate, int milliseconds) {
   
   Behavior* behavior = NULL;
@@ -787,8 +770,8 @@ Delay* Get_Delay_Behavior (Behavior* behavior) {
   return ((Delay*) (*behavior).schema);
 }
 
-/// Creates a Sound
-///
+//! Creates a Sound
+//!
 Behavior* Create_Sound_Behavior (Substrate* substrate, int note, int duration) {
   
   Behavior* behavior = NULL;
@@ -859,8 +842,8 @@ Sound* Get_Sound_Behavior (Behavior* behavior) {
   return ((Sound*) (*behavior).schema);
 }
 
-/// Create message (i.e., a behavior transformation).
-///
+//! Create message (i.e., a behavior transformation).
+//!
 Behavior* Create_Immediate_Behavior (Substrate* substrate, String message) {
   
   Behavior* behavior = NULL;
@@ -1033,8 +1016,8 @@ boolean Delete_Behavior_Schema (Behavior* behavior) { // i.e., Delete_Schema_By_
   
 }
 
-/// Deletes all behaviors in the specified sequence
-///
+//! Deletes all behaviors in the specified sequence
+//!
 boolean Delete_Sequence_Behaviors (Sequence* sequence) {
   Serial.println ("Delete_Sequence_Behaviors");
   
@@ -1089,8 +1072,8 @@ boolean Delete_Sequence_Behaviors (Sequence* sequence) {
   
 }
 
-/// Shows all behaviors in the specified sequence
-///
+//! Shows all behaviors in the specified sequence
+//!
 boolean Show_Sequence_Behaviors (Sequence* sequence) {
   Serial.println ("Show_Sequence_Behaviors");
   
@@ -1214,9 +1197,9 @@ boolean Delete_Behavior_By_Address (int uid) {
 
 
 
-///
-/// Behavior Performer
-///
+//!
+//! Behavior Performer
+//!
 
 // Create_Performer
 // Get_Performer_Substrate
@@ -1225,17 +1208,17 @@ boolean Delete_Behavior_By_Address (int uid) {
 // Continue_Performance
 // Perform_Behavior
 
-/// Behavior Performer
-///
-/// The "behavior performer" is something like a program counter. It is what 
-/// follows a path of behavior to its conclusion (if any). In a sense, it's like
-/// a game piece used in a board came. There can be multiple performers.
-///
-/// Performs run according to their own time-scale. That is, one can perform 
-/// a sequence of actions faster than another.
-///
-/// TODO: Give each performer it's own memory, performance history... essentially its own state and history, as if it is a "Computer" running the behavior.
-///
+//! Behavior Performer
+//!
+//! The "behavior performer" is something like a program counter. It is what 
+//! follows a path of behavior to its conclusion (if any). In a sense, it's like
+//! a game piece used in a board came. There can be multiple performers.
+//!
+//! Performs run according to their own time-scale. That is, one can perform 
+//! a sequence of actions faster than another.
+//!
+//! TODO: Give each performer it's own memory, performance history... essentially its own state and history, as if it is a "Computer" running the behavior.
+//!
 struct Performer {
   int uid;
   Substrate* substrate;
@@ -1249,9 +1232,9 @@ struct Performer {
 //  Device* device; // i.e., The device upon which the performance will take place.
 };
 
-/// Queue the outgoing message.
-/// Returns the queue size.
-///
+//! Queue the outgoing message.
+//! Returns the queue size.
+//!
 int Queue_Immediate_Behavior (Performer* performer, Behavior* behavior) {
   Serial.println ("Queue_Immediate_Behavior");
 
@@ -1299,8 +1282,8 @@ int Queue_Immediate_Behavior (Performer* performer, Behavior* behavior) {
   
 }
 
-/// Dequeue the next outgoing message.
-///
+//! Dequeue the next outgoing message.
+//!
 Behavior* Dequeue_Immediate_Behavior (Performer* performer) {
   Serial.println ("Dequeue_Immediate_Behavior");
   
@@ -1328,8 +1311,8 @@ Behavior* Dequeue_Immediate_Behavior (Performer* performer) {
   
 }
 
-///// Behavior Performer Dialect (e.g., Teensy, Arduino)
-/////
+////! Behavior Performer Dialect (e.g., Teensy, Arduino)
+////!
 //struct TeensyPerformer {
 //  int uid;
 //  Substrate* substrate;
@@ -1341,8 +1324,8 @@ Behavior* Dequeue_Immediate_Behavior (Performer* performer) {
 ////  Device* device; // i.e., The device upon which the performance will take place.
 //};
 
-/// Creates a behavior performer in the specified substrate.
-///
+//! Creates a behavior performer in the specified substrate.
+//!
 Performer* Create_Performer (Substrate* substrate) {
   Serial.println ("Create_Performer");
   
@@ -1376,9 +1359,9 @@ Performer* Create_Performer (Substrate* substrate) {
   return performer;
 }
 
-/// Starts the Performer's behavior performance. This is essentially a behavior
-/// interpreter (i.e., analogous to a JavaScript interpreter).
-///
+//! Starts the Performer's behavior performance. This is essentially a behavior
+//! interpreter (i.e., analogous to a JavaScript interpreter).
+//!
 boolean Perform_Behavior (Performer* performer) {
   // Serial.println ("Perform_Behavior");
   
@@ -1724,15 +1707,15 @@ boolean Perform_Behavior_On_Platform (Behavior* behavior) {
   
 }
 
-///
-/// Behavior Propagator
-///
+//!
+//! Behavior Propagator
+//!
 
 #define PROPAGATION_SIZE 32
 
-/// Transformation (i.e., Transformation) to propagate.
-///
-/// TODO: Rename to Transformation
+//! Transformation (i.e., Transformation) to propagate.
+//!
+//! TODO: Rename to Transformation
 struct Transformation {
   // String data;
   char* data;
@@ -1742,14 +1725,14 @@ struct Transformation {
   Transformation* next;
 };
 
-/// Propagator of behavior transformations.
-///
+//! Propagator of behavior transformations.
+//!
 struct Propagator {
   Transformation* transformation;
 };
 
-/// Create behavior transformation propagator.
-///
+//! Create behavior transformation propagator.
+//!
 Propagator* Create_Propagator () {
   
   Serial.println ("Create_Propagator");
@@ -1765,8 +1748,8 @@ Propagator* Create_Propagator () {
   
 }
 
-/// Deletes the propagator from dynamic memory.
-///
+//! Deletes the propagator from dynamic memory.
+//!
 boolean Delete_Propagator (Propagator* propagator) {
   
   Serial.println ("Delete_Propagator");
@@ -1786,8 +1769,8 @@ boolean Delete_Propagator (Propagator* propagator) {
   
 }
 
-/// Create transformation (i.e., a behavior transformation).
-///
+//! Create transformation (i.e., a behavior transformation).
+//!
 Transformation* Create_Transformation (String data) {
   
   Serial.println ("Create_Transformation");
@@ -1824,8 +1807,8 @@ String Get_Transformation_Data (Transformation* transformation) {
   
 }
 
-/// Frees the Transformation from dynamic memory.
-///
+//! Frees the Transformation from dynamic memory.
+//!
 boolean Delete_Transformation (Transformation* transformation) {
   
   Serial.println ("Delete_Transformation");
@@ -1844,8 +1827,8 @@ boolean Delete_Transformation (Transformation* transformation) {
   
 }
 
-/// Queue the transformation for transformation.
-///
+//! Queue the transformation for transformation.
+//!
 Transformation* Queue_Transformation (Propagator* propagator, Transformation* transformation) {
   
   Serial.println ("Queue_Transformation");
@@ -1891,8 +1874,8 @@ Transformation* Queue_Transformation (Propagator* propagator, Transformation* tr
   
 }
 
-/// Pop transformation off the propagator's stack
-///
+//! Pop transformation off the propagator's stack
+//!
 Transformation* Dequeue_Transformation (Propagator* propagator) {
   
   Serial.println ("Dequeue_Transformation");
@@ -1923,8 +1906,8 @@ Transformation* Dequeue_Transformation (Propagator* propagator) {
 // TODO: #define AURAL_CHANNEL 2
 // TODO: #define TEXTUAL_CHANNEL 3
 
-/// Propagate the next message in the queue on the specified channel.
-///
+//! Propagate the next message in the queue on the specified channel.
+//!
 boolean Propagate (Propagator* propagator, int channel) {
   
   Serial.println ("Propagate");
@@ -1965,9 +1948,9 @@ boolean Propagate (Propagator* propagator, int channel) {
 
 
 
-///
-/// Miscellaneous
-///
+//!
+//! Miscellaneous
+//!
 
 //struct TransformationBuffer {
 //  

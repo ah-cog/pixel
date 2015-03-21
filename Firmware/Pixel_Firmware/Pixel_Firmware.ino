@@ -249,54 +249,47 @@ void loop () {
   Get_Input_Port_Continuous ();
   // Serial.println(touchInputMean); // Output value for debugging (or manual calibration)
   
-  // TODO: Update the following input method to be one of multiple that can be swapped in an out depending on the type of input connected
+  if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
   
-  int inputType = 1; // e.g., 1 = INPUT_TYPE_CAPACITATIVE_SWITCH, 2 = INPUT_TYPE_RESISTIVE_SWITCH, 3 = INPUT_TYPE_DIGITAL_SWITCH
+    // Update input pin value to low (off)
+    Channel* moduleInputChannel = Get_Channel (platform, MODULE_INPUT_PIN);
+    Update_Channel_Value (moduleInputChannel, PIN_VALUE_HIGH);
+    Propagate_Channel_Value (moduleInputChannel);
   
-  if (inputType == 1) {
-    
-    if (touchInputMean > 3000 && lastInputValue <= 3000) { // Check if state changed to "pressed" from "not pressed"
-    
-      // Update input pin value to low (off)
-      Channel* moduleInputChannel = Get_Channel (platform, MODULE_INPUT_PIN);
-      Update_Channel_Value (moduleInputChannel, PIN_VALUE_HIGH);
-      Propagate_Channel_Value (moduleInputChannel);
-    
-      // Update output pin value to low (off)
-      if (outputPinRemote == false) {
-        // Output port is on this module!
-        //Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
-        Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-        Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
-        Propagate_Channel_Value (moduleOutputChannel);
-        Blink_Light (2);      
-      } else {
-        // Output port is on a different module than this one!
-        Blink_Light (3); // BUG! wrong number
-//        Queue_Message (BROADCAST_ADDRESS, ACTIVATE_MODULE_OUTPUT);
-        Queue_Message (platformUuid, BROADCAST_ADDRESS, String ("turn output on"));
-      }
-//      delay(500);
-    } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
-    
-      // Update input pin value to high (on)
-      Channel* moduleInputChannel = Get_Channel (platform, MODULE_INPUT_PIN);
-      Update_Channel_Value (moduleInputChannel, PIN_VALUE_LOW);
-      Propagate_Channel_Value (moduleInputChannel);
-    
-      // Update output pin value to high (on)
-      if (outputPinRemote == false) {
-//        Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
-//        syncPinValue(MODULE_OUTPUT_PIN);
-        Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-        Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
-        Propagate_Channel_Value (moduleOutputChannel);
-      } else {
-//        Queue_Message (BROADCAST_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
-        Queue_Message (platformUuid, BROADCAST_ADDRESS, String ("turn output off"));
-      }
-//      delay(500);
+    // Update output pin value to low (off)
+    if (outputPinRemote == false) {
+      // Output port is on this module!
+      //Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
+      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
+      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
+      Propagate_Channel_Value (moduleOutputChannel);
+      Blink_Light (2);      
+    } else {
+      // Output port is on a different module than this one!
+      Blink_Light (3); // BUG! wrong number
+//      Queue_Message (BROADCAST_ADDRESS, ACTIVATE_MODULE_OUTPUT);
+      Queue_Message (platformUuid, BROADCAST_ADDRESS, String ("turn output on"));
     }
+//    delay(500);
+  } else if (touchInputMean <= 3000 && lastInputValue > 3000) { // Check if state changed to "not pressed" from "pressed"
+  
+    // Update input pin value to high (on)
+    Channel* moduleInputChannel = Get_Channel (platform, MODULE_INPUT_PIN);
+    Update_Channel_Value (moduleInputChannel, PIN_VALUE_LOW);
+    Propagate_Channel_Value (moduleInputChannel);
+  
+    // Update output pin value to high (on)
+    if (outputPinRemote == false) {
+//      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
+//      syncPinValue(MODULE_OUTPUT_PIN);
+      Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
+      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
+      Propagate_Channel_Value (moduleOutputChannel);
+    } else {
+//      Queue_Message (BROADCAST_ADDRESS, DEACTIVATE_MODULE_OUTPUT);
+      Queue_Message (platformUuid, BROADCAST_ADDRESS, String ("turn output off"));
+    }
+//    delay(500);
   }
 
   // TODO: Send updated state of THIS board (master) to the OTHER board (slave) for caching.
@@ -332,9 +325,9 @@ void loop () {
     Light_Apply_Color ();
   }
   
-  ///
-  /// Get data from mesh network
-  ///
+  //!
+  //! Get data from mesh network
+  //!
   
   unsigned long currentTime = millis ();
   
@@ -449,7 +442,7 @@ void loop () {
 //        classifiedGestureIndex = 1;
 //      }
 
-      if (classifiedGestureIndex == 4) { // Ignore "shake" gesture if not yet swung
+      if (classifiedGestureIndex == 4) { // Ignore shake gesture if not yet swung
         // TODO: Check if has a "remote output", and if so, then DO NOT ignore the swing gesture.
         if (hasSwung == false) {
           if (outputPinRemote == true) {
@@ -464,7 +457,7 @@ void loop () {
         }
       } else if (classifiedGestureIndex == 1) { // If has swung, don't allow another swing if already swung (no effect)
         if (hasSwung) {
-//          classifiedGestureIndex = previousClassifiedGestureIndex;
+          classifiedGestureIndex = previousClassifiedGestureIndex;
         }
       }
       
@@ -479,6 +472,10 @@ void loop () {
       
       
       
+      
+//      // Parse parameters
+//      String key = getValue (split, ' ', 3);
+//      String value = getValue (split, ' ', 4);
   
       // Send module to remote module to set up its "messageSourceModule"
       Memory* memory = Update_Memory (String ("latest-gesture"), String (gestureName[classifiedGestureIndex])); // Memory* memory = Create_Memory (key, value);
@@ -509,9 +506,6 @@ void loop () {
   // Process gestures. Perform the action associated with the gesture.
   //
   
-  // TODO: Enable repeat gestures!
-  // TODO: Then try... interpret "shake" as "swing" and just use swing with 4 modes (dot, line, loop, none)
-  
   // Process current gesture (if it hasn't been processed yet)
   if (hasGestureChanged) { // Only executed when the gesture has changed
     if (!hasGestureProcessed) { // Only executed when the gesture hasn't yet been processed
@@ -522,9 +516,11 @@ void loop () {
       } else if (classifiedGestureIndex == 1) { // Check if gesture is "swing"
         Handle_Gesture_Swing ();
       } else if (classifiedGestureIndex == 2) { // Check if gesture is "tap to another, as left"
-        Handle_Gesture_Tap (); // Handle_Gesture_Tap_As_Left ();
+        Handle_Gesture_Tap ();
+        // Handle_Gesture_Tap_As_Left ();
       } else if (classifiedGestureIndex == 3) { // Check if gesture is "tap to another, as right"
-        Handle_Gesture_Tap (); // Handle_Gesture_Tap_As_Right ();
+        Handle_Gesture_Tap ();
+        // Handle_Gesture_Tap_As_Right ();
       } else if (classifiedGestureIndex == 4) { // Check if gesture is "shake"
         Handle_Gesture_Shake ();
       } else if (classifiedGestureIndex == 5) { // Check if gesture is "tilt left"
@@ -545,7 +541,7 @@ void loop () {
   // Process incoming messages in queue (if any)
   //
   
-  if (incomingMessageQueue != NULL) { /// Check if there are any received messages to be processed
+  if (incomingMessageQueue != NULL) { //! Check if there are any received messages to be processed
     
     // Get the next message on the queue of incoming messages
     Message* message = Dequeue_Incoming_Message ();

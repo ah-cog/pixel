@@ -270,8 +270,8 @@ int Dequeue_Light_Behavior () {
   return -1;
 }
 
-/// Update the module's input and output color.
-///
+//! Update the module's input and output color.
+//!
 void Apply_Color (uint8_t wait) {
 //  for (uint16_t i = 0; i < strip.numPixels (); i++) {
 //      strip.setPixelColor (i, c);
@@ -282,8 +282,8 @@ void Apply_Color (uint8_t wait) {
   Apply_Output_Color (strip.Color (outputBrightness * outputColor[0], outputBrightness * outputColor[1], outputBrightness * outputColor[2]), wait);
 }
 
-/// Update the module's input and output color.
-///
+//! Update the module's input and output color.
+//!
 void Apply_Input_Color (uint32_t c, uint8_t wait) {
 //  uint32_t c = strip.Color (red, green, blue);
 //  uint8_t wait = COLOR_MIX_DELAY;
@@ -294,8 +294,8 @@ void Apply_Input_Color (uint32_t c, uint8_t wait) {
   }
 }
 
-/// Update the module's input and output color.
-///
+//! Update the module's input and output color.
+//!
 void Apply_Output_Color (uint32_t c, uint8_t wait) {
 //  uint32_t c = strip.Color (red, green, blue);
 //  uint8_t wait = COLOR_MIX_DELAY;
@@ -306,8 +306,8 @@ void Apply_Output_Color (uint32_t c, uint8_t wait) {
   }
 }
 
-/// Update the module's input color.
-///
+//! Update the module's input color.
+//!
 void Update_Input_Color (int red, int green, int blue) {
   
   // Update input color
@@ -324,8 +324,8 @@ void Update_Input_Color (int red, int green, int blue) {
   
 }
 
-/// Update the module's output color.
-///
+//! Update the module's output color.
+//!
 void Update_Output_Color (int red, int green, int blue) {
   
   // Update output color
@@ -342,15 +342,15 @@ void Update_Output_Color (int red, int green, int blue) {
   
 }
 
-/// Initializes the module's color
-///
+//! Initializes the module's color
+//!
 boolean setupColor () {
   strip.begin ();
   strip.show (); // Initialize all pixels to 'off'
 }
 
-/// Sets the module's default, unique color.
-///
+//! Sets the module's default, unique color.
+//!
 void Update_Module_Color (int red, int green, int blue) {
   defaultModuleColor[0] = red;
   defaultModuleColor[1] = green;
@@ -365,16 +365,16 @@ void Update_Module_Color (int red, int green, int blue) {
 //  targetOutputColor[2] = defaultModuleColor[2];
 }
 
-/// Sets the module's sequence color
-///
+//! Sets the module's sequence color
+//!
 void setSequenceColor (int red, int green, int blue) {
   sequenceColor[0] = red;
   sequenceColor[1] = green;
   sequenceColor[2] = blue;
 }
 
-/// Sets the desired color of the module
-///
+//! Sets the desired color of the module
+//!
 void Update_Color (int red, int green, int blue) {
   
   // Update input color
@@ -394,14 +394,14 @@ void Update_Color (int red, int green, int blue) {
   
 }
 
-/// Sets the color of the module to it's default color
-///
+//! Sets the color of the module to it's default color
+//!
 void Update_Module_Color () {
   Update_Color (defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
 }
 
-/// Performs one step of crossfading the LED's current color to the specified color
-///
+//! Performs one step of crossfading the LED's current color to the specified color
+//!
 void crossfadeColorStep (int red, int green, int blue) {
   //for (int i = 0; i <= 255; i++) {
   if (crossfadeStep <= 255) {
@@ -455,15 +455,15 @@ void crossfadeColorStep (int red, int green, int blue) {
   }
 }
 
-/// Performs one step of crossfading the LED's current color to the current target co
-///
+//! Performs one step of crossfading the LED's current color to the current target co
+//!
 void crossfadeColorStep () {
   //crossfadeColorStep (targetColor[0], targetColor[1], targetColor[2]);
   crossfadeColorStep (targetInputColor[0], targetInputColor[1], targetInputColor[2]);
 }
 
-/// Gradually transition from the current color to the specified color.
-///
+//! Gradually transition from the current color to the specified color.
+//!
 void crossfadeColor (int red, int green, int blue) {
   
 //  targetColor[0] = red; // abs(red - 255);
@@ -478,8 +478,8 @@ void crossfadeColor (int red, int green, int blue) {
   // crossfadeColorStep(targetColor[0], targetColor[1], targetColor[2]); // TODO: Move this to the main loop, but generalized, so animation happens "simultaneously" with gesture recognition, so it's very responsive to gesture and movement.
 }
 
-/// Physically changes the color of the LED by setting the PWM pins.
-///
+//! Physically changes the color of the LED by setting the PWM pins.
+//!
 void applyColor (int applicationMethod) {
   if (applicationMethod == COLORING_MODE_CUT) {
     
@@ -502,8 +502,8 @@ void applyColor (int applicationMethod) {
   }
 }
 
-/// Blinks the lights the specified number of times.
-///
+//! Blinks the lights the specified number of times.
+//!
 void Blink_Light (int count) {
   for (int i = 0; i < count; i++) {
     Queue_Light_Behavior (LIGHT_BEHAVIOR_ON);
@@ -515,15 +515,15 @@ void Blink_Light (int count) {
   }
 }
 
-/// Make the light blink until it is manually stopped.
-///
+//! Make the light blink until it is manually stopped.
+//!
 void Start_Blink_Light () {
 //  Serial.println ("startBlinkLight");
   Queue_Light_Behavior (GENERATE_LIGHT_BEHAVIOR_BLINK_100MS);
 }
 
-/// Make the light stop blinking.
-///
+//! Make the light stop blinking.
+//!
 boolean Stop_Blink_Light () {
 //  Serial.println ("stopBlinkLight");
   // TODO: 

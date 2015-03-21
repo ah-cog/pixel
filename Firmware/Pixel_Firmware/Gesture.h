@@ -35,7 +35,7 @@
 #define DEACTIVATE_MODULE_OUTPUT 21
 
 boolean classifyMostFrequentGesture = false;
-#define PREVIOUS_CLASSIFIED_GESTURE_COUNT 1
+#define PREVIOUS_CLASSIFIED_GESTURE_COUNT 10
 int previousClassifiedGestures[PREVIOUS_CLASSIFIED_GESTURE_COUNT];
 int previousClassifiedGestureCount = 0;
 
@@ -219,7 +219,6 @@ unsigned long lastSwingTimeout = 5000; // i.e., the time for which a response to
 //int compositionMode = false;
 //unsigned long compositionModeStartTime = 0;
 
-int swingCount = 0;
 boolean Handle_Gesture_Swing () {
 //  setColor(defaultModuleColor[0], defaultModuleColor[1], defaultModuleColor[2]);
 
@@ -227,16 +226,11 @@ boolean Handle_Gesture_Swing () {
 
   if (hasSwung == false) {
     
-    swingCount = 1;
-    
     if (lastSwingAddress != -1) { // i.e., another module has been swung
     
       Stop_Blink_Light ();
     
     } else {
-      
-      // TODO: Add the swung module to the group of swung modules (if not yet swung), or switch to the next sequencing mode (if already swung)
-      // TODO: Count the number of swings
     
       // Blink the lights
     //  blinkLight(3);
@@ -260,14 +254,7 @@ boolean Handle_Gesture_Swing () {
     
 //    Start_Focus ();
     
-  } else {
-    
-    swingCount = (swingCount + 1) % 4; // swingCount is between [1,3]
-    
   }
-  
-  Serial.print ("swing count = ");
-  Serial.println (swingCount);
   
   return true;
 }
