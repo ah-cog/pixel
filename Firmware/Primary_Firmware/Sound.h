@@ -129,7 +129,7 @@ void Play_Melody ();
 void Play_Note ();
 void Stop_Sound ();
 
-boolean setupSound () {
+boolean Setup_Sound () {
   
 //  Play_Melody ();
   Stop_Sound ();

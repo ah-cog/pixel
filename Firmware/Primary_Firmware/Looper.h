@@ -1594,7 +1594,7 @@ boolean Perform_Behavior_On_Platform (Behavior* behavior) {
       
       // TODO: Call device-specific routine (retreived from cloud to change the device itself).
       Channel* channel = Get_Channel (platform, (*output).pin);
-      Update_Channel_Value (channel, (*output).data);
+      Set_Channel_Value (channel, (*output).data);
 //        Get_Channel_Value (channel);
 //        Propagate_Channel_Value (channel);
       

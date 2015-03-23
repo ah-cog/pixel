@@ -51,13 +51,21 @@ boolean Setup_Input_Port () {
   for (int i = 0; i < SAMPLE_CAPACITY; i++) {
     samples[i] = 0;
   }
+  
+  return true; // Setup was successful
+  
 }
+
+// TODO: Update the parameter to be an actual Channel structure
+double Get_Capacitive_Input_Continuous (int inputPin) {
   
-void Get_Input_Port_Continuous () {
+  // Store current value on the channel's timeline
+  lastInputValue = touchInputMean; // Store the previous input value in history
   
+  // Update the channel wit hthe current value
   tStart = millis();
 //  for (int i = 0; i < TOUCH_SAMPLES && ((millis() - tStart) < TOUCH_TIMEOUT); i++) {
-    x = touchRead(MODULE_INPUT_PIN); // Read touch value on pin
+    x = touchRead (inputPin); // Read touch value on pin
     
     // Calculate the sum of the samples data
 //    datSum += x;
@@ -86,49 +94,52 @@ void Get_Input_Port_Continuous () {
 //  Serial.println(stdev, 3);
   
   touchInputMean = mean;
-}
-
-void Get_Input_Port () {
-  int t1;
-  long tStart;  // starting time
-  long datSum;  // reset our accumulated sum of input values to zero
-  int sMax;
-  int sMin;
-  long n;            // count of how many readings so far
-  double x, mean, delta, sumsq, m2, variance, stdev;  // to calculate standard deviation
-
-  datSum = 0;
-  sumsq = 0; // initialize running squared sum of differences
-  n = 0;     // have not made any ADC readings yet
-  mean = 0; // start off with running mean at zero
-  m2 = 0;
-  sMax = 0;
-  sMin = 65535;
-         
-  tStart = millis();
-  for (int i = 0; i < TOUCH_SAMPLES && ((millis() - tStart) < TOUCH_TIMEOUT); i++) {
-    x = touchRead(MODULE_INPUT_PIN);
-    datSum += x;
-    if (x > sMax) sMax = x;
-    if (x < sMin) sMin = x;
-          // from http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
-    n++;
-    delta = x - mean;
-    mean += delta/n;
-    m2 += (delta * (x - mean));
-  }
-  variance = m2 / (n-1);  // (n-1):Sample Variance  (n): Population Variance
-  stdev = sqrt(variance);  // Calculate standard deviation
-
-//  Serial.print(mean);
-//  Serial.print(", ");  
-//  Serial.print(n);
-//  Serial.print(", ");  
-//  Serial.print(sMax - sMin);
-//  Serial.print(", ");  
-//  Serial.println(stdev, 3);
   
-  touchInputMean = mean;
+  return touchInputMean;
 }
+
+//void Get_Input_Port () {
+//  
+//  int t1;
+//  long tStart;  // starting time
+//  long datSum;  // reset our accumulated sum of input values to zero
+//  int sMax;
+//  int sMin;
+//  long n;            // count of how many readings so far
+//  double x, mean, delta, sumsq, m2, variance, stdev;  // to calculate standard deviation
+//
+//  datSum = 0;
+//  sumsq = 0; // initialize running squared sum of differences
+//  n = 0;     // have not made any ADC readings yet
+//  mean = 0; // start off with running mean at zero
+//  m2 = 0;
+//  sMax = 0;
+//  sMin = 65535;
+//         
+//  tStart = millis();
+//  for (int i = 0; i < TOUCH_SAMPLES && ((millis() - tStart) < TOUCH_TIMEOUT); i++) {
+//    x = touchRead(MODULE_INPUT_PIN);
+//    datSum += x;
+//    if (x > sMax) sMax = x;
+//    if (x < sMin) sMin = x;
+//          // from http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+//    n++;
+//    delta = x - mean;
+//    mean += delta/n;
+//    m2 += (delta * (x - mean));
+//  }
+//  variance = m2 / (n-1);  // (n-1):Sample Variance  (n): Population Variance
+//  stdev = sqrt(variance);  // Calculate standard deviation
+//
+////  Serial.print(mean);
+////  Serial.print(", ");  
+////  Serial.print(n);
+////  Serial.print(", ");  
+////  Serial.print(sMax - sMin);
+////  Serial.print(", ");  
+////  Serial.println(stdev, 3);
+//  
+//  touchInputMean = mean;
+//}
 
 #endif

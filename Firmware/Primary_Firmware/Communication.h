@@ -3,7 +3,7 @@
 
 #define MESH_SERIAL Serial1
 
-boolean setupCommunication () {
+boolean Setup_Communication () {
   MESH_SERIAL.begin (9600);
 }
 

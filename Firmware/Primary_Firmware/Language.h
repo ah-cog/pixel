@@ -227,7 +227,7 @@ long Process_Message (Message* message) {
 //      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
 //      syncPinValue(MODULE_OUTPUT_PIN);
       Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
+      Set_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
       Propagate_Channel_Value (moduleOutputChannel);
     } else if (strncmp ((*message).content, "turn output off", (*message).size) == 0) { // deactivate module output
       Serial.println ("turn output off");
@@ -235,7 +235,7 @@ long Process_Message (Message* message) {
 //      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
 //      syncPinValue(MODULE_OUTPUT_PIN);
       Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
+      Set_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
       Propagate_Channel_Value (moduleOutputChannel);
       
     } else {
@@ -674,10 +674,6 @@ void Process_Immediate_Message (String message) {
       Queue_Incoming_Message (selfMessage);
 //      Perform_Shell_Behavior (outgoingMessageContent);
     }
-    
-  } else if (firstWord.compareTo ("ip") == 0) {
-    
-    Serial.println (ipAddress);
     
   } else if (firstWord.compareTo ("self") == 0) { // self
     
