@@ -1,16 +1,6 @@
 #ifndef BEHAVIOR_H
 #define BEHAVIOR_H
 
-//// Instruction operation codes (op. codes)
-//#define PIN_READ_DIGITAL 0
-//#define PIN_WRITE_DIGITAL 1
-//#define BEHAVIOR_DELAY 2
-//#define BEHAVIOR_ERASE 3
-//#define BEHAVIOR_DELETE 4
-//#define BEHAVIOR_UPDATE 5
-//#define BEHAVIOR_REBOOT 20
-//#define STATUS_WIFI_CONNECTED 30
-
 // Behavior Transformations
 #define CREATE 1
 #define GET 2
@@ -47,11 +37,12 @@
 #define BEHAVIOR_TYPE_DELAY  3
 
 #define BEHAVIOR_TYPE_SOUND  4 // TODO: Make this a "user defined" behavior in Looper
-#define BEHAVIOR_TYPE_MOTION  5 // TODO: Make this a "user defined" behavior in Looper
+#define BEHAVIOR_TYPE_MOTION 5 // TODO: Make this a "user defined" behavior in Looper
 
-#define BEHAVIOR_TYPE_IMMEDIATE  6 // TODO: Hack... consider removing this "message" behavior
+#define BEHAVIOR_TYPE_IMMEDIATE 6 // TODO: Hack... consider removing this "message" behavior
+#define BEHAVIOR_TYPE_ABSTRACT  7
 
-struct Substrate;
+struct Context;
 struct Sequence;
 //struct Point; // or "Dot"
 //struct Line;
@@ -60,6 +51,11 @@ struct Behavior;
 struct Input;
 struct Output;
 struct Delay;
+
+// Perspective:
+// TODO: Create "Perspective" with pointers to Contexts, etc. as the intermediary for interacting with Contexts, Sequences, Behaviors, etc.
+Context* context = NULL;
+Sequence* currentSequence = NULL;
 
 int behaviorCount = 0;
 
@@ -70,15 +66,15 @@ int Generate_Behavior_Identifier () {
   return behaviorIdentifier;
 }
 
-// The "behavioral substrate" which provides an unconstrained context for behaviors.
-struct Substrate {
+// The "behavioral context" which provides an unconstrained context for behaviors.
+struct Context {
   // TOOD: List of sequences (i.e., loops)
-  Sequence* origin; // The start sequence (i.e., the first sequence to execute in the substrate)
+  Sequence* origin; // The start sequence (i.e., the first sequence to execute in the context)
   Sequence* sequences;
   
   // TODO: Implement previous and next
-  // Substrate* previous;
-  // Substrate* next;
+  // Context* previous;
+  // Context* next;
 };
 
 #define SEQUENCE_TYPE_NONE 0
@@ -90,7 +86,7 @@ struct Sequence {
   int uid;
   int type; // e.g., line or loop
   void* schema;
-  Substrate* substrate;
+  Context* context;
   
   Behavior* behavior; // The first behavior in the sequence
   int size;
@@ -99,7 +95,7 @@ struct Sequence {
   Sequence* next; // THe next sequence in the list
 };
 
-// The "looping" behavioral filter, providing dynamical/behavioral form within the general, unconstrained substrate.
+// The "looping" behavioral filter, providing dynamical/behavioral form within the general, unconstrained context.
 // This provides a constraining context (i.e., structure) for behaviors and sequences.
 struct Loop {
   boolean continuous; // set to true
@@ -116,8 +112,6 @@ struct Loop {
 //  boolean singleton;
 //};
 
-Substrate* substrate = NULL;
-
 struct Behavior {
   int uid; // The behavior's unique ID (uid will recur on other modules since it's just a counter associated with behaviors added)
   int type; // i.e., digital or analog
@@ -126,7 +120,7 @@ struct Behavior {
   // Activation conditions
   int conditionType; // 0 = NONE, 1 = <X> equals <Y>, 2 = <X> is not equal to <Y>
   
-  Substrate* substrate; // The substrate containing the behavior
+  Context* context; // The context containing the behavior
   
   Sequence* sequence; // The sequence containing the behavior (if any)
   
@@ -219,6 +213,15 @@ struct Immediate {
   
   int messageSize;
   char* message;
+};
+
+//! \struct Abstract
+//! The definition of the Sequence structure.
+//!
+struct Abstract { // Sequence_Behavior {
+  Behavior* behavior;
+  
+  Sequence* sequence;
 };
 
 // TODO: struct Periodic // i.e., a periodic behavior occurs every "x" seconds (converted from whatever unit of time is designated by the user)

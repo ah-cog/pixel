@@ -17,8 +17,9 @@ double touchInputMean = 0;
 boolean Setup_Input_Port ();
 
 boolean Setup_Ports () {
+  
   // Set up pin mode for I/O
-  pinMode(MODULE_OUTPUT_PIN, OUTPUT); // pinMode(13, OUTPUT);
+  pinMode (MODULE_OUTPUT_PIN, OUTPUT); // pinMode(13, OUTPUT);
   
   Setup_Input_Port ();
 }

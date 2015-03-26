@@ -115,7 +115,7 @@ void printData (void) {
     Serial.print(serialDataString);
 }
 
-void storeData() {
+void Store_Data () {
   
   // Shift points left by one
   if (gestureCandidateSize >= (GESTURE_CANDIDATE_SIZE - 1)) {
@@ -138,7 +138,7 @@ void storeData() {
   }
 }
 
-void storeDataAccelerometer() {
+void Store_Data_Accelerometer() {
   
   // Shift points left by one
   if (gestureCandidateSize >= (GESTURE_CANDIDATE_SIZE - 1)) {

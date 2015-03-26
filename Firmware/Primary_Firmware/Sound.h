@@ -1,9 +1,11 @@
 #ifndef SOUND_H
 #define SOUND_H
 
-/*************************************************
- * Public Constants
- *************************************************/
+#define SPEAKER_OUT_PIN A8
+
+//
+// Tone/Note Pitch Constants
+//
 
 #define NOTE_B0  31
 #define NOTE_C1  33
@@ -95,89 +97,74 @@
 #define NOTE_D8  4699
 #define NOTE_DS8 4978
 
+// Note durations:
+// e.g., 4 = quarter note, 8 = eighth note, etc.:
+#define QUARTER_NOTE 4
+#define EIGHTH_NOTE 8
 
-
-/*
-  Melody
- 
- Plays a melody 
- 
- circuit:
- * 8-ohm speaker on digital pin 8
- 
- created 21 Jan 2010
- modified 30 Aug 2011
- by Tom Igoe 
-
-This example code is in the public domain.
- 
- http://arduino.cc/en/Tutorial/Tone
- 
- */
-// #include "pitches.h"
-
-#define SPEAKER_OUT_PIN A8
-// notes in the melody:
-
-//int melody[] = { NOTE_C4, NOTE_G3,NOTE_G3, NOTE_A3, NOTE_G3,0, NOTE_B3, NOTE_C4 };
-int melody[] = { NOTE_C6, NOTE_C6, NOTE_C6, NOTE_C6 };
-
-// note durations: 4 = quarter note, 8 = eighth note, etc.:
-int noteDurations[] = { 4, 8, 4, 4 };
+int melodyNotes[] = { NOTE_C6, NOTE_C6, NOTE_C6, NOTE_C6 }; // Notes in a melody
+int melodyNoteDurations[] = { QUARTER_NOTE, EIGHTH_NOTE, QUARTER_NOTE, QUARTER_NOTE };
 
 void Play_Melody ();
 void Play_Note ();
 void Stop_Sound ();
 
+//
+// Initialize the speaker
+//
 boolean Setup_Sound () {
   
-//  Play_Melody ();
+  // Play_Melody ();
   Stop_Sound ();
   
   return true;
 }
 
+//
+// Play a melody
+// 
+// Iterate through the notes in the melody.
+//
 void Play_Melody () {
   
-  // iterate over the notes of the melody:
-  //for (int thisNote = 0; thisNote < 8; thisNote++) {
-  for (int thisNote = 0; thisNote < 4; thisNote++) {
+  int nodeCountInMelody = 4;
+  for (int thisNote = 0; thisNote < nodeCountInMelody; thisNote++) {
 
-    // to calculate the note duration, take one second 
-    // divided by the note type.
-    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-    int noteDuration = 1000/noteDurations[thisNote];
-    tone(SPEAKER_OUT_PIN, melody[thisNote],noteDuration);
+    // To calculate the note duration, take one second divided by the note type.
+    // e.g., Quarter note = 1000 / 4, Eighth note = 1000/8, etc.
+    int noteDuration = 1000 / melodyNoteDurations[thisNote];
+    tone (SPEAKER_OUT_PIN, melodyNotes[thisNote], noteDuration);
 
-    // to distinguish the notes, set a minimum time between them.
-    // the note's duration + 30% seems to work well:
+    // To help distinguish between notes, set a minimum time duration between sequential notes.
+    // Note: The note's duration + 30% seems to work well.
     int pauseBetweenNotes = noteDuration * 1.30;
-    delay(pauseBetweenNotes);
-    // stop the tone playing:
-    noTone(SPEAKER_OUT_PIN);
+    delay (pauseBetweenNotes);
+    noTone (SPEAKER_OUT_PIN); // Stop the tone playing
   }
 }
 
+//
+// Play a melody
+// 
+// Iterate through the notes in the melody.
+//
 // TODO: Make the prameters of this call correspond to an envelope filter like those in keyboards.
+//
 void Play_Note (int note, int duration) {
-//void playNote (int note) {
+  
   pinMode (SPEAKER_OUT_PIN, OUTPUT);
   
-  // to calculate the note duration, take one second 
-  // divided by the note type.
-  //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-//  int noteDuration = 1000 / noteDurations[thisNote];
-//  int noteDuration = 1000;
   tone (SPEAKER_OUT_PIN, note, duration);
 
-  // to distinguish the notes, set a minimum time between them.
-  // the note's duration + 30% seems to work well:
-//  int pauseBetweenNotes = noteDuration * 1.30;
+  // To help distinguish between notes, set a minimum time duration between sequential notes.
+  // Note: The note's duration + 30% seems to work well.
   delay (duration);
-  // stop the tone playing:
-  noTone (SPEAKER_OUT_PIN);
+  noTone (SPEAKER_OUT_PIN); // Stop the tone playing
 }
 
+//
+// Stop playing a sound.
+//
 void Stop_Sound () {
   noTone (SPEAKER_OUT_PIN);
   pinMode (SPEAKER_OUT_PIN, INPUT);

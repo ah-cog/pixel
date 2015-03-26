@@ -64,6 +64,9 @@ struct Channel {
   // TODO: Remove previousValue, replacing it by calls to the previous value in the timeline
   int previousValue; // i.e., the pervious value
   
+  // Channel Filter (e.g., capacitative):
+  int threshold;
+  
 //  int location; // Is it local or remote
   
   boolean isUpdated; // Denotes that the physical pin has been updated and it should be synced up with its virtual pins (and associated hardware).
@@ -223,6 +226,8 @@ Channel* Create_Channel (Platform* platform, int address) {
   (*channel).previous  = NULL;
   (*channel).next  = NULL;
   
+  (*channel).threshold = 2500; // for capacitative
+  
   // Generate UUID for the channel
   (*channel).uid  = 0; // (*channel).uid  = generateUuid ();
   (*channel).address = address;
@@ -318,7 +323,7 @@ void (*HwDigitalWrite)(unsigned char,unsigned char);
 // if input, update and buffer the value on the source of the input (e.g., pin)
 // if output, update the output source with the buffered value (after updating from the source of output?)
 void Update_Channel_Value (Channel* channel) {
-  Serial.println ("Update_Channel_Value");
+  // DEBUG: Serial.println ("Update_Channel_Value");
   
   if (channel != NULL) {
     
@@ -376,6 +381,18 @@ void Update_Channel_Value (Channel* channel) {
   // TODO: Return "none" if channel not found (if specified channel is NULL)
 }
 
+int Get_Channel_Switch_Threshold (Channel* channel) {
+  
+  if (channel != NULL) {
+    
+    return (*channel).threshold;
+    
+  }
+  
+  return NULL;
+  
+}
+
 int Get_Channel_Digital_Value (Channel* channel) {
   
   if (channel != NULL) {
@@ -389,12 +406,13 @@ int Get_Channel_Digital_Value (Channel* channel) {
       // DEBUG: Serial.println (touchInputMean); // Output value for debugging (or manual calibration)
       
       // Get the capacitative threshold for the specified channel
-      int capacitiveThresholdValue = 2500;
+//      int capacitiveThresholdValue = 2500;
       
       int currentValue = Get_Channel_Value (channel);
       int previousValue = Get_Channel_Previous_Value (channel);
+      int thresholdValue = Get_Channel_Switch_Threshold (channel);
       
-      if (currentValue > capacitiveThresholdValue && previousValue <= capacitiveThresholdValue) { // Check if state changed to "pressed" from "not pressed"
+      if (currentValue > thresholdValue && previousValue <= thresholdValue) { // Check if state changed to "pressed" from "not pressed"
       
         // Update input pin value to low (off)
   //        Channel* moduleInputChannel = Get_Channel (platform, MODULE_INPUT_PIN);
@@ -419,7 +437,7 @@ int Get_Channel_Digital_Value (Channel* channel) {
 
         return 1;
     
-      } else if (currentValue <= capacitiveThresholdValue && previousValue > capacitiveThresholdValue) { // Check if state changed to "not pressed" from "pressed"
+      } else if (currentValue <= thresholdValue && previousValue > thresholdValue) { // Check if state changed to "not pressed" from "pressed"
       
         // Update input pin value to high (on)
   //        Channel* moduleInputChannel = Get_Channel (platform, MODULE_INPUT_PIN);
@@ -477,7 +495,7 @@ void Set_Channel_Value (Channel* channel, int value) {
 //! Gets the "current" value on the specified channel.
 //!
 int Get_Channel_Value (Channel* channel) {
-  Serial.println ("Get_Channel_Value");
+  // DEBUG: Serial.println ("Get_Channel_Value");
   
   if (channel != NULL) {
     
@@ -492,7 +510,7 @@ int Get_Channel_Value (Channel* channel) {
 //! Gets the "current" value on the specified channel.
 //!
 int Get_Channel_Previous_Value (Channel* channel) {
-  Serial.println ("Get_Channel_Previous_Value");
+  // DEBUG: Serial.println ("Get_Channel_Previous_Value");
   
   if (channel != NULL) {
     

@@ -138,7 +138,7 @@ void Setup_Altimeter () {
  * Read the IMU sensor data and estimate the module's orientation. Orientation is 
  * estimated using the DCM (Direction Cosine Matrix).
  */
-boolean senseOrientation () {
+boolean Sense_Orientation () {
   
   if ((millis() - timer) >= 20) { // Main loop runs at 50Hz
     counter++;

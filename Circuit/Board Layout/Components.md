@@ -1,5 +1,7 @@
 # Components
 
+The following components are organized into lists named the same as the circuit board "layers."
+
 **Order**
 - (2x) Teensy 3.1 [SparkFun](https://www.sparkfun.com/products/12646)
 
@@ -11,7 +13,7 @@
 - (2x) 3.7V 500mAh Lithium Ion Polymer Battery [AdaFruit](https://www.adafruit.com/products/1578)
 
 **Movement**
-- MinIMU-9 v3 [Pololu](https://www.pololu.com/product/2468)
+- AltIMU-10 v4 [Pololu](https://www.pololu.com/product/2470)
 
 **Stimulus**
 - Piezo Speaker (PC Mount 12mm 2.048kHz) [SparkFun](https://www.sparkfun.com/products/7950)
