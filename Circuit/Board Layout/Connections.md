@@ -2,7 +2,7 @@
 
 This does not yet include the connections for an external battery, for the 5V and 3.3V voltage regulators, or JST switch.
 
-## Primary Teensy 3.1g
+## Primary Teensy 3.1
 
 In summary, the primary Teensy 3.1 connects to IMU, RGB LEDs, piezo speaker, Synapse module, and the secondary Teensy 3.1 (see below for its pinout).
 
@@ -17,9 +17,9 @@ Serial1 (constant MESH_SERIAL in Communication.h)
 
 **Secondary Teensy 3.1**
 
-Serial3 - Serial communication with secondary Teensy 3.1 (constant DEVICE_SERIAL in Serial.h)
+The primary Teensy 3.1 communicates with the secondary Teensy 3.1 via `Serial3`. The firmware references this with the constant `DEVICE_SERIAL` in `Serial.h`.
 
-| Teensy 3.1 | Teensy 3.1 (Secondary) |
+| Teensy 3.1 | Secondary Teensy 3.1 |
 | ---------- | ---------------- |
 | 7/RX3      | 8/TX3            |
 | 8/TX3      | 7/RX3            |
@@ -35,7 +35,7 @@ constant LED_OUTPUT_PIN, in Color.h
 
 **Piezo Speaker (PC Mount 12mm 2.048kHz)**
 
-constant SPEAKER_OUT_PIN in Sound.h
+The firmware references this with the constant `SPEAKER_OUT_PIN` in `Sound.h`.
 
 | Teensy 3.1 | RGB LED Breakout |
 | ---------- | ---------------- |
@@ -56,16 +56,16 @@ The secondary Teensy 3.1 connects to the Adafruit CC3000 and the primary Teensy 
 
 **Primary Teensy 3.1**
 
-Serial3 - Serial communication with primary Teensy 3.1 (constant DEVICE_SERIAL in Serial.h)
+The secondary Teensy 3.1 communicates with the primary Teensy 3.1 via `Serial3`. The firmware references this with the constant `DEVICE_SERIAL` in `Serial.h`.
 
-| Teensy 3.1 (Secondary) | Teensy 3.1 (Primary) |
+| Secondary Teensy 3.1 | Primary Teensy 3.1 |
 | ---------- | ---------------- |
 | 7/RX3      | 8/TX3            |
 | 8/TX3      | 7/RX3            |
 
 **Adafruit CC3000 WiFi Breakout with Onboard Antenna**
 
-| Teensy 3.1 (Secondary) | Teensy 3.1 (Primary) |
+| Secondary Teensy 3.1 | CC3000 Breakout |
 | ---------- | ---------------- |
 | 1          | IRQ              |
 | 3          | VBEN             |
@@ -74,4 +74,4 @@ Serial3 - Serial communication with primary Teensy 3.1 (constant DEVICE_SERIAL i
 | 12/DIN     | MOSI             |
 | 13/SCK     | CLK              |
 
-VBEN is denoted as the constant VBAT in WebServer.h.
+The firmware references the connection to VBEN with the constant `VBAT` in `WebServer.h`.
