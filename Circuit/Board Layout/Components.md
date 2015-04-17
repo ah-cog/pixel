@@ -1,5 +1,7 @@
 # Components
 
+The following components are organized into lists named the same as the circuit board "layers."
+
 **Order**
 - (2x) Teensy 3.1 [SparkFun](https://www.sparkfun.com/products/12646)
 		MK20DX256VLH7-ND ---- $6.98
@@ -21,9 +23,13 @@
 
 
 **Movement**
+<<<<<<< HEAD
 - MinIMU-9 v3 [Pololu](https://www.pololu.com/product/2468) 
 		acceleration and magnetic - STMICROELECTRONICS - LSM303DLHC - SENSOR, 3 CH, ACCEL, MAG, MOD, 14LGA --- $2.85,
 		gyro - STMICROELECTRONICS - L3GD20 - GYROSCOPE, MEMS, 3-AXIS, DIGITAL, LGA-16 --- $2.83
+=======
+- AltIMU-10 v4 [Pololu](https://www.pololu.com/product/2470)
+>>>>>>> 3c81645c1cc83f793c2ab2a9a39cb5d0691f7097
 
 **Stimulus**
 - Piezo Speaker (PC Mount 12mm 2.048kHz) [SparkFun](https://www.sparkfun.com/products/7950) 

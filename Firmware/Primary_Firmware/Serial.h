@@ -12,7 +12,7 @@ long Process_Message (Message* message); // start the "interpretive dance": tran
 char behaviorDescriptionBuffer[128];
 int behaviorDescriptionBufferIndex = 0;
 
-boolean setupBridge () {
+boolean Setup_Bridge () {
   DEVICE_SERIAL.begin (115200);
 }
 
@@ -28,7 +28,7 @@ void Propagate_Channel_Value (Channel* channel) {
 //void syncPinValue(int pin) {
 
   // Get the most recent pin value
-  int pinValue = Get_Current_Channel_Value (channel);
+  int pinValue = Get_Channel_Value (channel);
   
   // TODO: Conditionally propagate only on channels on which machines/simulation transclusions exist.
   

@@ -344,7 +344,7 @@ void Update_Output_Color (int red, int green, int blue) {
 
 //! Initializes the module's color
 //!
-boolean setupColor () {
+boolean Setup_Color () {
   strip.begin ();
   strip.show (); // Initialize all pixels to 'off'
 }

@@ -44,7 +44,7 @@ int previousClassifiedGestureFrequency[GESTURE_COUNT];
 /**
  * Sets up gesture sensing.
  */
-void setupGestureSensing () {
+void Setup_Gesture_Sensing () {
   for (int i = 0; i < PREVIOUS_CLASSIFIED_GESTURE_COUNT; i++) {
     previousClassifiedGestures[i] = -1;
   }

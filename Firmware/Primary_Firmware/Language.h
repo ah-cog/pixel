@@ -227,7 +227,7 @@ long Process_Message (Message* message) {
 //      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_HIGH);
 //      syncPinValue(MODULE_OUTPUT_PIN);
       Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
+      Set_Channel_Value (moduleOutputChannel, PIN_VALUE_HIGH);
       Propagate_Channel_Value (moduleOutputChannel);
     } else if (strncmp ((*message).content, "turn output off", (*message).size) == 0) { // deactivate module output
       Serial.println ("turn output off");
@@ -235,7 +235,7 @@ long Process_Message (Message* message) {
 //      Update_Channel_Value (MODULE_OUTPUT_PIN, PIN_VALUE_LOW);
 //      syncPinValue(MODULE_OUTPUT_PIN);
       Channel* moduleOutputChannel = Get_Channel (platform, MODULE_OUTPUT_PIN);
-      Update_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
+      Set_Channel_Value (moduleOutputChannel, PIN_VALUE_LOW);
       Propagate_Channel_Value (moduleOutputChannel);
       
     } else {
@@ -315,14 +315,14 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
     String second = getValue (split, ' ', 1);
     Serial.println (second);
     
-    if (second.compareTo ("substrate") == 0) {
-      // TODO: create substrate
+    if (second.compareTo ("context") == 0) {
+      // TODO: create context
       
       String uid = getValue (split, ' ', 2);
       
-      // TODO: Create the substrate with the specified UID.
+      // TODO: Create the context with the specified UID.
       
-      Serial.println ("(Note: Not implemented.) Created substrate <ID>.");
+      Serial.println ("(Note: Not implemented.) Created context <ID>.");
       
     } else if (second.compareTo ("behavior") == 0) {
       
@@ -339,11 +339,11 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
         int pin = getValue (split, ' ', 3).toInt();
         String signal = getValue (split, ' ', 4);
         
-        // Create behavior and add it to the behavior substrate
-        Behavior* behavior = Create_Input_Behavior (substrate, pin, signal);
+        // Create behavior and add it to the behavior context
+        Behavior* behavior = Create_Input_Behavior (context, pin, signal);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
-        Sequence* sequence = (*substrate).sequences;
-        Sequence_Behavior (behavior, sequence);
+//        Sequence* sequence = (*context).sequences;
+        Sequence_Behavior (behavior, currentSequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
         
@@ -356,11 +356,11 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
         String signal = getValue (split, ' ', 4);
         String data = getValue (split, ' ', 5);
         
-        // Create behavior and add it to the behavior substrate
-        Behavior* behavior = Create_Output_Behavior (substrate, pin, signal, data);
+        // Create behavior and add it to the behavior context
+        Behavior* behavior = Create_Output_Behavior (context, pin, signal, data);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
-        Sequence* sequence = (*substrate).sequences;
-        Sequence_Behavior (behavior, sequence);
+//        Sequence* sequence = (*context).sequences;
+        Sequence_Behavior (behavior, currentSequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
         
@@ -371,10 +371,10 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
         // Parse parameters
         int milliseconds = getValue (split, ' ', 3).toInt();
         
-        // Create behavior and add it to the behavior substrate
-        Behavior* behavior = Create_Delay_Behavior (substrate, milliseconds);
+        // Create behavior and add it to the behavior context
+        Behavior* behavior = Create_Delay_Behavior (context, milliseconds);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
-        Sequence* sequence = (*substrate).sequences;
+        Sequence* sequence = (*context).sequences;
         Sequence_Behavior (behavior, sequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
@@ -389,15 +389,42 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
 //            String signal = getValue (split, ' ', 4);
 //            String data = getValue (split, ' ', 5);
         
-        // Create behavior and add it to the behavior substrate
-        Behavior* behavior = Create_Sound_Behavior (substrate, note, duration);
+        // Create behavior and add it to the behavior context
+        Behavior* behavior = Create_Sound_Behavior (context, note, duration);
         (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
-        Sequence* sequence = (*substrate).sequences;
-        Sequence_Behavior (behavior, sequence);
+//        Sequence* sequence = (*context).sequences;
+        Sequence_Behavior (behavior, currentSequence);
         
         // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
         
         resultUuid = (*behavior).uid;
+        
+      } else if (behaviorType.compareTo ("abstract") == 0) {
+        
+        Serial.println ("Creating ABSTRACT behavior");
+    
+        // Parse parameters
+        int sequenceUuid = getValue (split, ' ', 3).toInt ();
+        
+        Sequence* sequence = Get_Sequence (sequenceUuid);
+        
+        if (sequence != NULL) {
+        
+          // Create behavior and add it to the behavior context
+          Behavior* behavior = Create_Abstract_Behavior (context, sequence);
+//          (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
+//          Sequence* sequence = (*context).sequences;
+          Sequence_Behavior (behavior, currentSequence);
+          
+          // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
+          
+          resultUuid = (*behavior).uid;
+          
+        } else {
+          
+          Serial.println ("> Can't do that because can't find the sequence.");
+          
+        }
         
       } else if (behaviorType.compareTo ("memory") == 0) {
     
@@ -416,22 +443,23 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
       }
       
     } else if (second.compareTo ("loop") == 0) {
+
+      Sequence* sequence = Create_Sequence (context);
+      boolean isAdded = Contextualize_Sequence (sequence, context);
       
-      // TODO: create loop
-      
-    } 
-//        else if (first.compareTo ("line")) {
-//          // TODO: Substrate
-//        } else if (first.compareTo ("dot")) {
-//          // TODO: Substrate
-//        }
+    }
+//    else if (first.compareTo ("line")) {
+//      // TODO: Context
+//    } else if (first.compareTo ("dot")) {
+//      // TODO: Context
+//    }
     
   } else if (first.compareTo ("erase") == 0) { // synonyms: clear, wipe, clean
     
     String second = getValue (split, ' ', 1);
     Serial.println (second);
     
-    if (second.compareTo ("substrate") == 0) {
+    if (second.compareTo ("context") == 0) {
       
       // TODO: Implement core behavior
       
@@ -439,7 +467,7 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
       
       Serial.println ("> Clearing loop");
       
-      Sequence* sequence = (*substrate).sequences;
+      Sequence* sequence = (*context).sequences;
       Delete_Sequence_Behaviors (sequence);
       
     } else if (second.compareTo ("behavior") == 0) {
@@ -450,35 +478,63 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
       
       Delete_Behavior_By_Address (third);
       
-    } 
+    }
     
   } else if (firstWord.compareTo ("show") == 0) { // i.e., echo, print, show, display
     
     String secondWord = getValue (message, ' ', 1);
 
-    if (secondWord.compareTo ("substrate") == 0) {
+    if (secondWord.compareTo ("context") == 0) {
       
-//      Serial.print ("> The substrate is\n");
-      Serial.print ("> substrate ");
-      Serial.print ((int) substrate);
+//      Serial.print ("> The context is\n");
+      Serial.print ("> context ");
+      Serial.print ((int) context);
       Serial.print ("\n");
     
     } else if (secondWord.compareTo ("loop") == 0) {
       
-      Sequence* sequence = (*substrate).sequences;
+      Sequence* sequence = (*context).sequences;
       Show_Sequence_Behaviors (sequence);
       
     } else if (secondWord.compareTo ("loops") == 0) {
       
 //      Serial.print ("> The loops are\n");
-//      Sequence* sequences = Get_Substrate_Sequences (substrate);
-////      Serial.print ((int) sequences);
-//      Serial.print ("\n");
-    
+      Sequence* sequences = Get_Context_Sequences (context);
+//      Serial.print ((int) sequences);
+      Serial.print ("\n");
+      
+    } else if (secondWord.compareTo ("sequence") == 0) {
+      
+      if (wordCount == 2) {
+        
+        if (currentSequence != NULL) {
+          Serial.print ("> sequence ");
+          Serial.println ((*currentSequence).uid);
+        } else {
+          Serial.println ("> Can't find the sequence.");
+          // TODO: Search on the present device, on the PAN/LAN, then on the WAN (cloud).
+        }
+        
+      } else {
+      
+        int thirdWord = getValue (split, ' ', 2).toInt ();
+        
+        Sequence* sequence = Get_Sequence (thirdWord);
+        
+        if (sequence != NULL) {
+          Serial.print ("> sequence ");
+          Serial.println ((*sequence).uid);
+        } else {
+          Serial.println ("> Can't find the sequence.");
+          // TODO: Search on the present device, on the PAN/LAN, then on the WAN (cloud).
+        }
+        
+      }
+      
     } else if (secondWord.compareTo ("behaviors") == 0) {
       
 //      Serial.print ("> The behaviors are\n");
-      Sequence* sequences = Get_Substrate_Behaviors (substrate);
+      Sequence* sequences = Get_Context_Behaviors (context);
 //      Serial.print ((int) sequences);
       Serial.print ("\n");
       
@@ -513,10 +569,10 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
       
       Serial.println ("> Desequencing behavior " + String (third));
       
-      Sequence* sequences = Get_Substrate_Behaviors (substrate);
-      Sequence* sequence = (*substrate).sequences;
+      Sequence* sequences = Get_Context_Behaviors (context);
+//      Sequence* sequence = (*context).sequences;
       Behavior* behavior = Get_Behavior (third); // TODO: Get_Behavior (third, sequence)
-      Desequence_Behavior (behavior, sequence);
+      Desequence_Behavior (behavior, currentSequence);
       
     }
   
@@ -525,12 +581,12 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
     String second = getValue (split, ' ', 1);
     Serial.println (second);
     
-    if (second.compareTo ("substrate") == 0) {
-      // TODO: create substrate
+    if (second.compareTo ("context") == 0) {
+      // TODO: create context
       
       String uid = getValue (split, ' ', 2);
       
-      // TODO: Create the substrate with the specified UID.
+      // TODO: Create the context with the specified UID.
       
     } else if (second.compareTo ("behavior") == 0) {
       
@@ -560,9 +616,9 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
 //            int pin = getValue (split, ' ', 3).toInt();
 //            String signal = getValue (split, ' ', 4);
 //            
-//            // Create behavior and add it to the behavior substrate
-//            Behavior* behavior = Create_Input_Behavior (substrate, pin, signal);
-//            Sequence* sequence = (*substrate).sequences;
+//            // Create behavior and add it to the behavior context
+//            Behavior* behavior = Create_Input_Behavior (context, pin, signal);
+//            Sequence* sequence = (*context).sequences;
 //            Update_Behavior_Sequence (behavior, sequence);
 //            
 //            // TODO: Propagate to any subscribers to this device! (stored "beneath" the interpreter, for the device).
@@ -593,25 +649,25 @@ long Process_Core_Message (String message) { // i.e., Perform_Engine_Behavior
 
 
 
-//        // Create behavior and add it to the behavior substrate
-//        Behavior* behavior = Create_Immediate_Behavior (substrate, message);
+//        // Create behavior and add it to the behavior context
+//        Behavior* behavior = Create_Immediate_Behavior (context, message);
 ////        (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
-//        Sequence* sequence = (*substrate).sequences;
+//        Sequence* sequence = (*context).sequences;
 //        Update_Behavior_Sequence (behavior, sequence); // Add to behavior sequence
 
         //!        
         //! Check temporal modifier
         //!
         
-        if (message.endsWith (" now") == true) { // Check if the behavior is immediate...
+        if (message.endsWith (" once") == true) { // Check if the behavior is immediate...
           message = message.substring (0, message.lastIndexOf (" now")); // Remove "now" from last part of string
-          Behavior* behavior = Create_Immediate_Behavior (substrate, message);
+          Behavior* behavior = Create_Immediate_Behavior (context, message);
           Queue_Immediate_Behavior (performer, behavior);
         } else { // ...or add it to the current (or specified) loop.
-          Behavior* behavior = Create_Immediate_Behavior (substrate, message);
+          Behavior* behavior = Create_Immediate_Behavior (context, message);
 //          (*behavior).uid = behaviorUuid; // TODO: Move/Remove this! Come up with a better way to do this!
-          Sequence* sequence = (*substrate).sequences;
-          Sequence_Behavior (behavior, sequence); // Add to behavior sequence
+//          Sequence* sequence = (*context).sequences;
+          Sequence_Behavior (behavior, currentSequence); // Add to behavior sequence
           
           resultUuid = (*behavior).uid;
         }
@@ -674,10 +730,6 @@ void Process_Immediate_Message (String message) {
       Queue_Incoming_Message (selfMessage);
 //      Perform_Shell_Behavior (outgoingMessageContent);
     }
-    
-  } else if (firstWord.compareTo ("ip") == 0) {
-    
-    Serial.println (ipAddress);
     
   } else if (firstWord.compareTo ("self") == 0) { // self
     
@@ -808,10 +860,35 @@ void Process_Immediate_Message (String message) {
   
   else if (firstWord.compareTo ("change") == 0) { // i.e., update
     
-    String secondWord = getValue (message, ' ', 1);
-    
     // "change input ..."
-    if (secondWord.compareTo ("input") == 0) {
+    String secondWord = getValue (message, ' ', 1);
+
+    if (secondWord.compareTo ("context") == 0) {
+      
+      // NOTE: The third word is "to"
+      int fourthWord = getValue (split, ' ', 3).toInt ();
+      
+      // TODO: Implement this!
+      
+      Serial.println ("> That hasn't been implemented yet!");
+      
+    } else if (secondWord.compareTo ("sequence") == 0) {
+      
+      // NOTE: The third word is "to"
+      int fourthWord = getValue (split, ' ', 3).toInt ();
+      
+      Sequence* sequence = Get_Sequence (fourthWord);
+      
+      if (sequence != NULL) {
+        currentSequence = sequence;
+        Serial.print ("> Changing current sequence to ");
+        Serial.println ((*sequence).uid);
+      } else {
+        Serial.println ("> Can't find the sequence.");
+        // TODO: Search on the present device, on the PAN/LAN, then on the WAN (cloud).
+      }
+      
+    } else if (secondWord.compareTo ("input") == 0) {
       
       String thirdWord = getValue (message, ' ', 2);
       
@@ -854,6 +931,14 @@ void Process_Immediate_Message (String message) {
         // Serial.println ("Changing output color.");
         
       }
+      
+    } else if (secondWord.compareTo ("name") == 0) {
+      
+      name = Generate_Name ();
+      
+      Serial.print ("> I changed my name to ");
+      Serial.print (name);
+      Serial.println (".");
       
     } else if (secondWord.compareTo ("color") == 0) {
       // TODO: Handle colors specified such as "reddish bluish", "light green", etc.
@@ -986,13 +1071,6 @@ void Process_Immediate_Message (String message) {
       }
       
     } 
-  }
-  
-  else if (firstWord.compareTo ("rename") == 0) {
-    
-    name = Generate_Name ();
-    Serial.println (name);
-    
   }
   
   // "change ..."

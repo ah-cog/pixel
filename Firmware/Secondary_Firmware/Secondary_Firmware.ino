@@ -1,7 +1,9 @@
-/*
-"Pixel" Firmware (for the Visual Language, i.e., Looper), Rendition 2
-Authors: Michael Gubbels
-*/
+//
+// "Pixel" Firmware (Secondary)
+//
+// Authors:
+// - Michael Gubbels
+//
 
 // Notes for Teensy 3.1 (i.e., heuristics to get the CC3000 module working, based on experience):
 // - Set "Board" to Teensy 3.1

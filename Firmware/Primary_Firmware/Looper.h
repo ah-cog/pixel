@@ -8,14 +8,14 @@
 //! Looper Engine
 //!
 
-Substrate* Create_Substrate ();
-Sequence* Create_Sequence (Substrate* substrate);
-Behavior* Create_Behavior (Substrate* substrate);
+Context* Create_Context ();
+Sequence* Create_Sequence (Context* context);
+Behavior* Create_Behavior (Context* context);
 
-boolean Contextualize_Sequence (Sequence* sequence, Substrate* substrate);
-boolean Decontextualize_Sequence (Sequence* sequence, Substrate* substrate);
+boolean Contextualize_Sequence (Sequence* sequence, Context* context);
+boolean Decontextualize_Sequence (Sequence* sequence, Context* context);
 
-Behavior* Create_Behavior (Substrate* substrate);
+Behavior* Create_Behavior (Context* context);
 boolean Desequence_Behavior (Behavior* behavior, Sequence* sequence);
 
 struct Performer;
@@ -24,7 +24,7 @@ struct Propagator;
 Propagator* propagator = NULL;
 Performer* performer = NULL;
 
-Performer* Create_Performer (Substrate* substrate);
+Performer* Create_Performer (Context* context);
 Propagator* Create_Propagator ();
 
 boolean Perform_Behavior_On_Platform (Behavior* behavior);
@@ -34,17 +34,17 @@ void Process_Immediate_Message (String message); // HACK
 
 // Methods:
 //
-// Create_Substrate
-// Get_Substrate_Origin
-// TODO: Get_Substrate_Behaviors
-// TODO: Get_Substrate_Sequences
-// Update_Substrate_Origin
-// Delete_Substrate
-// TODO: Deep_Delete_Substrate
+// Create_Context
+// Get_Context_Origin
+// TODO: Get_Context_Behaviors
+// TODO: Get_Context_Sequences
+// Update_Context_Origin
+// Delete_Context
+// TODO: Deep_Delete_Context
 //
 // Create_Sequence
-// Update_Sequence_Substrate
-// Remove_Sequence_Substrate
+// Update_Sequence_Context
+// Remove_Sequence_Context
 // Delete_Sequence
 // TODO: Deep_Delete_Sequence
 // Dissociate_Sequence
@@ -52,7 +52,7 @@ void Process_Immediate_Message (String message); // HACK
 // Create_Behavior
 // Get_Behavior
 // Update_Behavior
-// Update_Behavior_Substrate
+// Update_Behavior_Context
 // Update_Behavior_Sequence
 // Remove_Behavior_Sequence
 // Delete_Behavior
@@ -63,23 +63,25 @@ void Process_Immediate_Message (String message); // HACK
 //!
 boolean Setup_Looper () {
   
-  // Create behavior substrate
-  if (substrate == NULL) {
-    substrate = Create_Substrate ();
+  // Create behavior context
+  if (context == NULL) {
+    context = Create_Context ();
   }
   
   // Create sequence
-  // TODO: Add parameter "Substrate* substrate"
-  if (substrate != NULL) {
+  // TODO: Add parameter "Context* context"
+  if (context != NULL) {
     
-    Sequence* sequence = Create_Sequence (substrate);
+    Sequence* sequence = Create_Sequence (context);
     
-    boolean isAdded = Contextualize_Sequence (sequence, substrate);
+    boolean isAdded = Contextualize_Sequence (sequence, context);
+    
+    currentSequence = sequence; // TODO: Put this into the perspective!
     
 //    return isAdded;
   }
   
-  performer = Create_Performer (substrate);
+  performer = Create_Performer (context);
   propagator = Create_Propagator ();
   
   return true;
@@ -92,36 +94,37 @@ long Generate_Uuid () {
   return uuid;
 }
 
-//! Create behavior substrate
+//! Create behavior context
 //!
-Substrate* Create_Substrate () {
+Context* Create_Context () {
   
-  // Create substrate
-  Substrate* substrate = (Substrate*) malloc (sizeof (Substrate));
+  // Create context
+  Context* context = (Context*) malloc (sizeof (Context));
   
   // Initialize sequence
-  (*substrate).sequences = NULL;
-  (*substrate).origin    = NULL;
+  (*context).sequences = NULL;
+  (*context).origin    = NULL;
   
   // Return sequence
-  return substrate;
+  return context;
   
 }
 
-//! Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
-//! behavior to be executed by a performer for the substrate.
+//! Returns the context's "origin behavior" (or simply "origin"), which is the first 
+//! behavior to be executed by a performer for the context.
 //!
-Sequence* Get_Substrate_Sequences (Substrate* substrate) {
+Sequence* Get_Context_Sequences (Context* context) {
   Sequence* sequences = NULL;
   
-  if (substrate != NULL) {
+  if (context != NULL) {
     
-    // Update sequence topology (i.e., Remove all sequences' references to the substrate)
-    Sequence* currentSequence  = (*substrate).sequences;
+    // Update sequence topology (i.e., Remove all sequences' references to the context)
+    Sequence* currentSequence  = (*context).sequences;
     while (currentSequence != NULL) {
       
       Serial.print ("> sequence ");
-      Serial.print ((int) currentSequence);
+      // Serial.print ((int) currentSequence);
+      Serial.print ((*currentSequence).uid);
       Serial.print ("\n");
       
       // Proceed to next sequence
@@ -134,19 +137,19 @@ Sequence* Get_Substrate_Sequences (Substrate* substrate) {
   return sequences;
 }
 
-//! Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
-//! behavior to be executed by a performer for the substrate.
+//! Returns the context's "origin behavior" (or simply "origin"), which is the first 
+//! behavior to be executed by a performer for the context.
 //!
-Sequence* Get_Substrate_Behaviors (Substrate* substrate) {
+Sequence* Get_Context_Behaviors (Context* context) {
   Sequence* sequences = NULL;
   
-  if (substrate != NULL) {
+  if (context != NULL) {
     
-    // Update sequence topology (i.e., Remove all sequences' references to the substrate)
-    Sequence* currentSequence  = (*substrate).sequences;
+    // Update sequence topology (i.e., Remove all sequences' references to the context)
+    Sequence* currentSequence  = (*context).sequences;
     while (currentSequence != NULL) {
       
-      // Dissociate behavior topology (i.e., Remove all behaviors' references to the substrate)
+      // Dissociate behavior topology (i.e., Remove all behaviors' references to the context)
       Behavior* currentBehavior  = (*currentSequence).behavior;
       while (currentBehavior != NULL) {
         
@@ -167,22 +170,22 @@ Sequence* Get_Substrate_Behaviors (Substrate* substrate) {
   return sequences;
 }
 
-//! Returns the substrate's "origin behavior" (or simply "origin"), which is the first 
-//! behavior to be executed by a performer for the substrate.
+//! Returns the context's "origin behavior" (or simply "origin"), which is the first 
+//! behavior to be executed by a performer for the context.
 //!
-Sequence* Get_Substrate_Origin (Substrate* substrate) {
+Sequence* Get_Context_Origin (Context* context) {
   Sequence* origin = NULL;
   
-  if (substrate != NULL) {
-    origin = (*substrate).origin;
+  if (context != NULL) {
+    origin = (*context).origin;
   }
   
   return origin;
 }
 
-boolean Update_Substrate_Origin (Substrate* substrate, Sequence* origin) {
-  if (substrate != NULL) {
-    (*substrate).origin = origin;
+boolean Update_Context_Origin (Context* context, Sequence* origin) {
+  if (context != NULL) {
+    (*context).origin = origin;
   }
 }
 
@@ -200,19 +203,19 @@ Sequence* Dissociate_Sequence (Sequence* sequence) {
       
 //      Dissociate_Behavior (currentBehavior);
       // Dissociate a single behavior
-      // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
-      (*currentBehavior).substrate = NULL;
+      // TODO: Update to point to "Dissociated Context/NULL Context" rather than NULL.
+      (*currentBehavior).context = NULL;
       
       // Proceed to the next behavior
       currentBehavior = (*currentBehavior).next;
     }
     
-    // Step 2. Remove sequence from substrate
-    boolean hasRemoved = Decontextualize_Sequence (sequence, (*sequence).substrate);
+    // Step 2. Remove sequence from context
+    boolean hasRemoved = Decontextualize_Sequence (sequence, (*sequence).context);
     
     // Dissociate from sequence
-    // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
-//    (*sequence).substrate = NULL;
+    // TODO: Update to point to "Dissociated Context/NULL Context" rather than NULL.
+//    (*sequence).context = NULL;
     
 //    // Proceed to next sequence
 //    sequence = (*sequence).next;
@@ -236,15 +239,15 @@ Sequence* Dissociate_Sequence (Sequence* sequence) {
 //  
 //  
 //  
-//    // TODO: Substrate: Remove reference to behavior 
+//    // TODO: Context: Remove reference to behavior 
 //    
 //    // TODO: Sequence: Remove reference to behavior 
 //
 //    // TODO: Behavior.previous, Behavior.next: Remove reference to behavior 
 //    
 //    // Dissociate behavior
-//    // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
-//    (*behavior).substrate = NULL;
+//    // TODO: Update to point to "Dissociated Context/NULL Context" rather than NULL.
+//    (*behavior).context = NULL;
 //      
 //      
 //      
@@ -254,8 +257,8 @@ Sequence* Dissociate_Sequence (Sequence* sequence) {
 //    }
 //      
 //      // Dissociate sequence
-//      // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
-////      (*sequence).substrate = NULL;
+//      // TODO: Update to point to "Dissociated Context/NULL Context" rather than NULL.
+////      (*sequence).context = NULL;
 //      
 //      // Proceed to next sequence
 ////      sequence = (*sequence).next;
@@ -266,44 +269,44 @@ Sequence* Dissociate_Sequence (Sequence* sequence) {
 //  return sequence;
 //}
 
-//! Deletes the specified substrate. Removes all references to the substrate before deleting it.
+//! Deletes the specified context. Removes all references to the context before deleting it.
 //!
-boolean Delete_Substrate (Substrate* substrate) {
+boolean Delete_Context (Context* context) {
   
-  // TODO: Delete substrate "sequences" and "origin"
+  // TODO: Delete context "sequences" and "origin"
   
-  if (substrate != NULL) {
+  if (context != NULL) {
     
     // TODO: Possibly delete all behaviors from the sequence (or only the ones that are only referenced in this sequence)
     
-    // Update the sequence's topologies (for the sequences in the specified substrate being deleted)
+    // Update the sequence's topologies (for the sequences in the specified context being deleted)
     
-    // Update sequence topology (i.e., Remove all sequences' references to the substrate)
-    Sequence* currentSequence  = (*substrate).sequences;
+    // Update sequence topology (i.e., Remove all sequences' references to the context)
+    Sequence* currentSequence  = (*context).sequences;
     while (currentSequence != NULL) {
       
-      // Dissociate behavior topology (i.e., Remove all behaviors' references to the substrate)
+      // Dissociate behavior topology (i.e., Remove all behaviors' references to the context)
       Behavior* currentBehavior  = (*currentSequence).behavior;
       while (currentBehavior != NULL) {
         
         // Dissociate behavior
-        // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
-        (*currentBehavior).substrate = NULL;
+        // TODO: Update to point to "Dissociated Context/NULL Context" rather than NULL.
+        (*currentBehavior).context = NULL;
         
         currentBehavior = (*currentBehavior).next;
       }
       
       // Dissociate sequence
-      // TODO: Update to point to "Dissociated Substrate/NULL Substrate" rather than NULL.
-      (*currentSequence).substrate = NULL;
+      // TODO: Update to point to "Dissociated Context/NULL Context" rather than NULL.
+      (*currentSequence).context = NULL;
       
       // Proceed to next sequence
       currentSequence = (*currentSequence).next;
       
     }
     
-    // Free the substrate from memory
-    free(substrate);
+    // Free the context from memory
+    free(context);
     
     return true;
   }
@@ -314,7 +317,7 @@ boolean Delete_Substrate (Substrate* substrate) {
 
 //! Creates a sequence into which behaviors can be placed.
 //!
-Sequence* Create_Sequence (Substrate* substrate) {
+Sequence* Create_Sequence (Context* context) {
   Serial.println ("Create_Sequence");
   
   // Create sequence
@@ -329,6 +332,9 @@ Sequence* Create_Sequence (Substrate* substrate) {
   (*sequence).next     = NULL;
   (*sequence).schema   = NULL;
   
+  // Create UUID for the sequence
+  (*sequence).uid      = Generate_Uuid ();
+  
   // TODO: Create sequence schema
   
   Serial.print ("\ttype: "); Serial.print ((*sequence).type); Serial.print ("\n");
@@ -336,6 +342,36 @@ Sequence* Create_Sequence (Substrate* substrate) {
   // Return sequence
   return sequence;
   
+}
+
+//
+// Returns a pointer to the sequence with the specified UID.
+//
+Sequence* Get_Sequence (int uid) {
+    
+  // The pointer to the sequence
+  Sequence* sequence = NULL;
+  
+  // Search the loop for the behavior with the specified UID.
+  if (context != NULL) {
+    
+    // Get the last behavior in the loop
+    Sequence* currentSequence = (*context).sequences;
+    while (currentSequence != NULL) {
+      Serial.println("Searching sequence");
+
+      // Return the sequence if it has been found
+      if ((*currentSequence).uid == uid) {
+        sequence = currentSequence;
+        break;
+      }
+      
+      currentSequence = (*currentSequence).next;
+    }
+    
+  }
+  
+  return sequence;
 }
 
 int Get_Sequence_Type (Sequence* sequence) {
@@ -368,17 +404,17 @@ boolean Delete_Sequence (Sequence* sequence) {
       (*next).previous = previous;
     }
     
-    // Update substrate if needed
-    if ((*substrate).sequences == current) {
+    // Update context if needed
+    if ((*context).sequences == current) {
       if ((*current).next == NULL) {
-        (*substrate).sequences = NULL;
+        (*context).sequences = NULL;
       } else {
-        (*substrate).sequences = (*current).next;
+        (*context).sequences = (*current).next;
       }
     }
     
-    if ((*substrate).origin == sequence) {
-      (*substrate).origin = NULL;
+    if ((*context).origin == sequence) {
+      (*context).origin = NULL;
     }
     
     // Free the sequence from memory
@@ -394,25 +430,25 @@ boolean Delete_Sequence (Sequence* sequence) {
   
 }
 
-//! Adds the specified sequence to the specified substrate.
+//! Adds the specified sequence to the specified context.
 //!
-boolean Contextualize_Sequence (Sequence* sequence, Substrate* substrate) {
+boolean Contextualize_Sequence (Sequence* sequence, Context* context) {
   
-  // Add sequence to substrate
-  if ((*substrate).sequences == NULL) {
+  // Add sequence to context
+  if ((*context).sequences == NULL) {
     
     Serial.println("First sequence");
-    (*substrate).sequences = sequence;
+    (*context).sequences = sequence;
     
-    // Set the substrate's origin if it has not been set
-    if ((*substrate).origin == NULL) {
-      (*substrate).origin = sequence;
+    // Set the context's origin if it has not been set
+    if ((*context).origin == NULL) {
+      (*context).origin = sequence;
     }
     
   } else {
     
     // Get the last behavior in the loop
-    Sequence* lastSequence = (*substrate).sequences;
+    Sequence* lastSequence = (*context).sequences;
     while ((*lastSequence).next != NULL) {
       Serial.println("Next sequence");
       lastSequence = (*lastSequence).next;
@@ -429,9 +465,9 @@ boolean Contextualize_Sequence (Sequence* sequence, Substrate* substrate) {
   
 }
 
-//! Removes the specified sequence from the specified substrate.
+//! Removes the specified sequence from the specified context.
 //!
-boolean Decontextualize_Sequence (Sequence* sequence, Substrate* substrate) {
+boolean Decontextualize_Sequence (Sequence* sequence, Context* context) {
   
   // Update behavior topology
   Sequence* previousSequence = (*sequence).previous;
@@ -448,16 +484,16 @@ boolean Decontextualize_Sequence (Sequence* sequence, Substrate* substrate) {
   }
   
   // Update sequence if needed
-  if ((*substrate).sequences == sequence) {
+  if ((*context).sequences == sequence) {
     if ((*sequence).next == NULL) {
-      (*substrate).sequences = NULL;
+      (*context).sequences = NULL;
     } else {
-      (*substrate).sequences = (*sequence).next;
+      (*context).sequences = (*sequence).next;
     }
   }
   
-  // Dissociate from the substrate
-  (*sequence).substrate = NULL;
+  // Dissociate from the context
+  (*sequence).context = NULL;
   
   // Resize the sequence
 //  (*sequence).size = (*sequence).size - 1;
@@ -472,7 +508,7 @@ boolean Sequence_Behavior (Behavior* behavior, Sequence* sequence) {
   
   Serial.print ("\tsequence type: "); Serial.print ((*sequence).type); Serial.print ("\n");
   
-//  Sequence* coreLoop = (*substrate).sequences;
+//  Sequence* coreLoop = (*context).sequences;
   if ((*sequence).behavior == NULL) {
     
     Serial.println("First");
@@ -543,13 +579,13 @@ boolean Desequence_Behavior (Behavior* behavior, Sequence* sequence) {
 
 //! Creates an Output
 //!
-Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, String data) {
+Behavior* Create_Output_Behavior (Context* context, int pin, String signal, String data) {
   
   Behavior* behavior = NULL;
   
   Serial.println("Create_Output_Behavior");
   
-  if (substrate != NULL) {
+  if (context != NULL) {
     
     Serial.println (pin);
     Serial.println (signal);
@@ -591,7 +627,7 @@ Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, 
     (*output).data   = data2;
     
     // Create the Behavior
-    behavior = Create_Behavior (substrate);
+    behavior = Create_Behavior (context);
     (*behavior).type   = BEHAVIOR_TYPE_OUTPUT;
     (*behavior).schema = (void *) output;
     
@@ -618,7 +654,7 @@ Behavior* Create_Output_Behavior (Substrate* substrate, int pin, String signal, 
 //    }
     
     // Add the behavior to the loop
-//    Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//    Sequence* sequence = (*context).sequences; // HACK: TODO: Change this! Possibly add a pointer to the context and allow a NULL sequence.
 //    sequence_addBehavior(sequence, behavior);
     
   }
@@ -634,13 +670,13 @@ Output* Get_Output_Behavior (Behavior* behavior) {
 
 //! Creates an Input
 //!
-Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal) {
+Behavior* Create_Input_Behavior (Context* context, int pin, String signal) {
   
   Behavior* behavior = NULL;
   
   Serial.println("Create_Input_Behavior");
   
-  if (substrate != NULL) {
+  if (context != NULL) {
     
     Serial.println(pin);
     Serial.println(signal);
@@ -666,7 +702,7 @@ Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal) {
 //    (*input).data   = data2;
     
     // Create the Behavior
-    behavior = Create_Behavior (substrate);
+    behavior = Create_Behavior (context);
     (*behavior).type   = BEHAVIOR_TYPE_INPUT;
     (*behavior).schema = (void *) input;
     
@@ -693,7 +729,7 @@ Behavior* Create_Input_Behavior (Substrate* substrate, int pin, String signal) {
 //    }
     
     // Add the behavior to the loop
-//    Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//    Sequence* sequence = (*context).sequences; // HACK: TODO: Change this! Possibly add a pointer to the context and allow a NULL sequence.
 //    sequence_addBehavior(sequence, behavior);
     
   }
@@ -707,13 +743,13 @@ Input* Get_Input_Behavior (Behavior* behavior) {
 
 //! Creates an Output
 //!
-Behavior* Create_Delay_Behavior (Substrate* substrate, int milliseconds) {
+Behavior* Create_Delay_Behavior (Context* context, int milliseconds) {
   
   Behavior* behavior = NULL;
   
   Serial.println("Create_Delay_Behavior");
   
-  if (substrate != NULL) {
+  if (context != NULL) {
     
     Serial.println(milliseconds);
     
@@ -733,7 +769,7 @@ Behavior* Create_Delay_Behavior (Substrate* substrate, int milliseconds) {
     (*delay).currentTime = 0L;
     
     // Create the Behavior
-    behavior = Create_Behavior (substrate);
+    behavior = Create_Behavior (context);
     (*behavior).type   = BEHAVIOR_TYPE_DELAY;
     (*behavior).schema = (void *) delay;
     
@@ -758,7 +794,7 @@ Behavior* Create_Delay_Behavior (Substrate* substrate, int milliseconds) {
 //    }
     
     // Add the behavior to the loop
-//    Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//    Sequence* sequence = (*context).sequences; // HACK: TODO: Change this! Possibly add a pointer to the context and allow a NULL sequence.
 //    sequence_addBehavior(sequence, behavior);
     
   }
@@ -772,13 +808,13 @@ Delay* Get_Delay_Behavior (Behavior* behavior) {
 
 //! Creates a Sound
 //!
-Behavior* Create_Sound_Behavior (Substrate* substrate, int note, int duration) {
+Behavior* Create_Sound_Behavior (Context* context, int note, int duration) {
   
   Behavior* behavior = NULL;
   
   Serial.println("Create_Sound_Behavior");
   
-  if (substrate != NULL) {
+  if (context != NULL) {
     
     Serial.println (note);
     Serial.println (duration);
@@ -803,7 +839,7 @@ Behavior* Create_Sound_Behavior (Substrate* substrate, int note, int duration) {
     (*sound).duration = duration;
     
     // Create the Behavior
-    behavior = Create_Behavior (substrate);
+    behavior = Create_Behavior (context);
     (*behavior).type   = BEHAVIOR_TYPE_SOUND;
     (*behavior).schema = (void *) sound;
     
@@ -830,7 +866,7 @@ Behavior* Create_Sound_Behavior (Substrate* substrate, int note, int duration) {
 //    }
     
     // Add the behavior to the loop
-//    Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//    Sequence* sequence = (*context).sequences; // HACK: TODO: Change this! Possibly add a pointer to the context and allow a NULL sequence.
 //    sequence_addBehavior(sequence, behavior);
     
   }
@@ -844,13 +880,13 @@ Sound* Get_Sound_Behavior (Behavior* behavior) {
 
 //! Create message (i.e., a behavior transformation).
 //!
-Behavior* Create_Immediate_Behavior (Substrate* substrate, String message) {
+Behavior* Create_Immediate_Behavior (Context* context, String message) {
   
   Behavior* behavior = NULL;
   
   Serial.println("Create_Immediate_Behavior");
   
-  if (substrate != NULL) {
+  if (context != NULL) {
     
 //    Serial.println("CREATING IMMEDIATE BEHAVIOR");
     
@@ -861,7 +897,7 @@ Behavior* Create_Immediate_Behavior (Substrate* substrate, String message) {
     message.toCharArray ((*immediate).message, ((*immediate).messageSize + 1));    
     
     // Create the Behavior
-    behavior = Create_Behavior (substrate);
+    behavior = Create_Behavior (context);
     (*behavior).type = BEHAVIOR_TYPE_IMMEDIATE;
     (*behavior).schema = (void *) immediate;
     
@@ -878,15 +914,76 @@ Behavior* Create_Immediate_Behavior (Substrate* substrate, String message) {
   
 }
 
+//! Creates a Sequence Behavior
+//!
+Behavior* Create_Abstract_Behavior (Context* context, Sequence* sequence) {
+  
+  Behavior* behavior = NULL;
+  
+  Serial.println("Create_Sequence_Behavior");
+  
+  if (context != NULL) {
+    
+//    Serial.println ((int) sequence);
+    
+    // TODO: Parse and validate parameters
+    
+    Serial.println("CREATING SEQUENCE BEHAVIOR");
+    
+    // Create the Output schema for Behavior
+    Abstract* abstract = (Abstract*) malloc (sizeof (Abstract));
+//    Immediate* immediate   = (Immediate*) malloc (sizeof (Immediate));
+    (*abstract).sequence = sequence;
+    
+    // Create the Behavior
+    behavior           = Create_Behavior (context);
+    (*behavior).type   = BEHAVIOR_TYPE_ABSTRACT;
+    (*behavior).schema = (void *) abstract;
+    
+    // Associate the created Output schema with the corresponding created Behavior
+    (*abstract).behavior = behavior;
+    
+    // Parse behavior schema parameters
+//    Serial.println (pin);
+//    Serial.println (signal);
+//    Serial.println(data);
+    
+//    // Set up the behavior schema
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* input = (Input*) malloc(sizeof(Input));
+//      (*behavior).schema = input;
+//    } else {
+//      // TODO: Handle schema creation for other behavior types
+//    }
+    
+//    Serial.println((int)(*behavior).schema);
+    
+//    if ((*behavior).type == BEHAVIOR_TYPE_INPUT) {
+//      Input* in = (Input*) (*behavior).schema;
+//    }
+    
+    // Add the behavior to the loop
+//    Sequence* sequence = (*context).sequences; // HACK: TODO: Change this! Possibly add a pointer to the context and allow a NULL sequence.
+//    sequence_addBehavior(sequence, behavior);
+    
+  }
+  
+  return behavior;
+}
+
+Abstract* Get_Abstract_Behavior (Behavior* behavior) {
+  return ((Abstract*) (*behavior).schema);
+}
+
 // TODO: Consider: Behavior* Create_Behavior (String type, void* schema), at least internally to this method... called by the method as part of the process.
-Behavior* Create_Behavior (Substrate* substrate) {
+Behavior* Create_Behavior (Context* context) {
   
   // Create a behavior
   Behavior* behavior    = (Behavior*) malloc (sizeof (Behavior));
   (*behavior).uid       = 0;
   (*behavior).type      = BEHAVIOR_TYPE_NONE;
   (*behavior).schema    = NULL;
-  (*behavior).substrate = substrate;
+  (*behavior).context = context;
   (*behavior).previous  = NULL;
   (*behavior).next      = NULL;
   
@@ -913,7 +1010,7 @@ Behavior* Create_Behavior (Substrate* substrate) {
 //  }
   
 //  // Add the behavior to the loop
-//  Sequence* sequence = (*substrate).sequences; // HACK: TODO: Change this! Possibly add a pointer to the substrate and allow a NULL sequence.
+//  Sequence* sequence = (*context).sequences; // HACK: TODO: Change this! Possibly add a pointer to the context and allow a NULL sequence.
 //  sequence_addBehavior(sequence, behavior);
   
   return behavior;
@@ -930,10 +1027,10 @@ Behavior* Get_Behavior (int uid) {
   // TODO: Search the sequences for the specified behavior
   
   // Search the loop for the behavior with the specified UID.
-  if (substrate != NULL) {
+  if (context != NULL) {
     
     // Get the last behavior in the loop
-    Sequence* currentSequence = (*substrate).sequences;
+    Sequence* currentSequence = (*context).sequences;
     while (currentSequence != NULL) {
       Serial.println("Searching sequence");
       
@@ -966,10 +1063,10 @@ Behavior* Update_Behavior (int uid) {
   Behavior* behavior = NULL;
   
   // Search the loop for the behavior with the specified UID.
-  if (substrate != NULL) {
+  if (context != NULL) {
     
     // Get the last behavior in the loop
-    Sequence* currentSequence = (*substrate).sequences;
+    Sequence* currentSequence = (*context).sequences;
     while (currentSequence != NULL) {
       Serial.println ("Searching sequence");
       
@@ -1030,7 +1127,7 @@ boolean Delete_Sequence_Behaviors (Sequence* sequence) {
       Serial.println("Deleting behavior");
       
       // TODO: Remove behavior from ALL sequences (maybe replace it with a "NONE" behavior in sequences, while still referencing the behavior in the behavior's history)
-//      Sequence* currentSequence = (*substrate).sequences;
+//      Sequence* currentSequence = (*context).sequences;
       int isRemoved = Desequence_Behavior (behavior, sequence);
             
       // Free the behavior from memory
@@ -1089,7 +1186,7 @@ boolean Show_Sequence_Behaviors (Sequence* sequence) {
 //      Serial.println("Deleting behavior");
       
       // TODO: Remove behavior from ALL sequences (maybe replace it with a "NONE" behavior in sequences, while still referencing the behavior in the behavior's history)
-//      Sequence* currentSequence = (*substrate).sequences;
+//      Sequence* currentSequence = (*context).sequences;
 //      int isRemoved = Remove_Behavior_Sequence (behavior, sequence);
 //            
 //      // Free the behavior from memory
@@ -1139,7 +1236,7 @@ boolean Delete_Behavior (Behavior* behavior) {
     Serial.println("Deleting behavior");
     
     // TODO: Remove behavior from ALL sequences (maybe replace it with a "NONE" behavior in sequences, while still referencing the behavior in the behavior's history)
-    Sequence* currentSequence = (*substrate).sequences;
+    Sequence* currentSequence = (*context).sequences;
     int isRemoved = Desequence_Behavior (behavior, currentSequence);
           
     // Free the behavior from memory
@@ -1164,10 +1261,10 @@ boolean Delete_Behavior_By_Address (int uid) {
   Behavior* behavior = NULL;
   
   // Search the loop for the behavior with the specified UID.
-  if (substrate != NULL) {
+  if (context != NULL) {
     
     // Get the last behavior in the loop
-    Sequence* currentSequence = (*substrate).sequences;
+    Sequence* currentSequence = (*context).sequences;
     while (currentSequence != NULL) {
       Serial.println("Searching sequence");
       
@@ -1202,8 +1299,8 @@ boolean Delete_Behavior_By_Address (int uid) {
 //!
 
 // Create_Performer
-// Get_Performer_Substrate
-// Update_Performer_Substrate
+// Get_Performer_Context
+// Update_Performer_Context
 // Delete_Performer
 // Continue_Performance
 // Perform_Behavior
@@ -1221,7 +1318,7 @@ boolean Delete_Behavior_By_Address (int uid) {
 //!
 struct Performer {
   int uid;
-  Substrate* substrate;
+  Context* context;
   Behavior* behavior; // i.e., The current behavior. This is akin to a "program counter".
   
   Sequence* origin; // i.e., The performer's first behavior sequence.
@@ -1315,7 +1412,7 @@ Behavior* Dequeue_Immediate_Behavior (Performer* performer) {
 ////!
 //struct TeensyPerformer {
 //  int uid;
-//  Substrate* substrate;
+//  Context* context;
 //  Behavior* behavior; // i.e., The current behavior. This is akin to a "program counter".
 //  
 //  Sequence* origin; // i.e., The performer's first behavior sequence.
@@ -1324,19 +1421,19 @@ Behavior* Dequeue_Immediate_Behavior (Performer* performer) {
 ////  Device* device; // i.e., The device upon which the performance will take place.
 //};
 
-//! Creates a behavior performer in the specified substrate.
+//! Creates a behavior performer in the specified context.
 //!
-Performer* Create_Performer (Substrate* substrate) {
+Performer* Create_Performer (Context* context) {
   Serial.println ("Create_Performer");
   
   Performer* performer = NULL;
   
-  if (substrate != NULL) {
+  if (context != NULL) {
     
     // Create a performer
     performer              = (Performer*) malloc (sizeof (Performer));
     (*performer).uid       = 0;
-    (*performer).substrate = substrate;
+    (*performer).context = context;
     (*performer).behavior  = NULL;
     (*performer).origin    = NULL;
     
@@ -1346,10 +1443,10 @@ Performer* Create_Performer (Substrate* substrate) {
     (*performer).uid  = Generate_Uuid ();
     
     // Initialize the processor's current behavior
-    if ((*substrate).origin != NULL) {
+    if ((*context).origin != NULL) {
       Serial.println ("Setting performer's origin and behavior.");
-      (*performer).origin = (*substrate).origin;
-      (*performer).behavior = (*((*substrate).origin)).behavior;
+      (*performer).origin = (*context).origin;
+      (*performer).behavior = (*((*context).origin)).behavior;
       
       Serial.print ("\tsequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
     }
@@ -1364,6 +1461,8 @@ Performer* Create_Performer (Substrate* substrate) {
 //!
 boolean Perform_Behavior (Performer* performer) {
   // Serial.println ("Perform_Behavior");
+  
+  // TODO: Make sure runs the right sequence for the context! 
   
   boolean sustainBehavior = false;
   boolean performanceResult = false;
@@ -1386,8 +1485,8 @@ boolean Perform_Behavior (Performer* performer) {
     // Update the Performer
     if ((*performer).behavior == NULL) {
       // Serial.println ("Updating performer's origin and behavior.");
-      (*performer).origin = (*((*performer).substrate)).origin; // (*substrate).origin
-      (*performer).behavior = (*((*((*performer).substrate)).origin)).behavior;
+      (*performer).origin = (*((*performer).context)).origin; // (*context).origin
+      (*performer).behavior = (*((*((*performer).context)).origin)).behavior;
       
       // Serial.print ("\tsequence type: "); Serial.print ((*((*performer).origin)).type); Serial.print ("\n");
     }
@@ -1594,7 +1693,7 @@ boolean Perform_Behavior_On_Platform (Behavior* behavior) {
       
       // TODO: Call device-specific routine (retreived from cloud to change the device itself).
       Channel* channel = Get_Channel (platform, (*output).pin);
-      Update_Channel_Value (channel, (*output).data);
+      Set_Channel_Value (channel, (*output).data);
 //        Get_Channel_Value (channel);
 //        Propagate_Channel_Value (channel);
       
@@ -1737,7 +1836,7 @@ Propagator* Create_Propagator () {
   
   Serial.println ("Create_Propagator");
   
-  // Create substrate
+  // Create context
   Propagator* propagator = (Propagator*) malloc (sizeof (Propagator));
   
   // Initialize sequence
@@ -1776,7 +1875,7 @@ Transformation* Create_Transformation (String data) {
   Serial.println ("Create_Transformation");
   Serial.print ("data = "); Serial.print (data); Serial.print ("\n");
   
-  // Create substrate
+  // Create context
   Transformation* transformation = (Transformation*) malloc (sizeof (Transformation));
   
   Serial.println ("Allocated Transformation.");
@@ -1958,7 +2057,7 @@ boolean Propagate (Propagator* propagator, int channel) {
 
 struct Behavior_Transformation {
   int type;
-  void* behavior; // i.e., Substrate, Behavior, Sequence
+  void* behavior; // i.e., Context, Behavior, Sequence
 };
 
 #endif

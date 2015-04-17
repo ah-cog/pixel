@@ -36,24 +36,24 @@ L3G gyro; // Gyroscope (sensor of angular momentum)
 LSM303 compass; // Compass
 LPS ps; // Pressure sensor (measures the atmospheric pressure)
 
-void setupInertialMeasurementUnit() {
+void Setup_Inertial_Measurement_Unit() {
   Wire.begin(); // Join I2C bus (address optional for master)
 }
 
 /**
  * Initialize the IMU peripheral (inertial measurement unit).
  */
-boolean setupOrientationSensing() {
+boolean Setup_Orientation_Sensing() {
 
-  Serial.println("Orientation sensors are active");
-  setupInertialMeasurementUnit();
+  Serial.println ("Orientation sensors are active");
+  Setup_Inertial_Measurement_Unit ();
 
   // delay(1500);
 
-  setupAccelerometer();
-  setupCompass();
-  setupGyroscope();
-  setupAltimeter();
+  Setup_Accelerometer();
+  Setup_Compass();
+  Setup_Gyroscope();
+  Setup_Altimeter();
 
   delay(20); // Wait for a small duration for the IMU sensors to initialize (?)
 
@@ -86,13 +86,13 @@ boolean setupOrientationSensing() {
   counter = 0;
 }
 
-void setupGyroscope() {
+void Setup_Gyroscope () {
   gyro.init();
   gyro.writeReg(L3G_CTRL_REG1, 0x0F); // normal power mode, all axes enabled, 100 Hz
   gyro.writeReg(L3G_CTRL_REG4, 0x20); // 2000 dps full scale
 }
 
-void setupAccelerometer() {
+void Setup_Accelerometer () {
   compass.init();
   compass.enableDefault();
   switch (compass.getDeviceType())
@@ -120,13 +120,13 @@ void setupAccelerometer() {
 }
 
 // Initialize compass sensor
-void setupCompass() {
+void Setup_Compass () {
 //  compass.writeMagReg(LSM303_MR_REG_M, 0x00); // continuous conversion mode
   // 15 Hz default
 }
 
 // Initialize altimeter sensor
-void setupAltimeter() {
+void Setup_Altimeter () {
   if (!ps.init()) {
     Serial.println("Error: Failed to autodetect pressure sensor!");
     while (1);
@@ -138,7 +138,7 @@ void setupAltimeter() {
  * Read the IMU sensor data and estimate the module's orientation. Orientation is 
  * estimated using the DCM (Direction Cosine Matrix).
  */
-boolean senseOrientation () {
+boolean Sense_Orientation () {
   
   if ((millis() - timer) >= 20) { // Main loop runs at 50Hz
     counter++;
