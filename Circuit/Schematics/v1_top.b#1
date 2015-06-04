@@ -141,7 +141,7 @@
 <wire x1="0" y1="31.496" x2="31.496" y2="31.496" width="0.0635" layer="22"/>
 <wire x1="31.496" y1="31.496" x2="31.496" y2="0" width="0.0635" layer="22"/>
 <wire x1="31.496" y1="0" x2="0" y2="0" width="0.0635" layer="22"/>
-<text x="19.05" y="28.702" size="1.778" layer="25">Pixel</text>
+<text x="19.558" y="28.702" size="1.778" layer="25">Pixel</text>
 <text x="26.67" y="22.86" size="0.8128" layer="25">RX</text>
 <text x="26.67" y="20.574" size="0.8128" layer="25">TX</text>
 <text x="26.67" y="17.78" size="0.8128" layer="25">CE</text>
@@ -153,7 +153,7 @@
 <text x="4.826" y="25.654" size="0.8128" layer="25" rot="R90">GND</text>
 <text x="14.732" y="25.146" size="0.8128" layer="25" rot="R90">VBAT</text>
 <text x="17.272" y="25.654" size="0.8128" layer="25" rot="R90">GND</text>
-<text x="19.304" y="27.178" size="0.8128" layer="25">P1 MG DB</text>
+<text x="19.558" y="27.178" size="0.8128" layer="25">P1 MG DB</text>
 </plain>
 <libraries>
 <library name="SparkFun-Capacitors">
