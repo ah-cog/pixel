@@ -1,0 +1,56 @@
+Partlist exported from /Users/danielbogachek/Desktop/pixel/Circuit/Schematics/bottom.sch at 6/7/15 3:13 PM
+
+Part         Value        Device            Package           Description                                       DIGIKEY        MF                     MPN               OC_FARNELL OC_NEWARK PROD_ID   
+C1           .22 uF       CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C2           4.7 uF       CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C3           10 nF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C4           5.6 pF       CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C5           1 uF         CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C6           15 pF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C7           15 pF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C8           1 uF         CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C9           .1 uF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C10          10 uF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C11          33 nF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C12          4.7 uF       CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C13          1 uF         CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C14          .1 uF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C15          .1 uF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C16          .1 uF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C17          .1 uF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C18          1.5 pF       CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C19          1.0 pF       CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C20          2.2 nF       CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C38          4.7 pF       CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C39          22 pF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+C40          22 pF        CAP0603-CAP       0603-CAP          Capacitor                                                                                                                                
+IC1          LM2936MP-3.3 LM2936MP-3.3      SOT223            Ultra-Low Quiescent Current LDO Voltage Regulator                NATIONAL SEMICONDUCTOR LM2936MP-3.3/NOPB 1469062    41K4523             
+JP1                       M12PTH            1X12              Header 12                                                                                                                                
+JP2                       M02LOCK           1X02_LOCK         Standard 2-pin 0.1" header. Use with                                                                                                     
+JP3                       M02LOCK           1X02_LOCK         Standard 2-pin 0.1" header. Use with                                                                                                     
+JP4                       M02LOCK           1X02_LOCK         Standard 2-pin 0.1" header. Use with                                                                                                     
+JP5                       M02LOCK           1X02_LOCK         Standard 2-pin 0.1" header. Use with                                                                                                     
+JP6                       M02LOCK           1X02_LOCK         Standard 2-pin 0.1" header. Use with                                                                                                     
+JP7                       M09               1X09              Header 9                                                                                                                                 
+L1           2.7 nH       INDUCTOR0402      C0402             Inductors                                                                                                                                
+L2           8.2 nH       INDUCTOR0402      C0402             Inductors                                                                                                                                
+L3           3.9 nH       INDUCTOR0402      C0402             Inductors                                                                                                                                
+L3GD20H      L3GD20H      L3GD20H           LGA16L                                                                                                                                                     
+LSM303D      LSM303D      LSM303D           LGA16L                                                                                                                                                     
+MESH         NRF24L01     NRF24L01          QFN20(4X4)                                                                                                                                                 
+R1           12k          RESISTOR0603-RES  0603-RES          Resistor                                                                                                                                 
+R2           12k          RESISTOR0603-RES  0603-RES          Resistor                                                                                                                                 
+R5           12k          RESISTOR0603-RES  0603-RES          Resistor                                                                                                                                 
+R6           1M           RESISTOR0603-RES  0603-RES          Resistor                                                                                                                                 
+R10          22k          RESISTOR0603-RES  0603-RES          Resistor                                                                                                                                 
+R11          10k          RESISTOR0603-RES  0603-RES          Resistor                                                                                                                                 
+R12          10k          RESISTOR0603-RES  0603-RES          Resistor                                                                                                                                 
+R13          10k          RESISTOR0603-RES  0603-RES          Resistor                                                                                                                                 
+S1                        SWITCH-SPDT-SMD-A SWITCH-SPST-SMD-A SPDT Switch                                                                                                                              
+U$1          LPS25H       LPS25H            LPS25H            ST-Micro Piezoresistive pressure sensor           497-15070-1-ND                                                                         
+U$9          ANTENNA2SMD  ANTENNA2SMD       ANTENNA-CHIP2     Chip antenna                                                                                                                             
+U$10         ANTENNA2SMD  ANTENNA2SMD       ANTENNA-CHIP2     Chip antenna                                                                                                                             
+WIFI         ESP8266EX    ESP8266EX         QFN32                                                                                                                                                      
+WIFI_STORAGE 25Q40        25Q40             SOP8                                                                                                                                                       
+Y1           16 Mhz       CRYSTAL5X3        CRYSTAL-SMD-5X3   Various standard crystals. Proven footprints.                                                                                  XTAL-08218
+Y2           16 Mhz       CRYSTAL5X3        CRYSTAL-SMD-5X3   Various standard crystals. Proven footprints.                                                                                  XTAL-08218
